@@ -4,64 +4,31 @@ import { useState } from "react";
 import LocationPicker from "./components/LocationPicker";
 
 export default function Home() {
-  const [tripType, setTripType] =
-    useState("oneway");
+  const [tripType, setTripType] = useState("oneway");
+  const [sameWhatsapp, setSameWhatsapp] = useState(true);
 
-  const [sameWhatsapp, setSameWhatsapp] =
-    useState(true);
+  const [pickup, setPickup] = useState("");
+  const [pickupCoords, setPickupCoords] = useState(null);
 
-  const [pickup, setPickup] =
-    useState("");
+  const [destination, setDestination] = useState("");
+  const [destinationCoords, setDestinationCoords] = useState(null);
 
-  const [pickupCoords, setPickupCoords] =
-    useState(null);
+  const [checkingDistance, setCheckingDistance] = useState(false);
+  const [distanceMessage, setDistanceMessage] = useState("");
 
-  const [destination, setDestination] =
-    useState("");
-
-  const [destinationCoords, setDestinationCoords] =
-    useState(null);
-
-  const [checkingDistance, setCheckingDistance] =
-    useState(false);
-
-  const [distanceMessage, setDistanceMessage] =
-    useState("");
-
-  const calculateDistance = (
-    lat1,
-    lon1,
-    lat2,
-    lon2
-  ) => {
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const earthRadius = 6371;
 
-    const dLat =
-      ((lat2 - lat1) * Math.PI) /
-      180;
-
-    const dLon =
-      ((lon2 - lon1) * Math.PI) /
-      180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
     const a =
-      Math.sin(dLat / 2) *
-        Math.sin(dLat / 2) +
-      Math.cos(
-        (lat1 * Math.PI) / 180
-      ) *
-        Math.cos(
-          (lat2 * Math.PI) / 180
-        ) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
 
-    const c =
-      2 *
-      Math.atan2(
-        Math.sqrt(a),
-        Math.sqrt(1 - a)
-      );
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return earthRadius * c;
   };
@@ -71,28 +38,28 @@ export default function Home() {
 
     if (!pickup.trim()) {
       setDistanceMessage(
-        "📍 Please enter your pickup location."
+        "📍 Please select your pickup location."
       );
       return;
     }
 
     if (!pickupCoords) {
       setDistanceMessage(
-        "📍 Please select your pickup location from the search results."
+        "📍 Please select your pickup location from the search results or map."
       );
       return;
     }
 
     if (!destination.trim()) {
       setDistanceMessage(
-        "📍 Please enter your destination."
+        "📍 Please select your destination."
       );
       return;
     }
 
     if (!destinationCoords) {
       setDistanceMessage(
-        "📍 Please select your destination from the search results."
+        "📍 Please select your destination from the search results or map."
       );
       return;
     }
@@ -100,18 +67,18 @@ export default function Home() {
     setCheckingDistance(true);
 
     try {
+      // Kanpur center
       const kanpur = {
         lat: 26.4499,
         lon: 80.3319,
       };
 
-      const distance =
-        calculateDistance(
-          kanpur.lat,
-          kanpur.lon,
-          destinationCoords.lat,
-          destinationCoords.lon
-        );
+      const distance = calculateDistance(
+        kanpur.lat,
+        kanpur.lon,
+        destinationCoords.lat,
+        destinationCoords.lon
+      );
 
       if (distance > 200) {
         setDistanceMessage(
@@ -129,23 +96,16 @@ export default function Home() {
         )} km from Kanpur — destination is within our service area.`
       );
 
-      console.log(
-        "Booking allowed:",
-        {
-          pickup,
-          pickupCoords,
-          destination,
-          destinationCoords,
-          distance:
-            Math.round(distance),
-          tripType,
-        }
-      );
+      console.log("Booking allowed:", {
+        pickup,
+        pickupCoords,
+        destination,
+        destinationCoords,
+        distance: Math.round(distance),
+        tripType,
+      });
     } catch (error) {
-      console.error(
-        "Distance calculation error:",
-        error
-      );
+      console.error(error);
 
       setDistanceMessage(
         "⚠️ We couldn't check the destination right now. Please try again."
@@ -161,19 +121,12 @@ export default function Home() {
       {/* HEADER */}
 
       <header className="header">
-
         <div className="logo">
-          <span className="logoMark">
-            V
-          </span>
-
-          <span>
-            VOYNU
-          </span>
+          <span className="logoMark">V</span>
+          <span>VOYNU</span>
         </div>
 
         <div className="headerRight">
-
           <a
             href="tel:+919123456789"
             className="phone"
@@ -187,10 +140,9 @@ export default function Home() {
           >
             ☰
           </button>
-
         </div>
-
       </header>
+
 
       {/* HERO */}
 
@@ -199,24 +151,17 @@ export default function Home() {
         <div className="heroText">
 
           <div className="serviceBadge">
-            📍 Serving within{" "}
-            <strong>
-              200 km
-            </strong>{" "}
-            from Kanpur
+            📍 Serving within <strong>200 km</strong> from Kanpur
           </div>
 
           <h1>
             Your ride,
             <br />
-            <span>
-              your way.
-            </span>
+            <span>your way.</span>
           </h1>
 
           <p>
-            Book a reliable cab for
-            your journey.
+            Book a reliable cab for your journey.
             <br />
             Travel safe. Travel smart.
           </p>
@@ -225,32 +170,27 @@ export default function Home() {
 
             <div>
               <span>🛡️</span>
-              <strong>
-                Safe & Secure
-              </strong>
+              <strong>Safe & Secure</strong>
             </div>
 
             <div>
               <span>✓</span>
-              <strong>
-                Verified Drivers
-              </strong>
+              <strong>Verified Drivers</strong>
             </div>
 
             <div>
               <span>⚡</span>
-              <strong>
-                EV Rides
-              </strong>
+              <strong>EV Rides</strong>
             </div>
 
           </div>
 
         </div>
 
+
         <div className="heroCar">
 
-          <div className="road" />
+          <div className="road"></div>
 
           <div className="car">
             🚙
@@ -264,9 +204,12 @@ export default function Home() {
 
       </section>
 
+
       {/* BOOKING CARD */}
 
       <section className="bookingCard">
+
+        {/* TRIP TYPE */}
 
         <div className="tripSelector">
 
@@ -277,11 +220,7 @@ export default function Home() {
                 ? "active"
                 : ""
             }
-            onClick={() =>
-              setTripType(
-                "oneway"
-              )
-            }
+            onClick={() => setTripType("oneway")}
           >
             🚗 One Way
           </button>
@@ -289,114 +228,93 @@ export default function Home() {
           <button
             type="button"
             className={
-              tripType ===
-              "roundtrip"
+              tripType === "roundtrip"
                 ? "active"
                 : ""
             }
-            onClick={() =>
-              setTripType(
-                "roundtrip"
-              )
-            }
+            onClick={() => setTripType("roundtrip")}
           >
             🔄 Round Trip
           </button>
 
         </div>
 
-        <div className="formGrid">
 
-          {/* PICKUP */}
+        {/* LOCATIONS */}
+
+        <div className="formGrid">
 
           <LocationPicker
             label="📍 Pickup location"
             value={pickup}
             placeholder="Search pickup location"
-            allowCurrentLocation={
-              true
-            }
-            onLocationSelect={(
-              location
-            ) => {
-              setPickup(
-                location.name
-              );
+            allowCurrentLocation={true}
+            onLocationSelect={(location) => {
+              setPickup(location.name);
 
               setPickupCoords({
                 lat: location.lat,
                 lon: location.lon,
               });
+
+              setDistanceMessage("");
             }}
           />
 
-          {/* DESTINATION */}
 
           <LocationPicker
             label="📍 Drop location"
-            value={
-              destination
-            }
+            value={destination}
             placeholder="Search destination"
-            onLocationSelect={(
-              location
-            ) => {
-              setDestination(
-                location.name
-              );
+            onLocationSelect={(location) => {
+              setDestination(location.name);
 
               setDestinationCoords({
                 lat: location.lat,
                 lon: location.lon,
               });
+
+              setDistanceMessage("");
             }}
           />
 
-          {/* DATE */}
+        </div>
+
+
+        {/* ROUND TRIP NOTICE */}
+
+        {tripType === "roundtrip" && (
+          <div className="chargingNotice">
+            ⚡ <strong>EV charging break:</strong>{" "}
+            For longer round trips, approximately 1 hour
+            may be required for charging during the journey.
+          </div>
+        )}
+
+
+        {/* DATE + TIME */}
+
+        <div className="formGrid dateTimeGrid">
 
           <label className="field">
-
-            <span>
-              📅 Travel date
-            </span>
+            <span>📅 Travel date</span>
 
             <input
               type="date"
             />
-
           </label>
 
-          {/* TIME */}
 
           <label className="field">
-
-            <span>
-              🕐 Pickup time
-            </span>
+            <span>🕐 Pickup time</span>
 
             <input
               type="time"
             />
-
           </label>
 
         </div>
 
-        {/* ROUND TRIP NOTICE */}
-
-        {tripType ===
-          "roundtrip" && (
-          <div className="chargingNotice">
-            ⚡{" "}
-            <strong>
-              EV charging break:
-            </strong>{" "}
-            For longer round trips,
-            approximately 1 hour may
-            be required for charging
-            during the journey.
-          </div>
-        )}
 
         {/* PASSENGER */}
 
@@ -417,6 +335,7 @@ export default function Home() {
 
         </div>
 
+
         {/* CONTACT */}
 
         <div className="formGrid">
@@ -434,6 +353,7 @@ export default function Home() {
 
           </label>
 
+
           <label className="field">
 
             <span>
@@ -443,57 +363,55 @@ export default function Home() {
             <input
               type="tel"
               placeholder="+91"
-              disabled={
-                sameWhatsapp
-              }
+              disabled={sameWhatsapp}
             />
 
           </label>
 
         </div>
 
+
+        {/* WHATSAPP CHECKBOX */}
+
         <label className="checkbox">
 
           <input
             type="checkbox"
-            checked={
-              sameWhatsapp
-            }
+            checked={sameWhatsapp}
             onChange={(event) =>
               setSameWhatsapp(
-                event.target
-                  .checked
+                event.target.checked
               )
             }
           />
 
-          WhatsApp number is the
-          same as phone number
+          WhatsApp number is the same as phone number
 
         </label>
+
 
         {/* FIND CAB */}
 
         <button
           type="button"
           className="findCab"
-          onClick={
-            handleFindCab
-          }
-          disabled={
-            checkingDistance
-          }
+          onClick={handleFindCab}
+          disabled={checkingDistance}
         >
           {checkingDistance
             ? "📍 CHECKING DISTANCE..."
             : "🚗 FIND A CAB"}
         </button>
 
+
+        {/* DISTANCE MESSAGE */}
+
         {distanceMessage && (
           <div className="distanceMessage">
             {distanceMessage}
           </div>
         )}
+
 
         {/* BENEFITS */}
 
@@ -509,6 +427,7 @@ export default function Home() {
             </small>
           </div>
 
+
           <div>
             <strong>
               🎧 Support
@@ -518,6 +437,7 @@ export default function Home() {
               We're always here
             </small>
           </div>
+
 
           <div>
             <strong>
@@ -533,13 +453,16 @@ export default function Home() {
 
       </section>
 
+
+      {/* FOOTER */}
+
       <footer>
         ♡ Travel safe. Travel smart.
-        Travel with{" "}
-        <strong>
-          VOYNU.
-        </strong>
+        Travel with <strong>VOYNU.</strong>
       </footer>
+
+
+      {/* STYLES */}
 
       <style jsx>{`
 
@@ -551,10 +474,7 @@ export default function Home() {
           min-height: 100vh;
           background: #f7faf8;
           color: #10231a;
-          font-family:
-            Arial,
-            Helvetica,
-            sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
         }
 
         .header {
@@ -564,8 +484,7 @@ export default function Home() {
           align-items: center;
           justify-content: space-between;
           padding: 0 6%;
-          border-bottom:
-            1px solid #e7ece9;
+          border-bottom: 1px solid #e7ece9;
         }
 
         .logo {
@@ -641,13 +560,7 @@ export default function Home() {
           padding: 10px 18px;
           font-size: 14px;
           box-shadow:
-            0 5px 20px
-            rgba(
-              0,
-              0,
-              0,
-              0.05
-            );
+            0 5px 20px rgba(0, 0, 0, 0.05);
         }
 
         .serviceBadge strong {
@@ -655,12 +568,7 @@ export default function Home() {
         }
 
         h1 {
-          font-size:
-            clamp(
-              48px,
-              6vw,
-              76px
-            );
+          font-size: clamp(48px, 6vw, 76px);
           line-height: 0.95;
           margin: 30px 0 22px;
           letter-spacing: -4px;
@@ -690,6 +598,7 @@ export default function Home() {
 
         .features span {
           font-size: 25px;
+          color: #08783f;
         }
 
         .features strong {
@@ -709,13 +618,7 @@ export default function Home() {
           top: 100px;
           filter:
             drop-shadow(
-              0 20px 20px
-              rgba(
-                0,
-                0,
-                0,
-                0.15
-              )
+              0 20px 20px rgba(0, 0, 0, 0.15)
             );
         }
 
@@ -753,13 +656,7 @@ export default function Home() {
           border-radius: 22px;
           padding: 28px;
           box-shadow:
-            0 18px 50px
-            rgba(
-              0,
-              0,
-              0,
-              0.12
-            );
+            0 18px 50px rgba(0, 0, 0, 0.12);
         }
 
         .tripSelector {
@@ -768,7 +665,7 @@ export default function Home() {
           border-radius: 13px;
           padding: 4px;
           max-width: 470px;
-          margin-bottom: 22px;
+          margin-bottom: 25px;
         }
 
         .tripSelector button {
@@ -789,9 +686,12 @@ export default function Home() {
 
         .formGrid {
           display: grid;
-          grid-template-columns:
-            1fr 1fr;
-          gap: 15px;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+        }
+
+        .dateTimeGrid {
+          margin-top: 18px;
         }
 
         .field {
@@ -819,13 +719,7 @@ export default function Home() {
         .field input:focus {
           border-color: #08783f;
           box-shadow:
-            0 0 0 3px
-            rgba(
-              8,
-              120,
-              63,
-              0.1
-            );
+            0 0 0 3px rgba(8, 120, 63, 0.1);
         }
 
         .field input:disabled {
@@ -833,7 +727,7 @@ export default function Home() {
         }
 
         .singleField {
-          margin-top: 15px;
+          margin-top: 18px;
         }
 
         .chargingNotice {
@@ -894,11 +788,7 @@ export default function Home() {
 
         .benefits {
           display: grid;
-          grid-template-columns:
-            repeat(
-              3,
-              1fr
-            );
+          grid-template-columns: repeat(3, 1fr);
           margin-top: 18px;
           background: #f1f8f3;
           border-radius: 13px;
@@ -942,8 +832,7 @@ export default function Home() {
           }
 
           .hero {
-            padding:
-              35px 22px 110px;
+            padding: 35px 22px 110px;
             min-height: auto;
           }
 
@@ -969,24 +858,18 @@ export default function Home() {
           }
 
           .bookingCard {
-            width:
-              calc(
-                100% - 24px
-              );
-            margin:
-              -70px auto 0;
+            width: calc(100% - 24px);
+            margin: -70px auto 0;
             padding: 18px;
             border-radius: 18px;
           }
 
           .formGrid {
-            grid-template-columns:
-              1fr;
+            grid-template-columns: 1fr;
           }
 
           .benefits {
-            grid-template-columns:
-              1fr;
+            grid-template-columns: 1fr;
           }
 
           .tripSelector {
