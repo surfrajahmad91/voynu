@@ -1,885 +1,245 @@
 "use client";
 
 import { useState } from "react";
-import LocationPicker from "./components/LocationPicker";
+import LocationPicker from "@/components/LocationPicker";
 
-export default function Home() {
-  const [tripType, setTripType] = useState("oneway");
-  const [sameWhatsapp, setSameWhatsapp] = useState(true);
-
-  const [pickup, setPickup] = useState("");
-  const [pickupCoords, setPickupCoords] = useState(null);
-
-  const [destination, setDestination] = useState("");
-  const [destinationCoords, setDestinationCoords] = useState(null);
-
-  const [checkingDistance, setCheckingDistance] = useState(false);
-  const [distanceMessage, setDistanceMessage] = useState("");
-
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const earthRadius = 6371;
-
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) ** 2;
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return earthRadius * c;
-  };
-
-  const handleFindCab = async () => {
-    setDistanceMessage("");
-
-    if (!pickup.trim()) {
-      setDistanceMessage(
-        "📍 Please select your pickup location."
-      );
-      return;
-    }
-
-    if (!pickupCoords) {
-      setDistanceMessage(
-        "📍 Please select your pickup location from the search results or map."
-      );
-      return;
-    }
-
-    if (!destination.trim()) {
-      setDistanceMessage(
-        "📍 Please select your destination."
-      );
-      return;
-    }
-
-    if (!destinationCoords) {
-      setDistanceMessage(
-        "📍 Please select your destination from the search results or map."
-      );
-      return;
-    }
-
-    setCheckingDistance(true);
-
-    try {
-      // Kanpur center
-      const kanpur = {
-        lat: 26.4499,
-        lon: 80.3319,
-      };
-
-      const distance = calculateDistance(
-        kanpur.lat,
-        kanpur.lon,
-        destinationCoords.lat,
-        destinationCoords.lon
-      );
-
-      if (distance > 200) {
-        setDistanceMessage(
-          `⚠️ This destination is approximately ${Math.round(
-            distance
-          )} km from Kanpur and is outside our current 200 km service area.`
-        );
-
-        return;
-      }
-
-      setDistanceMessage(
-        `✅ ${Math.round(
-          distance
-        )} km from Kanpur — destination is within our service area.`
-      );
-
-      console.log("Booking allowed:", {
-        pickup,
-        pickupCoords,
-        destination,
-        destinationCoords,
-        distance: Math.round(distance),
-        tripType,
-      });
-    } catch (error) {
-      console.error(error);
-
-      setDistanceMessage(
-        "⚠️ We couldn't check the destination right now. Please try again."
-      );
-    } finally {
-      setCheckingDistance(false);
-    }
-  };
+export default function HomePage() {
+  const [pickup, setPickup] = useState(null);
+  const [drop, setDrop] = useState(null);
 
   return (
     <main className="page">
+      <div className="container">
 
-      {/* HEADER */}
-
-      <header className="header">
-        <div className="logo">
-          <span className="logoMark">V</span>
-          <span>VOYNU</span>
-        </div>
-
-        <div className="headerRight">
-          <a
-            href="tel:+919123456789"
-            className="phone"
-          >
-            ☎ +91 91234 56789
-          </a>
-
-          <button
-            type="button"
-            className="menuButton"
-          >
-            ☰
-          </button>
-        </div>
-      </header>
-
-
-      {/* HERO */}
-
-      <section className="hero">
-
-        <div className="heroText">
-
-          <div className="serviceBadge">
-            📍 Serving within <strong>200 km</strong> from Kanpur
+        <div className="header">
+          <div className="logo">
+            V
           </div>
 
-          <h1>
-            Your ride,
-            <br />
-            <span>your way.</span>
-          </h1>
+          <div>
+            <h1>VOYNU</h1>
+            <p>Google Maps Location Test</p>
+          </div>
+        </div>
 
-          <p>
-            Book a reliable cab for your journey.
-            <br />
-            Travel safe. Travel smart.
+        <div className="card">
+
+          <h2>Test Location Search</h2>
+
+          <p className="description">
+            Search for a known building, hotel,
+            landmark, address or locality.
           </p>
 
-          <div className="features">
+          <div className="section">
 
-            <div>
-              <span>🛡️</span>
-              <strong>Safe & Secure</strong>
+            <LocationPicker
+              label="Pickup location"
+              placeholder="Search for a building, address or place"
+              allowCurrentLocation={true}
+              onLocationSelect={(location) => {
+                console.log(
+                  "PICKUP LOCATION:",
+                  location
+                );
+
+                setPickup(location);
+              }}
+            />
+
+          </div>
+
+          <div className="section">
+
+            <LocationPicker
+              label="Drop location"
+              placeholder="Search for a building, address or place"
+              onLocationSelect={(location) => {
+                console.log(
+                  "DROP LOCATION:",
+                  location
+                );
+
+                setDrop(location);
+              }}
+            />
+
+          </div>
+
+          {pickup && (
+            <div className="result">
+
+              <h3>Pickup Selected</h3>
+
+              <p>
+                <strong>Name:</strong>{" "}
+                {pickup.name}
+              </p>
+
+              <p>
+                <strong>Address:</strong>{" "}
+                {pickup.address}
+              </p>
+
+              <p>
+                <strong>Latitude:</strong>{" "}
+                {pickup.lat}
+              </p>
+
+              <p>
+                <strong>Longitude:</strong>{" "}
+                {pickup.lon}
+              </p>
+
+              {pickup.placeId && (
+                <p>
+                  <strong>Place ID:</strong>{" "}
+                  {pickup.placeId}
+                </p>
+              )}
+
             </div>
+          )}
 
-            <div>
-              <span>✓</span>
-              <strong>Verified Drivers</strong>
+          {drop && (
+            <div className="result">
+
+              <h3>Drop Selected</h3>
+
+              <p>
+                <strong>Name:</strong>{" "}
+                {drop.name}
+              </p>
+
+              <p>
+                <strong>Address:</strong>{" "}
+                {drop.address}
+              </p>
+
+              <p>
+                <strong>Latitude:</strong>{" "}
+                {drop.lat}
+              </p>
+
+              <p>
+                <strong>Longitude:</strong>{" "}
+                {drop.lon}
+              </p>
+
+              {drop.placeId && (
+                <p>
+                  <strong>Place ID:</strong>{" "}
+                  {drop.placeId}
+                </p>
+              )}
+
             </div>
-
-            <div>
-              <span>⚡</span>
-              <strong>EV Rides</strong>
-            </div>
-
-          </div>
+          )}
 
         </div>
 
-
-        <div className="heroCar">
-
-          <div className="road"></div>
-
-          <div className="car">
-            🚙
-          </div>
-
-          <div className="kanpurSign">
-            📍 KANPUR
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* BOOKING CARD */}
-
-      <section className="bookingCard">
-
-        {/* TRIP TYPE */}
-
-        <div className="tripSelector">
-
-          <button
-            type="button"
-            className={
-              tripType === "oneway"
-                ? "active"
-                : ""
-            }
-            onClick={() => setTripType("oneway")}
-          >
-            🚗 One Way
-          </button>
-
-          <button
-            type="button"
-            className={
-              tripType === "roundtrip"
-                ? "active"
-                : ""
-            }
-            onClick={() => setTripType("roundtrip")}
-          >
-            🔄 Round Trip
-          </button>
-
-        </div>
-
-
-        {/* LOCATIONS */}
-
-        <div className="formGrid">
-
-          <LocationPicker
-            label="📍 Pickup location"
-            value={pickup}
-            placeholder="Search pickup location"
-            allowCurrentLocation={true}
-            onLocationSelect={(location) => {
-              setPickup(location.name);
-
-              setPickupCoords({
-                lat: location.lat,
-                lon: location.lon,
-              });
-
-              setDistanceMessage("");
-            }}
-          />
-
-
-          <LocationPicker
-            label="📍 Drop location"
-            value={destination}
-            placeholder="Search destination"
-            onLocationSelect={(location) => {
-              setDestination(location.name);
-
-              setDestinationCoords({
-                lat: location.lat,
-                lon: location.lon,
-              });
-
-              setDistanceMessage("");
-            }}
-          />
-
-        </div>
-
-
-        {/* ROUND TRIP NOTICE */}
-
-        {tripType === "roundtrip" && (
-          <div className="chargingNotice">
-            ⚡ <strong>EV charging break:</strong>{" "}
-            For longer round trips, approximately 1 hour
-            may be required for charging during the journey.
-          </div>
-        )}
-
-
-        {/* DATE + TIME */}
-
-        <div className="formGrid dateTimeGrid">
-
-          <label className="field">
-            <span>📅 Travel date</span>
-
-            <input
-              type="date"
-            />
-          </label>
-
-
-          <label className="field">
-            <span>🕐 Pickup time</span>
-
-            <input
-              type="time"
-            />
-          </label>
-
-        </div>
-
-
-        {/* PASSENGER */}
-
-        <div className="singleField">
-
-          <label className="field">
-
-            <span>
-              👤 Passenger name
-            </span>
-
-            <input
-              type="text"
-              placeholder="Enter passenger name"
-            />
-
-          </label>
-
-        </div>
-
-
-        {/* CONTACT */}
-
-        <div className="formGrid">
-
-          <label className="field">
-
-            <span>
-              📞 Phone number
-            </span>
-
-            <input
-              type="tel"
-              placeholder="+91"
-            />
-
-          </label>
-
-
-          <label className="field">
-
-            <span>
-              💬 WhatsApp number
-            </span>
-
-            <input
-              type="tel"
-              placeholder="+91"
-              disabled={sameWhatsapp}
-            />
-
-          </label>
-
-        </div>
-
-
-        {/* WHATSAPP CHECKBOX */}
-
-        <label className="checkbox">
-
-          <input
-            type="checkbox"
-            checked={sameWhatsapp}
-            onChange={(event) =>
-              setSameWhatsapp(
-                event.target.checked
-              )
-            }
-          />
-
-          WhatsApp number is the same as phone number
-
-        </label>
-
-
-        {/* FIND CAB */}
-
-        <button
-          type="button"
-          className="findCab"
-          onClick={handleFindCab}
-          disabled={checkingDistance}
-        >
-          {checkingDistance
-            ? "📍 CHECKING DISTANCE..."
-            : "🚗 FIND A CAB"}
-        </button>
-
-
-        {/* DISTANCE MESSAGE */}
-
-        {distanceMessage && (
-          <div className="distanceMessage">
-            {distanceMessage}
-          </div>
-        )}
-
-
-        {/* BENEFITS */}
-
-        <div className="benefits">
-
-          <div>
-            <strong>
-              🛡️ Transparent Pricing
-            </strong>
-
-            <small>
-              No hidden charges
-            </small>
-          </div>
-
-
-          <div>
-            <strong>
-              🎧 Support
-            </strong>
-
-            <small>
-              We're always here
-            </small>
-          </div>
-
-
-          <div>
-            <strong>
-              💳 Easy Payments
-            </strong>
-
-            <small>
-              UPI, Cards & Wallets
-            </small>
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* FOOTER */}
-
-      <footer>
-        ♡ Travel safe. Travel smart.
-        Travel with <strong>VOYNU.</strong>
-      </footer>
-
-
-      {/* STYLES */}
+      </div>
 
       <style jsx>{`
-
-        * {
-          box-sizing: border-box;
-        }
-
         .page {
           min-height: 100vh;
-          background: #f7faf8;
-          color: #10231a;
-          font-family: Arial, Helvetica, sans-serif;
+          background: #f4f8f5;
+          padding: 40px 20px;
+        }
+
+        .container {
+          max-width: 900px;
+          margin: 0 auto;
         }
 
         .header {
-          height: 76px;
-          background: white;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 0 6%;
-          border-bottom: 1px solid #e7ece9;
+          gap: 12px;
+          margin-bottom: 24px;
         }
 
         .logo {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          font-size: 27px;
-          font-weight: 800;
-          letter-spacing: -1px;
-        }
-
-        .logoMark {
-          width: 38px;
-          height: 38px;
-          border-radius: 12px;
-          background: #08783f;
-          color: white;
+          width: 42px;
+          height: 42px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 900;
-        }
-
-        .headerRight {
-          display: flex;
-          align-items: center;
-          gap: 25px;
-        }
-
-        .phone {
-          color: #123;
-          text-decoration: none;
-          font-weight: 600;
-        }
-
-        .menuButton {
-          border: 0;
-          background: transparent;
-          font-size: 28px;
-          cursor: pointer;
-        }
-
-        .hero {
-          min-height: 470px;
-          padding: 55px 7% 0;
-          display: flex;
-          position: relative;
-          overflow: hidden;
-          background:
-            radial-gradient(
-              circle at 80% 20%,
-              #d8f1df,
-              transparent 35%
-            ),
-            linear-gradient(
-              135deg,
-              #ffffff 30%,
-              #eaf7ee
-            );
-        }
-
-        .heroText {
-          width: 52%;
-          position: relative;
-          z-index: 2;
-        }
-
-        .serviceBadge {
-          display: inline-block;
-          background: white;
-          border: 1px solid #cce3d3;
-          border-radius: 30px;
-          padding: 10px 18px;
-          font-size: 14px;
-          box-shadow:
-            0 5px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .serviceBadge strong {
-          color: #08783f;
-        }
-
-        h1 {
-          font-size: clamp(48px, 6vw, 76px);
-          line-height: 0.95;
-          margin: 30px 0 22px;
-          letter-spacing: -4px;
-        }
-
-        h1 span {
-          color: #08783f;
-        }
-
-        .heroText p {
-          font-size: 21px;
-          line-height: 1.5;
-          color: #52625a;
-        }
-
-        .features {
-          display: flex;
-          gap: 35px;
-          margin-top: 35px;
-        }
-
-        .features div {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .features span {
-          font-size: 25px;
-          color: #08783f;
-        }
-
-        .features strong {
-          font-size: 13px;
-        }
-
-        .heroCar {
-          flex: 1;
-          position: relative;
-          min-height: 350px;
-        }
-
-        .car {
-          position: absolute;
-          font-size: 150px;
-          right: 10%;
-          top: 100px;
-          filter:
-            drop-shadow(
-              0 20px 20px rgba(0, 0, 0, 0.15)
-            );
-        }
-
-        .road {
-          position: absolute;
-          width: 120%;
-          height: 100px;
-          background: #27332d;
-          transform: rotate(-8deg);
-          right: -15%;
-          bottom: 25px;
-          border-radius: 50%;
-          opacity: 0.9;
-        }
-
-        .kanpurSign {
-          position: absolute;
-          right: 3%;
-          top: 25px;
-          background: #183f30;
-          color: white;
-          padding: 15px 22px;
-          border-radius: 5px;
-          font-weight: 700;
-          transform: rotate(4deg);
-        }
-
-        .bookingCard {
-          width: 88%;
-          max-width: 1180px;
-          margin: -55px auto 0;
-          position: relative;
-          z-index: 5;
-          background: white;
-          border-radius: 22px;
-          padding: 28px;
-          box-shadow:
-            0 18px 50px rgba(0, 0, 0, 0.12);
-        }
-
-        .tripSelector {
-          display: flex;
-          background: #f0f3f1;
-          border-radius: 13px;
-          padding: 4px;
-          max-width: 470px;
-          margin-bottom: 25px;
-        }
-
-        .tripSelector button {
-          flex: 1;
-          border: 0;
-          padding: 15px;
-          border-radius: 10px;
-          background: transparent;
-          font-weight: 700;
-          font-size: 15px;
-          cursor: pointer;
-        }
-
-        .tripSelector button.active {
           background: #08783f;
           color: white;
-        }
-
-        .formGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 18px;
-        }
-
-        .dateTimeGrid {
-          margin-top: 18px;
-        }
-
-        .field {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .field span {
-          font-size: 12px;
-          font-weight: 700;
-          color: #52625a;
-        }
-
-        .field input {
-          width: 100%;
-          padding: 16px;
-          border: 1px solid #d9e1dc;
-          border-radius: 11px;
-          font-size: 15px;
-          outline: none;
-          background: white;
-        }
-
-        .field input:focus {
-          border-color: #08783f;
-          box-shadow:
-            0 0 0 3px rgba(8, 120, 63, 0.1);
-        }
-
-        .field input:disabled {
-          background: #f4f5f4;
-        }
-
-        .singleField {
-          margin-top: 18px;
-        }
-
-        .chargingNotice {
-          margin-top: 18px;
-          padding: 15px 18px;
-          background: #eff9f1;
-          border: 1px solid #d6ecd9;
-          border-radius: 12px;
-          color: #31553e;
-          font-size: 14px;
-        }
-
-        .checkbox {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin: 12px 0 20px;
-          font-size: 13px;
-          color: #52625a;
-        }
-
-        .checkbox input {
-          accent-color: #08783f;
-        }
-
-        .findCab {
-          width: 100%;
-          border: 0;
-          background: #08783f;
-          color: white;
-          padding: 18px;
-          border-radius: 11px;
-          font-size: 18px;
           font-weight: 800;
-          cursor: pointer;
+          font-size: 22px;
         }
 
-        .findCab:hover {
-          background: #065f32;
+        .header h1 {
+          margin: 0;
+          font-size: 22px;
+          color: #183329;
         }
 
-        .findCab:disabled {
-          opacity: 0.7;
-          cursor: wait;
-        }
-
-        .distanceMessage {
-          margin-top: 14px;
-          padding: 13px 16px;
-          border-radius: 11px;
-          background: #f1f8f3;
-          border: 1px solid #d6ecd9;
-          color: #31553e;
-          font-size: 14px;
-          line-height: 1.4;
-          text-align: center;
-        }
-
-        .benefits {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          margin-top: 18px;
-          background: #f1f8f3;
-          border-radius: 13px;
-          padding: 17px;
-          gap: 15px;
-        }
-
-        .benefits div {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          text-align: center;
-        }
-
-        .benefits strong {
+        .header p {
+          margin: 2px 0 0;
           font-size: 13px;
-        }
-
-        .benefits small {
           color: #65736b;
         }
 
-        footer {
-          text-align: center;
-          padding: 45px 20px;
-          color: #52625a;
+        .card {
+          background: white;
+          border: 1px solid #dce6df;
+          border-radius: 18px;
+          padding: 24px;
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
         }
 
-        footer strong {
+        .card h2 {
+          margin: 0;
+          color: #183329;
+          font-size: 22px;
+        }
+
+        .description {
+          margin: 8px 0 24px;
+          color: #65736b;
+          font-size: 14px;
+        }
+
+        .section {
+          margin-top: 24px;
+        }
+
+        .result {
+          margin-top: 24px;
+          padding: 16px;
+          border-radius: 12px;
+          background: #f1f8f3;
+          border: 1px solid #cce3d3;
+          word-break: break-word;
+        }
+
+        .result h3 {
+          margin: 0 0 12px;
           color: #08783f;
+          font-size: 15px;
         }
 
-        @media (max-width: 750px) {
-
-          .header {
-            padding: 0 20px;
-          }
-
-          .phone {
-            display: none;
-          }
-
-          .hero {
-            padding: 35px 22px 110px;
-            min-height: auto;
-          }
-
-          .heroText {
-            width: 100%;
-          }
-
-          h1 {
-            font-size: 52px;
-            letter-spacing: -3px;
-          }
-
-          .heroText p {
-            font-size: 17px;
-          }
-
-          .features {
-            gap: 18px;
-          }
-
-          .heroCar {
-            display: none;
-          }
-
-          .bookingCard {
-            width: calc(100% - 24px);
-            margin: -70px auto 0;
-            padding: 18px;
-            border-radius: 18px;
-          }
-
-          .formGrid {
-            grid-template-columns: 1fr;
-          }
-
-          .benefits {
-            grid-template-columns: 1fr;
-          }
-
-          .tripSelector {
-            max-width: none;
-          }
-
+        .result p {
+          margin: 6px 0;
+          color: #405149;
+          font-size: 13px;
+          line-height: 1.5;
         }
 
+        @media (max-width: 600px) {
+          .page {
+            padding: 20px 12px;
+          }
+
+          .card {
+            padding: 16px;
+          }
+        }
       `}</style>
-
     </main>
   );
 }
