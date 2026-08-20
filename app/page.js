@@ -16,29 +16,7 @@ const [destinationCoords, setDestinationCoords] = useState(null);
 const [checkingDistance, setCheckingDistance] = useState(false);
 const [distanceMessage, setDistanceMessage] = useState("");
 
-    const getCoordinates = async (place) => {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q=${encodeURIComponent(
-        place
-      )}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Unable to find location");
-    }
-
-    const data = await response.json();
-
-    if (!data || data.length === 0) {
-      return null;
-    }
-
-    return {
-      lat: parseFloat(data[0].lat),
-      lon: parseFloat(data[0].lon),
-      name: data[0].display_name,
-    };
-  };
+  
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const earthRadius = 6371;
