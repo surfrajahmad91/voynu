@@ -4,51 +4,100 @@ import { useState } from "react";
 import LocationPicker from "./components/LocationPicker";
 
 export default function Home() {
-  const [tripType, setTripType] = useState("oneway");
-const [sameWhatsapp, setSameWhatsapp] = useState(true);
+  const [tripType, setTripType] =
+    useState("oneway");
 
-const [pickup, setPickup] = useState("");
-const [pickupCoords, setPickupCoords] = useState(null);
+  const [sameWhatsapp, setSameWhatsapp] =
+    useState(true);
 
-const [destination, setDestination] = useState("");
-const [destinationCoords, setDestinationCoords] = useState(null);
+  const [pickup, setPickup] =
+    useState("");
 
-const [checkingDistance, setCheckingDistance] = useState(false);
-const [distanceMessage, setDistanceMessage] = useState("");
+  const [pickupCoords, setPickupCoords] =
+    useState(null);
 
-  
+  const [destination, setDestination] =
+    useState("");
 
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const [destinationCoords, setDestinationCoords] =
+    useState(null);
+
+  const [checkingDistance, setCheckingDistance] =
+    useState(false);
+
+  const [distanceMessage, setDistanceMessage] =
+    useState("");
+
+  const calculateDistance = (
+    lat1,
+    lon1,
+    lat2,
+    lon2
+  ) => {
     const earthRadius = 6371;
 
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const dLat =
+      ((lat2 - lat1) * Math.PI) /
+      180;
+
+    const dLon =
+      ((lon2 - lon1) * Math.PI) /
+      180;
 
     const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLat / 2) *
+        Math.sin(dLat / 2) +
+      Math.cos(
+        (lat1 * Math.PI) / 180
+      ) *
+        Math.cos(
+          (lat2 * Math.PI) / 180
+        ) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const c =
+      2 *
+      Math.atan2(
+        Math.sqrt(a),
+        Math.sqrt(1 - a)
+      );
 
     return earthRadius * c;
   };
 
   const handleFindCab = async () => {
+    setDistanceMessage("");
+
     if (!pickup.trim()) {
-      setDistanceMessage("📍 Please enter your pickup location.");
+      setDistanceMessage(
+        "📍 Please enter your pickup location."
+      );
+      return;
+    }
+
+    if (!pickupCoords) {
+      setDistanceMessage(
+        "📍 Please select your pickup location from the search results."
+      );
       return;
     }
 
     if (!destination.trim()) {
-      setDistanceMessage("📍 Please enter your destination.");
+      setDistanceMessage(
+        "📍 Please enter your destination."
+      );
+      return;
+    }
+
+    if (!destinationCoords) {
+      setDistanceMessage(
+        "📍 Please select your destination from the search results."
+      );
       return;
     }
 
     setCheckingDistance(true);
-    setDistanceMessage("");
 
     try {
       const kanpur = {
@@ -56,27 +105,21 @@ const [distanceMessage, setDistanceMessage] = useState("");
         lon: 80.3319,
       };
 
-      if (!destinationCoords) {
-  setDistanceMessage(
-    "📍 Please select your destination from the location search."
-  );
-  setCheckingDistance(false);
-  return;
-}
+      const distance =
+        calculateDistance(
+          kanpur.lat,
+          kanpur.lon,
+          destinationCoords.lat,
+          destinationCoords.lon
+        );
 
-const distance = calculateDistance(
-  kanpur.lat,
-  kanpur.lon,
-  destinationCoords.lat,
-  destinationCoords.lon
-);
       if (distance > 200) {
         setDistanceMessage(
           `⚠️ This destination is approximately ${Math.round(
             distance
           )} km from Kanpur and is outside our current 200 km service area.`
         );
-        setCheckingDistance(false);
+
         return;
       }
 
@@ -86,241 +129,420 @@ const distance = calculateDistance(
         )} km from Kanpur — destination is within our service area.`
       );
 
-      // Temporary success action.
-      // We will replace this with the cab-results page next.
-      console.log("Booking allowed:", {
-        pickup,
-        destination,
-        distance: Math.round(distance),
-        tripType,
-      });
+      console.log(
+        "Booking allowed:",
+        {
+          pickup,
+          pickupCoords,
+          destination,
+          destinationCoords,
+          distance:
+            Math.round(distance),
+          tripType,
+        }
+      );
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Distance calculation error:",
+        error
+      );
 
       setDistanceMessage(
         "⚠️ We couldn't check the destination right now. Please try again."
       );
+    } finally {
+      setCheckingDistance(false);
     }
-
-    setCheckingDistance(false);
   };
 
   return (
     <main className="page">
+
       {/* HEADER */}
+
       <header className="header">
+
         <div className="logo">
-          <span className="logoMark">V</span>
-          <span>VOYNU</span>
+          <span className="logoMark">
+            V
+          </span>
+
+          <span>
+            VOYNU
+          </span>
         </div>
 
         <div className="headerRight">
-          <a href="tel:+919123456789" className="phone">
+
+          <a
+            href="tel:+919123456789"
+            className="phone"
+          >
             ☎ +91 91234 56789
           </a>
-          <button className="menuButton">☰</button>
+
+          <button
+            type="button"
+            className="menuButton"
+          >
+            ☰
+          </button>
+
         </div>
+
       </header>
 
       {/* HERO */}
+
       <section className="hero">
+
         <div className="heroText">
+
           <div className="serviceBadge">
-            📍 Serving within <strong>200 km</strong> from Kanpur
+            📍 Serving within{" "}
+            <strong>
+              200 km
+            </strong>{" "}
+            from Kanpur
           </div>
 
           <h1>
             Your ride,
             <br />
-            <span>your way.</span>
+            <span>
+              your way.
+            </span>
           </h1>
 
           <p>
-            Book a reliable cab for your journey.
+            Book a reliable cab for
+            your journey.
             <br />
             Travel safe. Travel smart.
           </p>
 
           <div className="features">
+
             <div>
               <span>🛡️</span>
-              <strong>Safe & Secure</strong>
+              <strong>
+                Safe & Secure
+              </strong>
             </div>
 
             <div>
               <span>✓</span>
-              <strong>Verified Drivers</strong>
+              <strong>
+                Verified Drivers
+              </strong>
             </div>
 
             <div>
               <span>⚡</span>
-              <strong>EV Rides</strong>
+              <strong>
+                EV Rides
+              </strong>
             </div>
+
           </div>
+
         </div>
 
         <div className="heroCar">
-          <div className="road"></div>
+
+          <div className="road" />
+
           <div className="car">
             🚙
           </div>
+
           <div className="kanpurSign">
             📍 KANPUR
           </div>
+
         </div>
+
       </section>
 
       {/* BOOKING CARD */}
+
       <section className="bookingCard">
+
         <div className="tripSelector">
+
           <button
-            className={tripType === "oneway" ? "active" : ""}
-            onClick={() => setTripType("oneway")}
+            type="button"
+            className={
+              tripType === "oneway"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setTripType(
+                "oneway"
+              )
+            }
           >
             🚗 One Way
           </button>
 
           <button
-            className={tripType === "roundtrip" ? "active" : ""}
-            onClick={() => setTripType("roundtrip")}
+            type="button"
+            className={
+              tripType ===
+              "roundtrip"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setTripType(
+                "roundtrip"
+              )
+            }
           >
             🔄 Round Trip
           </button>
+
         </div>
 
         <div className="formGrid">
-          {/* PICKUP */}
-          <LocationPicker
-  label="📍 Pickup location"
-  value={pickup}
-  placeholder="Search pickup location"
-allowCurrentLocation={true}
-  onLocationSelect={(location) => {
-    setPickup(location.name);
-    setPickupCoords({
-      lat: location.lat,
-      lon: location.lon,
-    });
-  }}
-/>
 
-          {/* DROP */}
+          {/* PICKUP */}
+
           <LocationPicker
-  label="📍 Drop location"
-  value={destination}
-  placeholder="Search destination"
-  onLocationSelect={(location) => {
-    setDestination(location.name);
-    setDestinationCoords({
-      lat: location.lat,
-      lon: location.lon,
-    });
-  }}
-/>
+            label="📍 Pickup location"
+            value={pickup}
+            placeholder="Search pickup location"
+            allowCurrentLocation={
+              true
+            }
+            onLocationSelect={(
+              location
+            ) => {
+              setPickup(
+                location.name
+              );
+
+              setPickupCoords({
+                lat: location.lat,
+                lon: location.lon,
+              });
+            }}
+          />
+
+          {/* DESTINATION */}
+
+          <LocationPicker
+            label="📍 Drop location"
+            value={
+              destination
+            }
+            placeholder="Search destination"
+            onLocationSelect={(
+              location
+            ) => {
+              setDestination(
+                location.name
+              );
+
+              setDestinationCoords({
+                lat: location.lat,
+                lon: location.lon,
+              });
+            }}
+          />
 
           {/* DATE */}
+
           <label className="field">
-            <span>📅 Travel date</span>
-            <input type="date" />
+
+            <span>
+              📅 Travel date
+            </span>
+
+            <input
+              type="date"
+            />
+
           </label>
 
           {/* TIME */}
+
           <label className="field">
-            <span>🕐 Pickup time</span>
-            <input type="time" />
+
+            <span>
+              🕐 Pickup time
+            </span>
+
+            <input
+              type="time"
+            />
+
           </label>
+
         </div>
 
         {/* ROUND TRIP NOTICE */}
-        {tripType === "roundtrip" && (
+
+        {tripType ===
+          "roundtrip" && (
           <div className="chargingNotice">
-            ⚡ <strong>EV charging break:</strong> For longer round trips,
-            approximately 1 hour may be required for charging during the
-            journey.
+            ⚡{" "}
+            <strong>
+              EV charging break:
+            </strong>{" "}
+            For longer round trips,
+            approximately 1 hour may
+            be required for charging
+            during the journey.
           </div>
         )}
 
         {/* PASSENGER */}
+
         <div className="singleField">
+
           <label className="field">
-            <span>👤 Passenger name</span>
+
+            <span>
+              👤 Passenger name
+            </span>
+
             <input
               type="text"
               placeholder="Enter passenger name"
             />
+
           </label>
+
         </div>
 
         {/* CONTACT */}
+
         <div className="formGrid">
+
           <label className="field">
-            <span>📞 Phone number</span>
+
+            <span>
+              📞 Phone number
+            </span>
+
             <input
               type="tel"
               placeholder="+91"
             />
+
           </label>
 
           <label className="field">
-            <span>💬 WhatsApp number</span>
+
+            <span>
+              💬 WhatsApp number
+            </span>
+
             <input
               type="tel"
               placeholder="+91"
-              disabled={sameWhatsapp}
+              disabled={
+                sameWhatsapp
+              }
             />
+
           </label>
+
         </div>
 
         <label className="checkbox">
+
           <input
             type="checkbox"
-            checked={sameWhatsapp}
-            onChange={(e) => setSameWhatsapp(e.target.checked)}
+            checked={
+              sameWhatsapp
+            }
+            onChange={(event) =>
+              setSameWhatsapp(
+                event.target
+                  .checked
+              )
+            }
           />
-          WhatsApp number is the same as phone number
+
+          WhatsApp number is the
+          same as phone number
+
         </label>
 
-        {/* BOOK BUTTON */}
-        <button
-  className="findCab"
-  onClick={handleFindCab}
-  disabled={checkingDistance}
->
-  {checkingDistance ? "📍 CHECKING DISTANCE..." : "🚗 FIND A CAB"}
-</button>
+        {/* FIND CAB */}
 
-{distanceMessage && (
-  <div className="distanceMessage">
-    {distanceMessage}
-  </div>
-)}
+        <button
+          type="button"
+          className="findCab"
+          onClick={
+            handleFindCab
+          }
+          disabled={
+            checkingDistance
+          }
+        >
+          {checkingDistance
+            ? "📍 CHECKING DISTANCE..."
+            : "🚗 FIND A CAB"}
+        </button>
+
+        {distanceMessage && (
+          <div className="distanceMessage">
+            {distanceMessage}
+          </div>
+        )}
 
         {/* BENEFITS */}
+
         <div className="benefits">
+
           <div>
-            <strong>🛡️ Transparent Pricing</strong>
-            <small>No hidden charges</small>
+            <strong>
+              🛡️ Transparent Pricing
+            </strong>
+
+            <small>
+              No hidden charges
+            </small>
           </div>
 
           <div>
-            <strong>🎧 Support</strong>
-            <small>We're always here</small>
+            <strong>
+              🎧 Support
+            </strong>
+
+            <small>
+              We're always here
+            </small>
           </div>
 
           <div>
-            <strong>💳 Easy Payments</strong>
-            <small>UPI, Cards & Wallets</small>
+            <strong>
+              💳 Easy Payments
+            </strong>
+
+            <small>
+              UPI, Cards & Wallets
+            </small>
           </div>
+
         </div>
+
       </section>
 
-      {/* FOOTER MESSAGE */}
       <footer>
-        ♡ Travel safe. Travel smart. Travel with <strong>VOYNU.</strong>
+        ♡ Travel safe. Travel smart.
+        Travel with{" "}
+        <strong>
+          VOYNU.
+        </strong>
       </footer>
 
-      {/* PAGE STYLES */}
       <style jsx>{`
+
         * {
           box-sizing: border-box;
         }
@@ -329,7 +551,10 @@ allowCurrentLocation={true}
           min-height: 100vh;
           background: #f7faf8;
           color: #10231a;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family:
+            Arial,
+            Helvetica,
+            sans-serif;
         }
 
         .header {
@@ -339,7 +564,8 @@ allowCurrentLocation={true}
           align-items: center;
           justify-content: space-between;
           padding: 0 6%;
-          border-bottom: 1px solid #e7ece9;
+          border-bottom:
+            1px solid #e7ece9;
         }
 
         .logo {
@@ -389,8 +615,16 @@ allowCurrentLocation={true}
           position: relative;
           overflow: hidden;
           background:
-            radial-gradient(circle at 80% 20%, #d8f1df, transparent 35%),
-            linear-gradient(135deg, #ffffff 30%, #eaf7ee);
+            radial-gradient(
+              circle at 80% 20%,
+              #d8f1df,
+              transparent 35%
+            ),
+            linear-gradient(
+              135deg,
+              #ffffff 30%,
+              #eaf7ee
+            );
         }
 
         .heroText {
@@ -406,7 +640,14 @@ allowCurrentLocation={true}
           border-radius: 30px;
           padding: 10px 18px;
           font-size: 14px;
-          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+          box-shadow:
+            0 5px 20px
+            rgba(
+              0,
+              0,
+              0,
+              0.05
+            );
         }
 
         .serviceBadge strong {
@@ -414,7 +655,12 @@ allowCurrentLocation={true}
         }
 
         h1 {
-          font-size: clamp(48px, 6vw, 76px);
+          font-size:
+            clamp(
+              48px,
+              6vw,
+              76px
+            );
           line-height: 0.95;
           margin: 30px 0 22px;
           letter-spacing: -4px;
@@ -444,7 +690,6 @@ allowCurrentLocation={true}
 
         .features span {
           font-size: 25px;
-          color: #08783f;
         }
 
         .features strong {
@@ -462,7 +707,16 @@ allowCurrentLocation={true}
           font-size: 150px;
           right: 10%;
           top: 100px;
-          filter: drop-shadow(0 20px 20px rgba(0,0,0,0.15));
+          filter:
+            drop-shadow(
+              0 20px 20px
+              rgba(
+                0,
+                0,
+                0,
+                0.15
+              )
+            );
         }
 
         .road {
@@ -498,7 +752,14 @@ allowCurrentLocation={true}
           background: white;
           border-radius: 22px;
           padding: 28px;
-          box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+          box-shadow:
+            0 18px 50px
+            rgba(
+              0,
+              0,
+              0,
+              0.12
+            );
         }
 
         .tripSelector {
@@ -528,7 +789,8 @@ allowCurrentLocation={true}
 
         .formGrid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns:
+            1fr 1fr;
           gap: 15px;
         }
 
@@ -556,7 +818,14 @@ allowCurrentLocation={true}
 
         .field input:focus {
           border-color: #08783f;
-          box-shadow: 0 0 0 3px rgba(8, 120, 63, 0.1);
+          box-shadow:
+            0 0 0 3px
+            rgba(
+              8,
+              120,
+              63,
+              0.1
+            );
         }
 
         .field input:disabled {
@@ -605,26 +874,31 @@ allowCurrentLocation={true}
         .findCab:hover {
           background: #065f32;
         }
-        .findCab:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
 
-.distanceMessage {
-  margin-top: 14px;
-  padding: 13px 16px;
-  border-radius: 11px;
-  background: #f1f8f3;
-  border: 1px solid #d6ecd9;
-  color: #31553e;
-  font-size: 14px;
-  line-height: 1.4;
-  text-align: center;
-}
+        .findCab:disabled {
+          opacity: 0.7;
+          cursor: wait;
+        }
+
+        .distanceMessage {
+          margin-top: 14px;
+          padding: 13px 16px;
+          border-radius: 11px;
+          background: #f1f8f3;
+          border: 1px solid #d6ecd9;
+          color: #31553e;
+          font-size: 14px;
+          line-height: 1.4;
+          text-align: center;
+        }
 
         .benefits {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns:
+            repeat(
+              3,
+              1fr
+            );
           margin-top: 18px;
           background: #f1f8f3;
           border-radius: 13px;
@@ -658,6 +932,7 @@ allowCurrentLocation={true}
         }
 
         @media (max-width: 750px) {
+
           .header {
             padding: 0 20px;
           }
@@ -667,7 +942,8 @@ allowCurrentLocation={true}
           }
 
           .hero {
-            padding: 35px 22px 110px;
+            padding:
+              35px 22px 110px;
             min-height: auto;
           }
 
@@ -693,25 +969,34 @@ allowCurrentLocation={true}
           }
 
           .bookingCard {
-            width: calc(100% - 24px);
-            margin: -70px auto 0;
+            width:
+              calc(
+                100% - 24px
+              );
+            margin:
+              -70px auto 0;
             padding: 18px;
             border-radius: 18px;
           }
 
           .formGrid {
-            grid-template-columns: 1fr;
+            grid-template-columns:
+              1fr;
           }
 
           .benefits {
-            grid-template-columns: 1fr;
+            grid-template-columns:
+              1fr;
           }
 
           .tripSelector {
             max-width: none;
           }
+
         }
+
       `}</style>
+
     </main>
   );
 }
