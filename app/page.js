@@ -4,7 +4,125 @@ import { useState } from "react";
 
 export default function Home() {
   const [tripType, setTripType] = useState("oneway");
-  const [sameWhatsapp, setSameWhatsapp] = useState(true);
+const [sameWhatsapp, setSameWhatsapp] = useState(true);
+
+const [pickup, setPickup] = useState("");
+const [destination, setDestination] = useState("");
+const [checkingDistance, setCheckingDistance] = useState(false);
+const [distanceMessage, setDistanceMessage] = useState("");
+    const getCoordinates = async (place) => {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q=${encodeURIComponent(
+        place
+      )}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to find location");
+    }
+
+    const data = await response.json();
+
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    return {
+      lat: parseFloat(data[0].lat),
+      lon: parseFloat(data[0].lon),
+      name: data[0].display_name,
+    };
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const earthRadius = 6371;
+
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return earthRadius * c;
+  };
+
+  const handleFindCab = async () => {
+    if (!pickup.trim()) {
+      setDistanceMessage("📍 Please enter your pickup location.");
+      return;
+    }
+
+    if (!destination.trim()) {
+      setDistanceMessage("📍 Please enter your destination.");
+      return;
+    }
+
+    setCheckingDistance(true);
+    setDistanceMessage("");
+
+    try {
+      const kanpur = {
+        lat: 26.4499,
+        lon: 80.3319,
+      };
+
+      const destinationLocation = await getCoordinates(destination);
+
+      if (!destinationLocation) {
+        setDistanceMessage(
+          "⚠️ We couldn't find this destination. Please enter a city or location."
+        );
+        setCheckingDistance(false);
+        return;
+      }
+
+      const distance = calculateDistance(
+        kanpur.lat,
+        kanpur.lon,
+        destinationLocation.lat,
+        destinationLocation.lon
+      );
+
+      if (distance > 200) {
+        setDistanceMessage(
+          `⚠️ This destination is approximately ${Math.round(
+            distance
+          )} km from Kanpur and is outside our current 200 km service area.`
+        );
+        setCheckingDistance(false);
+        return;
+      }
+
+      setDistanceMessage(
+        `✅ ${Math.round(
+          distance
+        )} km from Kanpur — destination is within our service area.`
+      );
+
+      // Temporary success action.
+      // We will replace this with the cab-results page next.
+      console.log("Booking allowed:", {
+        pickup,
+        destination,
+        distance: Math.round(distance),
+        tripType,
+      });
+    } catch (error) {
+      console.error(error);
+
+      setDistanceMessage(
+        "⚠️ We couldn't check the destination right now. Please try again."
+      );
+    }
+
+    setCheckingDistance(false);
+  };
 
   return (
     <main className="page">
@@ -92,21 +210,25 @@ export default function Home() {
         <div className="formGrid">
           {/* PICKUP */}
           <label className="field">
-            <span>📍 Pickup location</span>
-            <input
-              type="text"
-              placeholder="Enter pickup location"
-            />
-          </label>
+  <span>📍 Pickup location</span>
+  <input
+    type="text"
+    placeholder="Enter pickup location"
+    value={pickup}
+    onChange={(e) => setPickup(e.target.value)}
+  />
+</label>
 
           {/* DROP */}
           <label className="field">
-            <span>📍 Drop location</span>
-            <input
-              type="text"
-              placeholder="Enter destination"
-            />
-          </label>
+  <span>📍 Drop location</span>
+  <input
+    type="text"
+    placeholder="Enter destination"
+    value={destination}
+    onChange={(e) => setDestination(e.target.value)}
+  />
+</label>
 
           {/* DATE */}
           <label className="field">
@@ -171,9 +293,19 @@ export default function Home() {
         </label>
 
         {/* BOOK BUTTON */}
-        <button className="findCab">
-          🚗 FIND A CAB
-        </button>
+        <button
+  className="findCab"
+  onClick={handleFindCab}
+  disabled={checkingDistance}
+>
+  {checkingDistance ? "📍 CHECKING DISTANCE..." : "🚗 FIND A CAB"}
+</button>
+
+{distanceMessage && (
+  <div className="distanceMessage">
+    {distanceMessage}
+  </div>
+)}
 
         {/* BENEFITS */}
         <div className="benefits">
@@ -485,6 +617,22 @@ export default function Home() {
         .findCab:hover {
           background: #065f32;
         }
+        .findCab:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.distanceMessage {
+  margin-top: 14px;
+  padding: 13px 16px;
+  border-radius: 11px;
+  background: #f1f8f3;
+  border: 1px solid #d6ecd9;
+  color: #31553e;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+}
 
         .benefits {
           display: grid;
