@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from "react";
 let googleMapsPromise = null;
 
 function loadGoogleMaps() {
-  if (typeof window === "undefined") return Promise.reject();
+  if (typeof window === "undefined") {
+    return Promise.reject(
+      new Error("Window is unavailable")
+    );
+  }
 
   if (window.google?.maps) {
     return Promise.resolve(window.google.maps);
@@ -14,6 +18,107 @@ function loadGoogleMaps() {
   if (googleMapsPromise) {
     return googleMapsPromise;
   }
+
+  const apiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey) {
+    return Promise.reject(
+      new Error(
+        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing from the Vercel build"
+      )
+    );
+  }
+
+  googleMapsPromise = new Promise(
+    (resolve, reject) => {
+      const existingScript =
+        document.getElementById(
+          "google-maps-script"
+        );
+
+      if (existingScript) {
+        existingScript.addEventListener(
+          "load",
+          () => {
+            if (window.google?.maps) {
+              resolve(window.google.maps);
+            } else {
+              reject(
+                new Error(
+                  "Google Maps script loaded, but Google Maps API is unavailable"
+                )
+              );
+            }
+          }
+        );
+
+        existingScript.addEventListener(
+          "error",
+          () => {
+            reject(
+              new Error(
+                "Google Maps JavaScript API script failed to load"
+              )
+            );
+          }
+        );
+
+        return;
+      }
+
+      /*
+       * Google calls this function when
+       * the API key is rejected.
+       */
+      window.gm_authFailure = () => {
+        reject(
+          new Error(
+            "Google rejected the API key. Check API restrictions, website restrictions, billing, and enabled APIs."
+          )
+        );
+      };
+
+      const script =
+        document.createElement("script");
+
+      script.id =
+        "google-maps-script";
+
+      script.src =
+        `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
+          apiKey
+        )}&v=weekly`;
+
+      script.async = true;
+      script.defer = true;
+
+      script.onload = () => {
+        if (window.google?.maps) {
+          resolve(window.google.maps);
+        } else {
+          reject(
+            new Error(
+              "Google Maps loaded but window.google.maps is unavailable"
+            )
+          );
+        }
+      };
+
+      script.onerror = () => {
+        reject(
+          new Error(
+            "Unable to download Google Maps JavaScript API"
+          )
+        );
+      };
+
+      document.head.appendChild(script);
+    }
+  );
+
+  return googleMapsPromise;
+}
 
   const apiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -185,8 +290,9 @@ export default function LocationPicker({
         );
 
         setMapError(
-          "Unable to load Google Maps. Please check your Google Maps API key."
-        );
+  error?.message ||
+  "Unknown Google Maps error"
+);
       }
     }
 
