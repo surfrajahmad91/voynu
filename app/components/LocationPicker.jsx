@@ -2,6 +2,79 @@
 
 import { useEffect, useRef, useState } from "react";
 
+let googleMapsPromise = null;
+
+function loadGoogleMaps() {
+  if (typeof window === "undefined") return Promise.reject();
+
+  if (window.google?.maps) {
+    return Promise.resolve(window.google.maps);
+  }
+
+  if (googleMapsPromise) {
+    return googleMapsPromise;
+  }
+
+  const apiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey) {
+    return Promise.reject(
+      new Error(
+        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing"
+      )
+    );
+  }
+
+  googleMapsPromise = new Promise(
+    (resolve, reject) => {
+      const existingScript =
+        document.getElementById(
+          "google-maps-script"
+        );
+
+      if (existingScript) {
+        existingScript.addEventListener(
+          "load",
+          () => resolve(window.google.maps)
+        );
+
+        existingScript.addEventListener(
+          "error",
+          reject
+        );
+
+        return;
+      }
+
+      const script =
+        document.createElement("script");
+
+      script.id = "google-maps-script";
+
+      script.src =
+        `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+
+      script.async = true;
+      script.defer = true;
+
+      script.onload = () =>
+        resolve(window.google.maps);
+
+      script.onerror = () =>
+        reject(
+          new Error(
+            "Google Maps failed to load"
+          )
+        );
+
+      document.head.appendChild(script);
+    }
+  );
+
+  return googleMapsPromise;
+}
+
 export default function LocationPicker({
   label,
   value,
@@ -12,13 +85,23 @@ export default function LocationPicker({
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markerRef = useRef(null);
+  const geocoderRef = useRef(null);
 
-  const [search, setSearch] = useState(value || "");
-  const [loading, setLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
+  const [search, setSearch] =
+    useState(value || "");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [searchResults, setSearchResults] =
+    useState([]);
+
+  const [mapError, setMapError] =
+    useState("");
 
   /*
-   * Keep the input synchronized with the parent.
+   * Keep input synchronized
+   * with parent value.
    */
   useEffect(() => {
     if (value) {
@@ -27,230 +110,312 @@ export default function LocationPicker({
   }, [value]);
 
   /*
-   * Load Leaflet.
+   * Initialize Google Maps.
    */
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    let cancelled = false;
 
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href =
-        "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    async function initializeMap() {
+      try {
+        setMapError("");
 
-      document.head.appendChild(link);
+        const google =
+          await loadGoogleMaps();
+
+        if (
+          cancelled ||
+          !mapRef.current ||
+          mapInstance.current
+        ) {
+          return;
+        }
+
+        const kanpur = {
+          lat: 26.4499,
+          lng: 80.3319,
+        };
+
+        const map =
+          new google.maps.Map(
+            mapRef.current,
+            {
+              center: kanpur,
+              zoom: 11,
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: true,
+              gestureHandling: "greedy",
+            }
+          );
+
+        mapInstance.current = map;
+
+        geocoderRef.current =
+          new google.maps.Geocoder();
+
+        /*
+         * Allow user to tap map
+         * and select exact location.
+         */
+        map.addListener(
+          "click",
+          async (event) => {
+            if (
+              !event.latLng
+            ) {
+              return;
+            }
+
+            const lat =
+              event.latLng.lat();
+
+            const lng =
+              event.latLng.lng();
+
+            await selectLocation(
+              lat,
+              lng
+            );
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Google Maps error:",
+          error
+        );
+
+        setMapError(
+          "Unable to load Google Maps. Please check your Google Maps API key."
+        );
+      }
     }
 
-    const initializeMap = () => {
-      if (
-        !mapRef.current ||
-        mapInstance.current ||
-        !window.L
-      ) {
-        return;
-      }
-
-      const L = window.L;
-
-      // Start around Kanpur.
-      const kanpur = [26.4499, 80.3319];
-
-      const map = L.map(mapRef.current).setView(
-        kanpur,
-        11
-      );
-
-      L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          attribution:
-            "&copy; OpenStreetMap contributors",
-        }
-      ).addTo(map);
-
-      mapInstance.current = map;
-
-      /*
-       * Allow the user to tap anywhere on the map.
-       */
-      map.on("click", async (event) => {
-        const { lat, lng } = event.latlng;
-
-        await selectLocation(lat, lng);
-      });
-    };
-
-    const loadLeaflet = () => {
-      if (window.L) {
-        initializeMap();
-        return;
-      }
-
-      const existingScript =
-        document.getElementById("leaflet-js");
-
-      if (existingScript) {
-        existingScript.addEventListener(
-          "load",
-          initializeMap
-        );
-        return;
-      }
-
-      const script = document.createElement("script");
-
-      script.id = "leaflet-js";
-      script.src =
-        "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      script.onload = initializeMap;
-
-      document.body.appendChild(script);
-    };
-
-    loadLeaflet();
+    initializeMap();
 
     return () => {
+      cancelled = true;
+
       if (mapInstance.current) {
-        mapInstance.current.remove();
         mapInstance.current = null;
       }
 
       markerRef.current = null;
+      geocoderRef.current = null;
     };
   }, []);
 
   /*
+   * Create a short location name.
+   */
+  const createShortLocationName =
+    (result) => {
+      if (!result) return "";
+
+      const components =
+        result.address_components ||
+        [];
+
+      const getComponent = (
+        types
+      ) => {
+        const item =
+          components.find(
+            (component) =>
+              types.some((type) =>
+                component.types.includes(
+                  type
+                )
+              )
+          );
+
+        return item?.long_name;
+      };
+
+      const parts = [
+        getComponent([
+          "route",
+        ]),
+        getComponent([
+          "sublocality",
+          "sublocality_level_1",
+          "neighborhood",
+        ]),
+        getComponent([
+          "locality",
+          "postal_town",
+        ]),
+        getComponent([
+          "administrative_area_level_2",
+        ]),
+      ].filter(Boolean);
+
+      return [
+        ...new Set(parts),
+      ]
+        .slice(0, 3)
+        .join(", ");
+    };
+
+  /*
+   * Update Google Maps marker.
+   */
+  const updateMarker = (
+    lat,
+    lng
+  ) => {
+    if (
+      !mapInstance.current ||
+      !window.google
+    ) {
+      return;
+    }
+
+    if (markerRef.current) {
+      markerRef.current.setPosition({
+        lat,
+        lng,
+      });
+    } else {
+      markerRef.current =
+        new window.google.maps.Marker({
+          position: {
+            lat,
+            lng,
+          },
+          map: mapInstance.current,
+        });
+    }
+
+    mapInstance.current.setCenter({
+      lat,
+      lng,
+    });
+
+    mapInstance.current.setZoom(
+      15
+    );
+  };
+
+  /*
    * Reverse geocode coordinates.
    */
-  const selectLocation = async (lat, lng) => {
+  const selectLocation = async (
+    lat,
+    lng
+  ) => {
+    if (!geocoderRef.current) {
+      return;
+    }
+
     setLoading(true);
     setSearchResults([]);
 
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Unable to find location"
+      const response =
+        await geocoderRef.current.geocode(
+          {
+            location: {
+              lat,
+              lng,
+            },
+          }
         );
-      }
 
-      const data = await response.json();
+      const result =
+        response.results?.[0];
 
       const locationName =
-        createShortLocationName(data) ||
-        `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        createShortLocationName(
+          result
+        ) ||
+        result?.formatted_address ||
+        `${lat.toFixed(
+          5
+        )}, ${lng.toFixed(5)}`;
 
       setSearch(locationName);
+
+      updateMarker(
+        lat,
+        lng
+      );
 
       if (onLocationSelect) {
         onLocationSelect({
           name: locationName,
           fullName:
-            data.display_name || locationName,
+            result?.formatted_address ||
+            locationName,
           lat,
           lon: lng,
         });
       }
-
-      updateMarker(lat, lng);
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Reverse geocoding error:",
+        error
+      );
     }
 
     setLoading(false);
   };
 
   /*
-   * Create a shorter, cleaner location name.
+   * Search location using
+   * Google Geocoding API.
    */
-  const createShortLocationName = (data) => {
-    if (!data || !data.address) {
-      return data?.display_name || "";
-    }
-
-    const address = data.address;
-
-    const parts = [
-      address.road,
-      address.neighbourhood,
-      address.suburb,
-      address.city_district,
-      address.town,
-      address.city,
-    ].filter(Boolean);
-
-    const uniqueParts = [...new Set(parts)];
-
-    return uniqueParts.slice(0, 3).join(", ");
-  };
-
-  /*
-   * Move/create map marker.
-   */
-  const updateMarker = (lat, lon) => {
-    if (!mapInstance.current || !window.L) {
+  const searchLocation = async () => {
+    if (!search.trim()) {
       return;
     }
 
-    if (markerRef.current) {
-      markerRef.current.setLatLng([
-        lat,
-        lon,
-      ]);
-    } else {
-      markerRef.current =
-        window.L.marker([
-          lat,
-          lon,
-        ]).addTo(mapInstance.current);
+    if (!geocoderRef.current) {
+      alert(
+        "Google Maps is still loading. Please try again."
+      );
+      return;
     }
-
-    mapInstance.current.setView(
-      [lat, lon],
-      15
-    );
-  };
-
-  /*
-   * Search locations.
-   */
-  const searchLocation = async () => {
-    if (!search.trim()) return;
 
     setLoading(true);
     setSearchResults([]);
 
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=in&addressdetails=1&q=${encodeURIComponent(
-          search
-        )}`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Unable to find location"
+      const response =
+        await geocoderRef.current.geocode(
+          {
+            address: search,
+            region: "IN",
+            componentRestrictions: {
+              country: "IN",
+            },
+          }
         );
-      }
 
-      const data = await response.json();
+      const results =
+        response.results || [];
 
-      if (!data || data.length === 0) {
-        setSearchResults([]);
+      if (
+        results.length === 0
+      ) {
         alert(
           "Location not found. Please try another search."
         );
+
         setLoading(false);
         return;
       }
 
-      setSearchResults(data);
+      /*
+       * Show up to 5 Google results.
+       */
+      setSearchResults(
+        results.slice(0, 5)
+      );
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Google search error:",
+        error
+      );
 
       alert(
         "Unable to search location right now."
@@ -261,80 +426,106 @@ export default function LocationPicker({
   };
 
   /*
-   * User selects a search result.
+   * Select Google search result.
    */
-  const selectSearchResult = (location) => {
-    const lat = parseFloat(location.lat);
-    const lon = parseFloat(location.lon);
+  const selectSearchResult = (
+    result
+  ) => {
+    if (
+      !result.geometry?.location
+    ) {
+      return;
+    }
+
+    const lat =
+      result.geometry.location.lat();
+
+    const lng =
+      result.geometry.location.lng();
 
     const shortName =
-      createShortLocationName(location) ||
-      location.display_name;
+      createShortLocationName(
+        result
+      ) ||
+      result.formatted_address;
 
     setSearch(shortName);
     setSearchResults([]);
 
-    updateMarker(lat, lon);
+    updateMarker(
+      lat,
+      lng
+    );
 
     if (onLocationSelect) {
       onLocationSelect({
         name: shortName,
-        fullName: location.display_name,
+        fullName:
+          result.formatted_address,
         lat,
-        lon,
+        lon: lng,
       });
     }
   };
 
   /*
-   * Use device's current GPS location.
+   * Use device GPS.
    */
-  const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert(
-        "Your device does not support location services."
-      );
-      return;
-    }
+  const useCurrentLocation =
+    () => {
+      if (
+        !navigator.geolocation
+      ) {
+        alert(
+          "Your device does not support location services."
+        );
 
-    setLoading(true);
-    setSearchResults([]);
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat =
-          position.coords.latitude;
-
-        const lon =
-          position.coords.longitude;
-
-        await selectLocation(lat, lon);
-      },
-      (error) => {
-        console.error(error);
-
-        setLoading(false);
-
-        if (
-          error.code ===
-          error.PERMISSION_DENIED
-        ) {
-          alert(
-            "Location permission was denied. Please allow location access and try again."
-          );
-        } else {
-          alert(
-            "Unable to get your current location."
-          );
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000,
+        return;
       }
-    );
-  };
+
+      setLoading(true);
+      setSearchResults([]);
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat =
+            position.coords.latitude;
+
+          const lng =
+            position.coords.longitude;
+
+          await selectLocation(
+            lat,
+            lng
+          );
+        },
+        (error) => {
+          console.error(
+            error
+          );
+
+          setLoading(false);
+
+          if (
+            error.code ===
+            error.PERMISSION_DENIED
+          ) {
+            alert(
+              "Location permission was denied. Please allow location access and try again."
+            );
+          } else {
+            alert(
+              "Unable to get your current location."
+            );
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000,
+        }
+      );
+    };
 
   return (
     <div className="locationPicker">
@@ -344,6 +535,7 @@ export default function LocationPicker({
       </label>
 
       {/* SEARCH */}
+
       <div className="locationSearch">
 
         <input
@@ -351,12 +543,18 @@ export default function LocationPicker({
           value={search}
           placeholder={placeholder}
           onChange={(e) => {
-            setSearch(e.target.value);
+            setSearch(
+              e.target.value
+            );
+
             setSearchResults([]);
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (
+              e.key === "Enter"
+            ) {
               e.preventDefault();
+
               searchLocation();
             }
           }}
@@ -364,7 +562,9 @@ export default function LocationPicker({
 
         <button
           type="button"
-          onClick={searchLocation}
+          onClick={
+            searchLocation
+          }
           disabled={loading}
         >
           {loading
@@ -375,11 +575,14 @@ export default function LocationPicker({
       </div>
 
       {/* CURRENT LOCATION */}
+
       {allowCurrentLocation && (
         <button
           type="button"
           className="currentLocationButton"
-          onClick={useCurrentLocation}
+          onClick={
+            useCurrentLocation
+          }
           disabled={loading}
         >
           📍 Use my current location
@@ -387,18 +590,20 @@ export default function LocationPicker({
       )}
 
       {/* SEARCH RESULTS */}
-      {searchResults.length > 0 && (
+
+      {searchResults.length >
+        0 && (
         <div className="searchResults">
 
           {searchResults.map(
-            (location, index) => (
+            (result, index) => (
               <button
                 type="button"
                 className="searchResult"
-                key={`${location.place_id}-${index}`}
+                key={`${result.place_id || index}-${index}`}
                 onClick={() =>
                   selectSearchResult(
-                    location
+                    result
                   )
                 }
               >
@@ -408,16 +613,20 @@ export default function LocationPicker({
                 </span>
 
                 <span className="resultText">
+
                   <strong>
                     {createShortLocationName(
-                      location
+                      result
                     ) ||
-                      location.display_name}
+                      result.formatted_address}
                   </strong>
 
                   <small>
-                    {location.display_name}
+                    {
+                      result.formatted_address
+                    }
                   </small>
+
                 </span>
 
               </button>
@@ -427,15 +636,23 @@ export default function LocationPicker({
         </div>
       )}
 
-      {/* MAP */}
+      {/* GOOGLE MAP */}
+
       <div
         ref={mapRef}
         className="locationMap"
       />
 
+      {mapError && (
+        <p className="mapError">
+          ⚠️ {mapError}
+        </p>
+      )}
+
       <p className="mapHint">
-        📍 Search for a place or tap the
-        map to select an exact location.
+        📍 Search for a place or tap
+        the map to select an exact
+        location.
       </p>
 
       <style jsx>{`
@@ -508,10 +725,6 @@ export default function LocationPicker({
           font-size: 13px;
           cursor: pointer;
           margin-bottom: 10px;
-        }
-
-        .currentLocationButton:hover {
-          background: #e5f3e9;
         }
 
         .currentLocationButton:disabled {
@@ -592,6 +805,12 @@ export default function LocationPicker({
           margin: 8px 0 0;
           font-size: 12px;
           color: #65736b;
+        }
+
+        .mapError {
+          margin: 8px 0 0;
+          font-size: 12px;
+          color: #b42318;
         }
 
         @media (max-width: 750px) {
