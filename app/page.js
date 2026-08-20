@@ -194,6 +194,7 @@ const distance = calculateDistance(
   label="📍 Pickup location"
   value={pickup}
   placeholder="Search pickup location"
+allowCurrentLocation={true}
   onLocationSelect={(location) => {
     setPickup(location.name);
     setPickupCoords({
