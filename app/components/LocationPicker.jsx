@@ -2,34 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/*
- * Google Maps loader
- *
- * IMPORTANT:
- * This returns window.google, NOT window.google.maps.
- * The component below uses google.maps.Map and
- * google.maps.Geocoder.
- */
 let googleMapsPromise = null;
 
 function loadGoogleMaps() {
   if (typeof window === "undefined") {
     return Promise.reject(
-      new Error("Window is unavailable")
+      new Error("Window is unavailable.")
     );
   }
 
-  /*
-   * Google Maps is already loaded.
-   */
-  if (window.google?.maps) {
-    return Promise.resolve(window.google);
+  // Already loaded
+  if (
+    window.google &&
+    window.google.maps
+  ) {
+    return Promise.resolve(
+      window.google.maps
+    );
   }
 
-  /*
-   * Another LocationPicker is already loading it.
-   * Reuse the same promise.
-   */
+  // Already loading
   if (googleMapsPromise) {
     return googleMapsPromise;
   }
@@ -40,65 +32,62 @@ function loadGoogleMaps() {
   if (!apiKey) {
     return Promise.reject(
       new Error(
-        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing from the Vercel build"
+        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing from the Vercel environment variables."
       )
     );
   }
 
   googleMapsPromise = new Promise(
     (resolve, reject) => {
-      /*
-       * Check whether another script was already
-       * inserted into the page.
-       */
+      const scriptId =
+        "google-maps-script";
+
       const existingScript =
-        document.getElementById(
-          "google-maps-script"
-        );
+        document.getElementById(scriptId);
 
-      if (existingScript) {
-        const handleLoad = () => {
-          if (window.google?.maps) {
-            resolve(window.google);
-          } else {
-            reject(
-              new Error(
-                "Google Maps script loaded, but Google Maps API is unavailable"
-              )
-            );
-          }
-        };
-
-        const handleError = () => {
+      const checkGoogleMaps = () => {
+        if (
+          window.google &&
+          window.google.maps
+        ) {
+          resolve(
+            window.google.maps
+          );
+        } else {
           reject(
             new Error(
-              "Google Maps JavaScript API script failed to load"
+              "Google Maps script loaded, but Google Maps API is unavailable."
             )
           );
-        };
+        }
+      };
 
+      if (existingScript) {
         existingScript.addEventListener(
           "load",
-          handleLoad,
+          checkGoogleMaps,
           { once: true }
         );
 
         existingScript.addEventListener(
           "error",
-          handleError,
+          () => {
+            reject(
+              new Error(
+                "Google Maps JavaScript API failed to load."
+              )
+            );
+          },
           { once: true }
         );
 
         return;
       }
 
-      /*
-       * Called by Google when the API key is rejected.
-       */
       window.gm_authFailure = () => {
         reject(
           new Error(
-            "Google rejected the API key. Check API restrictions, website restrictions, billing, and enabled APIs."
+            "Google rejected the API key. Check Google Maps API restrictions, website restrictions, billing, and enabled APIs."
           )
         );
       };
@@ -106,47 +95,33 @@ function loadGoogleMaps() {
       const script =
         document.createElement("script");
 
-      script.id =
-        "google-maps-script";
+      script.id = scriptId;
 
       script.src =
-        `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-          apiKey
-        )}&v=weekly`;
+        "https://maps.googleapis.com/maps/api/js" +
+        `?key=${encodeURIComponent(apiKey)}` +
+        "&v=weekly";
 
       script.async = true;
       script.defer = true;
 
       script.onload = () => {
-        if (window.google?.maps) {
-          resolve(window.google);
-        } else {
-          reject(
-            new Error(
-              "Google Maps loaded but window.google.maps is unavailable"
-            )
-          );
-        }
+        checkGoogleMaps();
       };
 
       script.onerror = () => {
         reject(
           new Error(
-            "Unable to download Google Maps JavaScript API"
+            "Unable to download the Google Maps JavaScript API."
           )
         );
       };
 
-      document.head.appendChild(script);
+      document.head.appendChild(
+        script
+      );
     }
   );
-
-  /*
-   * If loading fails, allow another attempt later.
-   */
-  googleMapsPromise.catch(() => {
-    googleMapsPromise = null;
-  });
 
   return googleMapsPromise;
 }
@@ -175,18 +150,124 @@ export default function LocationPicker({
   const [mapError, setMapError] =
     useState("");
 
-  /*
-   * Keep search input synchronized
-   * with the parent value.
-   */
   useEffect(() => {
-    if (value) {
-      setSearch(value);
-    }
+    setSearch(value || "");
   }, [value]);
 
   /*
-   * Create a short readable location name.
+   * Initialize Google Maps
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initializeMap() {
+      try {
+        setMapError("");
+
+        const google =
+          await loadGoogleMaps();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (
+          !mapRef.current
+        ) {
+          return;
+        }
+
+        if (
+          !google ||
+          !google.maps ||
+          !google.maps.Map
+        ) {
+          throw new Error(
+            "Google Maps Map class is unavailable."
+          );
+        }
+
+        if (mapInstance.current) {
+          return;
+        }
+
+        const kanpur = {
+          lat: 26.4499,
+          lng: 80.3319,
+        };
+
+        const map =
+          new google.maps.Map(
+            mapRef.current,
+            {
+              center: kanpur,
+              zoom: 11,
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: true,
+              gestureHandling: "greedy",
+            }
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        mapInstance.current = map;
+
+        geocoderRef.current =
+          new google.maps.Geocoder();
+
+        map.addListener(
+          "click",
+          async (event) => {
+            if (
+              !event.latLng
+            ) {
+              return;
+            }
+
+            const lat =
+              event.latLng.lat();
+
+            const lng =
+              event.latLng.lng();
+
+            await selectLocation(
+              lat,
+              lng
+            );
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Google Maps initialization error:",
+          error
+        );
+
+        setMapError(
+          error?.message ||
+            "Unable to initialize Google Maps."
+        );
+      }
+    }
+
+    initializeMap();
+
+    return () => {
+      cancelled = true;
+
+      if (mapInstance.current) {
+        mapInstance.current = null;
+      }
+
+      markerRef.current = null;
+      geocoderRef.current = null;
+    };
+  }, []);
+
+  /*
+   * Create a short location name
    */
   const createShortLocationName =
     (result) => {
@@ -195,22 +276,23 @@ export default function LocationPicker({
       }
 
       const components =
-        result.address_components || [];
+        result.address_components ||
+        [];
 
       const getComponent = (
         types
       ) => {
-        const item =
+        const component =
           components.find(
-            (component) =>
+            (item) =>
               types.some((type) =>
-                component.types?.includes(
+                item.types.includes(
                   type
                 )
               )
           );
 
-        return item?.long_name;
+        return component?.long_name;
       };
 
       const parts = [
@@ -242,7 +324,7 @@ export default function LocationPicker({
     };
 
   /*
-   * Update/create the marker.
+   * Update map marker
    */
   const updateMarker = (
     lat,
@@ -250,7 +332,8 @@ export default function LocationPicker({
   ) => {
     if (
       !mapInstance.current ||
-      !window.google?.maps
+      !window.google ||
+      !window.google.maps
     ) {
       return;
     }
@@ -260,9 +343,6 @@ export default function LocationPicker({
       lng,
     };
 
-    /*
-     * Reuse existing marker.
-     */
     if (markerRef.current) {
       markerRef.current.setPosition(
         position
@@ -275,18 +355,17 @@ export default function LocationPicker({
         });
     }
 
-    /*
-     * Move map to selected location.
-     */
     mapInstance.current.setCenter(
       position
     );
 
-    mapInstance.current.setZoom(15);
+    mapInstance.current.setZoom(
+      15
+    );
   };
 
   /*
-   * Reverse-geocode coordinates.
+   * Reverse geocode coordinates
    */
   const selectLocation = async (
     lat,
@@ -298,16 +377,17 @@ export default function LocationPicker({
 
     setLoading(true);
     setSearchResults([]);
-    setMapError("");
 
     try {
       const response =
-        await geocoderRef.current.geocode({
-          location: {
-            lat,
-            lng,
-          },
-        });
+        await geocoderRef.current.geocode(
+          {
+            location: {
+              lat,
+              lng,
+            },
+          }
+        );
 
       const result =
         response.results?.[0];
@@ -331,13 +411,10 @@ export default function LocationPicker({
       if (onLocationSelect) {
         onLocationSelect({
           name: locationName,
-
           fullName:
             result?.formatted_address ||
             locationName,
-
           lat,
-
           lon: lng,
         });
       }
@@ -347,356 +424,129 @@ export default function LocationPicker({
         error
       );
 
-      /*
-       * Even if reverse geocoding fails,
-       * keep the coordinates usable.
-       */
-      const fallbackName =
-        `${lat.toFixed(
-          5
-        )}, ${lng.toFixed(5)}`;
-
-      setSearch(fallbackName);
-
-      updateMarker(
-        lat,
-        lng
+      setMapError(
+        "Unable to identify this location."
       );
-
-      if (onLocationSelect) {
-        onLocationSelect({
-          name: fallbackName,
-          fullName: fallbackName,
-          lat,
-          lon: lng,
-        });
-      }
     } finally {
       setLoading(false);
     }
   };
 
   /*
-   * Initialize Google Maps.
+   * Search location
    */
-  useEffect(() => {
-    let cancelled = false;
+  const searchLocation = async () => {
+    if (!search.trim()) {
+      return;
+    }
 
-    const initializeMap =
-      async () => {
-        try {
-          setMapError("");
-
-          const google =
-            await loadGoogleMaps();
-
-          /*
-           * Component was unmounted while
-           * Google Maps was loading.
-           */
-          if (
-            cancelled ||
-            !mapRef.current ||
-            mapInstance.current
-          ) {
-            return;
-          }
-
-          /*
-           * Default map position.
-           * Kanpur.
-           */
-          const kanpur = {
-            lat: 26.4499,
-            lng: 80.3319,
-          };
-
-          /*
-           * IMPORTANT:
-           *
-           * google = window.google
-           *
-           * Therefore:
-           *
-           * google.maps.Map
-           * google.maps.Geocoder
-           *
-           * are both valid.
-           */
-          const map =
-            new google.maps.Map(
-              mapRef.current,
-              {
-                center: kanpur,
-
-                zoom: 11,
-
-                mapTypeControl: false,
-
-                streetViewControl: false,
-
-                fullscreenControl: true,
-
-                gestureHandling:
-                  "greedy",
-              }
-            );
-
-          mapInstance.current =
-            map;
-
-          geocoderRef.current =
-            new google.maps.Geocoder();
-
-          /*
-           * Allow user to tap/click
-           * anywhere on the map.
-           */
-          map.addListener(
-            "click",
-            async (event) => {
-              if (
-                !event.latLng
-              ) {
-                return;
-              }
-
-              const lat =
-                event.latLng.lat();
-
-              const lng =
-                event.latLng.lng();
-
-              await selectLocation(
-                lat,
-                lng
-              );
-            }
-          );
-
-          /*
-           * If a location already exists,
-           * try to show it on the map.
-           */
-          if (value) {
-            try {
-              const response =
-                await geocoderRef.current.geocode(
-                  {
-                    address: value,
-                    region: "IN",
-                    componentRestrictions: {
-                      country: "IN",
-                    },
-                  }
-                );
-
-              if (
-                cancelled
-              ) {
-                return;
-              }
-
-              const result =
-                response.results?.[0];
-
-              if (
-                result?.geometry
-                  ?.location
-              ) {
-                const lat =
-                  result.geometry.location.lat();
-
-                const lng =
-                  result.geometry.location.lng();
-
-                updateMarker(
-                  lat,
-                  lng
-                );
-              }
-            } catch (error) {
-              /*
-               * Initial value failing to
-               * geocode should not break
-               * the map.
-               */
-              console.warn(
-                "Initial location geocoding failed:",
-                error
-              );
-            }
-          }
-        } catch (error) {
-          console.error(
-            "Google Maps initialization error:",
-            error
-          );
-
-          if (!cancelled) {
-            setMapError(
-              error?.message ||
-                "Unable to load Google Maps."
-            );
-          }
-        }
-      };
-
-    initializeMap();
-
-    return () => {
-      cancelled = true;
-
-      /*
-       * Remove our references.
-       */
-      mapInstance.current =
-        null;
-
-      markerRef.current =
-        null;
-
-      geocoderRef.current =
-        null;
-    };
-
-    /*
-     * Only initialize once.
-     */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /*
-   * Search location.
-   */
-  const searchLocation =
-    async () => {
-      const query =
-        search.trim();
-
-      if (!query) {
-        return;
-      }
-
-      if (!geocoderRef.current) {
-        alert(
-          "Google Maps is still loading. Please try again."
-        );
-
-        return;
-      }
-
-      setLoading(true);
-      setSearchResults([]);
-      setMapError("");
-
-      try {
-        const response =
-          await geocoderRef.current.geocode(
-            {
-              address: query,
-
-              region: "IN",
-
-              componentRestrictions: {
-                country: "IN",
-              },
-            }
-          );
-
-        const results =
-          response.results || [];
-
-        if (
-          results.length === 0
-        ) {
-          alert(
-            "Location not found. Please try another search."
-          );
-
-          return;
-        }
-
-        /*
-         * Show up to five results.
-         */
-        setSearchResults(
-          results.slice(0, 5)
-        );
-      } catch (error) {
-        console.error(
-          "Google location search error:",
-          error
-        );
-
-        alert(
-          "Unable to search location right now."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-  /*
-   * Select a Google search result.
-   */
-  const selectSearchResult =
-    (result) => {
-      if (
-        !result?.geometry
-          ?.location
-      ) {
-        return;
-      }
-
-      const lat =
-        result.geometry.location.lat();
-
-      const lng =
-        result.geometry.location.lng();
-
-      const shortName =
-        createShortLocationName(
-          result
-        ) ||
-        result.formatted_address ||
-        `${lat.toFixed(
-          5
-        )}, ${lng.toFixed(5)}`;
-
-      setSearch(shortName);
-
-      setSearchResults([]);
-
-      updateMarker(
-        lat,
-        lng
+    if (!geocoderRef.current) {
+      setMapError(
+        "Google Maps is still loading. Please try again."
       );
 
-      if (onLocationSelect) {
-        onLocationSelect({
-          name: shortName,
+      return;
+    }
 
-          fullName:
-            result.formatted_address ||
-            shortName,
+    setLoading(true);
+    setSearchResults([]);
+    setMapError("");
 
-          lat,
+    try {
+      const response =
+        await geocoderRef.current.geocode(
+          {
+            address: search,
+            region: "IN",
+            componentRestrictions: {
+              country: "IN",
+            },
+          }
+        );
 
-          lon: lng,
-        });
+      const results =
+        response.results || [];
+
+      if (
+        results.length === 0
+      ) {
+        setMapError(
+          "Location not found. Please try another search."
+        );
+
+        return;
       }
-    };
+
+      setSearchResults(
+        results.slice(0, 5)
+      );
+    } catch (error) {
+      console.error(
+        "Google search error:",
+        error
+      );
+
+      setMapError(
+        "Unable to search location right now."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /*
-   * Use device GPS.
+   * Select search result
+   */
+  const selectSearchResult = (
+    result
+  ) => {
+    if (
+      !result.geometry?.location
+    ) {
+      return;
+    }
+
+    const lat =
+      result.geometry.location.lat();
+
+    const lng =
+      result.geometry.location.lng();
+
+    const shortName =
+      createShortLocationName(
+        result
+      ) ||
+      result.formatted_address;
+
+    setSearch(shortName);
+    setSearchResults([]);
+    setMapError("");
+
+    updateMarker(
+      lat,
+      lng
+    );
+
+    if (onLocationSelect) {
+      onLocationSelect({
+        name: shortName,
+        fullName:
+          result.formatted_address,
+        lat,
+        lon: lng,
+      });
+    }
+  };
+
+  /*
+   * Use current GPS location
    */
   const useCurrentLocation =
     () => {
       if (
         !navigator.geolocation
       ) {
-        alert(
+        setMapError(
           "Your device does not support location services."
         );
 
@@ -733,18 +583,11 @@ export default function LocationPicker({
             error.code ===
             error.PERMISSION_DENIED
           ) {
-            alert(
+            setMapError(
               "Location permission was denied. Please allow location access and try again."
             );
-          } else if (
-            error.code ===
-            error.TIMEOUT
-          ) {
-            alert(
-              "Getting your location took too long. Please try again."
-            );
           } else {
-            alert(
+            setMapError(
               "Unable to get your current location."
             );
           }
@@ -752,9 +595,7 @@ export default function LocationPicker({
 
         {
           enableHighAccuracy: true,
-
           timeout: 10000,
-
           maximumAge: 30000,
         }
       );
@@ -763,35 +604,29 @@ export default function LocationPicker({
   return (
     <div className="locationPicker">
 
-      {/* LABEL */}
-
       <label className="locationLabel">
         {label}
       </label>
-
-      {/* SEARCH */}
 
       <div className="locationSearch">
 
         <input
           type="text"
           value={search}
-          placeholder={
-            placeholder
-          }
-          onChange={(e) => {
+          placeholder={placeholder}
+          onChange={(event) => {
             setSearch(
-              e.target.value
+              event.target.value
             );
 
             setSearchResults([]);
+            setMapError("");
           }}
-          onKeyDown={(e) => {
+          onKeyDown={(event) => {
             if (
-              e.key === "Enter"
+              event.key === "Enter"
             ) {
-              e.preventDefault();
-
+              event.preventDefault();
               searchLocation();
             }
           }}
@@ -811,8 +646,6 @@ export default function LocationPicker({
 
       </div>
 
-      {/* CURRENT LOCATION */}
-
       {allowCurrentLocation && (
         <button
           type="button"
@@ -826,25 +659,18 @@ export default function LocationPicker({
         </button>
       )}
 
-      {/* SEARCH RESULTS */}
-
       {searchResults.length >
         0 && (
         <div className="searchResults">
 
           {searchResults.map(
-            (
-              result,
-              index
-            ) => (
+            (result, index) => (
               <button
                 type="button"
                 className="searchResult"
                 key={
-                  `${
-                    result.place_id ||
-                    index
-                  }-${index}`
+                  result.place_id ||
+                  index
                 }
                 onClick={() =>
                   selectSearchResult(
@@ -860,12 +686,10 @@ export default function LocationPicker({
                 <span className="resultText">
 
                   <strong>
-                    {
-                      createShortLocationName(
-                        result
-                      ) ||
-                        result.formatted_address
-                    }
+                    {createShortLocationName(
+                      result
+                    ) ||
+                      result.formatted_address}
                   </strong>
 
                   <small>
@@ -883,14 +707,10 @@ export default function LocationPicker({
         </div>
       )}
 
-      {/* GOOGLE MAP */}
-
       <div
         ref={mapRef}
         className="locationMap"
       />
-
-      {/* MAP ERROR */}
 
       {mapError && (
         <p className="mapError">
@@ -898,15 +718,11 @@ export default function LocationPicker({
         </p>
       )}
 
-      {/* MAP HINT */}
-
       <p className="mapHint">
         📍 Search for a place or tap
         the map to select an exact
         location.
       </p>
-
-      {/* STYLES */}
 
       <style jsx>{`
 
@@ -963,13 +779,8 @@ export default function LocationPicker({
           white-space: nowrap;
         }
 
-        .locationSearch button:hover {
-          background: #065f32;
-        }
-
         .locationSearch button:disabled {
           opacity: 0.6;
-          cursor: wait;
         }
 
         .currentLocationButton {
@@ -985,13 +796,8 @@ export default function LocationPicker({
           margin-bottom: 10px;
         }
 
-        .currentLocationButton:hover {
-          background: #e7f4eb;
-        }
-
         .currentLocationButton:disabled {
           opacity: 0.6;
-          cursor: wait;
         }
 
         .searchResults {
@@ -1076,10 +882,10 @@ export default function LocationPicker({
           padding: 10px 12px;
           border-radius: 10px;
           background: #fff5f4;
-          border: 1px solid #f3c5c0;
+          border: 1px solid #f5c2c0;
+          color: #b42318;
           font-size: 12px;
           line-height: 1.4;
-          color: #b42318;
         }
 
         @media (max-width: 750px) {
