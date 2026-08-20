@@ -1,15 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import LocationPicker from "./components/LocationPicker";
 
 export default function Home() {
   const [tripType, setTripType] = useState("oneway");
 const [sameWhatsapp, setSameWhatsapp] = useState(true);
 
 const [pickup, setPickup] = useState("");
+const [pickupCoords, setPickupCoords] = useState(null);
+
 const [destination, setDestination] = useState("");
+const [destinationCoords, setDestinationCoords] = useState(null);
+
 const [checkingDistance, setCheckingDistance] = useState(false);
 const [distanceMessage, setDistanceMessage] = useState("");
+
     const getCoordinates = async (place) => {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q=${encodeURIComponent(
@@ -72,23 +78,20 @@ const [distanceMessage, setDistanceMessage] = useState("");
         lon: 80.3319,
       };
 
-      const destinationLocation = await getCoordinates(destination);
+      if (!destinationCoords) {
+  setDistanceMessage(
+    "📍 Please select your destination from the location search."
+  );
+  setCheckingDistance(false);
+  return;
+}
 
-      if (!destinationLocation) {
-        setDistanceMessage(
-          "⚠️ We couldn't find this destination. Please enter a city or location."
-        );
-        setCheckingDistance(false);
-        return;
-      }
-
-      const distance = calculateDistance(
-        kanpur.lat,
-        kanpur.lon,
-        destinationLocation.lat,
-        destinationLocation.lon
-      );
-
+const distance = calculateDistance(
+  kanpur.lat,
+  kanpur.lon,
+  destinationCoords.lat,
+  destinationCoords.lon
+);
       if (distance > 200) {
         setDistanceMessage(
           `⚠️ This destination is approximately ${Math.round(
@@ -209,26 +212,32 @@ const [distanceMessage, setDistanceMessage] = useState("");
 
         <div className="formGrid">
           {/* PICKUP */}
-          <label className="field">
-  <span>📍 Pickup location</span>
-  <input
-    type="text"
-    placeholder="Enter pickup location"
-    value={pickup}
-    onChange={(e) => setPickup(e.target.value)}
-  />
-</label>
+          <LocationPicker
+  label="📍 Pickup location"
+  value={pickup}
+  placeholder="Search pickup location"
+  onLocationSelect={(location) => {
+    setPickup(location.name);
+    setPickupCoords({
+      lat: location.lat,
+      lon: location.lon,
+    });
+  }}
+/>
 
           {/* DROP */}
-          <label className="field">
-  <span>📍 Drop location</span>
-  <input
-    type="text"
-    placeholder="Enter destination"
-    value={destination}
-    onChange={(e) => setDestination(e.target.value)}
-  />
-</label>
+          <LocationPicker
+  label="📍 Drop location"
+  value={destination}
+  placeholder="Search destination"
+  onLocationSelect={(location) => {
+    setDestination(location.name);
+    setDestinationCoords({
+      lat: location.lat,
+      lon: location.lon,
+    });
+  }}
+/>
 
           {/* DATE */}
           <label className="field">
