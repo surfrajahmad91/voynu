@@ -8,35 +8,54 @@ import {
 } from "react";
 
 /*
-==============================================================
-GOOGLE MAPS LOADER
-==============================================================
+ * ---------------------------------------------------------
+ * GOOGLE MAPS CONFIGURATION
+ * ---------------------------------------------------------
+ *
+ * Add this to your Vercel environment variables:
+ *
+ * NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+ *
+ * The API key must have:
+ *
+ * - Maps JavaScript API
+ * - Places API
+ *
+ * enabled.
+ */
 
-Make sure your .env.local contains:
+const GOOGLE_MAPS_API_KEY =
+  process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_KEY
+const DEFAULT_CENTER = {
+  lat: 26.4499,
+  lng: 80.3319,
+};
 
-The same key must have these enabled:
-
-1. Maps JavaScript API
-2. Places API
-3. Places API (New)
-4. Routes API
-
-Google's current Maps JS API loads the Routes library
-through google.maps.importLibrary("routes").
-*/
+/*
+ * ---------------------------------------------------------
+ * LOAD GOOGLE MAPS
+ * ---------------------------------------------------------
+ *
+ * We load Google Maps manually instead of using another
+ * package so this component does not depend on:
+ *
+ * @googlemaps/js-api-loader
+ *
+ * or
+ *
+ * @react-google-maps/api
+ *
+ * This also avoids the previous UnitSystem error.
+ */
 
 let googleMapsPromise = null;
 
 function loadGoogleMaps() {
-  if (typeof window === "undefined") {
-    return Promise.reject(
-      new Error("Google Maps can only load in the browser.")
-    );
-  }
-
-  if (window.google?.maps?.importLibrary) {
+  if (
+    typeof window !== "undefined" &&
+    window.google?.maps
+  ) {
     return Promise.resolve(window.google);
   }
 
@@ -44,134 +63,75 @@ function loadGoogleMaps() {
     return googleMapsPromise;
   }
 
-  const apiKey =
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  if (!apiKey) {
+  if (!GOOGLE_MAPS_API_KEY) {
     return Promise.reject(
       new Error(
-        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing."
+        "Google Maps API key is missing."
       )
     );
   }
 
   googleMapsPromise = new Promise(
     (resolve, reject) => {
-      /*
-       * If another component has already inserted
-       * the Google Maps script, wait for it.
-       */
       const existingScript =
         document.querySelector(
           'script[data-voynu-google-maps="true"]'
         );
 
       if (existingScript) {
-        const checkExisting = () => {
-          if (
-            window.google?.maps?.importLibrary
-          ) {
-            resolve(window.google);
-            return;
-          }
-
-          setTimeout(
-            checkExisting,
-            100
-          );
-        };
-
-        checkExisting();
-        return;
-      }
-
-      /*
-       * Google recommended dynamic bootstrap loader.
-       */
-      if (!window.google) {
-        window.google = {};
-      }
-
-      if (!window.google.maps) {
-        window.google.maps = {};
-      }
-
-      const maps = window.google.maps;
-
-      if (maps.importLibrary) {
-        resolve(window.google);
-        return;
-      }
-
-      let scriptLoaded = false;
-
-      const loadPromise =
-        new Promise(
-          (innerResolve, innerReject) => {
-            const script =
-              document.createElement(
-                "script"
-              );
-
-            script.dataset.voynuGoogleMaps =
-              "true";
-
-            const params =
-              new URLSearchParams();
-
-            params.set(
-              "key",
-              apiKey
-            );
-
-            params.set(
-              "v",
-              "weekly"
-            );
-
-            /*
-             * We load Places and Routes dynamically
-             * using importLibrary().
-             */
-            script.src =
-              `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
-
-            script.async = true;
-            script.defer = true;
-
-            script.onload = () => {
-              scriptLoaded = true;
-              innerResolve();
-            };
-
-            script.onerror = () => {
-              innerReject(
-                new Error(
-                  "Google Maps failed to load."
-                )
-              );
-            };
-
-            document.head.appendChild(
-              script
-            );
-          }
+        existingScript.addEventListener(
+          "load",
+          () => resolve(window.google)
         );
 
-      loadPromise
-        .then(async () => {
-          if (
-            !window.google?.maps
-              ?.importLibrary
-          ) {
-            throw new Error(
-              "Google Maps loaded, but importLibrary is unavailable."
-            );
-          }
+        existingScript.addEventListener(
+          "error",
+          () =>
+            reject(
+              new Error(
+                "Google Maps failed to load."
+              )
+            )
+        );
 
+        return;
+      }
+
+      const script =
+        document.createElement("script");
+
+      script.src =
+        `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
+          GOOGLE_MAPS_API_KEY
+        )}&libraries=places`;
+
+      script.async = true;
+      script.defer = true;
+
+      script.dataset.voynuGoogleMaps =
+        "true";
+
+      script.onload = () => {
+        if (window.google?.maps) {
           resolve(window.google);
-        })
-        .catch(reject);
+        } else {
+          reject(
+            new Error(
+              "Google Maps loaded but is unavailable."
+            )
+          );
+        }
+      };
+
+      script.onerror = () => {
+        reject(
+          new Error(
+            "Unable to load Google Maps."
+          )
+        );
+      };
+
+      document.head.appendChild(script);
     }
   );
 
@@ -179,847 +139,213 @@ function loadGoogleMaps() {
 }
 
 /*
-==============================================================
-HELPERS
-==============================================================
-*/
+ * ---------------------------------------------------------
+ * HELPERS
+ * ---------------------------------------------------------
+ */
 
-function normalizeLocation(location) {
+function locationToLatLng(location) {
   if (!location) {
-    return {
-      name: "",
-      lat: null,
-      lon: null,
-    };
+    return null;
   }
 
   return {
-    name:
-      location.name ||
-      location.formattedAddress ||
-      location.address ||
-      "",
-
-    lat:
-      location.lat ??
-      location.latitude ??
-      location.location?.lat ??
-      null,
-
-    lon:
-      location.lon ??
-      location.lng ??
-      location.longitude ??
-      location.location?.lng ??
-      null,
+    lat: Number(location.lat),
+    lng: Number(location.lng),
   };
 }
 
-function formatDistance(meters) {
+function createLocation(
+  place,
+  fallbackAddress = ""
+) {
   if (
-    meters === null ||
-    meters === undefined ||
-    !Number.isFinite(meters)
+    !place?.geometry?.location
   ) {
     return null;
   }
 
-  const km = meters / 1000;
+  const lat =
+    place.geometry.location.lat();
 
-  if (km < 1) {
-    return `${Math.round(meters)} m`;
-  }
+  const lng =
+    place.geometry.location.lng();
 
-  if (km < 10) {
-    return `${km.toFixed(1)} km`;
-  }
+  const address =
+    place.formatted_address ||
+    place.name ||
+    fallbackAddress ||
+    "";
 
-  return `${Math.round(km)} km`;
-}
-
-function formatDuration(milliseconds) {
-  if (
-    milliseconds === null ||
-    milliseconds === undefined ||
-    !Number.isFinite(milliseconds)
-  ) {
-    return null;
-  }
-
-  const totalMinutes = Math.round(
-    milliseconds / 60000
-  );
-
-  const hours = Math.floor(
-    totalMinutes / 60
-  );
-
-  const minutes =
-    totalMinutes % 60;
-
-  if (hours <= 0) {
-    return `${minutes} min`;
-  }
-
-  if (minutes === 0) {
-    return `${hours} hr`;
-  }
-
-  return `${hours} hr ${minutes} min`;
+  return {
+    address,
+    lat,
+    lng,
+  };
 }
 
 /*
-==============================================================
-COMPONENT
-==============================================================
-*/
+ * ---------------------------------------------------------
+ * COMPONENT
+ * ---------------------------------------------------------
+ */
 
 export default function LocationPicker({
-  label,
-  value,
-  placeholder,
-  allowCurrentLocation = false,
-  onLocationSelect,
-
-  /*
-   * Optional service-area configuration.
-   *
-   * If these aren't provided, the component still works.
-   */
-  serviceCenter = {
-    lat: 26.4499,
-    lon: 80.3319,
-    name: "Kanpur",
-  },
-
-  serviceRadiusKm = 200,
+  pickup,
+  drop,
+  onPickupChange,
+  onDropChange,
+  onDistanceChange,
 }) {
+  const mapContainerRef =
+    useRef(null);
+
+  const pickupInputRef =
+    useRef(null);
+
+  const dropInputRef =
+    useRef(null);
+
   const mapRef =
     useRef(null);
 
-  const mapInstanceRef =
+  const pickupMarkerRef =
     useRef(null);
 
-  const markerRef =
+  const dropMarkerRef =
     useRef(null);
 
-  const autocompleteRef =
+  const pickupAutocompleteRef =
     useRef(null);
 
-  const routePolylineRef =
-    useRef([]);
+  const dropAutocompleteRef =
+    useRef(null);
 
-  const selectedLocationRef =
-    useRef({
-      name: value || "",
-      lat: null,
-      lon: null,
-    });
+  const directionsServiceRef =
+    useRef(null);
 
-  const routeRequestIdRef =
-    useRef(0);
+  const directionsRendererRef =
+    useRef(null);
 
-  const [isGoogleReady, setIsGoogleReady] =
+  const pickupChangeRef =
+    useRef(onPickupChange);
+
+  const dropChangeRef =
+    useRef(onDropChange);
+
+  const distanceChangeRef =
+    useRef(onDistanceChange);
+
+  const [mapsReady, setMapsReady] =
     useState(false);
 
-  const [googleError, setGoogleError] =
+  const [mapsError, setMapsError] =
     useState("");
 
-  const [searchValue, setSearchValue] =
-    useState(value || "");
-
-  const [selectedLocation, setSelectedLocation] =
-    useState({
-      name: value || "",
-      lat: null,
-      lon: null,
-    });
-
-  const [isRouting, setIsRouting] =
+  const [isCalculating, setIsCalculating] =
     useState(false);
 
-  const [routeDistance, setRouteDistance] =
+  const [distanceKm, setDistanceKm] =
     useState(null);
 
-  const [routeDuration, setRouteDuration] =
-    useState(null);
-
-  const [routeError, setRouteError] =
+  const [distanceError, setDistanceError] =
     useState("");
-
-  const [serviceDistance, setServiceDistance] =
-    useState(null);
-
-  const [serviceAreaStatus, setServiceAreaStatus] =
-    useState(null);
 
   /*
-  ============================================================
-  SYNC VALUE FROM PARENT
-  ============================================================
-  */
+   * Keep callbacks current without
+   * rebuilding the Google Maps objects.
+   */
 
   useEffect(() => {
-    setSearchValue(value || "");
+    pickupChangeRef.current =
+      onPickupChange;
+  }, [onPickupChange]);
 
-    if (
-      value &&
-      value !== selectedLocation.name
-    ) {
-      setSelectedLocation(
-        (previous) => ({
-          ...previous,
-          name: value,
-        })
-      );
-    }
-  }, [value]);
+  useEffect(() => {
+    dropChangeRef.current =
+      onDropChange;
+  }, [onDropChange]);
+
+  useEffect(() => {
+    distanceChangeRef.current =
+      onDistanceChange;
+  }, [onDistanceChange]);
 
   /*
-  ============================================================
-  LOAD GOOGLE MAPS
-  ============================================================
-  */
+   * ---------------------------------------------------------
+   * INITIALIZE GOOGLE MAPS
+   * ---------------------------------------------------------
+   */
 
   useEffect(() => {
     let cancelled = false;
 
-    loadGoogleMaps()
-      .then(() => {
-        if (!cancelled) {
-          setIsGoogleReady(true);
-        }
-      })
-      .catch((error) => {
-        console.error(
-          "VOYNU Google Maps error:",
-          error
-        );
-
-        if (!cancelled) {
-          setGoogleError(
-            error?.message ||
-              "Unable to load Google Maps."
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  /*
-  ============================================================
-  CALCULATE SERVICE CENTER DISTANCE
-  ============================================================
-  */
-
-  const calculateServiceDistance =
-    useCallback(
-      (lat, lng) => {
-        if (
-          lat === null ||
-          lng === null ||
-          lat === undefined ||
-          lng === undefined
-        ) {
-          return;
-        }
-
-        if (
-          serviceCenter?.lat ===
-            null ||
-          serviceCenter?.lon ===
-            null ||
-          serviceCenter?.lat ===
-            undefined ||
-          serviceCenter?.lon ===
-            undefined
-        ) {
-          return;
-        }
-
-        const toRadians = (
-          number
-        ) =>
-          (number * Math.PI) /
-          180;
-
-        const earthRadiusKm =
-          6371;
-
-        const dLat =
-          toRadians(
-            lat -
-              serviceCenter.lat
-          );
-
-        const dLon =
-          toRadians(
-            lng -
-              serviceCenter.lon
-          );
-
-        const a =
-          Math.sin(dLat / 2) *
-            Math.sin(dLat / 2) +
-          Math.cos(
-            toRadians(
-              serviceCenter.lat
-            )
-          ) *
-            Math.cos(
-              toRadians(lat)
-            ) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-
-        const c =
-          2 *
-          Math.atan2(
-            Math.sqrt(a),
-            Math.sqrt(1 - a)
-          );
-
-        const distance =
-          earthRadiusKm * c;
-
-        setServiceDistance(
-          distance
-        );
-
-        setServiceAreaStatus(
-          distance <=
-            serviceRadiusKm
-            ? "inside"
-            : "outside"
-        );
-
-        return distance;
-      },
-      [
-        serviceCenter?.lat,
-        serviceCenter?.lon,
-        serviceRadiusKm,
-      ]
-    );
-
-  /*
-  ============================================================
-  CLEAR ROUTE
-  ============================================================
-  */
-
-  const clearRoute =
-    useCallback(() => {
-      routePolylineRef.current.forEach(
-        (polyline) => {
-          if (
-            polyline &&
-            typeof polyline.setMap ===
-              "function"
-          ) {
-            polyline.setMap(null);
-          }
-        }
-      );
-
-      routePolylineRef.current =
-        [];
-
-      setRouteDistance(null);
-      setRouteDuration(null);
-      setRouteError("");
-    }, []);
-
-  /*
-  ============================================================
-  CALCULATE ROAD ROUTE
-  ============================================================
-  */
-
-  const calculateRoadRoute =
-    useCallback(
-      async (
-        origin,
-        destination
-      ) => {
-        /*
-         * Both coordinates are mandatory.
-         */
-        if (
-          !origin ||
-          !destination
-        ) {
-          clearRoute();
-          return;
-        }
-
-        if (
-          origin.lat === null ||
-          origin.lon === null ||
-          destination.lat ===
-            null ||
-          destination.lon ===
-            null
-        ) {
-          clearRoute();
-          return;
-        }
-
-        if (
-          origin.lat ===
-            undefined ||
-          origin.lon ===
-            undefined ||
-          destination.lat ===
-            undefined ||
-          destination.lon ===
-            undefined
-        ) {
-          clearRoute();
-          return;
-        }
-
-        const requestId =
-          ++routeRequestIdRef.current;
-
-        setIsRouting(true);
-        setRouteError("");
-
-        try {
-          /*
-           * Make sure Maps is loaded.
-           */
-          await loadGoogleMaps();
-
-          /*
-           * Load the current Routes library.
-           *
-           * This is the modern replacement for
-           * DirectionsService.
-           */
-          const {
-            Route,
-          } =
-            await window.google.maps.importLibrary(
-              "routes"
-            );
-
-          /*
-           * Build the route request.
-           *
-           * We use coordinates rather than address
-           * strings because our LocationPicker already
-           * has exact latitude/longitude values.
-           */
-          const request = {
-            origin: {
-              lat: Number(
-                origin.lat
-              ),
-              lng: Number(
-                origin.lon
-              ),
-            },
-
-            destination: {
-              lat: Number(
-                destination.lat
-              ),
-              lng: Number(
-                destination.lon
-              ),
-            },
-
-            travelMode:
-              "DRIVING",
-
-            routingPreference:
-              "TRAFFIC_UNAWARE",
-
-            units: "METRIC",
-
-            /*
-             * Required response field mask.
-             */
-            fields: [
-              "distanceMeters",
-              "durationMillis",
-              "path",
-              "viewport",
-            ],
-          };
-
-          console.log(
-            "VOYNU route request:",
-            request
-          );
-
-          const result =
-            await Route.computeRoutes(
-              request
-            );
-
-          /*
-           * Ignore an older request if the user
-           * changed the location while routing.
-           */
-          if (
-            requestId !==
-            routeRequestIdRef.current
-          ) {
-            return;
-          }
-
-          const routes =
-            result?.routes || [];
-
-          if (!routes.length) {
-            throw new Error(
-              "No driving route was found between these locations."
-            );
-          }
-
-          const route =
-            routes[0];
-
-          /*
-           * Route distance.
-           */
-          const distanceMeters =
-            route.distanceMeters;
-
-          /*
-           * Route duration.
-           */
-          const durationMillis =
-            route.durationMillis;
-
-          if (
-            !Number.isFinite(
-              distanceMeters
-            )
-          ) {
-            throw new Error(
-              "Google did not return a road distance."
-            );
-          }
-
-          setRouteDistance(
-            distanceMeters
-          );
-
-          setRouteDuration(
-            Number.isFinite(
-              durationMillis
-            )
-              ? durationMillis
-              : null
-          );
-
-          /*
-           * Draw the actual driving route
-           * on the map.
-           */
-          if (
-            mapInstanceRef.current &&
-            typeof route.createPolylines ===
-              "function"
-          ) {
-            /*
-             * Remove previous route.
-             */
-            routePolylineRef.current.forEach(
-              (polyline) => {
-                polyline.setMap(null);
-              }
-            );
-
-            routePolylineRef.current =
-              [];
-
-            const polylines =
-              route.createPolylines();
-
-            polylines.forEach(
-              (polyline) => {
-                polyline.setMap(
-                  mapInstanceRef.current
-                );
-
-                routePolylineRef.current.push(
-                  polyline
-                );
-              }
-            );
-
-            /*
-             * Fit the map around the route.
-             */
-            if (route.viewport) {
-              mapInstanceRef.current.fitBounds(
-                route.viewport
-              );
-            }
-          }
-
-          console.log(
-            "VOYNU road distance:",
-            distanceMeters,
-            "meters"
-          );
-
-          console.log(
-            "VOYNU driving duration:",
-            durationMillis,
-            "milliseconds"
-          );
-        } catch (error) {
-          console.error(
-            "VOYNU route calculation failed:",
-            error
-          );
-
-          if (
-            requestId ===
-            routeRequestIdRef.current
-          ) {
-            setRouteDistance(
-              null
-            );
-
-            setRouteDuration(
-              null
-            );
-
-            setRouteError(
-              error?.message ||
-                "Unable to calculate road distance."
-            );
-          }
-        } finally {
-          if (
-            requestId ===
-            routeRequestIdRef.current
-          ) {
-            setIsRouting(false);
-          }
-        }
-      },
-      [clearRoute]
-    );
-
-  /*
-  ============================================================
-  CREATE / INITIALIZE MAP
-  ============================================================
-  */
-
-  useEffect(() => {
-    if (
-      !isGoogleReady ||
-      !mapRef.current ||
-      mapInstanceRef.current
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-
-    async function initializeMap() {
+    async function initialize() {
       try {
-        const [
-          mapsLibrary,
-          markerLibrary,
-        ] =
-          await Promise.all([
-            window.google.maps.importLibrary(
-              "maps"
-            ),
-
-            window.google.maps.importLibrary(
-              "marker"
-            ),
-          ]);
+        const google =
+          await loadGoogleMaps();
 
         if (cancelled) {
           return;
         }
 
-        const Map =
-          mapsLibrary.Map;
-
-        const AdvancedMarkerElement =
-          markerLibrary.AdvancedMarkerElement;
+        if (!mapContainerRef.current) {
+          return;
+        }
 
         /*
-         * Default center: Kanpur.
+         * MAP
          */
-        const defaultCenter = {
-          lat:
-            serviceCenter?.lat ??
-            26.4499,
-
-          lng:
-            serviceCenter?.lon ??
-            80.3319,
-        };
 
         const map =
-          new Map(
-            mapRef.current,
+          new google.maps.Map(
+            mapContainerRef.current,
             {
-              center:
-                defaultCenter,
+              center: DEFAULT_CENTER,
+              zoom: 11,
 
-              zoom: 12,
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: true,
 
-              mapTypeControl:
-                false,
-
-              streetViewControl:
-                false,
-
-              fullscreenControl:
-                false,
-
-              mapId:
-                "DEMO_MAP_ID",
+              gestureHandling: "greedy",
             }
           );
 
-        mapInstanceRef.current =
-          map;
+        mapRef.current = map;
 
         /*
-         * Create marker.
+         * DIRECTIONS
          */
-        const marker =
-          new AdvancedMarkerElement(
-            {
-              map,
 
-              position:
-                defaultCenter,
+        directionsServiceRef.current =
+          new google.maps.DirectionsService();
 
-              gmpDraggable:
-                true,
-            }
-          );
-
-        markerRef.current =
-          marker;
+        directionsRendererRef.current =
+          new google.maps.DirectionsRenderer({
+            map,
+            suppressMarkers: true,
+            preserveViewport: false,
+          });
 
         /*
-         * Map click:
-         * move pin to clicked location.
+         * PICKUP AUTOCOMPLETE
          */
-        map.addListener(
-          "click",
-          (event) => {
-            if (
-              !event.latLng
-            ) {
-              return;
-            }
 
-            const lat =
-              event.latLng.lat();
-
-            const lng =
-              event.latLng.lng();
-
-            marker.position =
-              {
-                lat,
-                lng,
-              };
-
-            updateLocationFromCoordinates(
-              lat,
-              lng,
-              "Map location"
-            );
-          }
-        );
-
-        /*
-         * Drag marker:
-         * reverse geocode the new position.
-         */
-        marker.addListener(
-          "dragend",
-          () => {
-            const position =
-              marker.position;
-
-            if (!position) {
-              return;
-            }
-
-            const lat =
-              typeof position.lat ===
-              "function"
-                ? position.lat()
-                : position.lat;
-
-            const lng =
-              typeof position.lng ===
-              "function"
-                ? position.lng()
-                : position.lng;
-
-            updateLocationFromCoordinates(
-              lat,
-              lng,
-              "Selected location"
-            );
-          }
-        );
-
-        /*
-         * Places autocomplete.
-         */
-        const {
-          Autocomplete,
-        } =
-          await window.google.maps.importLibrary(
-            "places"
-          );
-
-        const input =
-          document.getElementById(
-            `voynu-location-search-${label
-              ?.toLowerCase()
-              .replace(
-                /[^a-z0-9]+/g,
-                "-"
-              )}`
-          );
-
-        if (input) {
+        if (pickupInputRef.current) {
           const autocomplete =
-            new Autocomplete(
-              input,
+            new google.maps.places.Autocomplete(
+              pickupInputRef.current,
               {
                 fields: [
                   "formatted_address",
                   "geometry",
                   "name",
-                  "place_id",
                 ],
-
-                componentRestrictions:
-                  {
-                    country:
-                      "in",
-                  },
               }
             );
 
-          autocompleteRef.current =
+          pickupAutocompleteRef.current =
             autocomplete;
 
           autocomplete.addListener(
@@ -1028,1268 +354,721 @@ export default function LocationPicker({
               const place =
                 autocomplete.getPlace();
 
-              if (
-                !place?.geometry
-                  ?.location
-              ) {
+              const location =
+                createLocation(place);
+
+              if (!location) {
                 return;
               }
 
-              const lat =
-                place.geometry.location.lat();
-
-              const lng =
-                place.geometry.location.lng();
-
-              const name =
-                place.formatted_address ||
-                place.name ||
-                "";
-
-              marker.position =
-                {
-                  lat,
-                  lng,
-                };
-
-              map.setCenter({
-                lat,
-                lng,
-              });
-
-              map.setZoom(
-                15
-              );
-
-              updateSelectedLocation(
-                {
-                  name,
-                  lat,
-                  lon: lng,
-                }
+              pickupChangeRef.current?.(
+                location
               );
             }
           );
         }
+
+        /*
+         * DROP AUTOCOMPLETE
+         */
+
+        if (dropInputRef.current) {
+          const autocomplete =
+            new google.maps.places.Autocomplete(
+              dropInputRef.current,
+              {
+                fields: [
+                  "formatted_address",
+                  "geometry",
+                  "name",
+                ],
+              }
+            );
+
+          dropAutocompleteRef.current =
+            autocomplete;
+
+          autocomplete.addListener(
+            "place_changed",
+            () => {
+              const place =
+                autocomplete.getPlace();
+
+              const location =
+                createLocation(place);
+
+              if (!location) {
+                return;
+              }
+
+              dropChangeRef.current?.(
+                location
+              );
+            }
+          );
+        }
+
+        setMapsReady(true);
       } catch (error) {
         console.error(
-          "VOYNU map initialization failed:",
+          "Google Maps initialization error:",
           error
         );
 
         if (!cancelled) {
-          setGoogleError(
+          setMapsError(
             error?.message ||
-              "Unable to initialize Google Maps."
+              "Unable to load Google Maps."
           );
         }
       }
     }
 
-    initializeMap();
+    initialize();
 
     return () => {
       cancelled = true;
     };
-  }, [
-    isGoogleReady,
-    label,
-    serviceCenter?.lat,
-    serviceCenter?.lon,
-  ]);
+  }, []);
 
   /*
-  ============================================================
-  UPDATE LOCATION
-  ============================================================
-  */
-
-  const updateSelectedLocation =
-    useCallback(
-      (location) => {
-        const normalized =
-          normalizeLocation(
-            location
-          );
-
-        selectedLocationRef.current =
-          normalized;
-
-        setSelectedLocation(
-          normalized
-        );
-
-        setSearchValue(
-          normalized.name
-        );
-
-        /*
-         * Calculate distance from Kanpur.
-         */
-        calculateServiceDistance(
-          normalized.lat,
-          normalized.lon
-        );
-
-        /*
-         * Tell HomePage about this location.
-         */
-        if (
-          typeof onLocationSelect ===
-          "function"
-        ) {
-          onLocationSelect(
-            normalized
-          );
-        }
-      },
-      [
-        calculateServiceDistance,
-        onLocationSelect,
-      ]
-    );
-
-  /*
-  ============================================================
-  REVERSE GEOCODING
-  ============================================================
-  */
-
-  const updateLocationFromCoordinates =
-    useCallback(
-      async (
-        lat,
-        lng,
-        fallbackName
-      ) => {
-        try {
-          await loadGoogleMaps();
-
-          const {
-            Geocoder,
-          } =
-            await window.google.maps.importLibrary(
-              "geocoding"
-            );
-
-          const geocoder =
-            new Geocoder();
-
-          const response =
-            await geocoder.geocode(
-              {
-                location: {
-                  lat,
-                  lng,
-                },
-              }
-            );
-
-          const result =
-            response?.results?.[0];
-
-          const name =
-            result?.formatted_address ||
-            fallbackName ||
-            `${lat.toFixed(
-              6
-            )}, ${lng.toFixed(
-              6
-            )}`;
-
-          updateSelectedLocation(
-            {
-              name,
-              lat,
-              lon: lng,
-            }
-          );
-        } catch (error) {
-          console.error(
-            "VOYNU reverse geocoding failed:",
-            error
-          );
-
-          updateSelectedLocation(
-            {
-              name:
-                fallbackName ||
-                `${lat.toFixed(
-                  6
-                )}, ${lng.toFixed(
-                  6
-                )}`,
-
-              lat,
-              lon: lng,
-            }
-          );
-        }
-      },
-      [
-        updateSelectedLocation,
-      ]
-    );
-
-  /*
-  ============================================================
-  CALCULATE SERVICE DISTANCE WHEN LOCATION CHANGES
-  ============================================================
-  */
+   * ---------------------------------------------------------
+   * CREATE / UPDATE PICKUP MARKER
+   * ---------------------------------------------------------
+   */
 
   useEffect(() => {
     if (
-      selectedLocation.lat !==
-        null &&
-      selectedLocation.lon !==
-        null
+      !mapsReady ||
+      !mapRef.current ||
+      !window.google
     ) {
-      calculateServiceDistance(
-        selectedLocation.lat,
-        selectedLocation.lon
+      return;
+    }
+
+    const google = window.google;
+
+    if (!pickup) {
+      if (pickupMarkerRef.current) {
+        pickupMarkerRef.current.setMap(null);
+        pickupMarkerRef.current = null;
+      }
+
+      return;
+    }
+
+    const position =
+      locationToLatLng(pickup);
+
+    if (!position) {
+      return;
+    }
+
+    if (!pickupMarkerRef.current) {
+      const marker =
+        new google.maps.Marker({
+          map: mapRef.current,
+          position,
+          title: "Pickup location",
+          draggable: true,
+        });
+
+      pickupMarkerRef.current =
+        marker;
+
+      /*
+       * Allow user to drag pickup marker.
+       */
+
+      marker.addListener(
+        "dragend",
+        () => {
+          const newPosition =
+            marker.getPosition();
+
+          if (!newPosition) {
+            return;
+          }
+
+          const updatedLocation = {
+            address:
+              pickup.address,
+            lat: newPosition.lat(),
+            lng: newPosition.lng(),
+          };
+
+          pickupChangeRef.current?.(
+            updatedLocation
+          );
+        }
+      );
+    } else {
+      pickupMarkerRef.current.setPosition(
+        position
+      );
+
+      pickupMarkerRef.current.setMap(
+        mapRef.current
       );
     }
-  }, [
-    selectedLocation.lat,
-    selectedLocation.lon,
-    calculateServiceDistance,
-  ]);
+  }, [pickup, mapsReady]);
 
   /*
-  ============================================================
-  CURRENT LOCATION
-  ============================================================
-  */
+   * ---------------------------------------------------------
+   * CREATE / UPDATE DROP MARKER
+   * ---------------------------------------------------------
+   */
 
-  const handleCurrentLocation =
-    async () => {
-      if (
-        !navigator.geolocation
-      ) {
-        setGoogleError(
-          "Your browser does not support location services."
+  useEffect(() => {
+    if (
+      !mapsReady ||
+      !mapRef.current ||
+      !window.google
+    ) {
+      return;
+    }
+
+    const google = window.google;
+
+    if (!drop) {
+      if (dropMarkerRef.current) {
+        dropMarkerRef.current.setMap(null);
+        dropMarkerRef.current = null;
+      }
+
+      return;
+    }
+
+    const position =
+      locationToLatLng(drop);
+
+    if (!position) {
+      return;
+    }
+
+    if (!dropMarkerRef.current) {
+      const marker =
+        new google.maps.Marker({
+          map: mapRef.current,
+          position,
+          title: "Drop location",
+          draggable: true,
+        });
+
+      dropMarkerRef.current =
+        marker;
+
+      /*
+       * Allow user to drag drop marker.
+       */
+
+      marker.addListener(
+        "dragend",
+        () => {
+          const newPosition =
+            marker.getPosition();
+
+          if (!newPosition) {
+            return;
+          }
+
+          const updatedLocation = {
+            address:
+              drop.address,
+            lat: newPosition.lat(),
+            lng: newPosition.lng(),
+          };
+
+          dropChangeRef.current?.(
+            updatedLocation
+          );
+        }
+      );
+    } else {
+      dropMarkerRef.current.setPosition(
+        position
+      );
+
+      dropMarkerRef.current.setMap(
+        mapRef.current
+      );
+    }
+  }, [drop, mapsReady]);
+
+  /*
+   * ---------------------------------------------------------
+   * CALCULATE ROAD DISTANCE
+   * ---------------------------------------------------------
+   *
+   * IMPORTANT:
+   *
+   * There is deliberately NO:
+   *
+   *     UnitSystem.METRIC
+   *
+   * and no:
+   *
+   *     unitSystem: "METRIC"
+   *
+   * Google gives us distance.value in meters.
+   *
+   * We convert:
+   *
+   * meters / 1000 = kilometres
+   */
+
+  const calculateDistance =
+    useCallback(async () => {
+      if (!pickup || !drop) {
+        setDistanceKm(null);
+        setDistanceError("");
+        setIsCalculating(false);
+
+        distanceChangeRef.current?.(
+          null
+        );
+
+        directionsRendererRef.current?.set(
+          "directions",
+          null
         );
 
         return;
       }
 
-      setGoogleError("");
+      if (
+        !directionsServiceRef.current
+      ) {
+        return;
+      }
 
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat =
-            position.coords.latitude;
+      setIsCalculating(true);
+      setDistanceError("");
 
-          const lng =
-            position.coords.longitude;
-
-          if (
-            markerRef.current
-          ) {
-            markerRef.current.position =
-              {
-                lat,
-                lng,
-              };
-          }
-
-          if (
-            mapInstanceRef.current
-          ) {
-            mapInstanceRef.current.setCenter(
-              {
-                lat,
-                lng,
-              }
-            );
-
-            mapInstanceRef.current.setZoom(
-              16
-            );
-          }
-
-          await updateLocationFromCoordinates(
-            lat,
-            lng,
-            "Current location"
-          );
-        },
-
-        (error) => {
-          console.error(
-            "VOYNU current location error:",
-            error
-          );
-
-          setGoogleError(
-            "Unable to access your current location. Please allow location permission and try again."
-          );
-        },
-
-        {
-          enableHighAccuracy:
-            true,
-
-          timeout:
-            15000,
-
-          maximumAge:
-            30000,
-        }
-      );
-    };
-
-  /*
-  ============================================================
-  MAP SEARCH INPUT CHANGE
-  ============================================================
-  */
-
-  const handleSearchChange =
-    (event) => {
-      setSearchValue(
-        event.target.value
-      );
-    };
-
-  /*
-  ============================================================
-  CLEAR LOCATION
-  ============================================================
-  */
-
-  const handleClear =
-    () => {
-      setSearchValue("");
-
-      setSelectedLocation(
-        {
-          name: "",
-          lat: null,
-          lon: null,
-        }
-      );
-
-      selectedLocationRef.current =
-        {
-          name: "",
-          lat: null,
-          lon: null,
+      try {
+        const origin = {
+          lat: Number(pickup.lat),
+          lng: Number(pickup.lng),
         };
 
-      setServiceDistance(
-        null
-      );
+        const destination = {
+          lat: Number(drop.lat),
+          lng: Number(drop.lng),
+        };
 
-      setServiceAreaStatus(
-        null
-      );
+        const result =
+          await directionsServiceRef.current.route(
+            {
+              origin,
+              destination,
 
-      clearRoute();
+              /*
+               * Only driving mode is specified.
+               *
+               * NO UnitSystem is used.
+               */
 
-      if (
-        markerRef.current
-      ) {
-        markerRef.current.position =
-          null;
+              travelMode:
+                window.google.maps.TravelMode
+                  .DRIVING,
+
+              /*
+               * Ask Google for the normal
+               * road route.
+               */
+              provideRouteAlternatives: false,
+            }
+          );
+
+        const route =
+          result?.routes?.[0];
+
+        if (!route) {
+          throw new Error(
+            "No driving route was found."
+          );
+        }
+
+        /*
+         * Add every route leg.
+         *
+         * This keeps the calculation robust
+         * even if Google returns more than
+         * one leg.
+         */
+
+        const totalMeters =
+          (route.legs || []).reduce(
+            (total, leg) => {
+              return (
+                total +
+                Number(
+                  leg?.distance?.value || 0
+                )
+              );
+            },
+            0
+          );
+
+        if (totalMeters <= 0) {
+          throw new Error(
+            "Google did not return a valid road distance."
+          );
+        }
+
+        /*
+         * Convert meters to kilometres.
+         */
+
+        const calculatedKm =
+          totalMeters / 1000;
+
+        /*
+         * Keep one decimal place.
+         */
+
+        const roundedKm =
+          Math.round(
+            calculatedKm * 10
+          ) / 10;
+
+        setDistanceKm(
+          roundedKm
+        );
+
+        distanceChangeRef.current?.(
+          roundedKm
+        );
+
+        /*
+         * Display route.
+         */
+
+        directionsRendererRef.current?.setDirections(
+          result
+        );
+
+      } catch (error) {
+        console.error(
+          "Road distance calculation failed:",
+          error
+        );
+
+        setDistanceKm(null);
+
+        distanceChangeRef.current?.(
+          null
+        );
+
+        setDistanceError(
+          "Unable to calculate road distance. Please check the locations and try again."
+        );
+
+        directionsRendererRef.current?.set(
+          "directions",
+          null
+        );
+      } finally {
+        setIsCalculating(false);
       }
-
-      if (
-        typeof onLocationSelect ===
-        "function"
-      ) {
-        onLocationSelect({
-          name: "",
-          lat: null,
-          lon: null,
-        });
-      }
-    };
+    }, [pickup, drop]);
 
   /*
-  ============================================================
-  EXTERNAL ROUTE TRIGGER
-  ============================================================
-  IMPORTANT:
-  This component calculates a route only when BOTH locations
-  are available.
-
-  HomePage will provide the other location through the
-  "otherLocation" mechanism below if you add it.
-
-  For the current VOYNU implementation, we also expose
-  a DOM event so pickup/drop components can communicate
-  without changing your HomePage API.
-  ============================================================
-  */
+   * Calculate whenever either location changes.
+   */
 
   useEffect(() => {
-    const handleOtherLocation =
-      (event) => {
-        const data =
-          event?.detail;
-
-        if (
-          !data ||
-          data.componentId ===
-            label
-        ) {
-          return;
-        }
-
-        if (
-          !selectedLocation.lat ||
-          !selectedLocation.lon ||
-          data.lat === null ||
-          data.lon === null ||
-          data.lat === undefined ||
-          data.lon === undefined
-        ) {
-          return;
-        }
-
-        calculateRoadRoute(
-          {
-            lat:
-              label
-                ?.toLowerCase()
-                .includes(
-                  "pickup"
-                )
-                ? selectedLocation.lat
-                : data.lat,
-
-            lon:
-              label
-                ?.toLowerCase()
-                .includes(
-                  "pickup"
-                )
-                ? selectedLocation.lon
-                : data.lon,
-          },
-
-          {
-            lat:
-              label
-                ?.toLowerCase()
-                .includes(
-                  "pickup"
-                )
-                ? data.lat
-                : selectedLocation.lat,
-
-            lon:
-              label
-                ?.toLowerCase()
-                .includes(
-                  "pickup"
-                )
-                ? data.lon
-                : selectedLocation.lon,
-          }
-        );
-      };
-
-    window.addEventListener(
-      "voynu-location-updated",
-      handleOtherLocation
-    );
-
-    return () => {
-      window.removeEventListener(
-        "voynu-location-updated",
-        handleOtherLocation
-      );
-    };
-  }, [
-    calculateRoadRoute,
-    label,
-    selectedLocation.lat,
-    selectedLocation.lon,
-  ]);
+    calculateDistance();
+  }, [calculateDistance]);
 
   /*
-  ============================================================
-  BROADCAST LOCATION CHANGE
-  ============================================================
-  */
+   * ---------------------------------------------------------
+   * FIT MAP TO BOTH LOCATIONS
+   * ---------------------------------------------------------
+   */
 
   useEffect(() => {
     if (
-      selectedLocation.lat ===
-        null ||
-      selectedLocation.lon ===
-        null
+      !mapsReady ||
+      !mapRef.current ||
+      !window.google
     ) {
       return;
     }
 
-    window.dispatchEvent(
-      new CustomEvent(
-        "voynu-location-updated",
-        {
-          detail: {
-            componentId:
-              label,
+    if (!pickup && !drop) {
+      mapRef.current.setCenter(
+        DEFAULT_CENTER
+      );
 
-            lat:
-              selectedLocation.lat,
+      mapRef.current.setZoom(11);
 
-            lon:
-              selectedLocation.lon,
+      return;
+    }
 
-            name:
-              selectedLocation.name,
-          },
-        }
-      )
+    const bounds =
+      new window.google.maps.LatLngBounds();
+
+    let hasLocation = false;
+
+    if (pickup) {
+      bounds.extend({
+        lat: Number(pickup.lat),
+        lng: Number(pickup.lng),
+      });
+
+      hasLocation = true;
+    }
+
+    if (drop) {
+      bounds.extend({
+        lat: Number(drop.lat),
+        lng: Number(drop.lng),
+      });
+
+      hasLocation = true;
+    }
+
+    if (!hasLocation) {
+      return;
+    }
+
+    /*
+     * If both locations are almost identical,
+     * don't zoom excessively.
+     */
+
+    if (
+      pickup &&
+      drop &&
+      pickup.lat === drop.lat &&
+      pickup.lng === drop.lng
+    ) {
+      mapRef.current.setCenter({
+        lat: Number(pickup.lat),
+        lng: Number(pickup.lng),
+      });
+
+      mapRef.current.setZoom(15);
+
+      return;
+    }
+
+    mapRef.current.fitBounds(
+      bounds,
+      80
     );
   }, [
-    label,
-    selectedLocation.lat,
-    selectedLocation.lon,
-    selectedLocation.name,
+    pickup,
+    drop,
+    mapsReady,
   ]);
 
   /*
-  ============================================================
-  UI VALUES
-  ============================================================
-  */
+   * ---------------------------------------------------------
+   * INPUT CLEARING
+   * ---------------------------------------------------------
+   */
 
-  const hasLocation =
-    selectedLocation.lat !==
-      null &&
-    selectedLocation.lon !==
-      null;
+  function clearPickup() {
+    pickupChangeRef.current?.(
+      null
+    );
 
-  const isPickup =
-    label
-      ?.toLowerCase()
-      .includes("pickup");
+    if (pickupInputRef.current) {
+      pickupInputRef.current.value =
+        "";
+    }
+  }
+
+  function clearDrop() {
+    dropChangeRef.current?.(
+      null
+    );
+
+    if (dropInputRef.current) {
+      dropInputRef.current.value =
+        "";
+    }
+  }
 
   /*
-  ============================================================
-  RENDER
-  ============================================================
-  */
+   * ---------------------------------------------------------
+   * RENDER
+   * ---------------------------------------------------------
+   */
 
   return (
-    <div className="locationPicker">
+    <div className="space-y-5">
 
-      <label className="locationLabel">
-        {label}
-      </label>
+      {/* ----------------------------------------------- */}
+      {/* PICKUP                                          */}
+      {/* ----------------------------------------------- */}
 
-      {/* CURRENT LOCATION */}
+      <div>
 
-      {allowCurrentLocation && (
-        <button
-          type="button"
-          className="currentLocationButton"
-          onClick={
-            handleCurrentLocation
-          }
+        <label
+          htmlFor="pickup-location"
+          className="mb-2 block text-sm font-semibold text-gray-700"
         >
-          <span className="currentLocationIcon">
-            ◎
-          </span>
+          Pickup location
+        </label>
 
-          <span>
-            Use my current location
-          </span>
-        </button>
-      )}
+        <div className="relative">
 
-      {/* SEARCH */}
+          <input
+            ref={pickupInputRef}
+            id="pickup-location"
+            type="text"
+            placeholder="Search for pickup location"
+            defaultValue={
+              pickup?.address || ""
+            }
+            autoComplete="off"
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 outline-none transition focus:border-[#238653] focus:ring-2 focus:ring-[#238653]/10"
+          />
 
-      <div className="searchWrapper">
+          {pickup && (
+            <button
+              type="button"
+              onClick={clearPickup}
+              aria-label="Clear pickup location"
+              className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+            >
+              ×
+            </button>
+          )}
 
-        <span className="searchPin">
-          📍
-        </span>
+        </div>
 
-        <input
-          id={`voynu-location-search-${label
-            ?.toLowerCase()
-            .replace(
-              /[^a-z0-9]+/g,
-              "-"
-            )}`}
-          type="text"
-          value={
-            searchValue
-          }
-          onChange={
-            handleSearchChange
-          }
-          placeholder={
-            placeholder ||
-            "Search location"
-          }
-          autoComplete="off"
+      </div>
+
+      {/* ----------------------------------------------- */}
+      {/* DROP                                            */}
+      {/* ----------------------------------------------- */}
+
+      <div>
+
+        <label
+          htmlFor="drop-location"
+          className="mb-2 block text-sm font-semibold text-gray-700"
+        >
+          Drop location
+        </label>
+
+        <div className="relative">
+
+          <input
+            ref={dropInputRef}
+            id="drop-location"
+            type="text"
+            placeholder="Search for drop location"
+            defaultValue={
+              drop?.address || ""
+            }
+            autoComplete="off"
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 outline-none transition focus:border-[#238653] focus:ring-2 focus:ring-[#238653]/10"
+          />
+
+          {drop && (
+            <button
+              type="button"
+              onClick={clearDrop}
+              aria-label="Clear drop location"
+              className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+            >
+              ×
+            </button>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* ----------------------------------------------- */}
+      {/* MAP                                             */}
+      {/* ----------------------------------------------- */}
+
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+
+        <div
+          ref={mapContainerRef}
+          className="h-[360px] w-full"
         />
 
-        {searchValue && (
-          <button
-            type="button"
-            className="clearButton"
-            onClick={
-              handleClear
-            }
-            aria-label="Clear location"
-          >
-            ×
-          </button>
+      </div>
+
+      {/* ----------------------------------------------- */}
+      {/* MAP STATUS                                      */}
+      {/* ----------------------------------------------- */}
+
+      {!mapsReady &&
+        !mapsError && (
+          <div className="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500">
+            Loading map...
+          </div>
+        )}
+
+      {mapsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {mapsError}
+        </div>
+      )}
+
+      {/* ----------------------------------------------- */}
+      {/* INSTRUCTION                                     */}
+      {/* ----------------------------------------------- */}
+
+      {mapsReady && (
+        <p className="text-sm text-gray-500">
+          Search for a place, building, address or
+          landmark. You can also drag either pin on
+          the map to fine-tune the location.
+        </p>
+      )}
+
+      {/* ----------------------------------------------- */}
+      {/* JOURNEY DISTANCE                                */}
+      {/* ----------------------------------------------- */}
+
+      <div className="rounded-2xl border border-gray-200 bg-[#f1f9f4] p-5">
+
+        <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          Journey distance
+        </div>
+
+        {!pickup || !drop ? (
+          <div className="mt-2 text-lg font-bold text-[#28704c]">
+            Select both locations to calculate road
+            distance.
+          </div>
+        ) : isCalculating ? (
+          <div className="mt-2 text-lg font-bold text-[#28704c]">
+            Calculating road distance...
+          </div>
+        ) : distanceError ? (
+          <div className="mt-2 text-sm font-medium text-red-600">
+            {distanceError}
+          </div>
+        ) : distanceKm !== null ? (
+          <>
+            <div className="mt-2 text-3xl font-bold text-[#28704c]">
+              {distanceKm} km
+            </div>
+
+            <div className="mt-1 text-sm text-gray-500">
+              Actual driving distance
+            </div>
+          </>
+        ) : (
+          <div className="mt-2 text-lg font-bold text-[#28704c]">
+            Select both locations to calculate road
+            distance.
+          </div>
         )}
 
       </div>
 
-      {/* MAP */}
-
-      <div
-        className="mapContainer"
-        ref={mapRef}
-      >
-        {!isGoogleReady &&
-          !googleError && (
-            <div className="mapLoading">
-              Loading map...
-            </div>
-          )}
-
-        {googleError && (
-          <div className="mapError">
-            {googleError}
-          </div>
-        )}
-
-        {isGoogleReady &&
-          !googleError && (
-            <div className="mapHint">
-              Tap map or drag pin to adjust
-            </div>
-          )}
-      </div>
-
-      {/* HELP TEXT */}
-
-      <div className="helpText">
-        Search for a place, building,
-        address or landmark.
-        <br />
-        You can also tap the map or
-        drag the pin to fine-tune the
-        location.
-      </div>
-
-      {/* SERVICE AREA */}
-
-      {isPickup &&
-        serviceDistance !==
-          null && (
-          <div
-            className={
-              serviceAreaStatus ===
-              "inside"
-                ? "serviceMessage inside"
-                : "serviceMessage outside"
-            }
-          >
-            <span className="serviceIcon">
-              {serviceAreaStatus ===
-              "inside"
-                ? "✓"
-                : "!"}
-            </span>
-
-            <span>
-              {serviceAreaStatus ===
-              "inside"
-                ? (
-                  <>
-                    Pickup is{" "}
-                    <strong>
-                      {serviceDistance.toFixed(
-                        1
-                      )}{" "}
-                      km
-                    </strong>{" "}
-                    from{" "}
-                    {serviceCenter.name ||
-                      "our service center"}{" "}
-                    and is within our{" "}
-                    <strong>
-                      {
-                        serviceRadiusKm
-                      }{" "}
-                      km
-                    </strong>{" "}
-                    service area.
-                  </>
-                )
-                : (
-                  <>
-                    Pickup is{" "}
-                    <strong>
-                      {serviceDistance.toFixed(
-                        1
-                      )}{" "}
-                      km
-                    </strong>{" "}
-                    from{" "}
-                    {serviceCenter.name ||
-                      "our service center"}{" "}
-                    and is outside our{" "}
-                    <strong>
-                      {
-                        serviceRadiusKm
-                      }{" "}
-                      km
-                    </strong>{" "}
-                    service area.
-                  </>
-                )}
-            </span>
-          </div>
-        )}
-
-      {/* JOURNEY DISTANCE */}
-
-      {!isPickup &&
-        hasLocation && (
-          <div className="journeyDistance">
-
-            <div className="journeyIcon">
-              🚕
-            </div>
-
-            <div className="journeyContent">
-
-              <div className="journeyTitle">
-                JOURNEY DISTANCE
-              </div>
-
-              {isRouting ? (
-                <div className="journeyValue">
-                  Calculating driving
-                  distance...
-                </div>
-              ) : routeDistance !==
-                null ? (
-                <>
-                  <div className="journeyValue">
-                    {formatDistance(
-                      routeDistance
-                    )}
-                  </div>
-
-                  {routeDuration !==
-                    null && (
-                    <div className="journeyDuration">
-                      Approx.{" "}
-                      {formatDuration(
-                        routeDuration
-                      )}{" "}
-                      driving time
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="journeyValue">
-                  {routeError ||
-                    "Select both locations to calculate road distance."}
-                </div>
-              )}
-
-            </div>
-
-          </div>
-        )}
-
-      {/* ROUTE ERROR */}
-
-      {routeError &&
-        !isRouting &&
-        hasLocation && (
-          <div className="routeError">
-            {routeError}
-          </div>
-        )}
-
-      <style jsx>{`
-
-        .locationPicker {
-          width: 100%;
-        }
-
-        .locationLabel {
-          display: block;
-
-          margin-bottom: 10px;
-
-          color: #52635a;
-
-          font-size: 13px;
-
-          font-weight: 800;
-        }
-
-        .currentLocationButton {
-          width: 100%;
-
-          min-height: 54px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          gap: 10px;
-
-          margin-bottom: 14px;
-
-          border: 1px solid #cfe2d5;
-
-          border-radius: 14px;
-
-          background: #f0f8f3;
-
-          color: #28794f;
-
-          font-family: inherit;
-
-          font-size: 14px;
-
-          font-weight: 800;
-
-          cursor: pointer;
-
-          transition:
-            background 0.2s ease,
-            border-color 0.2s ease,
-            transform 0.2s ease;
-        }
-
-        .currentLocationButton:hover {
-          background: #e7f4eb;
-
-          border-color: #bcd7c5;
-
-          transform: translateY(
-            -1px
-          );
-        }
-
-        .currentLocationIcon {
-          font-size: 20px;
-
-          font-weight: 900;
-        }
-
-        .searchWrapper {
-          position: relative;
-
-          width: 100%;
-
-          min-height: 62px;
-
-          display: flex;
-
-          align-items: center;
-
-          border: 1px solid #d8e1dc;
-
-          border-radius: 15px;
-
-          background: #ffffff;
-
-          overflow: hidden;
-
-          transition:
-            border-color 0.2s ease,
-            box-shadow 0.2s ease;
-        }
-
-        .searchWrapper:focus-within {
-          border-color: #08783f;
-
-          box-shadow:
-            0 0 0 3px
-              rgba(
-                8,
-                120,
-                63,
-                0.08
-              );
-        }
-
-        .searchPin {
-          flex: 0 0 auto;
-
-          margin-left: 18px;
-
-          margin-right: 12px;
-
-          font-size: 18px;
-        }
-
-        .searchWrapper input {
-          width: 100%;
-
-          min-width: 0;
-
-          height: 60px;
-
-          padding: 0 52px 0 0;
-
-          border: 0;
-
-          outline: none;
-
-          background: transparent;
-
-          color: #26372f;
-
-          font-family: inherit;
-
-          font-size: 16px;
-        }
-
-        .searchWrapper input::placeholder {
-          color: #9aa69f;
-        }
-
-        .clearButton {
-          position: absolute;
-
-          right: 12px;
-
-          top: 50%;
-
-          transform: translateY(
-            -50%
-          );
-
-          width: 42px;
-
-          height: 42px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          border: 0;
-
-          border-radius: 50%;
-
-          background: #f0f2f1;
-
-          color: #65726c;
-
-          font-size: 28px;
-
-          line-height: 1;
-
-          cursor: pointer;
-        }
-
-        .clearButton:hover {
-          background: #e6eae8;
-        }
-
-        .mapContainer {
-          position: relative;
-
-          width: 100%;
-
-          height: 500px;
-
-          margin-top: 14px;
-
-          border: 1px solid #dce4df;
-
-          border-radius: 16px;
-
-          overflow: hidden;
-
-          background: #edf2ef;
-        }
-
-        .mapLoading,
-        .mapError {
-          position: absolute;
-
-          inset: 0;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          padding: 20px;
-
-          text-align: center;
-
-          color: #64746b;
-
-          font-size: 13px;
-
-          background: #f3f7f4;
-
-          z-index: 2;
-        }
-
-        .mapError {
-          color: #b33d34;
-
-          background: #fff5f3;
-        }
-
-        .mapHint {
-          position: absolute;
-
-          left: 50%;
-
-          bottom: 14px;
-
-          transform: translateX(
-            -50%
-          );
-
-          z-index: 5;
-
-          padding: 9px 15px;
-
-          border-radius: 30px;
-
-          background: rgba(
-            255,
-            255,
-            255,
-            0.94
-          );
-
-          box-shadow:
-            0 5px 20px
-              rgba(
-                0,
-                0,
-                0,
-                0.08
-              );
-
-          color: #5c6962;
-
-          font-size: 12px;
-
-          font-weight: 700;
-
-          white-space: nowrap;
-
-          pointer-events: none;
-        }
-
-        .helpText {
-          margin-top: 12px;
-
-          color: #78867f;
-
-          font-size: 12px;
-
-          line-height: 1.6;
-        }
-
-        .serviceMessage {
-          display: flex;
-
-          align-items: flex-start;
-
-          gap: 11px;
-
-          margin-top: 18px;
-
-          padding: 14px 16px;
-
-          border: 1px solid;
-
-          border-radius: 14px;
-
-          font-size: 13px;
-
-          line-height: 1.55;
-        }
-
-        .serviceMessage.inside {
-          border-color: #cde3d4;
-
-          background: #eff9f2;
-
-          color: #3e7658;
-        }
-
-        .serviceMessage.outside {
-          border-color: #efccc8;
-
-          background: #fff5f3;
-
-          color: #ad4038;
-        }
-
-        .serviceIcon {
-          width: 32px;
-
-          height: 32px;
-
-          flex: 0 0 32px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          border-radius: 50%;
-
-          color: #ffffff;
-
-          font-size: 15px;
-
-          font-weight: 900;
-
-          background: #08783f;
-        }
-
-        .outside
-          .serviceIcon {
-          background: #c64a3f;
-        }
-
-        .journeyDistance {
-          display: flex;
-
-          align-items: center;
-
-          gap: 12px;
-
-          margin-top: 18px;
-
-          padding: 15px 16px;
-
-          border: 1px solid #d8e9de;
-
-          border-radius: 14px;
-
-          background: #f4faf6;
-        }
-
-        .journeyIcon {
-          width: 43px;
-
-          height: 43px;
-
-          flex: 0 0 43px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          border-radius: 13px;
-
-          background: #e5f4e9;
-
-          font-size: 21px;
-        }
-
-        .journeyContent {
-          min-width: 0;
-        }
-
-        .journeyTitle {
-          color: #6b7b72;
-
-          font-size: 10px;
-
-          font-weight: 900;
-
-          letter-spacing: 0.7px;
-        }
-
-        .journeyValue {
-          margin-top: 3px;
-
-          color: #6a776f;
-
-          font-size: 13px;
-
-          font-weight: 600;
-
-          line-height: 1.4;
-        }
-
-        .journeyDistance
-          .journeyValue {
-          color: #28794f;
-
-          font-size: 18px;
-
-          font-weight: 900;
-        }
-
-        .journeyDuration {
-          margin-top: 2px;
-
-          color: #74837b;
-
-          font-size: 11px;
-        }
-
-        .routeError {
-          margin-top: 10px;
-
-          padding: 10px 12px;
-
-          border-radius: 10px;
-
-          background: #fff5f3;
-
-          color: #b33d34;
-
-          font-size: 11px;
-
-          line-height: 1.5;
-        }
-
-        @media (
-          max-width: 700px
-        ) {
-          .mapContainer {
-            height: 500px;
-          }
-
-          .searchWrapper input {
-            font-size: 15px;
-          }
-
-          .mapHint {
-            font-size: 11px;
-
-            padding: 8px 12px;
-          }
-
-          .journeyDistance {
-            padding: 14px;
-          }
-        }
-
-      `}</style>
     </div>
   );
-  }
+}
