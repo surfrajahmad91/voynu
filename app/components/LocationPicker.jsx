@@ -139,6 +139,7 @@ export default function LocationPicker({
   placeholder = "Search for a place, building or address",
   allowCurrentLocation = false,
   onLocationSelect,
+  onLocationError,
 }) {
   const mapElementRef = useRef(null);
   const inputRef = useRef(null);
@@ -222,15 +223,15 @@ export default function LocationPicker({
   */
 
   const notifyLocation = (location) => {
-    setSelectedLocation(location);
+  setSelectedLocation(location);
 
-    lastExternalValueRef.current =
-      location.name || "";
+  lastExternalValueRef.current =
+    location.name || "";
 
-    onLocationSelectRef.current?.(
-      location
-    );
-  };
+  onLocationSelectRef.current?.(
+    location
+  );
+};
 
   /*
   |--------------------------------------------------------------------------
