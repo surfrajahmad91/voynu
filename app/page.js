@@ -21,14 +21,10 @@ export default function HomePage() {
   /* ============================================================
      SERVICE AREA
 
-     VOYNU INITIAL LAUNCH:
-     - Service center: Kanpur
-     - Pickup radius: 200 km
-     - Destination can be outside the radius
+     Pickup must be within 200 km of Kanpur.
 
      IMPORTANT:
-     This is currently frontend configuration only.
-     Later this should move to the backend/Admin Panel.
+     Drop location can be anywhere.
   ============================================================ */
 
   const SERVICE_AREA = {
@@ -41,24 +37,13 @@ export default function HomePage() {
   };
 
   /* ============================================================
-     DISTANCE HELPERS
+     DISTANCE CALCULATOR
+
+     Used ONLY for service-area distance.
+
+     This calculates straight-line distance from Kanpur to
+     pickup location.
   ============================================================ */
-
-  const toValidCoordinate = (value) => {
-    if (
-      value === null ||
-      value === undefined ||
-      value === ""
-    ) {
-      return null;
-    }
-
-    const number = Number(value);
-
-    return Number.isFinite(number)
-      ? number
-      : null;
-  };
 
   const calculateDistanceKm = (
     lat1,
@@ -66,23 +51,15 @@ export default function HomePage() {
     lat2,
     lon2
   ) => {
-    const latitude1 =
-      toValidCoordinate(lat1);
-
-    const longitude1 =
-      toValidCoordinate(lon1);
-
-    const latitude2 =
-      toValidCoordinate(lat2);
-
-    const longitude2 =
-      toValidCoordinate(lon2);
-
     if (
-      latitude1 === null ||
-      longitude1 === null ||
-      latitude2 === null ||
-      longitude2 === null
+      lat1 === null ||
+      lon1 === null ||
+      lat2 === null ||
+      lon2 === null ||
+      lat1 === undefined ||
+      lon1 === undefined ||
+      lat2 === undefined ||
+      lon2 === undefined
     ) {
       return null;
     }
@@ -92,19 +69,16 @@ export default function HomePage() {
 
     const earthRadiusKm = 6371;
 
-    const dLat = toRadians(
-      latitude2 - latitude1
-    );
-
-    const dLon = toRadians(
-      longitude2 - longitude1
-    );
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
 
     const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRadians(latitude1)) *
-        Math.cos(toRadians(latitude2)) *
-        Math.sin(dLon / 2) ** 2;
+      Math.sin(dLat / 2) *
+        Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) *
+        Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
 
     const c =
       2 *
@@ -141,6 +115,23 @@ export default function HomePage() {
 
   /* ============================================================
      JOURNEY
+
+     NEW:
+     routeDistanceKm
+     routeDurationText
+  ============================================================ */
+
+  const [routeDistanceKm, setRouteDistanceKm] =
+    useState(null);
+
+  const [routeDurationText, setRouteDurationText] =
+    useState("");
+
+  const [isCalculatingRoute, setIsCalculatingRoute] =
+    useState(false);
+
+  /* ============================================================
+     JOURNEY DATE / TIME
   ============================================================ */
 
   const [travelDate, setTravelDate] =
@@ -168,10 +159,8 @@ export default function HomePage() {
   const [whatsapp, setWhatsapp] =
     useState("");
 
-  const [
-    whatsappSameAsPhone,
-    setWhatsappSameAsPhone,
-  ] = useState(true);
+  const [whatsappSameAsPhone, setWhatsappSameAsPhone] =
+    useState(true);
 
   /* ============================================================
      UI STATE
@@ -187,44 +176,6 @@ export default function HomePage() {
     useState(false);
 
   /* ============================================================
-     PICKUP DISTANCE
-
-     This recalculates automatically whenever the
-     pickup coordinates change.
-  ============================================================ */
-
-  const pickupDistanceKm = useMemo(() => {
-    return calculateDistanceKm(
-      SERVICE_AREA.center.lat,
-      SERVICE_AREA.center.lon,
-      pickup.lat,
-      pickup.lon
-    );
-  }, [pickup.lat, pickup.lon]);
-
-  /* ============================================================
-     SERVICE AREA STATUS
-
-     ONLY PICKUP is checked.
-
-     DROP LOCATION CAN BE ANYWHERE.
-  ============================================================ */
-
-  const pickupWithinServiceArea =
-    pickupDistanceKm !== null &&
-    pickupDistanceKm <=
-      SERVICE_AREA.radiusKm;
-
-  const getPickupDistanceFromServiceCenter =
-    () => {
-      return pickupDistanceKm;
-    };
-
-  const isPickupWithinServiceArea = () => {
-    return pickupWithinServiceArea;
-  };
-
-  /* ============================================================
      WHATSAPP SYNC
   ============================================================ */
 
@@ -232,7 +183,10 @@ export default function HomePage() {
     if (whatsappSameAsPhone) {
       setWhatsapp(phone);
     }
-  }, [phone, whatsappSameAsPhone]);
+  }, [
+    phone,
+    whatsappSameAsPhone,
+  ]);
 
   /* ============================================================
      MESSAGE HELPERS
@@ -257,14 +211,9 @@ export default function HomePage() {
      PHONE NORMALIZATION
   ============================================================ */
 
-  const normalizeIndianPhone = (
-    value
-  ) => {
-    const cleaned = String(
-      value || ""
-    ).replace(/\D/g, "");
-
-    /* 10-digit Indian mobile */
+  const normalizeIndianPhone = (value) => {
+    const cleaned = String(value || "")
+      .replace(/\D/g, "");
 
     if (
       cleaned.length === 10 &&
@@ -272,8 +221,6 @@ export default function HomePage() {
     ) {
       return cleaned;
     }
-
-    /* 91 + 10-digit Indian mobile */
 
     if (
       cleaned.length === 12 &&
@@ -309,9 +256,7 @@ export default function HomePage() {
     const [
       hours,
       minutes,
-    ] = time
-      .split(":")
-      .map(Number);
+    ] = time.split(":").map(Number);
 
     const selected = new Date();
 
@@ -324,6 +269,216 @@ export default function HomePage() {
 
     return selected < now;
   };
+
+  /* ============================================================
+     SERVICE AREA HELPERS
+  ============================================================ */
+
+  const getPickupDistanceFromServiceCenter =
+    () => {
+      return calculateDistanceKm(
+        SERVICE_AREA.center.lat,
+        SERVICE_AREA.center.lon,
+        pickup.lat,
+        pickup.lon
+      );
+    };
+
+  const isPickupWithinServiceArea = () => {
+    const distance =
+      getPickupDistanceFromServiceCenter();
+
+    if (distance === null) {
+      return false;
+    }
+
+    return (
+      distance <=
+      SERVICE_AREA.radiusKm
+    );
+  };
+
+  /* ============================================================
+     ROUTE DISTANCE
+
+     NEW
+
+     Uses Google Maps road distance.
+
+     Pickup → Drop
+
+     This is different from the 200 km service-area
+     calculation.
+
+     Service area:
+       Kanpur → Pickup
+       straight-line distance
+
+     Journey:
+       Pickup → Drop
+       actual road distance
+  ============================================================ */
+
+  useEffect(() => {
+    let cancelled = false;
+    let retryTimer = null;
+
+    const calculateRoute = () => {
+      if (
+        pickup.lat === null ||
+        pickup.lon === null ||
+        drop.lat === null ||
+        drop.lon === null
+      ) {
+        setRouteDistanceKm(null);
+        setRouteDurationText("");
+        setIsCalculatingRoute(false);
+        return;
+      }
+
+      /*
+       * Google Maps script may still be loading.
+       *
+       * LocationPicker already loads Google Maps,
+       * so we wait for it to become available.
+       */
+
+      if (
+        typeof window === "undefined" ||
+        !window.google ||
+        !window.google.maps
+      ) {
+        setIsCalculatingRoute(true);
+
+        retryTimer = setTimeout(
+          calculateRoute,
+          500
+        );
+
+        return;
+      }
+
+      if (
+        !window.google.maps.DistanceMatrixService
+      ) {
+        setIsCalculatingRoute(false);
+        return;
+      }
+
+      setIsCalculatingRoute(true);
+
+      const service =
+        new window.google.maps.DistanceMatrixService();
+
+      service.getDistanceMatrix(
+        {
+          origins: [
+            {
+              lat: pickup.lat,
+              lng: pickup.lon,
+            },
+          ],
+
+          destinations: [
+            {
+              lat: drop.lat,
+              lng: drop.lon,
+            },
+          ],
+
+          travelMode:
+            window.google.maps.TravelMode.DRIVING,
+
+          unitSystem:
+            window.google.maps.UnitSystem.METRIC,
+
+          avoidHighways: false,
+          avoidTolls: false,
+        },
+
+        (response, status) => {
+          if (cancelled) {
+            return;
+          }
+
+          setIsCalculatingRoute(false);
+
+          if (
+            status !== "OK" ||
+            !response ||
+            !response.rows ||
+            !response.rows[0] ||
+            !response.rows[0].elements ||
+            !response.rows[0].elements[0]
+          ) {
+            setRouteDistanceKm(null);
+            setRouteDurationText("");
+            return;
+          }
+
+          const element =
+            response.rows[0].elements[0];
+
+          if (
+            element.status !== "OK"
+          ) {
+            setRouteDistanceKm(null);
+            setRouteDurationText("");
+            return;
+          }
+
+          /*
+           * Google returns distance in metres.
+           */
+
+          if (
+            element.distance &&
+            typeof element.distance.value ===
+              "number"
+          ) {
+            const distanceKm =
+              element.distance.value /
+              1000;
+
+            setRouteDistanceKm(
+              distanceKm
+            );
+          }
+
+          /*
+           * Google returns a human-readable duration,
+           * e.g. "8 hours 42 mins".
+           */
+
+          if (
+            element.duration &&
+            element.duration.text
+          ) {
+            setRouteDurationText(
+              element.duration.text
+            );
+          } else {
+            setRouteDurationText("");
+          }
+        }
+      );
+    };
+
+    calculateRoute();
+
+    return () => {
+      cancelled = true;
+
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
+    };
+  }, [
+    pickup.lat,
+    pickup.lon,
+    drop.lat,
+    drop.lon,
+  ]);
 
   /* ============================================================
      TRIP TYPE
@@ -473,20 +628,15 @@ export default function HomePage() {
       return;
     }
 
-    const latitude =
-      toValidCoordinate(
-        location.lat
-      );
-
-    const longitude =
-      toValidCoordinate(
-        location.lon
-      );
-
     setPickup({
-      name: location.name || "",
-      lat: latitude,
-      lon: longitude,
+      name:
+        location.name || "",
+      lat:
+        location.lat ??
+        null,
+      lon:
+        location.lon ??
+        null,
     });
   };
 
@@ -499,20 +649,15 @@ export default function HomePage() {
       return;
     }
 
-    const latitude =
-      toValidCoordinate(
-        location.lat
-      );
-
-    const longitude =
-      toValidCoordinate(
-        location.lon
-      );
-
     setDrop({
-      name: location.name || "",
-      lat: latitude,
-      lon: longitude,
+      name:
+        location.name || "",
+      lat:
+        location.lat ??
+        null,
+      lon:
+        location.lon ??
+        null,
     });
   };
 
@@ -522,7 +667,9 @@ export default function HomePage() {
 
   const buildBookingData = () => {
     const normalizedPhone =
-      normalizeIndianPhone(phone);
+      normalizeIndianPhone(
+        phone
+      );
 
     const normalizedWhatsApp =
       normalizeIndianPhone(
@@ -536,15 +683,25 @@ export default function HomePage() {
       tripType,
 
       pickup: {
-        name: pickup.name.trim(),
-        lat: pickup.lat,
-        lon: pickup.lon,
+        name:
+          pickup.name.trim(),
+
+        lat:
+          pickup.lat,
+
+        lon:
+          pickup.lon,
       },
 
       drop: {
-        name: drop.name.trim(),
-        lat: drop.lat,
-        lon: drop.lon,
+        name:
+          drop.name.trim(),
+
+        lat:
+          drop.lat,
+
+        lon:
+          drop.lon,
       },
 
       serviceArea: {
@@ -561,22 +718,33 @@ export default function HomePage() {
 
         pickupDistanceKm:
           pickupDistance,
+      },
 
-        pickupWithinServiceArea:
-          pickupWithinServiceArea,
+      /*
+       * NEW
+       */
+
+      journey: {
+        distanceKm:
+          routeDistanceKm,
+
+        duration:
+          routeDurationText ||
+          null,
       },
 
       travelDate,
-
       pickupTime,
 
       returnDate:
-        tripType === "roundtrip"
+        tripType ===
+        "roundtrip"
           ? returnDate
           : null,
 
       returnTime:
-        tripType === "roundtrip"
+        tripType ===
+        "roundtrip"
           ? returnTime
           : null,
 
@@ -599,11 +767,11 @@ export default function HomePage() {
   ============================================================ */
 
   const validateBooking = () => {
-    /* ----------------------------------------------------------
-       PICKUP
-    ---------------------------------------------------------- */
+    /* PICKUP */
 
-    if (!pickup.name?.trim()) {
+    if (
+      !pickup.name?.trim()
+    ) {
       return (
         "Please select your pickup location."
       );
@@ -618,11 +786,11 @@ export default function HomePage() {
       );
     }
 
-    /* ----------------------------------------------------------
-       DROP
-    ---------------------------------------------------------- */
+    /* DROP */
 
-    if (!drop.name?.trim()) {
+    if (
+      !drop.name?.trim()
+    ) {
       return (
         "Please select your drop location."
       );
@@ -637,20 +805,14 @@ export default function HomePage() {
       );
     }
 
-    /* ----------------------------------------------------------
-       PICKUP SERVICE AREA
-
-       IMPORTANT:
-       Only pickup is restricted.
-
-       Destination can be outside the
-       200 km service radius.
-    ---------------------------------------------------------- */
+    /* SERVICE AREA */
 
     const pickupDistance =
       getPickupDistanceFromServiceCenter();
 
-    if (pickupDistance === null) {
+    if (
+      pickupDistance === null
+    ) {
       return (
         "We couldn't verify your pickup location. Please select it again."
       );
@@ -660,15 +822,11 @@ export default function HomePage() {
       !isPickupWithinServiceArea()
     ) {
       return (
-        `Sorry, your pickup location is ${pickupDistance.toFixed(
-          1
-        )} km from Kanpur. VOYNU currently serves pickups within ${SERVICE_AREA.radiusKm} km of Kanpur.`
+        "Sorry, your pickup location is outside VOYNU's current 200 km service area from Kanpur."
       );
     }
 
-    /* ----------------------------------------------------------
-       SAME LOCATION
-    ---------------------------------------------------------- */
+    /* SAME LOCATION */
 
     if (
       pickup.lat !== null &&
@@ -678,14 +836,14 @@ export default function HomePage() {
     ) {
       const sameLatitude =
         Math.abs(
-          Number(pickup.lat) -
-            Number(drop.lat)
+          pickup.lat -
+            drop.lat
         ) < 0.00001;
 
       const sameLongitude =
         Math.abs(
-          Number(pickup.lon) -
-            Number(drop.lon)
+          pickup.lon -
+            drop.lon
         ) < 0.00001;
 
       if (
@@ -698,9 +856,7 @@ export default function HomePage() {
       }
     }
 
-    /* ----------------------------------------------------------
-       TRAVEL DATE
-    ---------------------------------------------------------- */
+    /* TRAVEL DATE */
 
     if (!travelDate) {
       return (
@@ -708,15 +864,15 @@ export default function HomePage() {
       );
     }
 
-    if (travelDate < today) {
+    if (
+      travelDate < today
+    ) {
       return (
         "Travel date cannot be in the past."
       );
     }
 
-    /* ----------------------------------------------------------
-       PICKUP TIME
-    ---------------------------------------------------------- */
+    /* PICKUP TIME */
 
     if (!pickupTime) {
       return (
@@ -736,9 +892,7 @@ export default function HomePage() {
       );
     }
 
-    /* ----------------------------------------------------------
-       PASSENGER
-    ---------------------------------------------------------- */
+    /* PASSENGER */
 
     const trimmedName =
       passengerName.trim();
@@ -749,18 +903,20 @@ export default function HomePage() {
       );
     }
 
-    if (trimmedName.length < 2) {
+    if (
+      trimmedName.length < 2
+    ) {
       return (
         "Please enter a valid passenger name."
       );
     }
 
-    /* ----------------------------------------------------------
-       PHONE
-    ---------------------------------------------------------- */
+    /* PHONE */
 
     const normalizedPhone =
-      normalizeIndianPhone(phone);
+      normalizeIndianPhone(
+        phone
+      );
 
     if (!normalizedPhone) {
       return (
@@ -768,9 +924,7 @@ export default function HomePage() {
       );
     }
 
-    /* ----------------------------------------------------------
-       WHATSAPP
-    ---------------------------------------------------------- */
+    /* WHATSAPP */
 
     const normalizedWhatsApp =
       normalizeIndianPhone(
@@ -783,12 +937,11 @@ export default function HomePage() {
       );
     }
 
-    /* ----------------------------------------------------------
-       ROUND TRIP
-    ---------------------------------------------------------- */
+    /* ROUND TRIP */
 
     if (
-      tripType === "roundtrip"
+      tripType ===
+      "roundtrip"
     ) {
       if (!returnDate) {
         return (
@@ -797,7 +950,8 @@ export default function HomePage() {
       }
 
       if (
-        returnDate < travelDate
+        returnDate <
+        travelDate
       ) {
         return (
           "Return date cannot be before the travel date."
@@ -823,8 +977,10 @@ export default function HomePage() {
       }
 
       if (
-        returnDate === travelDate &&
-        returnTime < pickupTime
+        returnDate ===
+          travelDate &&
+        returnTime <
+          pickupTime
       ) {
         return (
           "Return time cannot be before the pickup time."
@@ -853,7 +1009,6 @@ export default function HomePage() {
       showError(
         validationError
       );
-
       return;
     }
 
@@ -898,6 +1053,27 @@ export default function HomePage() {
   };
 
   /* ============================================================
+     DISPLAY VALUES
+  ============================================================ */
+
+  const pickupDistance =
+    getPickupDistanceFromServiceCenter();
+
+  const formattedPickupDistance =
+    pickupDistance !== null
+      ? pickupDistance < 10
+        ? pickupDistance.toFixed(1)
+        : pickupDistance.toFixed(0)
+      : null;
+
+  const formattedRouteDistance =
+    routeDistanceKm !== null
+      ? routeDistanceKm < 10
+        ? routeDistanceKm.toFixed(1)
+        : routeDistanceKm.toFixed(0)
+      : null;
+
+  /* ============================================================
      UI
   ============================================================ */
 
@@ -936,6 +1112,7 @@ export default function HomePage() {
             className="headerPhone"
             aria-label="Call VOYNU"
           >
+
             <span className="phoneIcon">
               ☎
             </span>
@@ -943,6 +1120,7 @@ export default function HomePage() {
             <span>
               +91 91234 56789
             </span>
+
           </a>
 
         </div>
@@ -1140,7 +1318,8 @@ export default function HomePage() {
                 tripType === "roundtrip"
               }
               className={
-                tripType === "roundtrip"
+                tripType ===
+                "roundtrip"
                   ? "tripButton active"
                   : "tripButton"
               }
@@ -1187,7 +1366,9 @@ export default function HomePage() {
 
           <div className="locationGrid">
 
-            {/* PICKUP */}
+            {/* ==================================================
+                PICKUP
+            ================================================== */}
 
             <div className="locationBox">
 
@@ -1201,67 +1382,62 @@ export default function HomePage() {
                 }
               />
 
-              {/* =================================================
-                  PICKUP SERVICE AREA STATUS
-              ================================================= */}
+              {/* PICKUP SERVICE AREA */}
 
-              {pickup.name &&
-                pickupDistanceKm !== null && (
+              {pickup.lat !== null &&
+                pickup.lon !== null &&
+                formattedPickupDistance !== null && (
                   <div
                     className={
-                      pickupWithinServiceArea
-                        ? "serviceAreaStatus serviceAreaValid"
-                        : "serviceAreaStatus serviceAreaInvalid"
+                      isPickupWithinServiceArea()
+                        ? "locationStatus valid"
+                        : "locationStatus invalid"
                     }
                   >
 
-                    <span className="serviceAreaStatusIcon">
-                      {pickupWithinServiceArea
+                    <span className="statusIcon">
+                      {isPickupWithinServiceArea()
                         ? "✓"
                         : "!"}
                     </span>
 
                     <span>
 
-                      {pickupWithinServiceArea ? (
-                        <>
-                          Pickup is{" "}
-                          <strong>
-                            {pickupDistanceKm.toFixed(
-                              1
-                            )}{" "}
-                            km
-                          </strong>{" "}
-                          from Kanpur and is
-                          within our{" "}
-                          <strong>
-                            {
-                              SERVICE_AREA.radiusKm
-                            }{" "}
-                            km
-                          </strong>{" "}
-                          service area.
-                        </>
-                      ) : (
-                        <>
-                          Pickup is{" "}
-                          <strong>
-                            {pickupDistanceKm.toFixed(
-                              1
-                            )}{" "}
-                            km
-                          </strong>{" "}
-                          from Kanpur and is
-                          outside our current{" "}
-                          <strong>
-                            {
-                              SERVICE_AREA.radiusKm
-                            }{" "}
-                            km
-                          </strong>{" "}
-                          service area.
-                        </>
-                      )}
+                      {isPickupWithinServiceArea()
+                        ? (
+                          <>
+                            Pickup is{" "}
+                            <strong>
+                              {
+                                formattedPickupDistance
+                              }{" "}
+                              km
+                            </strong>{" "}
+                            from Kanpur and is
+                            within our{" "}
+                            <strong>
+                              200 km
+                            </strong>{" "}
+                            service area.
+                          </>
+                        )
+                        : (
+                          <>
+                            Pickup is{" "}
+                            <strong>
+                              {
+                                formattedPickupDistance
+                              }{" "}
+                              km
+                            </strong>{" "}
+                            from Kanpur and is
+                            outside our{" "}
+                            <strong>
+                              200 km
+                            </strong>{" "}
+                            service area.
+                          </>
+                        )}
 
                     </span>
 
@@ -1270,7 +1446,9 @@ export default function HomePage() {
 
             </div>
 
-            {/* DROP */}
+            {/* ==================================================
+                DROP
+            ================================================== */}
 
             <div className="locationBox">
 
@@ -1283,6 +1461,74 @@ export default function HomePage() {
                   handleDropSelect
                 }
               />
+
+              {/* JOURNEY DISTANCE */}
+
+              {pickup.lat !== null &&
+                pickup.lon !== null &&
+                drop.lat !== null &&
+                drop.lon !== null && (
+
+                  <div className="journeyStatus">
+
+                    <div className="journeyStatusTop">
+
+                      <span className="routeIcon">
+                        🚕
+                      </span>
+
+                      <div>
+
+                        <div className="journeyLabel">
+                          Journey distance
+                        </div>
+
+                        {isCalculatingRoute ? (
+                          <div className="journeyCalculating">
+                            Calculating road distance...
+                          </div>
+                        ) : routeDistanceKm !== null ? (
+                          <div className="journeyDistance">
+
+                            <strong>
+                              {
+                                formattedRouteDistance
+                              }{" "}
+                              km
+                            </strong>
+
+                            {routeDurationText && (
+                              <span>
+                                ·{" "}
+                                {
+                                  routeDurationText
+                                }
+                              </span>
+                            )}
+
+                          </div>
+                        ) : (
+                          <div className="journeyCalculating">
+                            Unable to calculate road distance.
+                          </div>
+                        )}
+
+                      </div>
+
+                    </div>
+
+                    {!isCalculatingRoute &&
+                      routeDistanceKm !== null && (
+                        <div className="journeyHint">
+                          Estimated driving distance
+                          between your pickup and
+                          destination.
+                        </div>
+                      )}
+
+                  </div>
+
+                )}
 
             </div>
 
@@ -1345,9 +1591,7 @@ export default function HomePage() {
 
           </div>
 
-          {/* ======================================================
-              RETURN JOURNEY
-          ====================================================== */}
+          {/* RETURN JOURNEY */}
 
           {tripType === "roundtrip" && (
             <div className="roundTripBox">
@@ -1381,7 +1625,8 @@ export default function HomePage() {
                     type="date"
                     value={returnDate}
                     min={
-                      travelDate || today
+                      travelDate ||
+                      today
                     }
                     onChange={(event) => {
 
@@ -1393,7 +1638,8 @@ export default function HomePage() {
                       if (
                         travelDate &&
                         value &&
-                        value < travelDate
+                        value <
+                          travelDate
                       ) {
 
                         showError(
@@ -1406,10 +1652,13 @@ export default function HomePage() {
                         return;
                       }
 
-                      setReturnDate(value);
+                      setReturnDate(
+                        value
+                      );
 
                       if (
-                        value === today &&
+                        value ===
+                          today &&
                         returnTime &&
                         isTimeInPastForToday(
                           value,
@@ -1448,7 +1697,8 @@ export default function HomePage() {
                         event.target.value;
 
                       if (
-                        returnDate === today &&
+                        returnDate ===
+                          today &&
                         isTimeInPastForToday(
                           returnDate,
                           value
@@ -1465,9 +1715,11 @@ export default function HomePage() {
                       }
 
                       if (
-                        returnDate === travelDate &&
+                        returnDate ===
+                          travelDate &&
                         pickupTime &&
-                        value < pickupTime
+                        value <
+                          pickupTime
                       ) {
 
                         showError(
@@ -1479,7 +1731,9 @@ export default function HomePage() {
                         return;
                       }
 
-                      setReturnTime(value);
+                      setReturnTime(
+                        value
+                      );
 
                     }}
                   />
@@ -1491,9 +1745,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* ======================================================
-              PASSENGER
-          ====================================================== */}
+          {/* PASSENGER */}
 
           <div className="sectionLabel passengerSectionLabel">
 
@@ -1649,7 +1901,8 @@ export default function HomePage() {
           {message && (
             <div
               className={
-                messageType === "success"
+                messageType ===
+                "success"
                   ? "message successMessage"
                   : "message errorMessage"
               }
@@ -1659,7 +1912,8 @@ export default function HomePage() {
 
               <span className="messageIcon">
 
-                {messageType === "success"
+                {messageType ===
+                "success"
                   ? "✓"
                   : "!"}
 
@@ -1677,8 +1931,12 @@ export default function HomePage() {
           <button
             type="button"
             className="continueButton"
-            onClick={handleContinue}
-            disabled={isSubmitting}
+            onClick={
+              handleContinue
+            }
+            disabled={
+              isSubmitting
+            }
           >
 
             <span>
@@ -1911,12 +2169,13 @@ export default function HomePage() {
 
           border-radius: 50%;
 
-          background: rgba(
-            8,
-            120,
-            63,
-            0.055
-          );
+          background:
+            rgba(
+              8,
+              120,
+              63,
+              0.055
+            );
         }
 
         .serviceBadge {
@@ -1929,12 +2188,13 @@ export default function HomePage() {
           border: 1px solid #d8e7dc;
           border-radius: 30px;
 
-          background: rgba(
-            255,
-            255,
-            255,
-            0.9
-          );
+          background:
+            rgba(
+              255,
+              255,
+              255,
+              0.9
+            );
 
           color: #596a61;
 
@@ -2059,12 +2319,13 @@ export default function HomePage() {
 
           border-radius: 50%;
 
-          background: rgba(
-            8,
-            120,
-            63,
-            0.08
-          );
+          background:
+            rgba(
+              8,
+              120,
+              63,
+              0.08
+            );
 
           transform: rotate(-8deg);
         }
@@ -2075,17 +2336,19 @@ export default function HomePage() {
           font-size: 105px;
           line-height: 1;
 
-          transform: translateY(5px);
+          transform:
+            translateY(5px);
 
-          filter: drop-shadow(
-            0 14px 15px
-              rgba(
-                0,
-                0,
-                0,
-                0.08
-              )
-          );
+          filter:
+            drop-shadow(
+              0 14px 15px
+                rgba(
+                  0,
+                  0,
+                  0,
+                  0.08
+                )
+            );
         }
 
         /* ======================================================
@@ -2113,7 +2376,8 @@ export default function HomePage() {
 
           background: #ffffff;
 
-          border: 1px solid
+          border:
+            1px solid
             rgba(
               219,
               231,
@@ -2346,28 +2610,46 @@ export default function HomePage() {
            SERVICE AREA STATUS
         ====================================================== */
 
-        .serviceAreaStatus {
+        .locationStatus {
           display: flex;
           align-items: flex-start;
 
-          gap: 9px;
+          gap: 10px;
 
-          margin-top: 9px;
+          margin-top: 14px;
 
-          padding: 10px 12px;
+          padding: 12px 13px;
 
-          border-radius: 10px;
+          border-radius: 11px;
 
-          font-size: 11px;
+          font-size: 12px;
 
-          line-height: 1.45;
+          line-height: 1.5;
         }
 
-        .serviceAreaStatusIcon {
-          width: 20px;
-          height: 20px;
+        .locationStatus.valid {
+          border:
+            1px solid #cce5d4;
 
-          flex: 0 0 20px;
+          background: #eef9f1;
+
+          color: #367452;
+        }
+
+        .locationStatus.invalid {
+          border:
+            1px solid #efccc8;
+
+          background: #fff5f3;
+
+          color: #b33d34;
+        }
+
+        .statusIcon {
+          width: 21px;
+          height: 21px;
+
+          flex: 0 0 21px;
 
           display: flex;
           align-items: center;
@@ -2375,38 +2657,111 @@ export default function HomePage() {
 
           border-radius: 50%;
 
+          background: #08783f;
+
+          color: #ffffff;
+
           font-size: 11px;
           font-weight: 900;
         }
 
-        .serviceAreaValid {
-          background: #eef9f1;
-
-          border: 1px solid #cce5d4;
-
-          color: #28734b;
-        }
-
-        .serviceAreaValid
-          .serviceAreaStatusIcon {
-          background: #08783f;
-
-          color: #ffffff;
-        }
-
-        .serviceAreaInvalid {
-          background: #fff5f3;
-
-          border: 1px solid #efccc8;
-
-          color: #b33d34;
-        }
-
-        .serviceAreaInvalid
-          .serviceAreaStatusIcon {
+        .locationStatus.invalid
+          .statusIcon {
           background: #c64a3f;
+        }
 
-          color: #ffffff;
+        /* ======================================================
+           JOURNEY DISTANCE
+        ====================================================== */
+
+        .journeyStatus {
+          margin-top: 14px;
+
+          padding: 13px 14px;
+
+          border:
+            1px solid #dcebe1;
+
+          border-radius: 12px;
+
+          background: #f6fbf7;
+        }
+
+        .journeyStatusTop {
+          display: flex;
+          align-items: center;
+
+          gap: 10px;
+        }
+
+        .routeIcon {
+          width: 34px;
+          height: 34px;
+
+          flex: 0 0 34px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          border-radius: 10px;
+
+          background: #e4f3e8;
+
+          font-size: 17px;
+        }
+
+        .journeyLabel {
+          color: #6f8076;
+
+          font-size: 10px;
+          font-weight: 700;
+
+          text-transform: uppercase;
+
+          letter-spacing: 0.4px;
+        }
+
+        .journeyDistance {
+          display: flex;
+          align-items: baseline;
+
+          gap: 5px;
+
+          margin-top: 2px;
+
+          color: #26372f;
+
+          font-size: 13px;
+        }
+
+        .journeyDistance strong {
+          color: #08783f;
+
+          font-size: 16px;
+          font-weight: 900;
+        }
+
+        .journeyCalculating {
+          margin-top: 3px;
+
+          color: #75847c;
+
+          font-size: 11px;
+        }
+
+        .journeyHint {
+          margin-top: 9px;
+
+          padding-top: 8px;
+
+          border-top:
+            1px solid #e1ebe4;
+
+          color: #839189;
+
+          font-size: 10px;
+          line-height: 1.4;
         }
 
         /* ======================================================
@@ -2455,7 +2810,8 @@ export default function HomePage() {
 
           padding: 0 15px;
 
-          border: 1px solid #d9e2dc;
+          border:
+            1px solid #d9e2dc;
 
           border-radius: 11px;
 
@@ -2528,9 +2884,6 @@ export default function HomePage() {
           font-weight: 700;
 
           cursor: pointer;
-
-          transition:
-            color 0.2s ease;
         }
 
         .samePhoneToggle:hover {
@@ -2549,7 +2902,8 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
 
-          border: 1.5px solid #cbd9d0;
+          border:
+            1.5px solid #cbd9d0;
 
           border-radius: 50%;
 
@@ -2586,7 +2940,8 @@ export default function HomePage() {
 
           padding: 17px;
 
-          border: 1px solid #dcebe1;
+          border:
+            1px solid #dcebe1;
 
           border-radius: 14px;
 
@@ -2609,7 +2964,8 @@ export default function HomePage() {
           font-size: 17px;
         }
 
-        .roundTripBox .formGrid {
+        .roundTripBox
+          .formGrid {
           margin-top: 15px;
         }
 
@@ -2651,27 +3007,31 @@ export default function HomePage() {
         }
 
         .successMessage {
-          border: 1px solid #cce5d4;
+          border:
+            1px solid #cce5d4;
 
           background: #eef9f1;
 
           color: #28734b;
         }
 
-        .successMessage .messageIcon {
+        .successMessage
+          .messageIcon {
           background: #08783f;
           color: #ffffff;
         }
 
         .errorMessage {
-          border: 1px solid #efccc8;
+          border:
+            1px solid #efccc8;
 
           background: #fff5f3;
 
           color: #b33d34;
         }
 
-        .errorMessage .messageIcon {
+        .errorMessage
+          .messageIcon {
           background: #c64a3f;
           color: #ffffff;
         }
@@ -2724,10 +3084,13 @@ export default function HomePage() {
             opacity 0.18s ease;
         }
 
-        .continueButton:hover:not(:disabled) {
+        .continueButton:hover:not(
+          :disabled
+        ) {
           background: #076d39;
 
-          transform: translateY(-1px);
+          transform:
+            translateY(-1px);
 
           box-shadow:
             0 10px 22px
@@ -2739,8 +3102,11 @@ export default function HomePage() {
               );
         }
 
-        .continueButton:active:not(:disabled) {
-          transform: translateY(0);
+        .continueButton:active:not(
+          :disabled
+        ) {
+          transform:
+            translateY(0);
         }
 
         .continueButton:disabled {
@@ -2795,12 +3161,13 @@ export default function HomePage() {
 
           margin: 0 auto;
 
-          color: rgba(
-            255,
-            255,
-            255,
-            0.78
-          );
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.78
+            );
 
           font-size: 11px;
         }
@@ -2842,7 +3209,9 @@ export default function HomePage() {
         @media (max-width: 700px) {
 
           .headerInner {
-            width: calc(100% - 28px);
+            width:
+              calc(100% - 28px);
+
             min-height: 62px;
           }
 
@@ -2868,9 +3237,11 @@ export default function HomePage() {
           }
 
           .heroInner {
-            width: calc(100% - 28px);
+            width:
+              calc(100% - 28px);
 
-            padding: 28px 0 56px;
+            padding:
+              28px 0 56px;
           }
 
           .serviceBadge {
@@ -2880,7 +3251,8 @@ export default function HomePage() {
           .heroText h1 {
             font-size: 50px;
 
-            letter-spacing: -2.8px;
+            letter-spacing:
+              -2.8px;
           }
 
           .heroText p {
@@ -2919,7 +3291,8 @@ export default function HomePage() {
           }
 
           .bookingSection {
-            width: calc(100% - 20px);
+            width:
+              calc(100% - 20px);
 
             margin-top: -23px;
 
@@ -2927,7 +3300,8 @@ export default function HomePage() {
           }
 
           .bookingCard {
-            padding: 18px 16px 17px;
+            padding:
+              18px 16px 17px;
 
             border-radius: 20px;
           }
@@ -2991,12 +3365,6 @@ export default function HomePage() {
             gap: 14px;
           }
 
-          .serviceAreaStatus {
-            font-size: 10px;
-
-            padding: 9px 10px;
-          }
-
           .formGrid {
             grid-template-columns: 1fr;
 
@@ -3019,7 +3387,8 @@ export default function HomePage() {
             padding: 14px;
           }
 
-          .roundTripBox .formGrid {
+          .roundTripBox
+            .formGrid {
             margin-top: 13px;
           }
 
@@ -3042,7 +3411,8 @@ export default function HomePage() {
           }
 
           .footerInner {
-            width: calc(100% - 28px);
+            width:
+              calc(100% - 28px);
 
             min-height: 62px;
 
@@ -3070,7 +3440,8 @@ export default function HomePage() {
           }
 
           .bookingCard {
-            padding: 16px 14px;
+            padding:
+              16px 14px;
           }
 
           .tripButton {
@@ -3085,10 +3456,14 @@ export default function HomePage() {
             font-size: 13px;
           }
 
+          .journeyDistance {
+            flex-wrap: wrap;
+          }
+
         }
 
       `}</style>
 
     </main>
   );
-                    }
+        }
