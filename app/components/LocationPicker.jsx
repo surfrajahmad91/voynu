@@ -6,7 +6,9 @@ let googleMapsPromise = null;
 
 function loadGoogleMaps() {
   if (typeof window === "undefined") {
-    return Promise.reject(new Error("Google Maps requires a browser."));
+    return Promise.reject(
+      new Error("Google Maps requires a browser.")
+    );
   }
 
   if (window.google?.maps?.places) {
@@ -17,7 +19,8 @@ function loadGoogleMaps() {
     return googleMapsPromise;
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const apiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey) {
     return Promise.reject(
@@ -37,12 +40,18 @@ function loadGoogleMaps() {
         if (window.google?.maps) {
           resolve(window.google.maps);
         } else {
-          reject(new Error("Google Maps failed to initialize."));
+          reject(
+            new Error(
+              "Google Maps failed to initialize."
+            )
+          );
         }
       });
 
       existingScript.addEventListener("error", () => {
-        reject(new Error("Unable to load Google Maps."));
+        reject(
+          new Error("Unable to load Google Maps.")
+        );
       });
 
       return;
@@ -63,7 +72,11 @@ function loadGoogleMaps() {
       if (window.google?.maps) {
         resolve(window.google.maps);
       } else {
-        reject(new Error("Google Maps failed to initialize."));
+        reject(
+          new Error(
+            "Google Maps failed to initialize."
+          )
+        );
       }
     };
 
@@ -94,15 +107,32 @@ export default function LocationPicker({
   const markerRef = useRef(null);
   const autocompleteRef = useRef(null);
 
+  /*
+   * Keep the latest callback without causing
+   * Google Maps to initialize again.
+   */
+  const onLocationSelectRef =
+    useRef(onLocationSelect);
+
+  useEffect(() => {
+    onLocationSelectRef.current =
+      onLocationSelect;
+  }, [onLocationSelect]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [selectedLocation, setSelectedLocation] = useState({
-    name: value || "",
-    lat: null,
-    lon: null,
-  });
+  const [selectedLocation, setSelectedLocation] =
+    useState({
+      name: value || "",
+      lat: null,
+      lon: null,
+    });
 
+  /*
+   * Keep displayed location name synchronized
+   * with the parent value.
+   */
   useEffect(() => {
     setSelectedLocation((current) => ({
       ...current,
@@ -110,6 +140,9 @@ export default function LocationPicker({
     }));
   }, [value]);
 
+  /*
+   * Initialize Google Maps once.
+   */
   useEffect(() => {
     let cancelled = false;
 
@@ -118,11 +151,22 @@ export default function LocationPicker({
         setLoading(true);
         setError("");
 
-        const googleMaps = await loadGoogleMaps();
+        const googleMaps =
+          await loadGoogleMaps();
 
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
 
         if (!mapElementRef.current) {
+          return;
+        }
+
+        /*
+         * Prevent duplicate map initialization.
+         */
+        if (mapRef.current) {
+          setLoading(false);
           return;
         }
 
@@ -131,88 +175,141 @@ export default function LocationPicker({
           lng: 80.3319,
         };
 
-        const map = new googleMaps.Map(mapElementRef.current, {
-          center: defaultCenter,
-          zoom: 11,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          clickableIcons: false,
-          gestureHandling: "greedy",
-        });
+        const map = new googleMaps.Map(
+          mapElementRef.current,
+          {
+            center: defaultCenter,
+            zoom: 11,
+
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            clickableIcons: false,
+
+            gestureHandling: "greedy",
+          }
+        );
 
         mapRef.current = map;
 
-        if (googleMaps.places?.Autocomplete && inputRef.current) {
+        /*
+         * Google Places Autocomplete
+         */
+        if (
+          googleMaps.places?.Autocomplete &&
+          inputRef.current
+        ) {
           const autocomplete =
-            new googleMaps.places.Autocomplete(inputRef.current, {
-              fields: [
-                "formatted_address",
-                "geometry",
-                "name",
-              ],
-              componentRestrictions: {
-                country: "in",
-              },
-            });
+            new googleMaps.places.Autocomplete(
+              inputRef.current,
+              {
+                fields: [
+                  "formatted_address",
+                  "geometry",
+                  "name",
+                ],
 
-          autocompleteRef.current = autocomplete;
+                componentRestrictions: {
+                  country: "in",
+                },
+              }
+            );
 
-          autocomplete.addListener("place_changed", () => {
-            const place = autocomplete.getPlace();
+          autocompleteRef.current =
+            autocomplete;
 
-            if (!place.geometry?.location) {
-              setError(
-                "Please select a location from the suggestions."
+          autocomplete.addListener(
+            "place_changed",
+            () => {
+              const place =
+                autocomplete.getPlace();
+
+              if (
+                !place.geometry?.location
+              ) {
+                setError(
+                  "Please select a location from the suggestions."
+                );
+                return;
+              }
+
+              const lat =
+                place.geometry.location.lat();
+
+              const lng =
+                place.geometry.location.lng();
+
+              const locationName =
+                place.formatted_address ||
+                place.name ||
+                inputRef.current?.value ||
+                "";
+
+              const location = {
+                name: locationName,
+                lat,
+                lon: lng,
+              };
+
+              setSelectedLocation(location);
+              setError("");
+
+              map.setCenter({
+                lat,
+                lng,
+              });
+
+              map.setZoom(15);
+
+              setMarker(
+                map,
+                googleMaps,
+                lat,
+                lng
               );
-              return;
+
+              onLocationSelectRef.current?.(
+                location
+              );
             }
-
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-
-            const locationName =
-              place.formatted_address ||
-              place.name ||
-              inputRef.current?.value ||
-              "";
-
-            const location = {
-              name: locationName,
-              lat,
-              lon: lng,
-            };
-
-            setSelectedLocation(location);
-            setError("");
-
-            map.setCenter({
-              lat,
-              lng,
-            });
-
-            map.setZoom(15);
-
-            setMarker(map, googleMaps, lat, lng);
-
-            onLocationSelect?.(location);
-          });
+          );
         }
 
+        /*
+         * Allow the user to tap anywhere on
+         * the map and select that location.
+         */
         map.addListener("click", (event) => {
-          if (!event.latLng) return;
+          if (!event.latLng) {
+            return;
+          }
 
-          const lat = event.latLng.lat();
-          const lng = event.latLng.lng();
+          const lat =
+            event.latLng.lat();
 
-          setMarker(map, googleMaps, lat, lng);
+          const lng =
+            event.latLng.lng();
 
-          reverseGeocode(googleMaps, lat, lng);
+          setMarker(
+            map,
+            googleMaps,
+            lat,
+            lng
+          );
+
+          reverseGeocode(
+            googleMaps,
+            lat,
+            lng
+          );
         });
 
         setLoading(false);
       } catch (err) {
-        console.error("VOYNU Google Maps error:", err);
+        console.error(
+          "VOYNU Google Maps error:",
+          err
+        );
 
         if (!cancelled) {
           setError(
@@ -230,14 +327,21 @@ export default function LocationPicker({
     return () => {
       cancelled = true;
 
-      if (autocompleteRef.current) {
-        googleMapsSafeClearListeners(
+      if (
+        autocompleteRef.current &&
+        typeof window !== "undefined" &&
+        window.google?.maps?.event
+      ) {
+        window.google.maps.event.clearInstanceListeners(
           autocompleteRef.current
         );
       }
     };
-  }, [onLocationSelect]);
+  }, []);
 
+  /*
+   * Add / replace map marker.
+   */
   const setMarker = (
     map,
     googleMaps,
@@ -254,11 +358,17 @@ export default function LocationPicker({
           lat,
           lng,
         },
+
         map,
-        animation: googleMaps.Animation.DROP,
+
+        animation:
+          googleMaps.Animation.DROP,
       });
   };
 
+  /*
+   * Convert coordinates into an address.
+   */
   const reverseGeocode = async (
     googleMaps,
     lat,
@@ -269,34 +379,38 @@ export default function LocationPicker({
         new googleMaps.Geocoder();
 
       const result =
-        await new Promise((resolve, reject) => {
-          geocoder.geocode(
-            {
-              location: {
-                lat,
-                lng,
+        await new Promise(
+          (resolve, reject) => {
+            geocoder.geocode(
+              {
+                location: {
+                  lat,
+                  lng,
+                },
               },
-            },
-            (results, status) => {
-              if (
-                status === "OK" &&
-                results?.length
-              ) {
-                resolve(results[0]);
-              } else {
-                reject(
-                  new Error(
-                    "Unable to identify this location."
-                  )
-                );
+              (results, status) => {
+                if (
+                  status === "OK" &&
+                  results?.length
+                ) {
+                  resolve(results[0]);
+                } else {
+                  reject(
+                    new Error(
+                      "Unable to identify this location."
+                    )
+                  );
+                }
               }
-            }
-          );
-        });
+            );
+          }
+        );
 
       const locationName =
         result.formatted_address ||
-        `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        `${lat.toFixed(
+          6
+        )}, ${lng.toFixed(6)}`;
 
       if (inputRef.current) {
         inputRef.current.value =
@@ -312,7 +426,9 @@ export default function LocationPicker({
       setSelectedLocation(location);
       setError("");
 
-      onLocationSelect?.(location);
+      onLocationSelectRef.current?.(
+        location
+      );
     } catch (err) {
       console.error(
         "Reverse geocoding failed:",
@@ -320,13 +436,19 @@ export default function LocationPicker({
       );
 
       const location = {
-        name: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+        name: `${lat.toFixed(
+          6
+        )}, ${lng.toFixed(6)}`,
+
         lat,
         lon: lng,
       };
 
       setSelectedLocation(location);
-      onLocationSelect?.(location);
+
+      onLocationSelectRef.current?.(
+        location
+      );
 
       setError(
         "Location selected, but the address could not be identified."
@@ -334,11 +456,15 @@ export default function LocationPicker({
     }
   };
 
+  /*
+   * Use the device's current location.
+   */
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError(
         "Your browser does not support location services."
       );
+
       return;
     }
 
@@ -385,6 +511,7 @@ export default function LocationPicker({
           );
         }
       },
+
       (err) => {
         console.error(
           "Geolocation error:",
@@ -405,6 +532,7 @@ export default function LocationPicker({
           );
         }
       },
+
       {
         enableHighAccuracy: true,
         timeout: 15000,
@@ -438,7 +566,9 @@ export default function LocationPicker({
         {loading && (
           <div className="mapOverlay">
             <div className="spinner" />
-            <span>Loading map...</span>
+            <span>
+              Loading map...
+            </span>
           </div>
         )}
       </div>
@@ -458,22 +588,26 @@ export default function LocationPicker({
           ref={inputRef}
           type="text"
           className="locationInput"
-          defaultValue={selectedLocation.name}
+          defaultValue={
+            selectedLocation.name
+          }
           placeholder={placeholder}
           autoComplete="off"
           onChange={(event) => {
-            setSelectedLocation((current) => ({
-              ...current,
-              name: event.target.value,
-            }));
+            setSelectedLocation(
+              (current) => ({
+                ...current,
+                name: event.target.value,
+              })
+            );
           }}
         />
       </div>
 
       <p className="helpText">
-        📍 Search for a place, building, address
-        or landmark, or tap the map to select an
-        exact location.
+        📍 Search for a place, building,
+        address or landmark, or tap the map
+        to select an exact location.
       </p>
 
       <style jsx>{`
@@ -529,7 +663,12 @@ export default function LocationPicker({
           align-items: center;
           justify-content: center;
           gap: 10px;
-          background: rgba(255, 255, 255, 0.85);
+          background: rgba(
+            255,
+            255,
+            255,
+            0.85
+          );
           color: #52625a;
           font-size: 13px;
           font-weight: 700;
@@ -609,17 +748,4 @@ export default function LocationPicker({
       `}</style>
     </div>
   );
-}
-
-function googleMapsSafeClearListeners(
-  instance
-) {
-  if (
-    typeof window !== "undefined" &&
-    window.google?.maps?.event
-  ) {
-    window.google.maps.event.clearInstanceListeners(
-      instance
-    );
-  }
-}
+              }
