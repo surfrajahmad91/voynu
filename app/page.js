@@ -1,18 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import LocationPicker from "@/app/components/LocationPicker";
+import { useEffect, useState } from "react";
+import LocationPicker from "./components/LocationPicker";
+
 export default function HomePage() {
-  const today = useMemo(() => {
+  const [today] = useState(() => {
     const date = new Date();
+
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
-  }, []);
+  });
 
-  const [tripType, setTripType] = useState("oneway");
+  const [tripType, setTripType] =
+    useState("oneway");
 
   const [pickup, setPickup] = useState({
     name: "",
@@ -26,24 +35,39 @@ export default function HomePage() {
     lon: null,
   });
 
-  const [travelDate, setTravelDate] = useState("");
-  const [pickupTime, setPickupTime] = useState("");
+  const [travelDate, setTravelDate] =
+    useState("");
 
-  const [returnDate, setReturnDate] = useState("");
-  const [returnTime, setReturnTime] = useState("");
+  const [pickupTime, setPickupTime] =
+    useState("");
 
-  const [passengerName, setPassengerName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
+  const [returnDate, setReturnDate] =
+    useState("");
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
+  const [returnTime, setReturnTime] =
+    useState("");
+
+  const [passengerName, setPassengerName] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [whatsapp, setWhatsapp] =
+    useState("");
+
+  const [message, setMessage] =
+    useState("");
+
+  const [messageType, setMessageType] =
+    useState("");
 
   /*
-   * Keep WhatsApp number synced with phone until
-   * the user deliberately changes it.
+   * Keep WhatsApp number synced with phone
+   * until the user deliberately changes it.
    */
-  const [whatsappEdited, setWhatsappEdited] = useState(false);
+  const [whatsappEdited, setWhatsappEdited] =
+    useState(false);
 
   useEffect(() => {
     if (!whatsappEdited) {
@@ -52,10 +76,12 @@ export default function HomePage() {
   }, [phone, whatsappEdited]);
 
   /*
-   * When switching back to one-way, clear return details.
+   * When switching back to one-way,
+   * clear return details.
    */
   const handleTripTypeChange = (type) => {
     setTripType(type);
+
     setMessage("");
     setMessageType("");
 
@@ -66,29 +92,46 @@ export default function HomePage() {
   };
 
   /*
-   * Keep return date valid if the travel date changes.
+   * Keep return date valid if the travel
+   * date changes.
    */
   const handleTravelDateChange = (value) => {
     setTravelDate(value);
 
-    if (returnDate && value && returnDate < value) {
+    if (
+      returnDate &&
+      value &&
+      returnDate < value
+    ) {
       setReturnDate("");
     }
   };
 
   /*
    * Basic Indian mobile number validation.
-   * Allows +91XXXXXXXXXX or 10 digit number.
+   *
+   * Allows:
+   * 10 digit number
+   * +91XXXXXXXXXX
+   * 91XXXXXXXXXX
    */
   const isValidPhone = (value) => {
-    const cleaned = value.replace(/\D/g, "");
+    const cleaned =
+      value.replace(/\D/g, "");
 
     if (cleaned.length === 10) {
-      return /^[6-9]\d{9}$/.test(cleaned);
+      return /^[6-9]\d{9}$/.test(
+        cleaned
+      );
     }
 
-    if (cleaned.length === 12 && cleaned.startsWith("91")) {
-      return /^[6-9]\d{9}$/.test(cleaned.slice(2));
+    if (
+      cleaned.length === 12 &&
+      cleaned.startsWith("91")
+    ) {
+      return /^[6-9]\d{9}$/.test(
+        cleaned.slice(2)
+      );
     }
 
     return false;
@@ -103,53 +146,95 @@ export default function HomePage() {
     setMessage("");
     setMessageType("");
 
+    /*
+     * Pickup
+     */
     if (!pickup?.name?.trim()) {
-      showError("Please select your pickup location.");
+      showError(
+        "Please select your pickup location."
+      );
       return;
     }
 
+    /*
+     * Drop
+     */
     if (!drop?.name?.trim()) {
-      showError("Please select your drop location.");
+      showError(
+        "Please select your drop location."
+      );
       return;
     }
 
+    /*
+     * Travel date
+     */
     if (!travelDate) {
-      showError("Please select your travel date.");
+      showError(
+        "Please select your travel date."
+      );
       return;
     }
 
+    /*
+     * Pickup time
+     */
     if (!pickupTime) {
-      showError("Please select your pickup time.");
+      showError(
+        "Please select your pickup time."
+      );
       return;
     }
 
+    /*
+     * Passenger
+     */
     if (!passengerName.trim()) {
-      showError("Please enter the passenger name.");
+      showError(
+        "Please enter the passenger name."
+      );
       return;
     }
 
+    /*
+     * Phone
+     */
     if (!isValidPhone(phone)) {
-      showError("Please enter a valid 10-digit Indian mobile number.");
+      showError(
+        "Please enter a valid 10-digit Indian mobile number."
+      );
       return;
     }
 
+    /*
+     * Round trip validation
+     */
     if (tripType === "roundtrip") {
       if (!returnDate) {
-        showError("Please select the return date.");
+        showError(
+          "Please select the return date."
+        );
         return;
       }
 
       if (returnDate < travelDate) {
-        showError("Return date cannot be before the travel date.");
+        showError(
+          "Return date cannot be before the travel date."
+        );
         return;
       }
 
       if (!returnTime) {
-        showError("Please select the return time.");
+        showError(
+          "Please select the return time."
+        );
         return;
       }
     }
 
+    /*
+     * Booking data
+     */
     const bookingData = {
       tripType,
 
@@ -169,17 +254,27 @@ export default function HomePage() {
       pickupTime,
 
       returnDate:
-        tripType === "roundtrip" ? returnDate : null,
+        tripType === "roundtrip"
+          ? returnDate
+          : null,
 
       returnTime:
-        tripType === "roundtrip" ? returnTime : null,
+        tripType === "roundtrip"
+          ? returnTime
+          : null,
 
-      passengerName: passengerName.trim(),
+      passengerName:
+        passengerName.trim(),
+
       phone: phone.trim(),
+
       whatsapp: whatsapp.trim(),
     };
 
-    console.log("VOYNU booking:", bookingData);
+    console.log(
+      "VOYNU booking:",
+      bookingData
+    );
 
     setMessage(
       "Your trip details are ready. The next step is to choose your cab."
@@ -197,10 +292,15 @@ export default function HomePage() {
       <header className="header">
         <div className="headerInner">
           <div className="brand">
-            <div className="brandMark">V</div>
+            <div className="brandMark">
+              V
+            </div>
 
             <div>
-              <div className="brandName">VOYNU</div>
+              <div className="brandName">
+                VOYNU
+              </div>
+
               <div className="brandTagline">
                 Travel safe. Travel smart.
               </div>
@@ -211,7 +311,10 @@ export default function HomePage() {
             href="tel:+919123456789"
             className="headerPhone"
           >
-            <span className="phoneIcon">☎</span>
+            <span className="phoneIcon">
+              ☎
+            </span>
+
             +91 91234 56789
           </a>
         </div>
@@ -228,7 +331,10 @@ export default function HomePage() {
         <div className="heroInner">
           <div className="serviceBadge">
             <span className="badgeDot" />
-            Serving within <strong>200 km</strong> from Kanpur
+
+            Serving within{" "}
+            <strong>200 km</strong> from
+            Kanpur
           </div>
 
           <div className="heroGrid">
@@ -240,32 +346,51 @@ export default function HomePage() {
               </h1>
 
               <p>
-                Book a reliable cab for your journey.
+                Book a reliable cab for your
+                journey.
                 <br className="desktopBreak" />
                 Travel safe. Travel smart.
               </p>
 
               <div className="heroFeatures">
                 <div className="heroFeature">
-                  <span className="featureIcon">✓</span>
-                  <span>Verified Drivers</span>
+                  <span className="featureIcon">
+                    ✓
+                  </span>
+
+                  <span>
+                    Verified Drivers
+                  </span>
                 </div>
 
                 <div className="heroFeature">
-                  <span className="featureIcon">⌁</span>
-                  <span>Safe &amp; Secure</span>
+                  <span className="featureIcon">
+                    ⌁
+                  </span>
+
+                  <span>
+                    Safe &amp; Secure
+                  </span>
                 </div>
 
                 <div className="heroFeature">
-                  <span className="featureIcon">⚡</span>
-                  <span>EV Rides</span>
+                  <span className="featureIcon">
+                    ⚡
+                  </span>
+
+                  <span>
+                    EV Rides
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="heroVehicle">
               <div className="vehicleGlow" />
-              <div className="vehicle">🚙</div>
+
+              <div className="vehicle">
+                🚙
+              </div>
             </div>
           </div>
         </div>
@@ -279,8 +404,14 @@ export default function HomePage() {
         <div className="bookingCard">
           <div className="bookingHeader">
             <div>
-              <h2>Book your ride</h2>
-              <p>Tell us where you want to go.</p>
+              <h2>
+                Book your ride
+              </h2>
+
+              <p>
+                Tell us where you want to
+                go.
+              </p>
             </div>
 
             <div className="secureBadge">
@@ -302,13 +433,23 @@ export default function HomePage() {
                   : "tripButton"
               }
               onClick={() =>
-                handleTripTypeChange("oneway")
+                handleTripTypeChange(
+                  "oneway"
+                )
               }
             >
-              <span className="tripIcon">→</span>
+              <span className="tripIcon">
+                →
+              </span>
+
               <span>
-                <strong>One Way</strong>
-                <small>Single journey</small>
+                <strong>
+                  One Way
+                </strong>
+
+                <small>
+                  Single journey
+                </small>
               </span>
             </button>
 
@@ -320,13 +461,23 @@ export default function HomePage() {
                   : "tripButton"
               }
               onClick={() =>
-                handleTripTypeChange("roundtrip")
+                handleTripTypeChange(
+                  "roundtrip"
+                )
               }
             >
-              <span className="tripIcon">⇄</span>
+              <span className="tripIcon">
+                ⇄
+              </span>
+
               <span>
-                <strong>Round Trip</strong>
-                <small>Return journey</small>
+                <strong>
+                  Round Trip
+                </strong>
+
+                <small>
+                  Return journey
+                </small>
               </span>
             </button>
           </div>
@@ -336,8 +487,13 @@ export default function HomePage() {
           ===================================================== */}
 
           <div className="sectionLabel">
-            <span className="sectionNumber">1</span>
-            <span>Journey details</span>
+            <span className="sectionNumber">
+              1
+            </span>
+
+            <span>
+              Journey details
+            </span>
           </div>
 
           <div className="locationGrid">
@@ -347,8 +503,11 @@ export default function HomePage() {
                 value={pickup.name}
                 placeholder="Search pickup location"
                 allowCurrentLocation={true}
-                onLocationSelect={(location) => {
+                onLocationSelect={(
+                  location
+                ) => {
                   setPickup(location);
+
                   setMessage("");
                   setMessageType("");
                 }}
@@ -361,8 +520,11 @@ export default function HomePage() {
                 value={drop.name}
                 placeholder="Search destination"
                 allowCurrentLocation={false}
-                onLocationSelect={(location) => {
+                onLocationSelect={(
+                  location
+                ) => {
                   setDrop(location);
+
                   setMessage("");
                   setMessageType("");
                 }}
@@ -377,7 +539,10 @@ export default function HomePage() {
           <div className="formGrid">
             <div className="field">
               <label htmlFor="travelDate">
-                <span className="labelIcon">▣</span>
+                <span className="labelIcon">
+                  ▣
+                </span>
+
                 Travel date
               </label>
 
@@ -396,7 +561,10 @@ export default function HomePage() {
 
             <div className="field">
               <label htmlFor="pickupTime">
-                <span className="labelIcon">◷</span>
+                <span className="labelIcon">
+                  ◷
+                </span>
+
                 Pickup time
               </label>
 
@@ -417,7 +585,8 @@ export default function HomePage() {
               ROUND TRIP
           ===================================================== */}
 
-          {tripType === "roundtrip" && (
+          {tripType ===
+            "roundtrip" && (
             <div className="roundTripBox">
               <div className="roundTripTitle">
                 <span>⇄</span>
@@ -427,7 +596,10 @@ export default function HomePage() {
               <div className="formGrid">
                 <div className="field">
                   <label htmlFor="returnDate">
-                    <span className="labelIcon">▣</span>
+                    <span className="labelIcon">
+                      ▣
+                    </span>
+
                     Return date
                   </label>
 
@@ -435,7 +607,10 @@ export default function HomePage() {
                     id="returnDate"
                     type="date"
                     value={returnDate}
-                    min={travelDate || today}
+                    min={
+                      travelDate ||
+                      today
+                    }
                     onChange={(event) =>
                       setReturnDate(
                         event.target.value
@@ -446,7 +621,10 @@ export default function HomePage() {
 
                 <div className="field">
                   <label htmlFor="returnTime">
-                    <span className="labelIcon">◷</span>
+                    <span className="labelIcon">
+                      ◷
+                    </span>
+
                     Return time
                   </label>
 
@@ -470,13 +648,21 @@ export default function HomePage() {
           ===================================================== */}
 
           <div className="sectionLabel passengerSectionLabel">
-            <span className="sectionNumber">2</span>
-            <span>Passenger details</span>
+            <span className="sectionNumber">
+              2
+            </span>
+
+            <span>
+              Passenger details
+            </span>
           </div>
 
           <div className="field">
             <label htmlFor="passengerName">
-              <span className="labelIcon">●</span>
+              <span className="labelIcon">
+                ●
+              </span>
+
               Passenger name
             </label>
 
@@ -497,7 +683,10 @@ export default function HomePage() {
           <div className="formGrid">
             <div className="field">
               <label htmlFor="phone">
-                <span className="labelIcon">☎</span>
+                <span className="labelIcon">
+                  ☎
+                </span>
+
                 Phone number
               </label>
 
@@ -522,7 +711,10 @@ export default function HomePage() {
 
             <div className="field">
               <label htmlFor="whatsapp">
-                <span className="labelIcon">◌</span>
+                <span className="labelIcon">
+                  ◌
+                </span>
+
                 WhatsApp number
               </label>
 
@@ -535,7 +727,9 @@ export default function HomePage() {
                 value={whatsapp}
                 maxLength={12}
                 onChange={(event) => {
-                  setWhatsappEdited(true);
+                  setWhatsappEdited(
+                    true
+                  );
 
                   setWhatsapp(
                     event.target.value.replace(
@@ -546,11 +740,13 @@ export default function HomePage() {
                 }}
               />
 
-              {!whatsappEdited && phone && (
-                <div className="fieldHint">
-                  Same as your phone number
-                </div>
-              )}
+              {!whatsappEdited &&
+                phone && (
+                  <div className="fieldHint">
+                    Same as your phone
+                    number
+                  </div>
+                )}
             </div>
           </div>
 
@@ -561,18 +757,22 @@ export default function HomePage() {
           {message && (
             <div
               className={
-                messageType === "success"
+                messageType ===
+                "success"
                   ? "message successMessage"
                   : "message errorMessage"
               }
             >
               <span className="messageIcon">
-                {messageType === "success"
+                {messageType ===
+                "success"
                   ? "✓"
                   : "!"}
               </span>
 
-              <span>{message}</span>
+              <span>
+                {message}
+              </span>
             </div>
           )}
 
@@ -585,13 +785,20 @@ export default function HomePage() {
             className="continueButton"
             onClick={handleContinue}
           >
-            <span>Continue</span>
-            <span className="continueArrow">→</span>
+            <span>
+              Continue
+            </span>
+
+            <span className="continueArrow">
+              →
+            </span>
           </button>
 
           <div className="bookingFooter">
             <span>🔒</span>
-            Your information is safe and secure.
+
+            Your information is safe
+            and secure.
           </div>
         </div>
       </section>
@@ -603,8 +810,15 @@ export default function HomePage() {
       <footer className="footer">
         <div className="footerInner">
           <div>
-            <strong>VOYNU</strong>
-            <span> © {new Date().getFullYear()}</span>
+            <strong>
+              VOYNU
+            </strong>
+
+            <span>
+              {" "}
+              ©{" "}
+              {new Date().getFullYear()}
+            </span>
           </div>
 
           <div>
@@ -636,10 +850,6 @@ export default function HomePage() {
             sans-serif;
         }
 
-        /* =====================================================
-           HEADER
-        ===================================================== */
-
         .header {
           background: #ffffff;
           border-bottom: 1px solid #e8eee9;
@@ -648,7 +858,10 @@ export default function HomePage() {
         }
 
         .headerInner {
-          width: min(1180px, calc(100% - 40px));
+          width: min(
+            1180px,
+            calc(100% - 40px)
+          );
           min-height: 72px;
           margin: 0 auto;
 
@@ -710,10 +923,6 @@ export default function HomePage() {
           font-size: 15px;
         }
 
-        /* =====================================================
-           HERO
-        ===================================================== */
-
         .hero {
           position: relative;
           overflow: hidden;
@@ -728,7 +937,10 @@ export default function HomePage() {
         }
 
         .heroInner {
-          width: min(1180px, calc(100% - 40px));
+          width: min(
+            1180px,
+            calc(100% - 40px)
+          );
           margin: 0 auto;
 
           padding: 42px 0 78px;
@@ -761,7 +973,12 @@ export default function HomePage() {
           top: -145px;
 
           border-radius: 50%;
-          background: rgba(8, 120, 63, 0.055);
+          background: rgba(
+            8,
+            120,
+            63,
+            0.055
+          );
         }
 
         .serviceBadge {
@@ -774,13 +991,24 @@ export default function HomePage() {
           border: 1px solid #d8e7dc;
           border-radius: 30px;
 
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(
+            255,
+            255,
+            255,
+            0.9
+          );
 
           color: #596a61;
           font-size: 12px;
 
           box-shadow:
-            0 5px 18px rgba(0, 0, 0, 0.035);
+            0 5px 18px
+              rgba(
+                0,
+                0,
+                0,
+                0.035
+              );
         }
 
         .badgeDot {
@@ -792,7 +1020,8 @@ export default function HomePage() {
 
         .heroGrid {
           display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
+          grid-template-columns:
+            1.2fr 0.8fr;
           align-items: center;
           gap: 30px;
 
@@ -804,7 +1033,11 @@ export default function HomePage() {
 
           color: #26372f;
 
-          font-size: clamp(48px, 7vw, 78px);
+          font-size: clamp(
+            48px,
+            7vw,
+            78px
+          );
           line-height: 0.97;
 
           letter-spacing: -4px;
@@ -877,7 +1110,12 @@ export default function HomePage() {
           height: 100px;
 
           border-radius: 50%;
-          background: rgba(8, 120, 63, 0.08);
+          background: rgba(
+            8,
+            120,
+            63,
+            0.08
+          );
 
           transform: rotate(-8deg);
         }
@@ -889,17 +1127,23 @@ export default function HomePage() {
           line-height: 1;
 
           transform: translateY(5px);
+
           filter: drop-shadow(
-            0 14px 15px rgba(0, 0, 0, 0.08)
+            0 14px 15px
+              rgba(
+                0,
+                0,
+                0,
+                0.08
+              )
           );
         }
 
-        /* =====================================================
-           BOOKING SECTION
-        ===================================================== */
-
         .bookingSection {
-          width: min(1180px, calc(100% - 40px));
+          width: min(
+            1180px,
+            calc(100% - 40px)
+          );
           margin: -30px auto 0;
 
           position: relative;
@@ -916,9 +1160,21 @@ export default function HomePage() {
           background: #ffffff;
 
           box-shadow:
-            0 20px 60px rgba(25, 55, 39, 0.1);
+            0 20px 60px
+              rgba(
+                25,
+                55,
+                39,
+                0.1
+              );
 
-          border: 1px solid rgba(219, 231, 223, 0.75);
+          border: 1px solid
+            rgba(
+              219,
+              231,
+              223,
+              0.75
+            );
         }
 
         .bookingHeader {
@@ -960,15 +1216,15 @@ export default function HomePage() {
           font-weight: 700;
         }
 
-        /* =====================================================
-           TRIP TOGGLE
-        ===================================================== */
-
         .tripToggle {
-          width: min(620px, 100%);
+          width: min(
+            620px,
+            100%
+          );
 
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns:
+            1fr 1fr;
 
           gap: 5px;
 
@@ -1030,12 +1286,14 @@ export default function HomePage() {
           color: #ffffff;
 
           box-shadow:
-            0 5px 15px rgba(8, 120, 63, 0.2);
+            0 5px 15px
+              rgba(
+                8,
+                120,
+                63,
+                0.2
+              );
         }
-
-        /* =====================================================
-           SECTION LABEL
-        ===================================================== */
 
         .sectionLabel {
           display: flex;
@@ -1071,13 +1329,10 @@ export default function HomePage() {
           margin-top: 29px;
         }
 
-        /* =====================================================
-           LOCATIONS
-        ===================================================== */
-
         .locationGrid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns:
+            1fr 1fr;
           gap: 20px;
         }
 
@@ -1085,13 +1340,10 @@ export default function HomePage() {
           min-width: 0;
         }
 
-        /* =====================================================
-           FORM
-        ===================================================== */
-
         .formGrid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns:
+            1fr 1fr;
           gap: 20px;
 
           margin-top: 18px;
@@ -1152,7 +1404,13 @@ export default function HomePage() {
           border-color: #08783f;
 
           box-shadow:
-            0 0 0 3px rgba(8, 120, 63, 0.09);
+            0 0 0 3px
+              rgba(
+                8,
+                120,
+                63,
+                0.09
+              );
         }
 
         .fieldHint {
@@ -1161,10 +1419,6 @@ export default function HomePage() {
           color: #839189;
           font-size: 10px;
         }
-
-        /* =====================================================
-           ROUND TRIP
-        ===================================================== */
 
         .roundTripBox {
           margin-top: 20px;
@@ -1194,10 +1448,6 @@ export default function HomePage() {
         .roundTripBox .formGrid {
           margin-top: 15px;
         }
-
-        /* =====================================================
-           MESSAGE
-        ===================================================== */
 
         .message {
           display: flex;
@@ -1251,10 +1501,6 @@ export default function HomePage() {
           color: #ffffff;
         }
 
-        /* =====================================================
-           CONTINUE
-        ===================================================== */
-
         .continueButton {
           width: 100%;
           height: 56px;
@@ -1280,7 +1526,13 @@ export default function HomePage() {
           cursor: pointer;
 
           box-shadow:
-            0 7px 18px rgba(8, 120, 63, 0.18);
+            0 7px 18px
+              rgba(
+                8,
+                120,
+                63,
+                0.18
+              );
 
           transition:
             transform 0.18s ease,
@@ -1294,7 +1546,13 @@ export default function HomePage() {
           transform: translateY(-1px);
 
           box-shadow:
-            0 10px 22px rgba(8, 120, 63, 0.22);
+            0 10px 22px
+              rgba(
+                8,
+                120,
+                63,
+                0.22
+              );
         }
 
         .continueButton:active {
@@ -1318,17 +1576,16 @@ export default function HomePage() {
           font-size: 11px;
         }
 
-        /* =====================================================
-           FOOTER
-        ===================================================== */
-
         .footer {
           background: #26372f;
           color: #ffffff;
         }
 
         .footerInner {
-          width: min(1180px, calc(100% - 40px));
+          width: min(
+            1180px,
+            calc(100% - 40px)
+          );
           min-height: 68px;
 
           display: flex;
@@ -1337,7 +1594,12 @@ export default function HomePage() {
 
           margin: 0 auto;
 
-          color: rgba(255, 255, 255, 0.78);
+          color: rgba(
+            255,
+            255,
+            255,
+            0.78
+          );
 
           font-size: 11px;
         }
@@ -1346,10 +1608,6 @@ export default function HomePage() {
           color: #ffffff;
           letter-spacing: 0.5px;
         }
-
-        /* =====================================================
-           TABLET
-        ===================================================== */
 
         @media (max-width: 900px) {
           .heroGrid {
@@ -1369,13 +1627,11 @@ export default function HomePage() {
           }
         }
 
-        /* =====================================================
-           MOBILE
-        ===================================================== */
-
         @media (max-width: 700px) {
           .headerInner {
-            width: calc(100% - 28px);
+            width: calc(
+              100% - 28px
+            );
             min-height: 62px;
           }
 
@@ -1401,7 +1657,9 @@ export default function HomePage() {
           }
 
           .heroInner {
-            width: calc(100% - 28px);
+            width: calc(
+              100% - 28px
+            );
 
             padding: 28px 0 56px;
           }
@@ -1417,7 +1675,6 @@ export default function HomePage() {
 
           .heroText p {
             margin-top: 17px;
-
             font-size: 14px;
           }
 
@@ -1427,7 +1684,6 @@ export default function HomePage() {
 
           .heroFeatures {
             gap: 12px 17px;
-
             margin-top: 22px;
           }
 
@@ -1438,7 +1694,6 @@ export default function HomePage() {
           .featureIcon {
             width: 22px;
             height: 22px;
-
             font-size: 11px;
           }
 
@@ -1451,7 +1706,9 @@ export default function HomePage() {
           }
 
           .bookingSection {
-            width: calc(100% - 20px);
+            width: calc(
+              100% - 20px
+            );
 
             margin-top: -23px;
 
@@ -1540,7 +1797,9 @@ export default function HomePage() {
           }
 
           .footerInner {
-            width: calc(100% - 28px);
+            width: calc(
+              100% - 28px
+            );
 
             min-height: 62px;
 
@@ -1550,10 +1809,6 @@ export default function HomePage() {
             gap: 4px;
           }
         }
-
-        /* =====================================================
-           VERY SMALL PHONES
-        ===================================================== */
 
         @media (max-width: 380px) {
           .headerPhone {
@@ -1579,4 +1834,4 @@ export default function HomePage() {
       `}</style>
     </main>
   );
-        }
+  }
