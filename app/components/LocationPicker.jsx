@@ -2,541 +2,400 @@
 
 import { useEffect, useRef, useState } from "react";
 
-let googleMapsPromise = null;
+const GOOGLE_MAPS_SCRIPT_ID = "voynu-google-maps";
 
-function loadGoogleMaps() {
-  if (typeof window === "undefined") {
-    return Promise.reject(
-      new Error("Window is unavailable.")
-    );
-  }
-
-  // Already loaded
-  if (
-    window.google &&
-    window.google.maps &&
-    window.google.maps.Map
-  ) {
-    return Promise.resolve(window.google.maps);
-  }
-
-  // Already loading
-  if (googleMapsPromise) {
-    return googleMapsPromise;
-  }
-
-  const apiKey =
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  if (!apiKey) {
-    return Promise.reject(
-      new Error(
-        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing from the Vercel environment variables."
-      )
-    );
-  }
-
-  googleMapsPromise = new Promise(
-    (resolve, reject) => {
-      const existingScript =
-        document.getElementById(
-          "google-maps-script"
-        );
-
-      // Script already exists
-      if (existingScript) {
-        const checkGoogleMaps = () => {
-          if (
-            window.google &&
-            window.google.maps &&
-            window.google.maps.Map
-          ) {
-            resolve(window.google.maps);
-          } else {
-            reject(
-              new Error(
-                "Google Maps script loaded, but Google Maps Map class is unavailable."
-              )
-            );
-          }
-        };
-
-        existingScript.addEventListener(
-          "load",
-          checkGoogleMaps,
-          { once: true }
-        );
-
-        existingScript.addEventListener(
-          "error",
-          () => {
-            reject(
-              new Error(
-                "Google Maps JavaScript API failed to load."
-              )
-            );
-          },
-          { once: true }
-        );
-
-        // It may have loaded before our listener was attached
-        if (
-          window.google &&
-          window.google.maps &&
-          window.google.maps.Map
-        ) {
-          resolve(window.google.maps);
-        }
-
-        return;
-      }
-
-      window.gm_authFailure = () => {
-        reject(
-          new Error(
-            "Google rejected the API key. Check API restrictions, website restrictions, billing, and enabled APIs."
-          )
-        );
-      };
-
-      const script =
-        document.createElement("script");
-
-      script.id =
-        "google-maps-script";
-
-      script.src =
-        "https://maps.googleapis.com/maps/api/js" +
-        `?key=${encodeURIComponent(apiKey)}` +
-        "&v=weekly";
-
-      script.async = true;
-      script.defer = true;
-
-      script.onload = () => {
-        if (
-          window.google &&
-          window.google.maps &&
-          window.google.maps.Map
-        ) {
-          resolve(window.google.maps);
-        } else {
-          reject(
-            new Error(
-              "Google Maps script loaded, but Google Maps Map class is unavailable."
-            )
-          );
-        }
-      };
-
-      script.onerror = () => {
-        reject(
-          new Error(
-            "Unable to download the Google Maps JavaScript API."
-          )
-        );
-      };
-
-      document.head.appendChild(script);
+function loadGoogleMaps(apiKey) {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      reject(new Error("Google Maps can only load in the browser."));
+      return;
     }
-  );
 
-  return googleMapsPromise;
+    if (window.google && window.google.maps) {
+      resolve(window.google);
+      return;
+    }
+
+    const existingScript = document.getElementById(
+      GOOGLE_MAPS_SCRIPT_ID
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => {
+        if (window.google && window.google.maps) {
+          resolve(window.google);
+        } else {
+          reject(new Error("Google Maps loaded incorrectly."));
+        }
+      });
+
+      existingScript.addEventListener("error", () => {
+        reject(new Error("Unable to load Google Maps."));
+      });
+
+      return;
+    }
+
+    const script = document.createElement("script");
+
+    script.id = GOOGLE_MAPS_SCRIPT_ID;
+    script.src =
+      "https://maps.googleapis.com/maps/api/js?key=" +
+      encodeURIComponent(apiKey) +
+      "&v=weekly";
+
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
+      if (window.google && window.google.maps) {
+        resolve(window.google);
+      } else {
+        reject(new Error("Google Maps loaded incorrectly."));
+      }
+    };
+
+    script.onerror = () => {
+      reject(
+        new Error(
+          "Unable to load Google Maps. Check your API key and website restrictions."
+        )
+      );
+    };
+
+    document.head.appendChild(script);
+  });
 }
 
 export default function LocationPicker({
   label,
   value,
+  placeholder = "Search pickup location",
   onLocationSelect,
-  placeholder = "Search location",
   allowCurrentLocation = false,
 }) {
+  const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
-  const mapInstance = useRef(null);
   const markerRef = useRef(null);
   const geocoderRef = useRef(null);
+  const mountedRef = useRef(true);
 
-  const [search, setSearch] =
-    useState(value || "");
+  const [query, setQuery] = useState(value || "");
+  const [loading, setLoading] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [error, setError] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [searchResults, setSearchResults] =
-    useState([]);
-
-  const [mapError, setMapError] =
-    useState("");
-
-  /*
-   * Keep the input synchronized
-   * with the parent value.
-   */
   useEffect(() => {
-    setSearch(value || "");
-  }, [value]);
-
-  /*
-   * Initialize Google Maps.
-   *
-   * IMPORTANT:
-   * We deliberately use the classic
-   * Google Maps API.
-   *
-   * No importLibrary().
-   */
-  useEffect(() => {
-    let cancelled = false;
-
-    async function initializeMap() {
-      try {
-        setMapError("");
-
-        const google =
-          await loadGoogleMaps();
-
-        if (cancelled) {
-          return;
-        }
-
-        if (!mapRef.current) {
-          return;
-        }
-
-        if (
-          !google ||
-          !google.maps ||
-          !google.maps.Map
-        ) {
-          throw new Error(
-            "Google Maps Map class is unavailable."
-          );
-        }
-
-        if (mapInstance.current) {
-          return;
-        }
-
-        const kanpur = {
-          lat: 26.4499,
-          lng: 80.3319,
-        };
-
-        const map =
-          new google.maps.Map(
-            mapRef.current,
-            {
-              center: kanpur,
-              zoom: 11,
-
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: true,
-
-              gestureHandling: "greedy",
-            }
-          );
-
-        if (cancelled) {
-          return;
-        }
-
-        mapInstance.current = map;
-
-        geocoderRef.current =
-          new google.maps.Geocoder();
-
-        /*
-         * Allow the user to tap the map
-         * and select an exact location.
-         */
-        map.addListener(
-          "click",
-          async (event) => {
-            if (
-              !event.latLng
-            ) {
-              return;
-            }
-
-            const lat =
-              event.latLng.lat();
-
-            const lng =
-              event.latLng.lng();
-
-            await selectLocation(
-              lat,
-              lng
-            );
-          }
-        );
-      } catch (error) {
-        console.error(
-          "Google Maps initialization error:",
-          error
-        );
-
-        if (!cancelled) {
-          setMapError(
-            error?.message ||
-              "Google Maps could not be initialized."
-          );
-        }
-      }
-    }
-
-    initializeMap();
+    mountedRef.current = true;
 
     return () => {
-      cancelled = true;
-
-      mapInstance.current = null;
-      markerRef.current = null;
-      geocoderRef.current = null;
+      mountedRef.current = false;
     };
   }, []);
 
-  /*
-   * Create a short readable location name.
-   */
-  const createShortLocationName =
-    (result) => {
-      if (!result) {
-        return "";
-      }
+  // Keep input synchronized with parent.
+  useEffect(() => {
+    setQuery(value || "");
+  }, [value]);
 
-      const components =
-        result.address_components ||
-        [];
+  // Load Google Maps.
+  useEffect(() => {
+    const apiKey =
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-      const getComponent = (
-        types
-      ) => {
-        const component =
-          components.find(
-            (item) =>
-              types.some((type) =>
-                item.types.includes(type)
-              )
+    if (!apiKey) {
+      setError(
+        "Google Maps API key is missing. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in Vercel."
+      );
+      return;
+    }
+
+    let cancelled = false;
+
+    loadGoogleMaps(apiKey)
+      .then(() => {
+        if (!cancelled && mountedRef.current) {
+          setMapReady(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Google Maps loading error:", err);
+
+        if (!cancelled && mountedRef.current) {
+          setError(
+            err.message ||
+              "Unable to load Google Maps."
           );
+        }
+      });
 
-        return component?.long_name || "";
-      };
-
-      const parts = [
-        getComponent([
-          "route",
-        ]),
-
-        getComponent([
-          "sublocality",
-          "sublocality_level_1",
-          "neighborhood",
-        ]),
-
-        getComponent([
-          "locality",
-          "postal_town",
-        ]),
-
-        getComponent([
-          "administrative_area_level_2",
-        ]),
-      ].filter(Boolean);
-
-      return [
-        ...new Set(parts),
-      ]
-        .slice(0, 3)
-        .join(", ");
+    return () => {
+      cancelled = true;
     };
+  }, []);
 
-  /*
-   * Update the marker.
-   */
-  const updateMarker = (
-    lat,
-    lng
-  ) => {
+  // Initialize Google Map.
+  useEffect(() => {
     if (
-      !mapInstance.current ||
+      !mapReady ||
+      !mapContainerRef.current ||
       !window.google ||
       !window.google.maps
     ) {
       return;
     }
 
-    const position = {
-      lat,
-      lng,
-    };
-
-    if (markerRef.current) {
-      markerRef.current.setPosition(
-        position
-      );
-    } else {
-      markerRef.current =
-        new window.google.maps.Marker({
-          position,
-          map: mapInstance.current,
-        });
-    }
-
-    mapInstance.current.setCenter(
-      position
-    );
-
-    mapInstance.current.setZoom(15);
-  };
-
-  /*
-   * Reverse geocode coordinates.
-   */
-  const selectLocation = async (
-    lat,
-    lng
-  ) => {
-    if (!geocoderRef.current) {
-      setMapError(
-        "Google Maps geocoder is not ready yet. Please try again."
-      );
-
+    if (mapRef.current) {
       return;
     }
 
-    setLoading(true);
-    setSearchResults([]);
+    const google = window.google;
+
+    const map = new google.maps.Map(
+      mapContainerRef.current,
+      {
+        center: {
+          lat: 26.4499,
+          lng: 80.3319,
+        },
+        zoom: 11,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        gestureHandling: "greedy",
+      }
+    );
+
+    const geocoder = new google.maps.Geocoder();
+
+    mapRef.current = map;
+    geocoderRef.current = geocoder;
+
+    map.addListener("click", (event) => {
+      if (
+        event.latLng &&
+        typeof event.latLng.lat === "function" &&
+        typeof event.latLng.lng === "function"
+      ) {
+        selectCoordinates(
+          event.latLng.lat(),
+          event.latLng.lng()
+        );
+      }
+    });
+
+    // If a location already exists, try to display it.
+    if (value) {
+      geocodeExistingValue(value);
+    }
+
+    return () => {
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
+      }
+
+      mapRef.current = null;
+      geocoderRef.current = null;
+    };
+    // Intentionally only initialize once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady]);
+
+  const geocodeExistingValue = async (locationValue) => {
+    if (!geocoderRef.current || !mapRef.current) {
+      return;
+    }
 
     try {
       const response =
         await geocoderRef.current.geocode({
-          location: {
-            lat,
-            lng,
-          },
+          address: locationValue,
+          region: "IN",
         });
 
-      const result =
-        response.results?.[0];
+      if (
+        response.results &&
+        response.results.length > 0
+      ) {
+        const location =
+          response.results[0].geometry.location;
 
-      const locationName =
-        createShortLocationName(
-          result
-        ) ||
-        result?.formatted_address ||
-        `${lat.toFixed(
-          5
-        )}, ${lng.toFixed(5)}`;
+        const lat = location.lat();
+        const lng = location.lng();
 
-      setSearch(locationName);
+        placeMarker(lat, lng);
 
-      updateMarker(
-        lat,
-        lng
-      );
-
-      if (onLocationSelect) {
-        onLocationSelect({
-          name: locationName,
-
-          fullName:
-            result?.formatted_address ||
-            locationName,
-
+        mapRef.current.setCenter({
           lat,
-
-          lon: lng,
+          lng,
         });
-      }
-    } catch (error) {
-      console.error(
-        "Reverse geocoding error:",
-        error
-      );
 
-      setMapError(
-        "Unable to identify this location. Please try again."
+        mapRef.current.setZoom(15);
+      }
+    } catch (err) {
+      console.error(
+        "Existing location geocoding error:",
+        err
       );
-    } finally {
-      setLoading(false);
     }
   };
 
-  /*
-   * Search Google for a location.
-   */
-  const searchLocation = async () => {
-    if (!search.trim()) {
+  const placeMarker = (lat, lng) => {
+    if (!window.google || !window.google.maps) {
       return;
     }
 
-    if (!geocoderRef.current) {
-      setMapError(
-        "Google Maps is still loading. Please try again in a moment."
-      );
+    const google = window.google;
 
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+    }
+
+    markerRef.current =
+      new google.maps.Marker({
+        position: {
+          lat,
+          lng,
+        },
+        map: mapRef.current,
+        animation:
+          google.maps.Animation.DROP,
+      });
+  };
+
+  const selectCoordinates = async (
+    lat,
+    lng,
+    suppliedName = ""
+  ) => {
+    if (!mapRef.current) {
       return;
     }
 
     setLoading(true);
+    setError("");
     setSearchResults([]);
-    setMapError("");
+
+    placeMarker(lat, lng);
+
+    mapRef.current.setCenter({
+      lat,
+      lng,
+    });
+
+    mapRef.current.setZoom(16);
+
+    let locationName = suppliedName;
+
+    // Reverse geocode exact coordinates.
+    if (!locationName && geocoderRef.current) {
+      try {
+        const response =
+          await geocoderRef.current.geocode({
+            location: {
+              lat,
+              lng,
+            },
+          });
+
+        if (
+          response.results &&
+          response.results.length > 0
+        ) {
+          locationName =
+            response.results[0].formatted_address;
+        }
+      } catch (err) {
+        console.error(
+          "Reverse geocoding error:",
+          err
+        );
+      }
+    }
+
+    if (!locationName) {
+      locationName =
+        `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+
+    if (!mountedRef.current) {
+      return;
+    }
+
+    setQuery(locationName);
+    setLoading(false);
+
+    if (onLocationSelect) {
+      onLocationSelect({
+        name: locationName,
+        lat,
+        lon: lng,
+        lng,
+      });
+    }
+  };
+
+  const searchLocation = async () => {
+    const search = query.trim();
+
+    if (!search) {
+      setError("Please enter a location.");
+      setSearchResults([]);
+      return;
+    }
+
+    if (!geocoderRef.current) {
+      setError(
+        "Google Maps is still loading. Please try again."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setSearchResults([]);
 
     try {
       const response =
         await geocoderRef.current.geocode({
           address: search,
-
           region: "IN",
-
-          componentRestrictions: {
-            country: "IN",
-          },
         });
 
-      const results =
-        response.results || [];
-
       if (
-        results.length === 0
+        !response.results ||
+        response.results.length === 0
       ) {
-        setMapError(
-          "Location not found. Please try another search."
+        setError(
+          "No location found. Try a different search."
         );
-
-        setLoading(false);
         return;
       }
 
-      setSearchResults(
-        results.slice(0, 5)
-      );
-    } catch (error) {
+      const results =
+        response.results.slice(0, 5);
+
+      setSearchResults(results);
+    } catch (err) {
       console.error(
-        "Google location search error:",
-        error
+        "Google Maps search error:",
+        err
       );
 
-      setMapError(
-        "Unable to search location right now. Please try again."
+      setError(
+        "Unable to search right now. Please try again."
       );
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
-  /*
-   * Select one of the search results.
-   */
-  const selectSearchResult = (
-    result
-  ) => {
-    if (
-      !result.geometry ||
-      !result.geometry.location
-    ) {
+  const chooseSearchResult = async (result) => {
+    if (!result.geometry?.location) {
       return;
     }
 
@@ -546,136 +405,100 @@ export default function LocationPicker({
     const lng =
       result.geometry.location.lng();
 
-    const shortName =
-      createShortLocationName(
-        result
-      ) ||
-      result.formatted_address;
-
-    setSearch(shortName);
-
-    setSearchResults([]);
-
-    setMapError("");
-
-    updateMarker(
+    await selectCoordinates(
       lat,
-      lng
+      lng,
+      result.formatted_address
     );
-
-    if (onLocationSelect) {
-      onLocationSelect({
-        name: shortName,
-
-        fullName:
-          result.formatted_address,
-
-        lat,
-
-        lon: lng,
-      });
-    }
   };
 
-  /*
-   * Use device GPS.
-   */
-  const useCurrentLocation =
-    () => {
-      if (
-        !navigator.geolocation
-      ) {
-        setMapError(
-          "Your device does not support location services."
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError(
+        "Your browser does not support location services."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setSearchResults([]);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const {
+            latitude,
+            longitude,
+          } = position.coords;
+
+          await selectCoordinates(
+            latitude,
+            longitude
+          );
+        } catch (err) {
+          console.error(err);
+
+          if (mountedRef.current) {
+            setError(
+              "Unable to determine your location."
+            );
+            setLoading(false);
+          }
+        }
+      },
+      (err) => {
+        console.error(
+          "Geolocation error:",
+          err
         );
 
-        return;
-      }
+        if (mountedRef.current) {
+          let message =
+            "Unable to get your current location.";
 
-      setLoading(true);
-      setSearchResults([]);
-      setMapError("");
-
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat =
-            position.coords.latitude;
-
-          const lng =
-            position.coords.longitude;
-
-          await selectLocation(
-            lat,
-            lng
-          );
-        },
-
-        (error) => {
-          console.error(
-            "Geolocation error:",
-            error
-          );
-
-          setLoading(false);
-
-          if (
-            error.code ===
-            error.PERMISSION_DENIED
-          ) {
-            setMapError(
-              "Location permission was denied. Please allow location access and try again."
-            );
-          } else if (
-            error.code ===
-            error.TIMEOUT
-          ) {
-            setMapError(
-              "Your location could not be detected in time. Please try again."
-            );
-          } else {
-            setMapError(
-              "Unable to get your current location."
-            );
+          if (err.code === 1) {
+            message =
+              "Location access was denied. Please allow location access in your browser.";
+          } else if (err.code === 2) {
+            message =
+              "Your current location could not be determined.";
+          } else if (err.code === 3) {
+            message =
+              "Location request timed out. Please try again.";
           }
-        },
 
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 30000,
+          setError(message);
+          setLoading(false);
         }
-      );
-    };
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  };
 
   return (
     <div className="locationPicker">
-
-      <label className="locationLabel">
-        {label}
-      </label>
-
-      {/* SEARCH */}
+      <div className="locationHeader">
+        <span>{label}</span>
+      </div>
 
       <div className="locationSearch">
-
         <input
           type="text"
-          value={search}
+          value={query}
           placeholder={placeholder}
           onChange={(event) => {
-            setSearch(
-              event.target.value
-            );
-
+            setQuery(event.target.value);
             setSearchResults([]);
-            setMapError("");
+            setError("");
           }}
           onKeyDown={(event) => {
-            if (
-              event.key === "Enter"
-            ) {
+            if (event.key === "Enter") {
               event.preventDefault();
-
               searchLocation();
             }
           }}
@@ -683,212 +506,184 @@ export default function LocationPicker({
 
         <button
           type="button"
-          onClick={
-            searchLocation
-          }
-          disabled={loading}
+          onClick={searchLocation}
+          disabled={loading || !mapReady}
         >
-          {loading
-            ? "..."
-            : "Search"}
+          {loading ? "..." : "Search"}
         </button>
-
       </div>
-
-      {/* CURRENT LOCATION */}
 
       {allowCurrentLocation && (
         <button
           type="button"
-          className="currentLocationButton"
-          onClick={
-            useCurrentLocation
-          }
+          className="currentLocation"
+          onClick={useCurrentLocation}
           disabled={loading}
         >
-          📍 Use my current location
+          📍{" "}
+          {loading
+            ? "Finding your location..."
+            : "Use my current location"}
         </button>
       )}
 
-      {/* SEARCH RESULTS */}
-
-      {searchResults.length >
-        0 && (
+      {searchResults.length > 0 && (
         <div className="searchResults">
-
           {searchResults.map(
             (result, index) => (
               <button
                 type="button"
-                className="searchResult"
                 key={
                   result.place_id ||
-                  `result-${index}`
+                  `${result.formatted_address}-${index}`
                 }
+                className="searchResult"
                 onClick={() =>
-                  selectSearchResult(
-                    result
-                  )
+                  chooseSearchResult(result)
                 }
               >
-
                 <span className="resultIcon">
                   📍
                 </span>
 
                 <span className="resultText">
-
-                  <strong>
-                    {
-                      createShortLocationName(
-                        result
-                      ) ||
-                        result.formatted_address
-                    }
-                  </strong>
-
-                  <small>
-                    {
-                      result.formatted_address
-                    }
-                  </small>
-
+                  {result.formatted_address}
                 </span>
-
               </button>
             )
           )}
-
         </div>
       )}
 
-      {/* MAP */}
-
       <div
-        ref={mapRef}
+        ref={mapContainerRef}
         className="locationMap"
-      />
+      >
+        {!mapReady && !error && (
+          <div className="mapLoading">
+            <div className="spinner" />
+            <span>Loading map...</span>
+          </div>
+        )}
+      </div>
 
-      {/* ERROR */}
-
-      {mapError && (
-        <p className="mapError">
-          ⚠️ {mapError}
-        </p>
+      {error && (
+        <div className="locationError">
+          ⚠️ {error}
+        </div>
       )}
 
-      <p className="mapHint">
-        📍 Search for a place or tap the
-        map to select an exact location.
+      <p className="locationHelp">
+        📍 Search for a place, use your current
+        location, or tap the map to select an exact
+        location.
       </p>
 
       <style jsx>{`
-
         .locationPicker {
           width: 100%;
           position: relative;
         }
 
-        .locationLabel {
-          display: block;
-          font-size: 12px;
-          font-weight: 700;
-          color: #52625a;
-          margin-bottom: 7px;
-        }
-
-        .locationSearch {
-          display: flex;
-          gap: 8px;
+        .locationHeader {
           margin-bottom: 8px;
         }
 
+        .locationHeader span {
+          font-size: 13px;
+          font-weight: 700;
+          color: #52625a;
+        }
+
+        .locationSearch {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 10px;
+        }
+
         .locationSearch input {
-          flex: 1;
+          width: 100%;
           min-width: 0;
-          padding: 14px;
+          box-sizing: border-box;
+          padding: 16px;
           border: 1px solid #d9e1dc;
           border-radius: 11px;
           font-size: 15px;
           outline: none;
-          background: white;
+          background: #fff;
+          color: #26372f;
         }
 
         .locationSearch input:focus {
           border-color: #08783f;
           box-shadow:
             0 0 0 3px
-            rgba(
-              8,
-              120,
-              63,
-              0.1
-            );
+            rgba(8, 120, 63, 0.1);
         }
 
         .locationSearch button {
           border: 0;
           background: #08783f;
-          color: white;
-          padding: 0 18px;
+          color: #fff;
+          padding: 0 22px;
           border-radius: 11px;
           font-weight: 700;
+          font-size: 14px;
           cursor: pointer;
-          white-space: nowrap;
+          min-width: 92px;
         }
 
         .locationSearch button:disabled {
-          opacity: 0.6;
+          opacity: 0.65;
           cursor: wait;
         }
 
-        .currentLocationButton {
+        .currentLocation {
           width: 100%;
+          margin-top: 10px;
+          padding: 14px;
+          border-radius: 11px;
           border: 1px solid #cce3d3;
           background: #f1f8f3;
           color: #08783f;
-          padding: 11px 14px;
-          border-radius: 10px;
+          font-size: 14px;
           font-weight: 700;
-          font-size: 13px;
           cursor: pointer;
-          margin-bottom: 10px;
         }
 
-        .currentLocationButton:disabled {
-          opacity: 0.6;
-          cursor: wait;
+        .currentLocation:disabled {
+          opacity: 0.65;
         }
 
         .searchResults {
-          position: relative;
-          z-index: 20;
-          background: white;
+          position: absolute;
+          z-index: 10000;
+          left: 0;
+          right: 0;
+          top: 77px;
+          background: #fff;
           border: 1px solid #d9e1dc;
           border-radius: 12px;
-          overflow: hidden;
-          margin-bottom: 10px;
           box-shadow:
-            0 8px 25px
-            rgba(
-              0,
-              0,
-              0,
-              0.1
-            );
+            0 10px 30px
+            rgba(0, 0, 0, 0.14);
+          overflow: hidden;
         }
 
         .searchResult {
           width: 100%;
           display: flex;
-          align-items: flex-start;
           gap: 10px;
-          padding: 12px;
-          border: 0;
-          border-bottom: 1px solid #edf1ee;
-          background: white;
+          align-items: flex-start;
           text-align: left;
+          border: 0;
+          border-bottom: 1px solid #edf0ee;
+          background: #fff;
+          padding: 14px;
           cursor: pointer;
+          color: #26372f;
+          font-size: 13px;
+          line-height: 1.4;
         }
 
         .searchResult:last-child {
@@ -896,82 +691,91 @@ export default function LocationPicker({
         }
 
         .searchResult:hover {
-          background: #f4f8f5;
+          background: #f1f8f3;
         }
 
         .resultIcon {
-          font-size: 18px;
-          flex-shrink: 0;
+          flex: 0 0 auto;
         }
 
         .resultText {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
           min-width: 0;
-        }
-
-        .resultText strong {
-          font-size: 13px;
-          color: #10231a;
-        }
-
-        .resultText small {
-          font-size: 11px;
-          line-height: 1.35;
-          color: #65736b;
         }
 
         .locationMap {
           width: 100%;
-          height: 280px;
-          border-radius: 14px;
-          overflow: hidden;
+          height: 360px;
+          margin-top: 12px;
+          border-radius: 13px;
           border: 1px solid #d9e1dc;
+          overflow: hidden;
           background: #f4f6f5;
+          position: relative;
         }
 
-        .mapHint {
-          margin: 8px 0 0;
-          font-size: 12px;
-          line-height: 1.4;
-          color: #65736b;
+        .mapLoading {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          background: #f4f6f5;
+          color: #52625a;
+          font-size: 14px;
+          font-weight: 600;
+          z-index: 2;
         }
 
-        .mapError {
-          margin: 8px 0 0;
+        .spinner {
+          width: 18px;
+          height: 18px;
+          border: 2px solid #d9e1dc;
+          border-top-color: #08783f;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .locationError {
+          margin-top: 10px;
           padding: 12px 14px;
-          border-radius: 10px;
-          border: 1px solid #f0c7c2;
-          background: #fff5f4;
-          color: #b42318;
+          border-radius: 11px;
+          background: #fff3f1;
+          border: 1px solid #f1c8c3;
+          color: #b3342a;
+          font-size: 13px;
+          line-height: 1.4;
+        }
+
+        .locationHelp {
+          margin: 10px 0 0;
+          color: #65736b;
           font-size: 13px;
           line-height: 1.4;
         }
 
         @media (max-width: 750px) {
-
-          .locationMap {
-            height: 280px;
-            border-radius: 12px;
+          .locationSearch {
+            grid-template-columns:
+              minmax(0, 1fr) auto;
           }
 
           .locationSearch button {
+            min-width: 82px;
             padding: 0 14px;
           }
 
-          .currentLocationButton {
-            padding: 10px 12px;
+          .locationMap {
+            height: 300px;
           }
-
-          .searchResult {
-            padding: 11px;
-          }
-
         }
-
       `}</style>
-
     </div>
   );
 }
