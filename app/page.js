@@ -1,17 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import LocationPicker from "@/components/LocationPicker";
-
-function getToday() {
-  const now = new Date();
-
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
+import { useMemo, useState } from "react";
+import LocationPicker from "./components/LocationPicker";
 
 export default function HomePage() {
   const [tripType, setTripType] = useState("oneway");
@@ -19,13 +9,13 @@ export default function HomePage() {
   const [pickup, setPickup] = useState({
     name: "",
     lat: null,
-    lng: null,
+    lon: null,
   });
 
   const [drop, setDrop] = useState({
     name: "",
     lat: null,
-    lng: null,
+    lon: null,
   });
 
   const [travelDate, setTravelDate] = useState("");
@@ -41,10 +31,13 @@ export default function HomePage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
 
-  const [today, setToday] = useState("");
+  const today = useMemo(() => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
-  useEffect(() => {
-    setToday(getToday());
+    return `${year}-${month}-${day}`;
   }, []);
 
   const handleTripTypeChange = (type) => {
@@ -58,40 +51,32 @@ export default function HomePage() {
     }
   };
 
-  const handlePhoneChange = (event) => {
-    const value = event.target.value.replace(/\D/g, "");
-    setPhone(value.slice(0, 10));
-  };
+  const handleTravelDateChange = (value) => {
+    setTravelDate(value);
 
-  const handleWhatsappChange = (event) => {
-    const value = event.target.value.replace(/\D/g, "");
-    setWhatsapp(value.slice(0, 10));
+    if (returnDate && value && returnDate < value) {
+      setReturnDate("");
+    }
   };
 
   const handleContinue = () => {
     setMessage("");
     setMessageType("");
 
-    if (!pickup.name || pickup.lat === null || pickup.lng === null) {
-      setMessage("Please select a valid pickup location.");
+    if (!pickup.name) {
+      setMessage("Please select your pickup location.");
       setMessageType("error");
       return;
     }
 
-    if (!drop.name || drop.lat === null || drop.lng === null) {
-      setMessage("Please select a valid drop location.");
+    if (!drop.name) {
+      setMessage("Please select your drop location.");
       setMessageType("error");
       return;
     }
 
     if (!travelDate) {
       setMessage("Please select your travel date.");
-      setMessageType("error");
-      return;
-    }
-
-    if (today && travelDate < today) {
-      setMessage("Travel date cannot be in the past.");
       setMessageType("error");
       return;
     }
@@ -110,19 +95,8 @@ export default function HomePage() {
 
     const cleanPhone = phone.replace(/\D/g, "");
 
-    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      setMessage("Please enter a valid 10-digit Indian mobile number.");
-      setMessageType("error");
-      return;
-    }
-
-    const cleanWhatsapp = whatsapp.replace(/\D/g, "");
-
-    if (
-      cleanWhatsapp &&
-      !/^[6-9]\d{9}$/.test(cleanWhatsapp)
-    ) {
-      setMessage("Please enter a valid WhatsApp number.");
+    if (cleanPhone.length !== 10) {
+      setMessage("Please enter a valid 10-digit phone number.");
       setMessageType("error");
       return;
     }
@@ -135,9 +109,7 @@ export default function HomePage() {
       }
 
       if (returnDate < travelDate) {
-        setMessage(
-          "Return date cannot be before the travel date."
-        );
+        setMessage("Return date cannot be before the travel date.");
         setMessageType("error");
         return;
       }
@@ -147,56 +119,31 @@ export default function HomePage() {
         setMessageType("error");
         return;
       }
-
-      if (
-        returnDate === travelDate &&
-        returnTime <= pickupTime
-      ) {
-        setMessage(
-          "For a same-day round trip, return time must be later than pickup time."
-        );
-        setMessageType("error");
-        return;
-      }
     }
 
-    const bookingData = {
+    const booking = {
       tripType,
-
-      pickup: {
-        name: pickup.name,
-        lat: pickup.lat,
-        lng: pickup.lng,
-      },
-
-      drop: {
-        name: drop.name,
-        lat: drop.lat,
-        lng: drop.lng,
-      },
-
+      pickup,
+      drop,
       travelDate,
       pickupTime,
-
-      returnDate:
-        tripType === "roundtrip"
-          ? returnDate
-          : null,
-
-      returnTime:
-        tripType === "roundtrip"
-          ? returnTime
-          : null,
-
+      returnDate: tripType === "roundtrip" ? returnDate : "",
+      returnTime: tripType === "roundtrip" ? returnTime : "",
       passengerName: passengerName.trim(),
       phone: cleanPhone,
-      whatsapp: cleanWhatsapp || null,
+      whatsapp: whatsapp.replace(/\D/g, ""),
     };
 
-    console.log("VOYNU booking:", bookingData);
+    console.log("VOYNU booking:", booking);
+
+    /*
+     * NEXT STEP:
+     * This is where we will connect the booking
+     * to the backend/database/payment flow.
+     */
 
     setMessage(
-      "Your trip details are ready. Fare and vehicle selection will be added next."
+      "Your trip details are ready. Booking confirmation will be added next."
     );
     setMessageType("success");
   };
@@ -208,6 +155,7 @@ export default function HomePage() {
         <div className="headerInner">
           <div className="logo">
             <span className="logoIcon">V</span>
+
             <span className="logoText">VOYNU</span>
           </div>
 
@@ -278,9 +226,7 @@ export default function HomePage() {
 
             <button
               type="button"
-              className={
-                tripType === "roundtrip" ? "active" : ""
-              }
+              className={tripType === "roundtrip" ? "active" : ""}
               onClick={() => handleTripTypeChange("roundtrip")}
             >
               🔄 Round Trip
@@ -313,31 +259,24 @@ export default function HomePage() {
           {/* TRAVEL DATE + PICKUP TIME */}
           <div className="formGrid">
             <div className="field">
-              <label>📅 Travel date</label>
+              <label htmlFor="travelDate">📅 Travel date</label>
 
               <input
+                id="travelDate"
                 type="date"
                 value={travelDate}
                 min={today}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setTravelDate(value);
-
-                  if (
-                    returnDate &&
-                    value &&
-                    returnDate < value
-                  ) {
-                    setReturnDate("");
-                  }
-                }}
+                onChange={(event) =>
+                  handleTravelDateChange(event.target.value)
+                }
               />
             </div>
 
             <div className="field">
-              <label>🕐 Pickup time</label>
+              <label htmlFor="pickupTime">🕐 Pickup time</label>
 
               <input
+                id="pickupTime"
                 type="time"
                 value={pickupTime}
                 onChange={(event) =>
@@ -351,9 +290,10 @@ export default function HomePage() {
           {tripType === "roundtrip" && (
             <div className="formGrid">
               <div className="field">
-                <label>📅 Return date</label>
+                <label htmlFor="returnDate">📅 Return date</label>
 
                 <input
+                  id="returnDate"
                   type="date"
                   value={returnDate}
                   min={travelDate || today}
@@ -364,9 +304,10 @@ export default function HomePage() {
               </div>
 
               <div className="field">
-                <label>🕐 Return time</label>
+                <label htmlFor="returnTime">🕐 Return time</label>
 
                 <input
+                  id="returnTime"
                   type="time"
                   value={returnTime}
                   onChange={(event) =>
@@ -379,9 +320,10 @@ export default function HomePage() {
 
           {/* PASSENGER */}
           <div className="field">
-            <label>👤 Passenger name</label>
+            <label htmlFor="passengerName">👤 Passenger name</label>
 
             <input
+              id="passengerName"
               type="text"
               placeholder="Enter passenger name"
               value={passengerName}
@@ -395,29 +337,41 @@ export default function HomePage() {
           {/* PHONE + WHATSAPP */}
           <div className="formGrid">
             <div className="field">
-              <label>📞 Phone number</label>
+              <label htmlFor="phone">📞 Phone number</label>
 
               <input
+                id="phone"
                 type="tel"
                 inputMode="numeric"
-                placeholder="10-digit mobile number"
-                value={phone}
-                onChange={handlePhoneChange}
                 maxLength={10}
+                placeholder="Enter 10-digit phone number"
+                value={phone}
+                onChange={(event) =>
+                  setPhone(
+                    event.target.value.replace(/\D/g, "").slice(0, 10)
+                  )
+                }
                 autoComplete="tel"
               />
             </div>
 
             <div className="field">
-              <label>💬 WhatsApp number</label>
+              <label htmlFor="whatsapp">💬 WhatsApp number</label>
 
               <input
+                id="whatsapp"
                 type="tel"
                 inputMode="numeric"
-                placeholder="WhatsApp number (optional)"
-                value={whatsapp}
-                onChange={handleWhatsappChange}
                 maxLength={10}
+                placeholder="WhatsApp number"
+                value={whatsapp}
+                onChange={(event) =>
+                  setWhatsapp(
+                    event.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 10)
+                  )
+                }
                 autoComplete="tel"
               />
             </div>
@@ -455,13 +409,9 @@ export default function HomePage() {
       {/* FOOTER */}
       <footer className="footer">
         <div className="footerInner">
-          <div>
-            © {new Date().getFullYear()} VOYNU
-          </div>
+          <div>© {new Date().getFullYear()} VOYNU</div>
 
-          <div>
-            Travel safe. Travel smart.
-          </div>
+          <div>Travel safe. Travel smart.</div>
         </div>
       </footer>
 
@@ -474,10 +424,7 @@ export default function HomePage() {
           min-height: 100vh;
           background: #f5faf7;
           color: #26372f;
-          font-family:
-            Arial,
-            Helvetica,
-            sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
         }
 
         .header {
@@ -799,7 +746,7 @@ export default function HomePage() {
 
         @media (max-width: 700px) {
           .headerInner {
-            width: calc(100% - 28px);
+            width: min(100% - 28px, 1200px);
             min-height: 62px;
           }
 
@@ -808,7 +755,7 @@ export default function HomePage() {
           }
 
           .heroInner {
-            width: calc(100% - 28px);
+            width: min(100% - 28px, 1200px);
             padding: 32px 0 45px;
           }
 
@@ -842,7 +789,7 @@ export default function HomePage() {
           }
 
           .bookingSection {
-            width: calc(100% - 20px);
+            width: min(100% - 20px, 1200px);
           }
 
           .bookingCard {
@@ -856,7 +803,7 @@ export default function HomePage() {
           }
 
           .footerInner {
-            width: calc(100% - 28px);
+            width: min(100% - 28px, 1200px);
             flex-direction: column;
             justify-content: center;
             padding: 18px 0;
