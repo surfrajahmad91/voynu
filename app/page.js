@@ -39,6 +39,14 @@ export default function HomePage() {
   /*
    * ------------------------------------------------------------
    * LOCATIONS
+   *
+   * IMPORTANT:
+   *
+   * selected === true only after the user actually selects
+   * a location from LocationPicker.
+   *
+   * This prevents road-distance calculation from starting
+   * merely because coordinates temporarily exist.
    * ------------------------------------------------------------
    */
 
@@ -47,6 +55,7 @@ export default function HomePage() {
     lat: null,
     lon: null,
     placeId: null,
+    selected: false,
   });
 
   const [drop, setDrop] = useState({
@@ -54,6 +63,7 @@ export default function HomePage() {
     lat: null,
     lon: null,
     placeId: null,
+    selected: false,
   });
 
   /*
@@ -84,11 +94,9 @@ export default function HomePage() {
    */
 
   const [travelDate, setTravelDate] = useState("");
-
   const [pickupTime, setPickupTime] = useState("");
 
   const [returnDate, setReturnDate] = useState("");
-
   const [returnTime, setReturnTime] = useState("");
 
   /*
@@ -98,9 +106,7 @@ export default function HomePage() {
    */
 
   const [passengerName, setPassengerName] = useState("");
-
   const [phone, setPhone] = useState("");
-
   const [whatsapp, setWhatsapp] = useState("");
 
   const [whatsappSameAsPhone, setWhatsappSameAsPhone] =
@@ -113,9 +119,7 @@ export default function HomePage() {
    */
 
   const [message, setMessage] = useState("");
-
   const [messageType, setMessageType] = useState("");
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /*
@@ -193,327 +197,325 @@ export default function HomePage() {
 
     const selected = new Date();
 
-    selected.setHours(
-      hours,
-      minutes,
-      0,
-      0
-    );
+    selected.setHours(hours, minutes, 0, 0);
 
     return selected < new Date();
   };
 
   /*
    * ------------------------------------------------------------
-   * LOCATION VALIDATION
-   *
-   * IMPORTANT:
-   *
-   * A location is considered selected ONLY when:
-   *
-   * 1. It has a visible name
-   * 2. It has valid latitude
-   * 3. It has valid longitude
-   *
-   * This prevents Google/current-location coordinates from
-   * triggering distance calculation while the field is still
-   * visually empty.
+   * VALID LOCATION CHECK
    * ------------------------------------------------------------
    */
 
-  const hasValidSelectedLocation = useCallback(
-    (location) => {
-      const hasName =
-        typeof location?.name === "string" &&
-        location.name.trim().length > 0;
+  const hasValidCoordinates = (location) => {
+    return (
+      Number.isFinite(Number(location?.lat)) &&
+      Number.isFinite(Number(location?.lon))
+    );
+  };
 
-      const hasLatitude = Number.isFinite(
-        Number(location?.lat)
+  const hasSelectedLocation = (location) => {
+    return (
+      location?.selected === true &&
+      String(location?.name || "").trim().length > 0 &&
+      hasValidCoordinates(location)
+    );
+  };
+
+  /*
+   * ------------------------------------------------------------
+   * SERVER ROAD DISTANCE
+   *
+   * IMPORTANT:
+   *
+   * DO NOT use Google DirectionsService in the browser.
+   *
+   * The Google Routes API key stays on the server.
+   *
+   * Expected API:
+   *
+   * POST /api/route-distance
+   *
+   * Request:
+   *
+   * {
+   *   origin: {
+   *     lat: number,
+   *     lon: number
+   *   },
+   *   destination: {
+   *     lat: number,
+   *     lon: number
+   *   }
+   * }
+   *
+   * Response can provide:
+   *
+   * {
+   *   distanceMeters: number,
+   *   durationSeconds: number
+   * }
+   *
+   * or:
+   *
+   * {
+   *   distanceKm: number,
+   *   distanceText: string,
+   *   durationText: string
+   * }
+   *
+   * This function accepts either format.
+   * ------------------------------------------------------------
+   */
+
+  const calculateRoadDistance = useCallback(
+    async (pickupLocation, dropLocation) => {
+      if (
+        !hasSelectedLocation(pickupLocation) ||
+        !hasSelectedLocation(dropLocation)
+      ) {
+        throw new Error(
+          "Both pickup and drop locations must be selected."
+        );
+      }
+
+      const response = await fetch(
+        "/api/route-distance",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            origin: {
+              lat: Number(pickupLocation.lat),
+              lon: Number(pickupLocation.lon),
+            },
+
+            destination: {
+              lat: Number(dropLocation.lat),
+              lon: Number(dropLocation.lon),
+            },
+          }),
+        }
       );
 
-      const hasLongitude = Number.isFinite(
-        Number(location?.lon)
-      );
+      let data = null;
 
-      return (
-        hasName &&
-        hasLatitude &&
-        hasLongitude
-      );
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+            data?.message ||
+            `Road-distance request failed (${response.status}).`
+        );
+      }
+
+      /*
+       * --------------------------------------------------------
+       * DISTANCE
+       * --------------------------------------------------------
+       */
+
+      let distanceKm = null;
+
+      if (
+        Number.isFinite(
+          Number(data?.distanceKm)
+        )
+      ) {
+        distanceKm = Number(data.distanceKm);
+      } else if (
+        Number.isFinite(
+          Number(data?.distanceMeters)
+        )
+      ) {
+        distanceKm =
+          Number(data.distanceMeters) / 1000;
+      }
+
+      if (
+        !Number.isFinite(distanceKm)
+      ) {
+        throw new Error(
+          "The road-distance service returned no valid distance."
+        );
+      }
+
+      /*
+       * --------------------------------------------------------
+       * DISTANCE TEXT
+       * --------------------------------------------------------
+       */
+
+      let distanceText =
+        data?.distanceText || "";
+
+      if (!distanceText) {
+        distanceText =
+          `${distanceKm.toFixed(1)} km`;
+      }
+
+      /*
+       * --------------------------------------------------------
+       * DURATION
+       * --------------------------------------------------------
+       */
+
+      let durationText =
+        data?.durationText || "";
+
+      if (
+        !durationText &&
+        Number.isFinite(
+          Number(data?.durationSeconds)
+        )
+      ) {
+        const totalMinutes = Math.round(
+          Number(data.durationSeconds) / 60
+        );
+
+        const hours = Math.floor(
+          totalMinutes / 60
+        );
+
+        const minutes =
+          totalMinutes % 60;
+
+        if (hours > 0) {
+          durationText =
+            minutes > 0
+              ? `${hours} hr ${minutes} min`
+              : `${hours} hr`;
+        } else {
+          durationText =
+            `${minutes} min`;
+        }
+      }
+
+      return {
+        distanceKm,
+        distanceText,
+        durationText,
+      };
     },
     []
   );
 
   /*
    * ------------------------------------------------------------
-   * GOOGLE ROAD DISTANCE
-   *
-   * ONLY:
-   *
-   * PICKUP → DROP
-   *
-   * No Pickup → Kanpur calculation.
-   * ------------------------------------------------------------
-   */
-
-  const calculateRoadDistance = useCallback(
-    (pickupLocation, dropLocation) => {
-      return new Promise((resolve, reject) => {
-        /*
-         * Validate complete selected locations.
-         */
-
-        if (
-          !hasValidSelectedLocation(
-            pickupLocation
-          ) ||
-          !hasValidSelectedLocation(
-            dropLocation
-          )
-        ) {
-          reject(
-            new Error(
-              "Both locations must be selected."
-            )
-          );
-
-          return;
-        }
-
-        /*
-         * DirectionsService must already
-         * be available.
-         */
-
-        if (
-          typeof window === "undefined" ||
-          !window.google?.maps
-            ?.DirectionsService
-        ) {
-          reject(
-            new Error(
-              "Google Maps road-distance service is not ready."
-            )
-          );
-
-          return;
-        }
-
-        const directionsService =
-          new window.google.maps.DirectionsService();
-
-        directionsService.route(
-          {
-            origin: {
-              lat: Number(
-                pickupLocation.lat
-              ),
-              lng: Number(
-                pickupLocation.lon
-              ),
-            },
-
-            destination: {
-              lat: Number(
-                dropLocation.lat
-              ),
-              lng: Number(
-                dropLocation.lon
-              ),
-            },
-
-            travelMode:
-              window.google.maps
-                .TravelMode.DRIVING,
-
-            provideRouteAlternatives: false,
-          },
-
-          (result, status) => {
-            if (status !== "OK") {
-              reject(
-                new Error(
-                  `Google route calculation failed: ${status}`
-                )
-              );
-
-              return;
-            }
-
-            const leg =
-              result?.routes?.[0]?.legs?.[0];
-
-            if (
-              !leg ||
-              !leg.distance ||
-              typeof leg.distance.value !==
-                "number"
-            ) {
-              reject(
-                new Error(
-                  "Google Maps returned no road distance."
-                )
-              );
-
-              return;
-            }
-
-            const distanceKm =
-              leg.distance.value / 1000;
-
-            resolve({
-              distanceKm,
-
-              distanceText:
-                leg.distance.text ||
-                `${distanceKm.toFixed(1)} km`,
-
-              durationText:
-                leg.duration?.text || "",
-            });
-          }
-        );
-      });
-    },
-    [hasValidSelectedLocation]
-  );
-
-  /*
-   * ------------------------------------------------------------
    * AUTOMATIC DISTANCE CALCULATION
-   * ------------------------------------------------------------
    *
-   * IMPORTANT FIX:
+   * IMPORTANT:
    *
-   * Calculation does NOT start just because lat/lon exist.
+   * Calculation happens ONLY when:
    *
-   * Both pickup AND drop must have:
+   * pickup.selected === true
+   * AND
+   * drop.selected === true
    *
-   * - a non-empty selected name
-   * - valid latitude
-   * - valid longitude
-   *
-   * Therefore:
-   *
-   * Empty pickup + empty drop
-   *        ↓
-   * NO calculation
-   *
-   * Pickup only
-   *        ↓
-   * NO calculation
-   *
-   * Drop only
-   *        ↓
-   * NO calculation
-   *
-   * Pickup + Drop
-   *        ↓
-   * Calculate road distance
+   * This is the key fix for the original issue.
    * ------------------------------------------------------------
    */
 
   useEffect(() => {
     let cancelled = false;
 
-    let retryTimer = null;
+    /*
+     * Only calculate after BOTH locations have actually
+     * been selected.
+     */
 
-    const hasPickup =
-      hasValidSelectedLocation(pickup);
+    const pickupIsSelected =
+      hasSelectedLocation(pickup);
 
-    const hasDrop =
-      hasValidSelectedLocation(drop);
+    const dropIsSelected =
+      hasSelectedLocation(drop);
 
     /*
      * ----------------------------------------------------------
      * NO COMPLETE JOURNEY
      * ----------------------------------------------------------
-     *
-     * This is the important part.
-     *
-     * If either location has not actually been selected,
-     * we completely reset the distance state and DO NOT
-     * attempt Google Directions.
-     * ----------------------------------------------------------
      */
 
-    if (!hasPickup || !hasDrop) {
+    if (
+      !pickupIsSelected ||
+      !dropIsSelected
+    ) {
       setJourneyDistanceKm(null);
-
       setJourneyDistanceText("");
-
       setJourneyDurationText("");
-
       setJourneyDistanceError("");
-
       setJourneyDistanceLoading(false);
 
       return () => {
         cancelled = true;
-
-        if (retryTimer) {
-          clearTimeout(retryTimer);
-        }
       };
     }
 
     /*
      * ----------------------------------------------------------
-     * COMPLETE JOURNEY
+     * SAME LOCATION
+     * ----------------------------------------------------------
+     */
+
+    const sameLatitude =
+      Math.abs(
+        Number(pickup.lat) -
+          Number(drop.lat)
+      ) < 0.00001;
+
+    const sameLongitude =
+      Math.abs(
+        Number(pickup.lon) -
+          Number(drop.lon)
+      ) < 0.00001;
+
+    if (
+      sameLatitude &&
+      sameLongitude
+    ) {
+      setJourneyDistanceKm(null);
+      setJourneyDistanceText("");
+      setJourneyDurationText("");
+      setJourneyDistanceLoading(false);
+
+      setJourneyDistanceError(
+        "Pickup and drop locations cannot be the same."
+      );
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    /*
+     * ----------------------------------------------------------
+     * CLEAR PREVIOUS RESULT
      * ----------------------------------------------------------
      */
 
     setJourneyDistanceKm(null);
-
     setJourneyDistanceText("");
-
     setJourneyDurationText("");
-
     setJourneyDistanceError("");
-
     setJourneyDistanceLoading(true);
 
-    let attempts = 0;
-
-    const maxAttempts = 20;
+    /*
+     * ----------------------------------------------------------
+     * CALCULATE
+     * ----------------------------------------------------------
+     */
 
     const calculate = async () => {
-      if (cancelled) {
-        return;
-      }
-
-      attempts += 1;
-
-      /*
-       * Wait until DirectionsService exists.
-       */
-
-      const directionsReady =
-        typeof window !== "undefined" &&
-        window.google?.maps
-          ?.DirectionsService;
-
-      if (!directionsReady) {
-        if (attempts < maxAttempts) {
-          retryTimer = setTimeout(
-            calculate,
-            300
-          );
-
-          return;
-        }
-
-        if (!cancelled) {
-          setJourneyDistanceLoading(false);
-
-          setJourneyDistanceError(
-            "Google Maps road-distance service is unavailable."
-          );
-        }
-
-        return;
-      }
-
       try {
         const result =
           await calculateRoadDistance(
@@ -538,7 +540,6 @@ export default function HomePage() {
         );
 
         setJourneyDistanceError("");
-
         setJourneyDistanceLoading(false);
       } catch (error) {
         if (cancelled) {
@@ -550,21 +551,9 @@ export default function HomePage() {
           error
         );
 
-        if (attempts < maxAttempts) {
-          retryTimer = setTimeout(
-            calculate,
-            500
-          );
-
-          return;
-        }
-
         setJourneyDistanceKm(null);
-
         setJourneyDistanceText("");
-
         setJourneyDurationText("");
-
         setJourneyDistanceLoading(false);
 
         setJourneyDistanceError(
@@ -578,21 +567,24 @@ export default function HomePage() {
 
     return () => {
       cancelled = true;
-
-      if (retryTimer) {
-        clearTimeout(retryTimer);
-      }
     };
   }, [
     pickup,
     drop,
     calculateRoadDistance,
-    hasValidSelectedLocation,
   ]);
 
   /*
    * ------------------------------------------------------------
    * TOTAL DISTANCE
+   *
+   * For round trip:
+   *
+   * Each leg is limited to 200 km.
+   *
+   * Total distance is still calculated as:
+   *
+   * one-way × 2
    * ------------------------------------------------------------
    */
 
@@ -690,22 +682,60 @@ export default function HomePage() {
     (location) => {
       clearMessage();
 
+      /*
+       * If LocationPicker clears its selection,
+       * completely reset pickup.
+       */
+
       if (!location) {
+        setPickup({
+          name: "",
+          lat: null,
+          lon: null,
+          placeId: null,
+          selected: false,
+        });
+
         return;
       }
 
+      const name =
+        String(location.name || "").trim();
+
+      const lat =
+        Number.isFinite(
+          Number(location.lat)
+        )
+          ? Number(location.lat)
+          : null;
+
+      const lon =
+        Number.isFinite(
+          Number(location.lon)
+        )
+          ? Number(location.lon)
+          : null;
+
+      /*
+       * Mark selected ONLY when a real location
+       * with valid coordinates has been returned.
+       */
+
+      const selected =
+        Boolean(name) &&
+        Number.isFinite(lat) &&
+        Number.isFinite(lon);
+
       setPickup({
-        name:
-          location.name || "",
-
-        lat:
-          location.lat ?? null,
-
-        lon:
-          location.lon ?? null,
+        name,
+        lat,
+        lon,
 
         placeId:
-          location.placeId ?? null,
+          location.placeId ??
+          null,
+
+        selected,
       });
     },
     [clearMessage]
@@ -715,22 +745,55 @@ export default function HomePage() {
     (location) => {
       clearMessage();
 
+      /*
+       * If LocationPicker clears its selection,
+       * completely reset drop.
+       */
+
       if (!location) {
+        setDrop({
+          name: "",
+          lat: null,
+          lon: null,
+          placeId: null,
+          selected: false,
+        });
+
         return;
       }
 
+      const name =
+        String(location.name || "").trim();
+
+      const lat =
+        Number.isFinite(
+          Number(location.lat)
+        )
+          ? Number(location.lat)
+          : null;
+
+      const lon =
+        Number.isFinite(
+          Number(location.lon)
+        )
+          ? Number(location.lon)
+          : null;
+
+      const selected =
+        Boolean(name) &&
+        Number.isFinite(lat) &&
+        Number.isFinite(lon);
+
       setDrop({
-        name:
-          location.name || "",
-
-        lat:
-          location.lat ?? null,
-
-        lon:
-          location.lon ?? null,
+        name,
+        lat,
+        lon,
 
         placeId:
-          location.placeId ?? null,
+          location.placeId ??
+          null,
+
+        selected,
       });
     },
     [clearMessage]
@@ -815,21 +878,15 @@ export default function HomePage() {
 
       pickup: {
         name: pickup.name.trim(),
-
         lat: pickup.lat,
-
         lon: pickup.lon,
-
         placeId: pickup.placeId,
       },
 
       drop: {
         name: drop.name.trim(),
-
         lat: drop.lat,
-
         lon: drop.lon,
-
         placeId: drop.placeId,
       },
 
@@ -844,8 +901,7 @@ export default function HomePage() {
           totalJourneyDistanceKm,
 
         totalDistanceText:
-          totalJourneyDistanceKm !==
-          null
+          totalJourneyDistanceKm !== null
             ? `${totalJourneyDistanceKm.toFixed(
                 1
               )} km`
@@ -875,9 +931,11 @@ export default function HomePage() {
       passengerName:
         passengerName.trim(),
 
-      phone: normalizedPhone,
+      phone:
+        normalizedPhone,
 
-      whatsapp: normalizedWhatsApp,
+      whatsapp:
+        normalizedWhatsApp,
 
       createdAt:
         new Date().toISOString(),
@@ -891,38 +949,32 @@ export default function HomePage() {
    */
 
   const validateBooking = () => {
+    /*
+     * PICKUP
+     */
+
     if (!pickup.name.trim()) {
       return "Please select your pickup location.";
     }
 
-    if (
-      !Number.isFinite(
-        Number(pickup.lat)
-      ) ||
-      !Number.isFinite(
-        Number(pickup.lon)
-      )
-    ) {
+    if (!hasSelectedLocation(pickup)) {
       return "Please select your pickup location from the suggested locations.";
     }
+
+    /*
+     * DROP
+     */
 
     if (!drop.name.trim()) {
       return "Please select your drop location.";
     }
 
-    if (
-      !Number.isFinite(
-        Number(drop.lat)
-      ) ||
-      !Number.isFinite(
-        Number(drop.lon)
-      )
-    ) {
+    if (!hasSelectedLocation(drop)) {
       return "Please select your drop location from the suggested locations.";
     }
 
     /*
-     * Same coordinates.
+     * SAME COORDINATES
      */
 
     const sameLatitude =
@@ -945,13 +997,18 @@ export default function HomePage() {
     }
 
     /*
-     * Distance.
+     * DISTANCE
      */
 
-    if (
-      journeyDistanceKm === null
-    ) {
-      return "Please wait while we calculate the road distance between your pickup and drop locations.";
+    if (journeyDistanceKm === null) {
+      if (journeyDistanceLoading) {
+        return "Please wait while we calculate the road distance between your pickup and drop locations.";
+      }
+
+      return (
+        journeyDistanceError ||
+        "We couldn't calculate the journey distance. Please select your locations again."
+      );
     }
 
     if (
@@ -981,6 +1038,8 @@ export default function HomePage() {
 
     /*
      * ROUND TRIP
+     *
+     * Check ONE WAY distance only.
      */
 
     if (
@@ -1057,9 +1116,7 @@ export default function HomePage() {
      */
 
     const normalizedWhatsApp =
-      normalizeIndianPhone(
-        whatsapp
-      );
+      normalizeIndianPhone(whatsapp);
 
     if (!normalizedWhatsApp) {
       return "Please enter a valid WhatsApp mobile number.";
@@ -1123,7 +1180,6 @@ export default function HomePage() {
 
     if (validationError) {
       showError(validationError);
-
       return;
     }
 
@@ -1264,6 +1320,7 @@ export default function HomePage() {
               <div className="heroFeatures">
 
                 <div className="heroFeature">
+
                   <span className="featureIcon">
                     ✓
                   </span>
@@ -1271,9 +1328,11 @@ export default function HomePage() {
                   <span>
                     Verified Drivers
                   </span>
+
                 </div>
 
                 <div className="heroFeature">
+
                   <span className="featureIcon">
                     ⌁
                   </span>
@@ -1281,9 +1340,11 @@ export default function HomePage() {
                   <span>
                     Safe &amp; Secure
                   </span>
+
                 </div>
 
                 <div className="heroFeature">
+
                   <span className="featureIcon">
                     ⚡
                   </span>
@@ -1291,6 +1352,7 @@ export default function HomePage() {
                   <span>
                     EV Rides
                   </span>
+
                 </div>
 
               </div>
@@ -1392,10 +1454,12 @@ export default function HomePage() {
               type="button"
               role="tab"
               aria-selected={
-                tripType === "roundtrip"
+                tripType ===
+                "roundtrip"
               }
               className={
-                tripType === "roundtrip"
+                tripType ===
+                "roundtrip"
                   ? "tripButton active"
                   : "tripButton"
               }
@@ -1482,10 +1546,10 @@ export default function HomePage() {
                 JOURNEY DISTANCE
               </div>
 
-              {!hasValidSelectedLocation(
+              {!hasSelectedLocation(
                 pickup
               ) ||
-              !hasValidSelectedLocation(
+              !hasSelectedLocation(
                 drop
               ) ? (
 
@@ -1528,9 +1592,7 @@ export default function HomePage() {
                   {journeyDurationText && (
                     <div className="journeyDuration">
                       Approx. driving time:{" "}
-                      {
-                        journeyDurationText
-                      }
+                      {journeyDurationText}
 
                       {tripType ===
                         "roundtrip" &&
@@ -1665,7 +1727,6 @@ export default function HomePage() {
                         );
 
                         setReturnDate("");
-
                         setReturnTime("");
 
                         return;
@@ -1713,8 +1774,7 @@ export default function HomePage() {
                         event.target.value;
 
                       if (
-                        returnDate ===
-                          today &&
+                        returnDate === today &&
                         isTimeInPastForToday(
                           returnDate,
                           value
@@ -3229,4 +3289,4 @@ export default function HomePage() {
 
     </main>
   );
-}
+      }
