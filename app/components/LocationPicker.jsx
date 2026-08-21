@@ -36,7 +36,7 @@ function loadGoogleMaps() {
     );
 
     if (existingScript) {
-      existingScript.addEventListener("load", () => {
+      const handleLoad = () => {
         if (window.google?.maps) {
           resolve(window.google.maps);
         } else {
@@ -46,18 +46,33 @@ function loadGoogleMaps() {
             )
           );
         }
-      });
+      };
 
-      existingScript.addEventListener("error", () => {
+      const handleError = () => {
         reject(
-          new Error("Unable to load Google Maps.")
+          new Error(
+            "Unable to load Google Maps."
+          )
         );
-      });
+      };
+
+      existingScript.addEventListener(
+        "load",
+        handleLoad,
+        { once: true }
+      );
+
+      existingScript.addEventListener(
+        "error",
+        handleError,
+        { once: true }
+      );
 
       return;
     }
 
-    const script = document.createElement("script");
+    const script =
+      document.createElement("script");
 
     script.src =
       "https://maps.googleapis.com/maps/api/js" +
@@ -106,18 +121,9 @@ export default function LocationPicker({
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const autocompleteRef = useRef(null);
-
-  /*
-   * Keep the latest callback without causing
-   * Google Maps to initialize again.
-   */
-  const onLocationSelectRef =
-    useRef(onLocationSelect);
-
-  useEffect(() => {
-    onLocationSelectRef.current =
-      onLocationSelect;
-  }, [onLocationSelect]);
+  const onLocationSelectRef = useRef(
+    onLocationSelect
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -130,8 +136,17 @@ export default function LocationPicker({
     });
 
   /*
-   * Keep displayed location name synchronized
-   * with the parent value.
+   * Keep the latest callback without forcing
+   * Google Maps to initialize again.
+   */
+  useEffect(() => {
+    onLocationSelectRef.current =
+      onLocationSelect;
+  }, [onLocationSelect]);
+
+  /*
+   * Keep displayed location synchronized
+   * with the parent component.
    */
   useEffect(() => {
     setSelectedLocation((current) => ({
@@ -141,7 +156,7 @@ export default function LocationPicker({
   }, [value]);
 
   /*
-   * Initialize Google Maps once.
+   * Initialize Google Maps only once.
    */
   useEffect(() => {
     let cancelled = false;
@@ -154,19 +169,9 @@ export default function LocationPicker({
         const googleMaps =
           await loadGoogleMaps();
 
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
         if (!mapElementRef.current) {
-          return;
-        }
-
-        /*
-         * Prevent duplicate map initialization.
-         */
-        if (mapRef.current) {
-          setLoading(false);
           return;
         }
 
@@ -175,25 +180,26 @@ export default function LocationPicker({
           lng: 80.3319,
         };
 
-        const map = new googleMaps.Map(
-          mapElementRef.current,
-          {
-            center: defaultCenter,
-            zoom: 11,
+        const map =
+          new googleMaps.Map(
+            mapElementRef.current,
+            {
+              center: defaultCenter,
+              zoom: 11,
 
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
-            clickableIcons: false,
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: false,
+              clickableIcons: false,
 
-            gestureHandling: "greedy",
-          }
-        );
+              gestureHandling: "greedy",
+            }
+          );
 
         mapRef.current = map;
 
         /*
-         * Google Places Autocomplete
+         * Google Places Autocomplete.
          */
         if (
           googleMaps.places?.Autocomplete &&
@@ -276,33 +282,34 @@ export default function LocationPicker({
         }
 
         /*
-         * Allow the user to tap anywhere on
-         * the map and select that location.
+         * Allow exact location selection
+         * directly from the map.
          */
-        map.addListener("click", (event) => {
-          if (!event.latLng) {
-            return;
+        map.addListener(
+          "click",
+          (event) => {
+            if (!event.latLng) return;
+
+            const lat =
+              event.latLng.lat();
+
+            const lng =
+              event.latLng.lng();
+
+            setMarker(
+              map,
+              googleMaps,
+              lat,
+              lng
+            );
+
+            reverseGeocode(
+              googleMaps,
+              lat,
+              lng
+            );
           }
-
-          const lat =
-            event.latLng.lat();
-
-          const lng =
-            event.latLng.lng();
-
-          setMarker(
-            map,
-            googleMaps,
-            lat,
-            lng
-          );
-
-          reverseGeocode(
-            googleMaps,
-            lat,
-            lng
-          );
-        });
+        );
 
         setLoading(false);
       } catch (err) {
@@ -328,20 +335,30 @@ export default function LocationPicker({
       cancelled = true;
 
       if (
-        autocompleteRef.current &&
-        typeof window !== "undefined" &&
-        window.google?.maps?.event
+        autocompleteRef.current
       ) {
-        window.google.maps.event.clearInstanceListeners(
+        googleMapsSafeClearListeners(
           autocompleteRef.current
         );
+
+        autocompleteRef.current = null;
+      }
+
+      if (mapRef.current) {
+        googleMapsSafeClearListeners(
+          mapRef.current
+        );
+
+        mapRef.current = null;
+      }
+
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
       }
     };
   }, []);
 
-  /*
-   * Add / replace map marker.
-   */
   const setMarker = (
     map,
     googleMaps,
@@ -358,17 +375,12 @@ export default function LocationPicker({
           lat,
           lng,
         },
-
         map,
-
         animation:
           googleMaps.Animation.DROP,
       });
   };
 
-  /*
-   * Convert coordinates into an address.
-   */
   const reverseGeocode = async (
     googleMaps,
     lat,
@@ -388,12 +400,17 @@ export default function LocationPicker({
                   lng,
                 },
               },
-              (results, status) => {
+              (
+                results,
+                status
+              ) => {
                 if (
                   status === "OK" &&
                   results?.length
                 ) {
-                  resolve(results[0]);
+                  resolve(
+                    results[0]
+                  );
                 } else {
                   reject(
                     new Error(
@@ -412,11 +429,6 @@ export default function LocationPicker({
           6
         )}, ${lng.toFixed(6)}`;
 
-      if (inputRef.current) {
-        inputRef.current.value =
-          locationName;
-      }
-
       const location = {
         name: locationName,
         lat,
@@ -425,6 +437,11 @@ export default function LocationPicker({
 
       setSelectedLocation(location);
       setError("");
+
+      if (inputRef.current) {
+        inputRef.current.value =
+          locationName;
+      }
 
       onLocationSelectRef.current?.(
         location
@@ -439,7 +456,6 @@ export default function LocationPicker({
         name: `${lat.toFixed(
           6
         )}, ${lng.toFixed(6)}`,
-
         lat,
         lon: lng,
       };
@@ -456,15 +472,11 @@ export default function LocationPicker({
     }
   };
 
-  /*
-   * Use the device's current location.
-   */
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError(
         "Your browser does not support location services."
       );
-
       return;
     }
 
@@ -511,7 +523,6 @@ export default function LocationPicker({
           );
         }
       },
-
       (err) => {
         console.error(
           "Geolocation error:",
@@ -532,7 +543,6 @@ export default function LocationPicker({
           );
         }
       },
-
       {
         enableHighAccuracy: true,
         timeout: 15000,
@@ -588,9 +598,7 @@ export default function LocationPicker({
           ref={inputRef}
           type="text"
           className="locationInput"
-          defaultValue={
-            selectedLocation.name
-          }
+          value={selectedLocation.name}
           placeholder={placeholder}
           autoComplete="off"
           onChange={(event) => {
@@ -598,8 +606,12 @@ export default function LocationPicker({
               (current) => ({
                 ...current,
                 name: event.target.value,
+                lat: null,
+                lon: null,
               })
             );
+
+            setError("");
           }}
         />
       </div>
@@ -724,7 +736,12 @@ export default function LocationPicker({
           border-color: #08783f;
           box-shadow:
             0 0 0 3px
-            rgba(8, 120, 63, 0.1);
+            rgba(
+              8,
+              120,
+              63,
+              0.1
+            );
         }
 
         .helpText {
@@ -748,4 +765,17 @@ export default function LocationPicker({
       `}</style>
     </div>
   );
-              }
+}
+
+function googleMapsSafeClearListeners(
+  instance
+) {
+  if (
+    typeof window !== "undefined" &&
+    window.google?.maps?.event
+  ) {
+    window.google.maps.event.clearInstanceListeners(
+      instance
+    );
+  }
+}
