@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import LocationPicker from "./components/LocationPicker";
 
 export default function HomePage() {
@@ -8,26 +8,21 @@ export default function HomePage() {
      TODAY
   ============================================================ */
 
-  const [today] = useState(() => {
+  const today = useMemo(() => {
     const date = new Date();
 
     const year = date.getFullYear();
-    const month = String(
-      date.getMonth() + 1
-    ).padStart(2, "0");
-    const day = String(
-      date.getDate()
-    ).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
-  });
+  }, []);
 
   /* ============================================================
      TRIP
   ============================================================ */
 
-  const [tripType, setTripType] =
-    useState("oneway");
+  const [tripType, setTripType] = useState("oneway");
 
   /* ============================================================
      LOCATIONS
@@ -49,64 +44,43 @@ export default function HomePage() {
      JOURNEY
   ============================================================ */
 
-  const [travelDate, setTravelDate] =
-    useState("");
+  const [travelDate, setTravelDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
 
-  const [pickupTime, setPickupTime] =
-    useState("");
-
-  const [returnDate, setReturnDate] =
-    useState("");
-
-  const [returnTime, setReturnTime] =
-    useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [returnTime, setReturnTime] = useState("");
 
   /* ============================================================
      PASSENGER
   ============================================================ */
 
-  const [passengerName, setPassengerName] =
-    useState("");
+  const [passengerName, setPassengerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
-  const [phone, setPhone] =
-    useState("");
-
-  const [whatsapp, setWhatsapp] =
-    useState("");
-
-  /*
-   * TRUE means WhatsApp is linked to phone.
-   */
-  const [
-    whatsappSameAsPhone,
-    setWhatsappSameAsPhone,
-  ] = useState(true);
+  const [whatsappSameAsPhone, setWhatsappSameAsPhone] =
+    useState(true);
 
   /* ============================================================
-     MESSAGE
+     UI STATE
   ============================================================ */
 
-  const [message, setMessage] =
-    useState("");
-
-  const [messageType, setMessageType] =
-    useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /* ============================================================
-     KEEP WHATSAPP SYNCED
+     WHATSAPP SYNC
   ============================================================ */
 
   useEffect(() => {
     if (whatsappSameAsPhone) {
       setWhatsapp(phone);
     }
-  }, [
-    phone,
-    whatsappSameAsPhone,
-  ]);
+  }, [phone, whatsappSameAsPhone]);
 
   /* ============================================================
-     HELPERS
+     MESSAGE HELPERS
   ============================================================ */
 
   const clearMessage = () => {
@@ -125,18 +99,13 @@ export default function HomePage() {
   };
 
   /* ============================================================
-     PHONE VALIDATION
+     PHONE NORMALIZATION
   ============================================================ */
 
-  const normalizeIndianPhone = (
-    value
-  ) => {
-    const cleaned =
-      String(value || "").replace(
-        /\D/g,
-        ""
-      );
+  const normalizeIndianPhone = (value) => {
+    const cleaned = String(value || "").replace(/\D/g, "");
 
+    // 10-digit Indian mobile
     if (
       cleaned.length === 10 &&
       /^[6-9]\d{9}$/.test(cleaned)
@@ -144,12 +113,11 @@ export default function HomePage() {
       return cleaned;
     }
 
+    // 91 + 10-digit Indian mobile
     if (
       cleaned.length === 12 &&
       cleaned.startsWith("91") &&
-      /^[6-9]\d{9}$/.test(
-        cleaned.slice(2)
-      )
+      /^[6-9]\d{9}$/.test(cleaned.slice(2))
     ) {
       return cleaned.slice(2);
     }
@@ -157,21 +125,34 @@ export default function HomePage() {
     return null;
   };
 
-  const isValidPhone = (value) => {
-    return Boolean(
-      normalizeIndianPhone(value)
-    );
+  /* ============================================================
+     TIME HELPERS
+  ============================================================ */
+
+  const isTimeInPastForToday = (date, time) => {
+    if (!date || !time || date !== today) {
+      return false;
+    }
+
+    const now = new Date();
+
+    const [hours, minutes] = time.split(":").map(Number);
+
+    const selected = new Date();
+
+    selected.setHours(hours, minutes, 0, 0);
+
+    return selected < now;
   };
 
   /* ============================================================
      TRIP TYPE
   ============================================================ */
 
-  const handleTripTypeChange = (
-    type
-  ) => {
-    setTripType(type);
+  const handleTripTypeChange = (type) => {
     clearMessage();
+
+    setTripType(type);
 
     if (type === "oneway") {
       setReturnDate("");
@@ -183,16 +164,11 @@ export default function HomePage() {
      TRAVEL DATE
   ============================================================ */
 
-  const handleTravelDateChange = (
-    value
-  ) => {
-    setTravelDate(value);
+  const handleTravelDateChange = (value) => {
     clearMessage();
 
-    /*
-     * If return date is now before
-     * travel date, clear it.
-     */
+    setTravelDate(value);
+
     if (
       returnDate &&
       value &&
@@ -201,30 +177,63 @@ export default function HomePage() {
       setReturnDate("");
       setReturnTime("");
     }
+
+    // A previously selected time may now be invalid
+    // if the user changes the travel date to today.
+    if (
+      pickupTime &&
+      value === today &&
+      isTimeInPastForToday(value, pickupTime)
+    ) {
+      setPickupTime("");
+    }
+  };
+
+  /* ============================================================
+     PICKUP TIME
+  ============================================================ */
+
+  const handlePickupTimeChange = (value) => {
+    clearMessage();
+
+    if (
+      travelDate === today &&
+      isTimeInPastForToday(today, value)
+    ) {
+      showError(
+        "Pickup time cannot be in the past."
+      );
+      setPickupTime("");
+      return;
+    }
+
+    setPickupTime(value);
   };
 
   /* ============================================================
      PHONE CHANGE
   ============================================================ */
 
-  const handlePhoneChange = (
-    event
-  ) => {
-    const value =
-      event.target.value.replace(
-        /[^\d+]/g,
-        ""
-      );
+  const handlePhoneChange = (event) => {
+    const value = event.target.value.replace(/[^\d+]/g, "");
 
     setPhone(value);
 
-    /*
-     * If WhatsApp is linked,
-     * keep it identical.
-     */
     if (whatsappSameAsPhone) {
       setWhatsapp(value);
     }
+
+    clearMessage();
+  };
+
+  /* ============================================================
+     WHATSAPP CHANGE
+  ============================================================ */
+
+  const handleWhatsAppChange = (event) => {
+    const value = event.target.value.replace(/[^\d+]/g, "");
+
+    setWhatsapp(value);
 
     clearMessage();
   };
@@ -234,175 +243,69 @@ export default function HomePage() {
   ============================================================ */
 
   const handleWhatsAppToggle = () => {
-    const nextState =
-      !whatsappSameAsPhone;
+    clearMessage();
 
-    setWhatsappSameAsPhone(
-      nextState
-    );
+    const nextState = !whatsappSameAsPhone;
+
+    setWhatsappSameAsPhone(nextState);
 
     if (nextState) {
-      /*
-       * Re-link WhatsApp to phone.
-       */
       setWhatsapp(phone);
     }
-
-    clearMessage();
   };
 
   /* ============================================================
-     CONTINUE
+     LOCATION SELECT
   ============================================================ */
 
-  const handleContinue = () => {
+  const handlePickupSelect = (location) => {
     clearMessage();
 
-    /* ----------------------------------------------------------
-       PICKUP
-    ---------------------------------------------------------- */
-
-    if (!pickup?.name?.trim()) {
-      showError(
-        "Please select your pickup location."
-      );
+    if (!location) {
       return;
     }
 
-    /* ----------------------------------------------------------
-       DROP
-    ---------------------------------------------------------- */
+    setPickup({
+      name: location.name || "",
+      lat: location.lat ?? null,
+      lon: location.lon ?? null,
+    });
+  };
 
-    if (!drop?.name?.trim()) {
-      showError(
-        "Please select your drop location."
-      );
+  const handleDropSelect = (location) => {
+    clearMessage();
+
+    if (!location) {
       return;
     }
 
-    /* ----------------------------------------------------------
-       TRAVEL DATE
-    ---------------------------------------------------------- */
+    setDrop({
+      name: location.name || "",
+      lat: location.lat ?? null,
+      lon: location.lon ?? null,
+    });
+  };
 
-    if (!travelDate) {
-      showError(
-        "Please select your travel date."
-      );
-      return;
-    }
+  /* ============================================================
+     BOOKING DATA
+  ============================================================ */
 
-    if (travelDate < today) {
-      showError(
-        "Travel date cannot be in the past."
-      );
-      return;
-    }
-
-    /* ----------------------------------------------------------
-       PICKUP TIME
-    ---------------------------------------------------------- */
-
-    if (!pickupTime) {
-      showError(
-        "Please select your pickup time."
-      );
-      return;
-    }
-
-    /* ----------------------------------------------------------
-       PASSENGER
-    ---------------------------------------------------------- */
-
-    if (!passengerName.trim()) {
-      showError(
-        "Please enter the passenger name."
-      );
-      return;
-    }
-
-    if (
-      passengerName.trim().length < 2
-    ) {
-      showError(
-        "Please enter a valid passenger name."
-      );
-      return;
-    }
-
-    /* ----------------------------------------------------------
-       PHONE
-    ---------------------------------------------------------- */
-
-    const normalizedPhone =
-      normalizeIndianPhone(phone);
-
-    if (!normalizedPhone) {
-      showError(
-        "Please enter a valid 10-digit Indian mobile number."
-      );
-      return;
-    }
-
-    /* ----------------------------------------------------------
-       WHATSAPP
-    ---------------------------------------------------------- */
-
+  const buildBookingData = () => {
+    const normalizedPhone = normalizeIndianPhone(phone);
     const normalizedWhatsApp =
-      normalizeIndianPhone(
-        whatsapp
-      );
+      normalizeIndianPhone(whatsapp);
 
-    if (!normalizedWhatsApp) {
-      showError(
-        "Please enter a valid WhatsApp mobile number."
-      );
-      return;
-    }
-
-    /* ----------------------------------------------------------
-       ROUND TRIP
-    ---------------------------------------------------------- */
-
-    if (
-      tripType === "roundtrip"
-    ) {
-      if (!returnDate) {
-        showError(
-          "Please select the return date."
-        );
-        return;
-      }
-
-      if (returnDate < travelDate) {
-        showError(
-          "Return date cannot be before the travel date."
-        );
-        return;
-      }
-
-      if (!returnTime) {
-        showError(
-          "Please select the return time."
-        );
-        return;
-      }
-    }
-
-    /* ==========================================================
-       BOOKING DATA
-    ========================================================== */
-
-    const bookingData = {
+    return {
       tripType,
 
       pickup: {
-        name: pickup.name,
+        name: pickup.name.trim(),
         lat: pickup.lat,
         lon: pickup.lon,
       },
 
       drop: {
-        name: drop.name,
+        name: drop.name.trim(),
         lat: drop.lat,
         lon: drop.lon,
       },
@@ -425,38 +328,239 @@ export default function HomePage() {
 
       phone: normalizedPhone,
 
-      whatsapp:
-        normalizedWhatsApp,
-    };
+      whatsapp: normalizedWhatsApp,
 
-    /*
-     * For now we keep this in sessionStorage.
-     *
-     * This gives us a clean hand-off to
-     * the future cab-selection page.
-     */
+      createdAt: new Date().toISOString(),
+    };
+  };
+
+  /* ============================================================
+     VALIDATION
+  ============================================================ */
+
+  const validateBooking = () => {
+    /* ----------------------------------------------------------
+       PICKUP
+    ---------------------------------------------------------- */
+
+    if (!pickup.name?.trim()) {
+      return "Please select your pickup location.";
+    }
+
+    /* ----------------------------------------------------------
+       DROP
+    ---------------------------------------------------------- */
+
+    if (!drop.name?.trim()) {
+      return "Please select your drop location.";
+    }
+
+    /* ----------------------------------------------------------
+       SAME LOCATION
+    ---------------------------------------------------------- */
+
+    if (
+      pickup.lat !== null &&
+      pickup.lon !== null &&
+      drop.lat !== null &&
+      drop.lon !== null
+    ) {
+      const sameLatitude =
+        Math.abs(pickup.lat - drop.lat) < 0.00001;
+
+      const sameLongitude =
+        Math.abs(pickup.lon - drop.lon) < 0.00001;
+
+      if (sameLatitude && sameLongitude) {
+        return "Pickup and drop locations cannot be the same.";
+      }
+    }
+
+    /* ----------------------------------------------------------
+       TRAVEL DATE
+    ---------------------------------------------------------- */
+
+    if (!travelDate) {
+      return "Please select your travel date.";
+    }
+
+    if (travelDate < today) {
+      return "Travel date cannot be in the past.";
+    }
+
+    /* ----------------------------------------------------------
+       PICKUP TIME
+    ---------------------------------------------------------- */
+
+    if (!pickupTime) {
+      return "Please select your pickup time.";
+    }
+
+    if (
+      travelDate === today &&
+      isTimeInPastForToday(
+        travelDate,
+        pickupTime
+      )
+    ) {
+      return "Pickup time cannot be in the past.";
+    }
+
+    /* ----------------------------------------------------------
+       PASSENGER
+    ---------------------------------------------------------- */
+
+    const trimmedName =
+      passengerName.trim();
+
+    if (!trimmedName) {
+      return "Please enter the passenger name.";
+    }
+
+    if (trimmedName.length < 2) {
+      return "Please enter a valid passenger name.";
+    }
+
+    /* ----------------------------------------------------------
+       PHONE
+    ---------------------------------------------------------- */
+
+    const normalizedPhone =
+      normalizeIndianPhone(phone);
+
+    if (!normalizedPhone) {
+      return (
+        "Please enter a valid 10-digit Indian mobile number."
+      );
+    }
+
+    /* ----------------------------------------------------------
+       WHATSAPP
+    ---------------------------------------------------------- */
+
+    const normalizedWhatsApp =
+      normalizeIndianPhone(whatsapp);
+
+    if (!normalizedWhatsApp) {
+      return (
+        "Please enter a valid WhatsApp mobile number."
+      );
+    }
+
+    /* ----------------------------------------------------------
+       ROUND TRIP
+    ---------------------------------------------------------- */
+
+    if (tripType === "roundtrip") {
+      if (!returnDate) {
+        return "Please select the return date.";
+      }
+
+      if (returnDate < travelDate) {
+        return (
+          "Return date cannot be before the travel date."
+        );
+      }
+
+      if (!returnTime) {
+        return "Please select the return time.";
+      }
+
+      if (
+        returnDate === today &&
+        isTimeInPastForToday(
+          returnDate,
+          returnTime
+        )
+      ) {
+        return "Return time cannot be in the past.";
+      }
+
+      /*
+       * If the return is on the same day,
+       * it cannot be before the pickup time.
+       */
+      if (
+        returnDate === travelDate &&
+        returnTime < pickupTime
+      ) {
+        return (
+          "Return time cannot be before the pickup time."
+        );
+      }
+    }
+
+    return null;
+  };
+
+  /* ============================================================
+     CONTINUE
+  ============================================================ */
+
+  const handleContinue = () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    clearMessage();
+
+    const validationError =
+      validateBooking();
+
+    if (validationError) {
+      showError(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const bookingData =
+      buildBookingData();
+
     try {
       sessionStorage.setItem(
         "voynu_booking",
-        JSON.stringify(
-          bookingData
-        )
+        JSON.stringify(bookingData)
+      );
+
+      /*
+       * Also keep a simple timestamp separately.
+       * Useful later when we build the cab-selection
+       * and booking confirmation flow.
+       */
+      sessionStorage.setItem(
+        "voynu_booking_created_at",
+        bookingData.createdAt
+      );
+
+      console.log(
+        "VOYNU booking:",
+        bookingData
+      );
+
+      /*
+       * IMPORTANT:
+       *
+       * We are intentionally NOT forcing navigation
+       * here until the cab-selection route exists.
+       *
+       * This keeps the current page stable.
+       */
+      showSuccess(
+        "Your trip details are ready. Next, we'll help you choose your cab."
       );
     } catch (error) {
       console.error(
         "Unable to save booking data:",
         error
       );
+
+      showError(
+        "We couldn't save your trip details. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    console.log(
-      "VOYNU booking:",
-      bookingData
-    );
-
-    showSuccess(
-      "Your trip details are ready. Next, we'll help you choose your cab."
-    );
   };
 
   /* ============================================================
@@ -465,12 +569,14 @@ export default function HomePage() {
 
   return (
     <main className="page">
+
       {/* ========================================================
           HEADER
       ======================================================== */}
 
       <header className="header">
         <div className="headerInner">
+
           <div className="brand">
             <div className="brandMark">
               V
@@ -490,6 +596,7 @@ export default function HomePage() {
           <a
             href="tel:+919123456789"
             className="headerPhone"
+            aria-label="Call VOYNU"
           >
             <span className="phoneIcon">
               ☎
@@ -499,6 +606,7 @@ export default function HomePage() {
               +91 91234 56789
             </span>
           </a>
+
         </div>
       </header>
 
@@ -507,10 +615,12 @@ export default function HomePage() {
       ======================================================== */}
 
       <section className="hero">
+
         <div className="heroDecor heroDecorOne" />
         <div className="heroDecor heroDecorTwo" />
 
         <div className="heroInner">
+
           <div className="serviceBadge">
             <span className="badgeDot" />
 
@@ -524,7 +634,9 @@ export default function HomePage() {
           </div>
 
           <div className="heroGrid">
+
             <div className="heroText">
+
               <h1>
                 Your ride,
                 <br />
@@ -541,6 +653,7 @@ export default function HomePage() {
               </p>
 
               <div className="heroFeatures">
+
                 <div className="heroFeature">
                   <span className="featureIcon">
                     ✓
@@ -570,6 +683,7 @@ export default function HomePage() {
                     EV Rides
                   </span>
                 </div>
+
               </div>
             </div>
 
@@ -583,6 +697,7 @@ export default function HomePage() {
                 🚙
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -592,20 +707,20 @@ export default function HomePage() {
       ======================================================== */}
 
       <section className="bookingSection">
+
         <div className="bookingCard">
-          {/* ----------------------------------------------------
-              BOOKING HEADER
-          ---------------------------------------------------- */}
+
+          {/* BOOKING HEADER */}
 
           <div className="bookingHeader">
+
             <div>
               <h2>
                 Book your ride
               </h2>
 
               <p>
-                Tell us where you want
-                to go.
+                Tell us where you want to go.
               </p>
             </div>
 
@@ -616,27 +731,25 @@ export default function HomePage() {
 
               Secure booking
             </div>
+
           </div>
 
-          {/* ----------------------------------------------------
-              TRIP TYPE
-          ---------------------------------------------------- */}
+          {/* TRIP TYPE */}
 
           <div
             className="tripToggle"
             role="tablist"
             aria-label="Trip type"
           >
+
             <button
               type="button"
               role="tab"
               aria-selected={
-                tripType ===
-                "oneway"
+                tripType === "oneway"
               }
               className={
-                tripType ===
-                "oneway"
+                tripType === "oneway"
                   ? "tripButton active"
                   : "tripButton"
               }
@@ -665,12 +778,10 @@ export default function HomePage() {
               type="button"
               role="tab"
               aria-selected={
-                tripType ===
-                "roundtrip"
+                tripType === "roundtrip"
               }
               className={
-                tripType ===
-                "roundtrip"
+                tripType === "roundtrip"
                   ? "tripButton active"
                   : "tripButton"
               }
@@ -694,13 +805,13 @@ export default function HomePage() {
                 </small>
               </span>
             </button>
+
           </div>
 
-          {/* ----------------------------------------------------
-              JOURNEY
-          ---------------------------------------------------- */}
+          {/* JOURNEY */}
 
           <div className="sectionLabel">
+
             <span className="sectionNumber">
               1
             </span>
@@ -708,48 +819,47 @@ export default function HomePage() {
             <span>
               Journey details
             </span>
+
           </div>
 
           <div className="locationGrid">
+
             <div className="locationBox">
+
               <LocationPicker
                 label="Pickup location"
                 value={pickup.name}
                 placeholder="Search pickup location"
                 allowCurrentLocation={true}
-                onLocationSelect={(
-                  location
-                ) => {
-                  setPickup(
-                    location
-                  );
-                  clearMessage();
-                }}
+                onLocationSelect={
+                  handlePickupSelect
+                }
               />
+
             </div>
 
             <div className="locationBox">
+
               <LocationPicker
                 label="Drop location"
                 value={drop.name}
                 placeholder="Search destination"
                 allowCurrentLocation={false}
-                onLocationSelect={(
-                  location
-                ) => {
-                  setDrop(location);
-                  clearMessage();
-                }}
+                onLocationSelect={
+                  handleDropSelect
+                }
               />
+
             </div>
+
           </div>
 
-          {/* ----------------------------------------------------
-              DATE + TIME
-          ---------------------------------------------------- */}
+          {/* DATE + TIME */}
 
           <div className="formGrid">
+
             <div className="field">
+
               <label htmlFor="travelDate">
                 <span className="labelIcon">
                   ▣
@@ -769,9 +879,11 @@ export default function HomePage() {
                   )
                 }
               />
+
             </div>
 
             <div className="field">
+
               <label htmlFor="pickupTime">
                 <span className="labelIcon">
                   ◷
@@ -784,23 +896,22 @@ export default function HomePage() {
                 id="pickupTime"
                 type="time"
                 value={pickupTime}
-                onChange={(event) => {
-                  setPickupTime(
+                onChange={(event) =>
+                  handlePickupTimeChange(
                     event.target.value
-                  );
-                  clearMessage();
-                }}
+                  )
+                }
               />
+
             </div>
+
           </div>
 
-          {/* ----------------------------------------------------
-              RETURN JOURNEY
-          ---------------------------------------------------- */}
+          {/* RETURN JOURNEY */}
 
-          {tripType ===
-            "roundtrip" && (
+          {tripType === "roundtrip" && (
             <div className="roundTripBox">
+
               <div className="roundTripTitle">
                 <span>
                   ⇄
@@ -810,7 +921,9 @@ export default function HomePage() {
               </div>
 
               <div className="formGrid">
+
                 <div className="field">
+
                   <label htmlFor="returnDate">
                     <span className="labelIcon">
                       ▣
@@ -822,24 +935,49 @@ export default function HomePage() {
                   <input
                     id="returnDate"
                     type="date"
-                    value={
-                      returnDate
-                    }
+                    value={returnDate}
                     min={
-                      travelDate ||
-                      today
+                      travelDate || today
                     }
                     onChange={(event) => {
-                      setReturnDate(
-                        event.target
-                          .value
-                      );
                       clearMessage();
+
+                      const value =
+                        event.target.value;
+
+                      if (
+                        travelDate &&
+                        value &&
+                        value < travelDate
+                      ) {
+                        showError(
+                          "Return date cannot be before the travel date."
+                        );
+
+                        setReturnDate("");
+                        setReturnTime("");
+                        return;
+                      }
+
+                      setReturnDate(value);
+
+                      if (
+                        value === today &&
+                        returnTime &&
+                        isTimeInPastForToday(
+                          value,
+                          returnTime
+                        )
+                      ) {
+                        setReturnTime("");
+                      }
                     }}
                   />
+
                 </div>
 
                 <div className="field">
+
                   <label htmlFor="returnTime">
                     <span className="labelIcon">
                       ◷
@@ -851,46 +989,77 @@ export default function HomePage() {
                   <input
                     id="returnTime"
                     type="time"
-                    value={
-                      returnTime
-                    }
+                    value={returnTime}
                     onChange={(event) => {
-                      setReturnTime(
-                        event.target
-                          .value
-                      );
                       clearMessage();
+
+                      const value =
+                        event.target.value;
+
+                      if (
+                        returnDate === today &&
+                        isTimeInPastForToday(
+                          returnDate,
+                          value
+                        )
+                      ) {
+                        showError(
+                          "Return time cannot be in the past."
+                        );
+
+                        setReturnTime("");
+                        return;
+                      }
+
+                      if (
+                        returnDate === travelDate &&
+                        pickupTime &&
+                        value < pickupTime
+                      ) {
+                        showError(
+                          "Return time cannot be before the pickup time."
+                        );
+
+                        setReturnTime("");
+                        return;
+                      }
+
+                      setReturnTime(value);
                     }}
                   />
+
                 </div>
+
               </div>
             </div>
           )}
 
-          {/* ----------------------------------------------------
-              PASSENGER
-          ---------------------------------------------------- */}
+          {/* PASSENGER */}
 
           <div className="sectionLabel passengerSectionLabel">
+
             <span className="sectionNumber">
               2
             </span>
 
             <div>
+
               <span className="sectionTitle">
                 Passenger details
               </span>
 
               <span className="sectionSubtitle">
-                Who are we booking
-                this ride for?
+                Who are we booking this ride for?
               </span>
+
             </div>
+
           </div>
 
           {/* NAME */}
 
           <div className="field">
+
             <label htmlFor="passengerName">
               <span className="labelIcon">
                 ●
@@ -904,25 +1073,26 @@ export default function HomePage() {
               type="text"
               autoComplete="name"
               placeholder="Enter passenger name"
-              value={
-                passengerName
-              }
+              value={passengerName}
               onChange={(event) => {
                 setPassengerName(
-                  event.target
-                    .value
+                  event.target.value
                 );
+
                 clearMessage();
               }}
             />
+
           </div>
 
           {/* PHONE + WHATSAPP */}
 
           <div className="formGrid">
+
             {/* PHONE */}
 
             <div className="field">
+
               <label htmlFor="phone">
                 <span className="labelIcon">
                   ☎
@@ -943,11 +1113,13 @@ export default function HomePage() {
                   handlePhoneChange
                 }
               />
+
             </div>
 
             {/* WHATSAPP */}
 
             <div className="field">
+
               <label htmlFor="whatsapp">
                 <span className="labelIcon">
                   ◌
@@ -967,16 +1139,9 @@ export default function HomePage() {
                 disabled={
                   whatsappSameAsPhone
                 }
-                onChange={(event) => {
-                  setWhatsapp(
-                    event.target.value.replace(
-                      /[^\d+]/g,
-                      ""
-                    )
-                  );
-
-                  clearMessage();
-                }}
+                onChange={
+                  handleWhatsAppChange
+                }
               />
 
               <button
@@ -993,6 +1158,7 @@ export default function HomePage() {
                   whatsappSameAsPhone
                 }
               >
+
                 <span className="toggleCheck">
                   {whatsappSameAsPhone
                     ? "✓"
@@ -1000,30 +1166,30 @@ export default function HomePage() {
                 </span>
 
                 <span>
-                  Same as phone
-                  number
+                  Same as phone number
                 </span>
+
               </button>
+
             </div>
+
           </div>
 
-          {/* ----------------------------------------------------
-              MESSAGE
-          ---------------------------------------------------- */}
+          {/* MESSAGE */}
 
           {message && (
             <div
               className={
-                messageType ===
-                "success"
+                messageType === "success"
                   ? "message successMessage"
                   : "message errorMessage"
               }
               role="alert"
+              aria-live="polite"
             >
+
               <span className="messageIcon">
-                {messageType ===
-                "success"
+                {messageType === "success"
                   ? "✓"
                   : "!"}
               </span>
@@ -1031,57 +1197,59 @@ export default function HomePage() {
               <span>
                 {message}
               </span>
+
             </div>
           )}
 
-          {/* ----------------------------------------------------
-              CONTINUE
-          ---------------------------------------------------- */}
+          {/* CONTINUE */}
 
           <button
             type="button"
             className="continueButton"
-            onClick={
-              handleContinue
-            }
+            onClick={handleContinue}
+            disabled={isSubmitting}
           >
+
             <span>
-              Continue to cab
-              selection
+              {isSubmitting
+                ? "Preparing your trip..."
+                : "Continue to cab selection"}
             </span>
 
             <span className="continueArrow">
               →
             </span>
+
           </button>
 
           <div className="bookingFooter">
+
             <span>
               🛡️
             </span>
 
             <span>
-              Your information is
-              safe and secure.
+              Your information is safe and secure.
             </span>
+
           </div>
+
         </div>
       </section>
 
-      {/* ========================================================
-          FOOTER
-      ======================================================== */}
+      {/* FOOTER */}
 
       <footer className="footer">
+
         <div className="footerInner">
+
           <div>
             <strong>
               VOYNU
             </strong>
 
             <span>
-              {" "}
-              ©{" "}
+              {" "}©{" "}
               {new Date().getFullYear()}
             </span>
           </div>
@@ -1089,7 +1257,9 @@ export default function HomePage() {
           <div>
             Travel safe. Travel smart.
           </div>
+
         </div>
+
       </footer>
 
       {/* ========================================================
@@ -1097,13 +1267,13 @@ export default function HomePage() {
       ======================================================== */}
 
       <style jsx>{`
+
         * {
           box-sizing: border-box;
         }
 
         .page {
           min-height: 100vh;
-
           background: #f4faf6;
           color: #26372f;
 
@@ -1123,20 +1293,14 @@ export default function HomePage() {
 
         .header {
           background: #ffffff;
-
-          border-bottom: 1px solid
-            #e8eee9;
+          border-bottom: 1px solid #e8eee9;
 
           position: relative;
           z-index: 20;
         }
 
         .headerInner {
-          width: min(
-            1180px,
-            calc(100% - 40px)
-          );
-
+          width: min(1180px, calc(100% - 40px));
           min-height: 72px;
 
           margin: 0 auto;
@@ -1224,10 +1388,7 @@ export default function HomePage() {
         }
 
         .heroInner {
-          width: min(
-            1180px,
-            calc(100% - 40px)
-          );
+          width: min(1180px, calc(100% - 40px));
 
           margin: 0 auto;
 
@@ -1280,9 +1441,7 @@ export default function HomePage() {
 
           padding: 8px 14px;
 
-          border: 1px solid
-            #d8e7dc;
-
+          border: 1px solid #d8e7dc;
           border-radius: 30px;
 
           background: rgba(
@@ -1537,10 +1696,7 @@ export default function HomePage() {
         ====================================================== */
 
         .tripToggle {
-          width: min(
-            620px,
-            100%
-          );
+          width: min(620px, 100%);
 
           display: grid;
 
@@ -1568,7 +1724,6 @@ export default function HomePage() {
           gap: 10px;
 
           border: 0;
-
           border-radius: 11px;
 
           background: transparent;
@@ -1745,8 +1900,7 @@ export default function HomePage() {
 
           padding: 0 15px;
 
-          border: 1px solid
-            #d9e2dc;
+          border: 1px solid #d9e2dc;
 
           border-radius: 11px;
 
@@ -1794,7 +1948,7 @@ export default function HomePage() {
         }
 
         /* ======================================================
-           WHATSAPP TOGGLE
+           WHATSAPP
         ====================================================== */
 
         .samePhoneToggle {
@@ -1840,8 +1994,7 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
 
-          border: 1.5px solid
-            #cbd9d0;
+          border: 1.5px solid #cbd9d0;
 
           border-radius: 50%;
 
@@ -1851,11 +2004,6 @@ export default function HomePage() {
 
           font-size: 11px;
           font-weight: 900;
-
-          transition:
-            background 0.2s ease,
-            border-color 0.2s ease,
-            transform 0.15s ease;
         }
 
         .samePhoneToggle.active
@@ -1874,11 +2022,6 @@ export default function HomePage() {
               );
         }
 
-        .samePhoneToggle:active
-          .toggleCheck {
-          transform: scale(0.92);
-        }
-
         /* ======================================================
            ROUND TRIP
         ====================================================== */
@@ -1888,8 +2031,7 @@ export default function HomePage() {
 
           padding: 17px;
 
-          border: 1px solid
-            #dcebe1;
+          border: 1px solid #dcebe1;
 
           border-radius: 14px;
 
@@ -1912,8 +2054,7 @@ export default function HomePage() {
           font-size: 17px;
         }
 
-        .roundTripBox
-          .formGrid {
+        .roundTripBox .formGrid {
           margin-top: 15px;
         }
 
@@ -1955,33 +2096,28 @@ export default function HomePage() {
         }
 
         .successMessage {
-          border: 1px solid
-            #cce5d4;
+          border: 1px solid #cce5d4;
 
           background: #eef9f1;
 
           color: #28734b;
         }
 
-        .successMessage
-          .messageIcon {
+        .successMessage .messageIcon {
           background: #08783f;
           color: #ffffff;
         }
 
         .errorMessage {
-          border: 1px solid
-            #efccc8;
+          border: 1px solid #efccc8;
 
           background: #fff5f3;
 
           color: #b33d34;
         }
 
-        .errorMessage
-          .messageIcon {
+        .errorMessage .messageIcon {
           background: #c64a3f;
-
           color: #ffffff;
         }
 
@@ -2004,7 +2140,6 @@ export default function HomePage() {
           padding: 0 20px;
 
           border: 0;
-
           border-radius: 12px;
 
           background: #08783f;
@@ -2030,10 +2165,11 @@ export default function HomePage() {
           transition:
             transform 0.18s ease,
             background 0.18s ease,
-            box-shadow 0.18s ease;
+            box-shadow 0.18s ease,
+            opacity 0.18s ease;
         }
 
-        .continueButton:hover {
+        .continueButton:hover:not(:disabled) {
           background: #076d39;
 
           transform: translateY(-1px);
@@ -2048,8 +2184,13 @@ export default function HomePage() {
               );
         }
 
-        .continueButton:active {
+        .continueButton:active:not(:disabled) {
           transform: translateY(0);
+        }
+
+        .continueButton:disabled {
+          opacity: 0.7;
+          cursor: wait;
         }
 
         .continueArrow {
@@ -2058,7 +2199,7 @@ export default function HomePage() {
         }
 
         /* ======================================================
-           FOOTER INSIDE CARD
+           BOOKING FOOTER
         ====================================================== */
 
         .bookingFooter {
@@ -2143,10 +2284,7 @@ export default function HomePage() {
 
         @media (max-width: 700px) {
           .headerInner {
-            width: calc(
-              100% - 28px
-            );
-
+            width: calc(100% - 28px);
             min-height: 62px;
           }
 
@@ -2172,9 +2310,7 @@ export default function HomePage() {
           }
 
           .heroInner {
-            width: calc(
-              100% - 28px
-            );
+            width: calc(100% - 28px);
 
             padding: 28px 0 56px;
           }
@@ -2225,9 +2361,7 @@ export default function HomePage() {
           }
 
           .bookingSection {
-            width: calc(
-              100% - 20px
-            );
+            width: calc(100% - 20px);
 
             margin-top: -23px;
 
@@ -2321,8 +2455,7 @@ export default function HomePage() {
             padding: 14px;
           }
 
-          .roundTripBox
-            .formGrid {
+          .roundTripBox .formGrid {
             margin-top: 13px;
           }
 
@@ -2345,9 +2478,7 @@ export default function HomePage() {
           }
 
           .footerInner {
-            width: calc(
-              100% - 28px
-            );
+            width: calc(100% - 28px);
 
             min-height: 62px;
 
@@ -2388,6 +2519,7 @@ export default function HomePage() {
             font-size: 13px;
           }
         }
+
       `}</style>
     </main>
   );
