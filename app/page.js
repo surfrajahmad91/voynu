@@ -20,16 +20,15 @@ export default function HomePage() {
 
   /* ============================================================
      SERVICE AREA
-     
-     IMPORTANT:
-     This is currently frontend configuration only.
-     Later we will move the active service center and radius
-     to the backend/Admin Panel.
-     
-     VOYNU initial launch:
-     - Center: Kanpur
+
+     VOYNU INITIAL LAUNCH:
+     - Service center: Kanpur
      - Pickup radius: 200 km
      - Destination can be outside the radius
+
+     IMPORTANT:
+     This is currently frontend configuration only.
+     Later this should move to the backend/Admin Panel.
   ============================================================ */
 
   const SERVICE_AREA = {
@@ -41,21 +40,49 @@ export default function HomePage() {
     radiusKm: 200,
   };
 
+  /* ============================================================
+     DISTANCE HELPERS
+  ============================================================ */
+
+  const toValidCoordinate = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return null;
+    }
+
+    const number = Number(value);
+
+    return Number.isFinite(number)
+      ? number
+      : null;
+  };
+
   const calculateDistanceKm = (
     lat1,
     lon1,
     lat2,
     lon2
   ) => {
+    const latitude1 =
+      toValidCoordinate(lat1);
+
+    const longitude1 =
+      toValidCoordinate(lon1);
+
+    const latitude2 =
+      toValidCoordinate(lat2);
+
+    const longitude2 =
+      toValidCoordinate(lon2);
+
     if (
-      lat1 === null ||
-      lon1 === null ||
-      lat2 === null ||
-      lon2 === null ||
-      lat1 === undefined ||
-      lon1 === undefined ||
-      lat2 === undefined ||
-      lon2 === undefined
+      latitude1 === null ||
+      longitude1 === null ||
+      latitude2 === null ||
+      longitude2 === null
     ) {
       return null;
     }
@@ -65,16 +92,19 @@ export default function HomePage() {
 
     const earthRadiusKm = 6371;
 
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
+    const dLat = toRadians(
+      latitude2 - latitude1
+    );
+
+    const dLon = toRadians(
+      longitude2 - longitude1
+    );
 
     const a =
-      Math.sin(dLat / 2) *
-        Math.sin(dLat / 2) +
-      Math.cos(toRadians(lat1)) *
-        Math.cos(toRadians(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRadians(latitude1)) *
+        Math.cos(toRadians(latitude2)) *
+        Math.sin(dLon / 2) ** 2;
 
     const c =
       2 *
@@ -90,7 +120,8 @@ export default function HomePage() {
      TRIP
   ============================================================ */
 
-  const [tripType, setTripType] = useState("oneway");
+  const [tripType, setTripType] =
+    useState("oneway");
 
   /* ============================================================
      LOCATIONS
@@ -112,30 +143,86 @@ export default function HomePage() {
      JOURNEY
   ============================================================ */
 
-  const [travelDate, setTravelDate] = useState("");
-  const [pickupTime, setPickupTime] = useState("");
+  const [travelDate, setTravelDate] =
+    useState("");
 
-  const [returnDate, setReturnDate] = useState("");
-  const [returnTime, setReturnTime] = useState("");
+  const [pickupTime, setPickupTime] =
+    useState("");
+
+  const [returnDate, setReturnDate] =
+    useState("");
+
+  const [returnTime, setReturnTime] =
+    useState("");
 
   /* ============================================================
      PASSENGER
   ============================================================ */
 
-  const [passengerName, setPassengerName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
+  const [passengerName, setPassengerName] =
+    useState("");
 
-  const [whatsappSameAsPhone, setWhatsappSameAsPhone] =
-    useState(true);
+  const [phone, setPhone] =
+    useState("");
+
+  const [whatsapp, setWhatsapp] =
+    useState("");
+
+  const [
+    whatsappSameAsPhone,
+    setWhatsappSameAsPhone,
+  ] = useState(true);
 
   /* ============================================================
      UI STATE
   ============================================================ */
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] =
+    useState("");
+
+  const [messageType, setMessageType] =
+    useState("");
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  /* ============================================================
+     PICKUP DISTANCE
+
+     This recalculates automatically whenever the
+     pickup coordinates change.
+  ============================================================ */
+
+  const pickupDistanceKm = useMemo(() => {
+    return calculateDistanceKm(
+      SERVICE_AREA.center.lat,
+      SERVICE_AREA.center.lon,
+      pickup.lat,
+      pickup.lon
+    );
+  }, [pickup.lat, pickup.lon]);
+
+  /* ============================================================
+     SERVICE AREA STATUS
+
+     ONLY PICKUP is checked.
+
+     DROP LOCATION CAN BE ANYWHERE.
+  ============================================================ */
+
+  const pickupWithinServiceArea =
+    pickupDistanceKm !== null &&
+    pickupDistanceKm <=
+      SERVICE_AREA.radiusKm;
+
+  const getPickupDistanceFromServiceCenter =
+    () => {
+      return pickupDistanceKm;
+    };
+
+  const isPickupWithinServiceArea = () => {
+    return pickupWithinServiceArea;
+  };
 
   /* ============================================================
      WHATSAPP SYNC
@@ -170,10 +257,15 @@ export default function HomePage() {
      PHONE NORMALIZATION
   ============================================================ */
 
-  const normalizeIndianPhone = (value) => {
-    const cleaned = String(value || "").replace(/\D/g, "");
+  const normalizeIndianPhone = (
+    value
+  ) => {
+    const cleaned = String(
+      value || ""
+    ).replace(/\D/g, "");
 
-    // 10-digit Indian mobile
+    /* 10-digit Indian mobile */
+
     if (
       cleaned.length === 10 &&
       /^[6-9]\d{9}$/.test(cleaned)
@@ -181,11 +273,14 @@ export default function HomePage() {
       return cleaned;
     }
 
-    // 91 + 10-digit Indian mobile
+    /* 91 + 10-digit Indian mobile */
+
     if (
       cleaned.length === 12 &&
       cleaned.startsWith("91") &&
-      /^[6-9]\d{9}$/.test(cleaned.slice(2))
+      /^[6-9]\d{9}$/.test(
+        cleaned.slice(2)
+      )
     ) {
       return cleaned.slice(2);
     }
@@ -197,53 +292,46 @@ export default function HomePage() {
      TIME HELPERS
   ============================================================ */
 
-  const isTimeInPastForToday = (date, time) => {
-    if (!date || !time || date !== today) {
+  const isTimeInPastForToday = (
+    date,
+    time
+  ) => {
+    if (
+      !date ||
+      !time ||
+      date !== today
+    ) {
       return false;
     }
 
     const now = new Date();
 
-    const [hours, minutes] = time.split(":").map(Number);
+    const [
+      hours,
+      minutes,
+    ] = time
+      .split(":")
+      .map(Number);
 
     const selected = new Date();
 
-    selected.setHours(hours, minutes, 0, 0);
+    selected.setHours(
+      hours,
+      minutes,
+      0,
+      0
+    );
 
     return selected < now;
-  };
-
-  /* ============================================================
-     SERVICE AREA HELPERS
-  ============================================================ */
-
-  const getPickupDistanceFromServiceCenter = () => {
-    return calculateDistanceKm(
-      SERVICE_AREA.center.lat,
-      SERVICE_AREA.center.lon,
-      pickup.lat,
-      pickup.lon
-    );
-  };
-
-  const isPickupWithinServiceArea = () => {
-    const distance =
-      getPickupDistanceFromServiceCenter();
-
-    if (distance === null) {
-      return false;
-    }
-
-    return (
-      distance <= SERVICE_AREA.radiusKm
-    );
   };
 
   /* ============================================================
      TRIP TYPE
   ============================================================ */
 
-  const handleTripTypeChange = (type) => {
+  const handleTripTypeChange = (
+    type
+  ) => {
     clearMessage();
 
     setTripType(type);
@@ -258,7 +346,9 @@ export default function HomePage() {
      TRAVEL DATE
   ============================================================ */
 
-  const handleTravelDateChange = (value) => {
+  const handleTravelDateChange = (
+    value
+  ) => {
     clearMessage();
 
     setTravelDate(value);
@@ -272,12 +362,13 @@ export default function HomePage() {
       setReturnTime("");
     }
 
-    // A previously selected time may now be invalid
-    // if the user changes the travel date to today.
     if (
       pickupTime &&
       value === today &&
-      isTimeInPastForToday(value, pickupTime)
+      isTimeInPastForToday(
+        value,
+        pickupTime
+      )
     ) {
       setPickupTime("");
     }
@@ -287,12 +378,17 @@ export default function HomePage() {
      PICKUP TIME
   ============================================================ */
 
-  const handlePickupTimeChange = (value) => {
+  const handlePickupTimeChange = (
+    value
+  ) => {
     clearMessage();
 
     if (
       travelDate === today &&
-      isTimeInPastForToday(today, value)
+      isTimeInPastForToday(
+        today,
+        value
+      )
     ) {
       showError(
         "Pickup time cannot be in the past."
@@ -309,8 +405,14 @@ export default function HomePage() {
      PHONE CHANGE
   ============================================================ */
 
-  const handlePhoneChange = (event) => {
-    const value = event.target.value.replace(/[^\d+]/g, "");
+  const handlePhoneChange = (
+    event
+  ) => {
+    const value =
+      event.target.value.replace(
+        /[^\d+]/g,
+        ""
+      );
 
     setPhone(value);
 
@@ -325,8 +427,14 @@ export default function HomePage() {
      WHATSAPP CHANGE
   ============================================================ */
 
-  const handleWhatsAppChange = (event) => {
-    const value = event.target.value.replace(/[^\d+]/g, "");
+  const handleWhatsAppChange = (
+    event
+  ) => {
+    const value =
+      event.target.value.replace(
+        /[^\d+]/g,
+        ""
+      );
 
     setWhatsapp(value);
 
@@ -340,9 +448,12 @@ export default function HomePage() {
   const handleWhatsAppToggle = () => {
     clearMessage();
 
-    const nextState = !whatsappSameAsPhone;
+    const nextState =
+      !whatsappSameAsPhone;
 
-    setWhatsappSameAsPhone(nextState);
+    setWhatsappSameAsPhone(
+      nextState
+    );
 
     if (nextState) {
       setWhatsapp(phone);
@@ -353,31 +464,55 @@ export default function HomePage() {
      LOCATION SELECT
   ============================================================ */
 
-  const handlePickupSelect = (location) => {
+  const handlePickupSelect = (
+    location
+  ) => {
     clearMessage();
 
     if (!location) {
       return;
     }
+
+    const latitude =
+      toValidCoordinate(
+        location.lat
+      );
+
+    const longitude =
+      toValidCoordinate(
+        location.lon
+      );
 
     setPickup({
       name: location.name || "",
-      lat: location.lat ?? null,
-      lon: location.lon ?? null,
+      lat: latitude,
+      lon: longitude,
     });
   };
 
-  const handleDropSelect = (location) => {
+  const handleDropSelect = (
+    location
+  ) => {
     clearMessage();
 
     if (!location) {
       return;
     }
 
+    const latitude =
+      toValidCoordinate(
+        location.lat
+      );
+
+    const longitude =
+      toValidCoordinate(
+        location.lon
+      );
+
     setDrop({
       name: location.name || "",
-      lat: location.lat ?? null,
-      lon: location.lon ?? null,
+      lat: latitude,
+      lon: longitude,
     });
   };
 
@@ -386,10 +521,13 @@ export default function HomePage() {
   ============================================================ */
 
   const buildBookingData = () => {
-    const normalizedPhone = normalizeIndianPhone(phone);
+    const normalizedPhone =
+      normalizeIndianPhone(phone);
 
     const normalizedWhatsApp =
-      normalizeIndianPhone(whatsapp);
+      normalizeIndianPhone(
+        whatsapp
+      );
 
     const pickupDistance =
       getPickupDistanceFromServiceCenter();
@@ -411,8 +549,11 @@ export default function HomePage() {
 
       serviceArea: {
         center: {
-          lat: SERVICE_AREA.center.lat,
-          lon: SERVICE_AREA.center.lon,
+          lat:
+            SERVICE_AREA.center.lat,
+
+          lon:
+            SERVICE_AREA.center.lon,
         },
 
         radiusKm:
@@ -420,9 +561,13 @@ export default function HomePage() {
 
         pickupDistanceKm:
           pickupDistance,
+
+        pickupWithinServiceArea:
+          pickupWithinServiceArea,
       },
 
       travelDate,
+
       pickupTime,
 
       returnDate:
@@ -438,9 +583,11 @@ export default function HomePage() {
       passengerName:
         passengerName.trim(),
 
-      phone: normalizedPhone,
+      phone:
+        normalizedPhone,
 
-      whatsapp: normalizedWhatsApp,
+      whatsapp:
+        normalizedWhatsApp,
 
       createdAt:
         new Date().toISOString(),
@@ -457,7 +604,9 @@ export default function HomePage() {
     ---------------------------------------------------------- */
 
     if (!pickup.name?.trim()) {
-      return "Please select your pickup location.";
+      return (
+        "Please select your pickup location."
+      );
     }
 
     if (
@@ -474,7 +623,9 @@ export default function HomePage() {
     ---------------------------------------------------------- */
 
     if (!drop.name?.trim()) {
-      return "Please select your drop location.";
+      return (
+        "Please select your drop location."
+      );
     }
 
     if (
@@ -488,6 +639,12 @@ export default function HomePage() {
 
     /* ----------------------------------------------------------
        PICKUP SERVICE AREA
+
+       IMPORTANT:
+       Only pickup is restricted.
+
+       Destination can be outside the
+       200 km service radius.
     ---------------------------------------------------------- */
 
     const pickupDistance =
@@ -503,7 +660,9 @@ export default function HomePage() {
       !isPickupWithinServiceArea()
     ) {
       return (
-        "Sorry, your pickup location is outside VOYNU's current 200 km service area from Kanpur."
+        `Sorry, your pickup location is ${pickupDistance.toFixed(
+          1
+        )} km from Kanpur. VOYNU currently serves pickups within ${SERVICE_AREA.radiusKm} km of Kanpur.`
       );
     }
 
@@ -519,12 +678,14 @@ export default function HomePage() {
     ) {
       const sameLatitude =
         Math.abs(
-          pickup.lat - drop.lat
+          Number(pickup.lat) -
+            Number(drop.lat)
         ) < 0.00001;
 
       const sameLongitude =
         Math.abs(
-          pickup.lon - drop.lon
+          Number(pickup.lon) -
+            Number(drop.lon)
         ) < 0.00001;
 
       if (
@@ -542,11 +703,15 @@ export default function HomePage() {
     ---------------------------------------------------------- */
 
     if (!travelDate) {
-      return "Please select your travel date.";
+      return (
+        "Please select your travel date."
+      );
     }
 
     if (travelDate < today) {
-      return "Travel date cannot be in the past.";
+      return (
+        "Travel date cannot be in the past."
+      );
     }
 
     /* ----------------------------------------------------------
@@ -554,7 +719,9 @@ export default function HomePage() {
     ---------------------------------------------------------- */
 
     if (!pickupTime) {
-      return "Please select your pickup time.";
+      return (
+        "Please select your pickup time."
+      );
     }
 
     if (
@@ -564,7 +731,9 @@ export default function HomePage() {
         pickupTime
       )
     ) {
-      return "Pickup time cannot be in the past.";
+      return (
+        "Pickup time cannot be in the past."
+      );
     }
 
     /* ----------------------------------------------------------
@@ -575,11 +744,15 @@ export default function HomePage() {
       passengerName.trim();
 
     if (!trimmedName) {
-      return "Please enter the passenger name.";
+      return (
+        "Please enter the passenger name."
+      );
     }
 
     if (trimmedName.length < 2) {
-      return "Please enter a valid passenger name.";
+      return (
+        "Please enter a valid passenger name."
+      );
     }
 
     /* ----------------------------------------------------------
@@ -600,7 +773,9 @@ export default function HomePage() {
     ---------------------------------------------------------- */
 
     const normalizedWhatsApp =
-      normalizeIndianPhone(whatsapp);
+      normalizeIndianPhone(
+        whatsapp
+      );
 
     if (!normalizedWhatsApp) {
       return (
@@ -612,19 +787,27 @@ export default function HomePage() {
        ROUND TRIP
     ---------------------------------------------------------- */
 
-    if (tripType === "roundtrip") {
+    if (
+      tripType === "roundtrip"
+    ) {
       if (!returnDate) {
-        return "Please select the return date.";
+        return (
+          "Please select the return date."
+        );
       }
 
-      if (returnDate < travelDate) {
+      if (
+        returnDate < travelDate
+      ) {
         return (
           "Return date cannot be before the travel date."
         );
       }
 
       if (!returnTime) {
-        return "Please select the return time.";
+        return (
+          "Please select the return time."
+        );
       }
 
       if (
@@ -634,13 +817,11 @@ export default function HomePage() {
           returnTime
         )
       ) {
-        return "Return time cannot be in the past.";
+        return (
+          "Return time cannot be in the past."
+        );
       }
 
-      /*
-       * If the return is on the same day,
-       * it cannot be before the pickup time.
-       */
       if (
         returnDate === travelDate &&
         returnTime < pickupTime
@@ -669,7 +850,10 @@ export default function HomePage() {
       validateBooking();
 
     if (validationError) {
-      showError(validationError);
+      showError(
+        validationError
+      );
+
       return;
     }
 
@@ -681,14 +865,11 @@ export default function HomePage() {
     try {
       sessionStorage.setItem(
         "voynu_booking",
-        JSON.stringify(bookingData)
+        JSON.stringify(
+          bookingData
+        )
       );
 
-      /*
-       * Also keep a simple timestamp separately.
-       * Useful later when we build the cab-selection
-       * and booking confirmation flow.
-       */
       sessionStorage.setItem(
         "voynu_booking_created_at",
         bookingData.createdAt
@@ -699,14 +880,6 @@ export default function HomePage() {
         bookingData
       );
 
-      /*
-       * IMPORTANT:
-       *
-       * We are intentionally NOT forcing navigation
-       * here until the cab-selection route exists.
-       *
-       * This keeps the current page stable.
-       */
       showSuccess(
         "Your trip details are ready. Next, we'll help you choose your cab."
       );
@@ -739,11 +912,13 @@ export default function HomePage() {
         <div className="headerInner">
 
           <div className="brand">
+
             <div className="brandMark">
               V
             </div>
 
             <div>
+
               <div className="brandName">
                 VOYNU
               </div>
@@ -751,7 +926,9 @@ export default function HomePage() {
               <div className="brandTagline">
                 Travel safe. Travel smart.
               </div>
+
             </div>
+
           </div>
 
           <a
@@ -783,6 +960,7 @@ export default function HomePage() {
         <div className="heroInner">
 
           <div className="serviceBadge">
+
             <span className="badgeDot" />
 
             <span>
@@ -792,6 +970,7 @@ export default function HomePage() {
               </strong>{" "}
               from Kanpur
             </span>
+
           </div>
 
           <div className="heroGrid">
@@ -816,6 +995,7 @@ export default function HomePage() {
               <div className="heroFeatures">
 
                 <div className="heroFeature">
+
                   <span className="featureIcon">
                     ✓
                   </span>
@@ -823,9 +1003,11 @@ export default function HomePage() {
                   <span>
                     Verified Drivers
                   </span>
+
                 </div>
 
                 <div className="heroFeature">
+
                   <span className="featureIcon">
                     ⌁
                   </span>
@@ -833,9 +1015,11 @@ export default function HomePage() {
                   <span>
                     Safe &amp; Secure
                   </span>
+
                 </div>
 
                 <div className="heroFeature">
+
                   <span className="featureIcon">
                     ⚡
                   </span>
@@ -843,12 +1027,15 @@ export default function HomePage() {
                   <span>
                     EV Rides
                   </span>
+
                 </div>
 
               </div>
+
             </div>
 
             <div className="heroVehicle">
+
               <div className="vehicleGlow" />
 
               <div
@@ -857,10 +1044,13 @@ export default function HomePage() {
               >
                 🚙
               </div>
+
             </div>
 
           </div>
+
         </div>
+
       </section>
 
       {/* ========================================================
@@ -876,6 +1066,7 @@ export default function HomePage() {
           <div className="bookingHeader">
 
             <div>
+
               <h2>
                 Book your ride
               </h2>
@@ -883,14 +1074,17 @@ export default function HomePage() {
               <p>
                 Tell us where you want to go.
               </p>
+
             </div>
 
             <div className="secureBadge">
+
               <span>
                 🔒
               </span>
 
               Secure booking
+
             </div>
 
           </div>
@@ -920,11 +1114,13 @@ export default function HomePage() {
                 )
               }
             >
+
               <span className="tripIcon">
                 →
               </span>
 
               <span>
+
                 <strong>
                   One Way
                 </strong>
@@ -932,7 +1128,9 @@ export default function HomePage() {
                 <small>
                   Single journey
                 </small>
+
               </span>
+
             </button>
 
             <button
@@ -952,11 +1150,13 @@ export default function HomePage() {
                 )
               }
             >
+
               <span className="tripIcon">
                 ⇄
               </span>
 
               <span>
+
                 <strong>
                   Round Trip
                 </strong>
@@ -964,7 +1164,9 @@ export default function HomePage() {
                 <small>
                   Return journey
                 </small>
+
               </span>
+
             </button>
 
           </div>
@@ -985,6 +1187,8 @@ export default function HomePage() {
 
           <div className="locationGrid">
 
+            {/* PICKUP */}
+
             <div className="locationBox">
 
               <LocationPicker
@@ -997,7 +1201,76 @@ export default function HomePage() {
                 }
               />
 
+              {/* =================================================
+                  PICKUP SERVICE AREA STATUS
+              ================================================= */}
+
+              {pickup.name &&
+                pickupDistanceKm !== null && (
+                  <div
+                    className={
+                      pickupWithinServiceArea
+                        ? "serviceAreaStatus serviceAreaValid"
+                        : "serviceAreaStatus serviceAreaInvalid"
+                    }
+                  >
+
+                    <span className="serviceAreaStatusIcon">
+                      {pickupWithinServiceArea
+                        ? "✓"
+                        : "!"}
+                    </span>
+
+                    <span>
+
+                      {pickupWithinServiceArea ? (
+                        <>
+                          Pickup is{" "}
+                          <strong>
+                            {pickupDistanceKm.toFixed(
+                              1
+                            )}{" "}
+                            km
+                          </strong>{" "}
+                          from Kanpur and is
+                          within our{" "}
+                          <strong>
+                            {
+                              SERVICE_AREA.radiusKm
+                            }{" "}
+                            km
+                          </strong>{" "}
+                          service area.
+                        </>
+                      ) : (
+                        <>
+                          Pickup is{" "}
+                          <strong>
+                            {pickupDistanceKm.toFixed(
+                              1
+                            )}{" "}
+                            km
+                          </strong>{" "}
+                          from Kanpur and is
+                          outside our current{" "}
+                          <strong>
+                            {
+                              SERVICE_AREA.radiusKm
+                            }{" "}
+                            km
+                          </strong>{" "}
+                          service area.
+                        </>
+                      )}
+
+                    </span>
+
+                  </div>
+                )}
+
             </div>
+
+            {/* DROP */}
 
             <div className="locationBox">
 
@@ -1022,11 +1295,13 @@ export default function HomePage() {
             <div className="field">
 
               <label htmlFor="travelDate">
+
                 <span className="labelIcon">
                   ▣
                 </span>
 
                 Travel date
+
               </label>
 
               <input
@@ -1046,11 +1321,13 @@ export default function HomePage() {
             <div className="field">
 
               <label htmlFor="pickupTime">
+
                 <span className="labelIcon">
                   ◷
                 </span>
 
                 Pickup time
+
               </label>
 
               <input
@@ -1068,17 +1345,21 @@ export default function HomePage() {
 
           </div>
 
-          {/* RETURN JOURNEY */}
+          {/* ======================================================
+              RETURN JOURNEY
+          ====================================================== */}
 
           {tripType === "roundtrip" && (
             <div className="roundTripBox">
 
               <div className="roundTripTitle">
+
                 <span>
                   ⇄
                 </span>
 
                 Return journey
+
               </div>
 
               <div className="formGrid">
@@ -1086,11 +1367,13 @@ export default function HomePage() {
                 <div className="field">
 
                   <label htmlFor="returnDate">
+
                     <span className="labelIcon">
                       ▣
                     </span>
 
                     Return date
+
                   </label>
 
                   <input
@@ -1101,6 +1384,7 @@ export default function HomePage() {
                       travelDate || today
                     }
                     onChange={(event) => {
+
                       clearMessage();
 
                       const value =
@@ -1111,12 +1395,14 @@ export default function HomePage() {
                         value &&
                         value < travelDate
                       ) {
+
                         showError(
                           "Return date cannot be before the travel date."
                         );
 
                         setReturnDate("");
                         setReturnTime("");
+
                         return;
                       }
 
@@ -1132,6 +1418,7 @@ export default function HomePage() {
                       ) {
                         setReturnTime("");
                       }
+
                     }}
                   />
 
@@ -1140,11 +1427,13 @@ export default function HomePage() {
                 <div className="field">
 
                   <label htmlFor="returnTime">
+
                     <span className="labelIcon">
                       ◷
                     </span>
 
                     Return time
+
                   </label>
 
                   <input
@@ -1152,6 +1441,7 @@ export default function HomePage() {
                     type="time"
                     value={returnTime}
                     onChange={(event) => {
+
                       clearMessage();
 
                       const value =
@@ -1164,11 +1454,13 @@ export default function HomePage() {
                           value
                         )
                       ) {
+
                         showError(
                           "Return time cannot be in the past."
                         );
 
                         setReturnTime("");
+
                         return;
                       }
 
@@ -1177,25 +1469,31 @@ export default function HomePage() {
                         pickupTime &&
                         value < pickupTime
                       ) {
+
                         showError(
                           "Return time cannot be before the pickup time."
                         );
 
                         setReturnTime("");
+
                         return;
                       }
 
                       setReturnTime(value);
+
                     }}
                   />
 
                 </div>
 
               </div>
+
             </div>
           )}
 
-          {/* PASSENGER */}
+          {/* ======================================================
+              PASSENGER
+          ====================================================== */}
 
           <div className="sectionLabel passengerSectionLabel">
 
@@ -1222,11 +1520,13 @@ export default function HomePage() {
           <div className="field">
 
             <label htmlFor="passengerName">
+
               <span className="labelIcon">
                 ●
               </span>
 
               Passenger name
+
             </label>
 
             <input
@@ -1236,11 +1536,13 @@ export default function HomePage() {
               placeholder="Enter passenger name"
               value={passengerName}
               onChange={(event) => {
+
                 setPassengerName(
                   event.target.value
                 );
 
                 clearMessage();
+
               }}
             />
 
@@ -1255,11 +1557,13 @@ export default function HomePage() {
             <div className="field">
 
               <label htmlFor="phone">
+
                 <span className="labelIcon">
                   ☎
                 </span>
 
                 Phone number
+
               </label>
 
               <input
@@ -1282,11 +1586,13 @@ export default function HomePage() {
             <div className="field">
 
               <label htmlFor="whatsapp">
+
                 <span className="labelIcon">
                   ◌
                 </span>
 
                 WhatsApp number
+
               </label>
 
               <input
@@ -1321,9 +1627,11 @@ export default function HomePage() {
               >
 
                 <span className="toggleCheck">
+
                   {whatsappSameAsPhone
                     ? "✓"
                     : ""}
+
                 </span>
 
                 <span>
@@ -1350,9 +1658,11 @@ export default function HomePage() {
             >
 
               <span className="messageIcon">
+
                 {messageType === "success"
                   ? "✓"
                   : "!"}
+
               </span>
 
               <span>
@@ -1372,9 +1682,11 @@ export default function HomePage() {
           >
 
             <span>
+
               {isSubmitting
                 ? "Preparing your trip..."
                 : "Continue to cab selection"}
+
             </span>
 
             <span className="continueArrow">
@@ -1396,15 +1708,19 @@ export default function HomePage() {
           </div>
 
         </div>
+
       </section>
 
-      {/* FOOTER */}
+      {/* ========================================================
+          FOOTER
+      ======================================================== */}
 
       <footer className="footer">
 
         <div className="footerInner">
 
           <div>
+
             <strong>
               VOYNU
             </strong>
@@ -1413,6 +1729,7 @@ export default function HomePage() {
               {" "}©{" "}
               {new Date().getFullYear()}
             </span>
+
           </div>
 
           <div>
@@ -1461,7 +1778,11 @@ export default function HomePage() {
         }
 
         .headerInner {
-          width: min(1180px, calc(100% - 40px));
+          width: min(
+            1180px,
+            calc(100% - 40px)
+          );
+
           min-height: 72px;
 
           margin: 0 auto;
@@ -1549,7 +1870,10 @@ export default function HomePage() {
         }
 
         .heroInner {
-          width: min(1180px, calc(100% - 40px));
+          width: min(
+            1180px,
+            calc(100% - 40px)
+          );
 
           margin: 0 auto;
 
@@ -1857,7 +2181,10 @@ export default function HomePage() {
         ====================================================== */
 
         .tripToggle {
-          width: min(620px, 100%);
+          width: min(
+            620px,
+            100%
+          );
 
           display: grid;
 
@@ -2013,6 +2340,73 @@ export default function HomePage() {
 
         .locationBox {
           min-width: 0;
+        }
+
+        /* ======================================================
+           SERVICE AREA STATUS
+        ====================================================== */
+
+        .serviceAreaStatus {
+          display: flex;
+          align-items: flex-start;
+
+          gap: 9px;
+
+          margin-top: 9px;
+
+          padding: 10px 12px;
+
+          border-radius: 10px;
+
+          font-size: 11px;
+
+          line-height: 1.45;
+        }
+
+        .serviceAreaStatusIcon {
+          width: 20px;
+          height: 20px;
+
+          flex: 0 0 20px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          border-radius: 50%;
+
+          font-size: 11px;
+          font-weight: 900;
+        }
+
+        .serviceAreaValid {
+          background: #eef9f1;
+
+          border: 1px solid #cce5d4;
+
+          color: #28734b;
+        }
+
+        .serviceAreaValid
+          .serviceAreaStatusIcon {
+          background: #08783f;
+
+          color: #ffffff;
+        }
+
+        .serviceAreaInvalid {
+          background: #fff5f3;
+
+          border: 1px solid #efccc8;
+
+          color: #b33d34;
+        }
+
+        .serviceAreaInvalid
+          .serviceAreaStatusIcon {
+          background: #c64a3f;
+
+          color: #ffffff;
         }
 
         /* ======================================================
@@ -2422,6 +2816,7 @@ export default function HomePage() {
         ====================================================== */
 
         @media (max-width: 900px) {
+
           .heroGrid {
             grid-template-columns: 1fr;
           }
@@ -2437,6 +2832,7 @@ export default function HomePage() {
           .bookingCard {
             padding: 25px;
           }
+
         }
 
         /* ======================================================
@@ -2444,6 +2840,7 @@ export default function HomePage() {
         ====================================================== */
 
         @media (max-width: 700px) {
+
           .headerInner {
             width: calc(100% - 28px);
             min-height: 62px;
@@ -2594,6 +2991,12 @@ export default function HomePage() {
             gap: 14px;
           }
 
+          .serviceAreaStatus {
+            font-size: 10px;
+
+            padding: 9px 10px;
+          }
+
           .formGrid {
             grid-template-columns: 1fr;
 
@@ -2649,6 +3052,7 @@ export default function HomePage() {
 
             gap: 4px;
           }
+
         }
 
         /* ======================================================
@@ -2656,6 +3060,7 @@ export default function HomePage() {
         ====================================================== */
 
         @media (max-width: 380px) {
+
           .headerPhone {
             font-size: 10px;
           }
@@ -2679,9 +3084,11 @@ export default function HomePage() {
           .continueButton {
             font-size: 13px;
           }
+
         }
 
       `}</style>
+
     </main>
   );
-}
+                    }
