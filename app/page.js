@@ -9,7 +9,21 @@ import {
 
 import LocationPicker from "./components/LocationPicker";
 
-const MAX_JOURNEY_DISTANCE_KM = 200;
+import {
+  calculateTripDetails,
+  getChargingMessage,
+  VOYNU_TRIP_CONFIG,
+} from "./lib/tripRules";
+
+/*
+ * Used only as a display default before a pickup city has been
+ * matched (e.g. in the hero badge, before any location is
+ * selected). The real, authoritative limit used for validation
+ * always comes from tripDetails.maxOneWayDistanceKm, which is
+ * resolved per service city inside tripRules.js.
+ */
+const DEFAULT_MAX_DISTANCE_KM =
+  VOYNU_TRIP_CONFIG.maxOneWayDistanceKm;
 
 export default function HomePage() {
   /*
@@ -47,6 +61,10 @@ export default function HomePage() {
    *
    * This prevents road-distance calculation from starting
    * merely because coordinates temporarily exist.
+   *
+   * city is the detected city name (from Google's
+   * address_components), used to match against
+   * VOYNU_TRIP_CONFIG.serviceCities in tripRules.js.
    * ------------------------------------------------------------
    */
 
@@ -55,6 +73,7 @@ export default function HomePage() {
     lat: null,
     lon: null,
     placeId: null,
+    city: null,
     selected: false,
   });
 
@@ -63,6 +82,7 @@ export default function HomePage() {
     lat: null,
     lon: null,
     placeId: null,
+    city: null,
     selected: false,
   });
 
@@ -580,7 +600,7 @@ export default function HomePage() {
    *
    * For round trip:
    *
-   * Each leg is limited to 200 km.
+   * Each leg is limited to the configured maximum.
    *
    * Total distance is still calculated as:
    *
@@ -594,6 +614,50 @@ export default function HomePage() {
         ? journeyDistanceKm * 2
         : journeyDistanceKm
       : null;
+
+  /*
+   * ------------------------------------------------------------
+   * TRIP DETAILS (business rules)
+   *
+   * Runs pickup, drop, trip type, distance, and the pickup's
+   * detected city through calculateTripDetails() in
+   * tripRules.js.
+   *
+   * This is the single source of truth for:
+   *
+   * - Whether the pickup is inside a currently active
+   *   service city (matched by detected city name, not
+   *   hardcoded).
+   *
+   * - Whether the one-way distance is within that city's
+   *   configured maximum (also not hardcoded).
+   *
+   * - Whether an EV round-trip charging break is required.
+   * ------------------------------------------------------------
+   */
+
+  const tripDetails = useMemo(() => {
+    if (
+      !hasSelectedLocation(pickup) ||
+      !hasSelectedLocation(drop) ||
+      journeyDistanceKm === null
+    ) {
+      return null;
+    }
+
+    return calculateTripDetails({
+      pickup,
+      drop,
+      tripType,
+      distanceKm: journeyDistanceKm,
+      pickupCityName: pickup.city,
+    });
+  }, [
+    pickup,
+    drop,
+    tripType,
+    journeyDistanceKm,
+  ]);
 
   /*
    * ------------------------------------------------------------
@@ -693,6 +757,7 @@ export default function HomePage() {
           lat: null,
           lon: null,
           placeId: null,
+          city: null,
           selected: false,
         });
 
@@ -735,6 +800,10 @@ export default function HomePage() {
           location.placeId ??
           null,
 
+        city:
+          location.city ??
+          null,
+
         selected,
       });
     },
@@ -756,6 +825,7 @@ export default function HomePage() {
           lat: null,
           lon: null,
           placeId: null,
+          city: null,
           selected: false,
         });
 
@@ -791,6 +861,10 @@ export default function HomePage() {
 
         placeId:
           location.placeId ??
+          null,
+
+        city:
+          location.city ??
           null,
 
         selected,
@@ -881,6 +955,7 @@ export default function HomePage() {
         lat: pickup.lat,
         lon: pickup.lon,
         placeId: pickup.placeId,
+        city: pickup.city,
       },
 
       drop: {
@@ -911,7 +986,20 @@ export default function HomePage() {
           journeyDurationText,
 
         maximumDistancePerLegKm:
-          MAX_JOURNEY_DISTANCE_KM,
+          tripDetails?.maxOneWayDistanceKm ??
+          DEFAULT_MAX_DISTANCE_KM,
+
+        serviceCityId:
+          tripDetails?.serviceCity?.id ??
+          null,
+
+        chargingRequired:
+          tripDetails?.chargingRequired ??
+          false,
+
+        chargingBreakMinutes:
+          tripDetails?.chargingBreakMinutes ??
+          0,
       },
 
       travelDate,
@@ -1020,39 +1108,21 @@ export default function HomePage() {
     }
 
     /*
-     * ONE WAY
-     */
-
-    if (
-      tripType === "oneway" &&
-      journeyDistanceKm >
-        MAX_JOURNEY_DISTANCE_KM
-    ) {
-      return `Sorry, this one-way journey is ${
-        journeyDistanceText ||
-        `${journeyDistanceKm.toFixed(
-          1
-        )} km`
-      }. VOYNU currently accepts journeys up to 200 km per leg.`;
-    }
-
-    /*
-     * ROUND TRIP
+     * SERVICE AREA & MAXIMUM DISTANCE
      *
-     * Check ONE WAY distance only.
+     * Both rules — which cities are active, and how far a
+     * trip can go — are resolved by calculateTripDetails()
+     * in tripRules.js, not hardcoded here.
      */
 
     if (
-      tripType === "roundtrip" &&
-      journeyDistanceKm >
-        MAX_JOURNEY_DISTANCE_KM
+      !tripDetails ||
+      !tripDetails.valid
     ) {
-      return `Sorry, this journey is ${
-        journeyDistanceText ||
-        `${journeyDistanceKm.toFixed(
-          1
-        )} km`
-      } one way. Each round-trip leg can be a maximum of 200 km.`;
+      return (
+        tripDetails?.reason ||
+        "We couldn't validate this journey. Please select your locations again."
+      );
     }
 
     /*
@@ -1291,7 +1361,7 @@ export default function HomePage() {
             <span>
               Journeys up to{" "}
               <strong>
-                200 km
+                {DEFAULT_MAX_DISTANCE_KM} km
               </strong>{" "}
               per leg
             </span>
@@ -1481,7 +1551,7 @@ export default function HomePage() {
                 </strong>
 
                 <small>
-                  200 km each way
+                  {DEFAULT_MAX_DISTANCE_KM} km each way
                 </small>
 
               </span>
@@ -1564,8 +1634,25 @@ export default function HomePage() {
                   Calculating road distance...
                 </div>
 
+              ) : journeyDistanceError ? (
+
+                <div className="journeyDistanceError">
+                  {journeyDistanceError}
+                </div>
+
               ) : journeyDistanceKm !==
-                null ? (
+                null &&
+                tripDetails &&
+                !tripDetails.valid ? (
+
+                <div className="journeyDistanceError">
+                  {tripDetails.reason ||
+                    "This journey is not currently supported."}
+                </div>
+
+              ) : journeyDistanceKm !==
+                null &&
+                tripDetails?.valid ? (
 
                 <div>
 
@@ -1586,7 +1673,12 @@ export default function HomePage() {
                   </div>
 
                   <div className="journeyDuration">
-                    Maximum 200 km each way
+                    Maximum{" "}
+                    {tripDetails.maxOneWayDistanceKm ??
+                      DEFAULT_MAX_DISTANCE_KM}{" "}
+                    km each way
+                    {tripDetails.serviceCity?.name &&
+                      ` • Pickup in ${tripDetails.serviceCity.name}`}
                   </div>
 
                   {journeyDurationText && (
@@ -1600,14 +1692,22 @@ export default function HomePage() {
                     </div>
                   )}
 
+                  {tripType === "roundtrip" &&
+                    tripDetails.chargingRequired && (
+                      <div className="journeyDuration">
+                        {getChargingMessage(
+                          tripDetails
+                        )}
+                      </div>
+                    )}
+
                 </div>
 
               ) : (
 
                 <div className="journeyDistanceError">
 
-                  {journeyDistanceError ||
-                    "Unable to calculate road distance."}
+                  Unable to calculate road distance.
 
                 </div>
 
@@ -3289,4 +3389,4 @@ export default function HomePage() {
 
     </main>
   );
-      }
+              }
