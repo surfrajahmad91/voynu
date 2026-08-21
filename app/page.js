@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import LocationPicker from "@/components/LocationPicker";
+import LocationPicker from "@/app/components/LocationPicker";
 
 export default function HomePage() {
   const today = useMemo(() => {
