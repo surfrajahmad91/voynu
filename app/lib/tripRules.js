@@ -16,7 +16,8 @@
 | {
 |   name,
 |   lat,
-|   lon
+|   lon,
+|   city
 | }
 |
 |--------------------------------------------------------------------------
@@ -57,19 +58,19 @@ export const VOYNU_TRIP_CONFIG = {
    *
    * At launch, pickup service is available in Kanpur.
    *
-   * More service areas can be added later.
-   *
-   * IMPORTANT:
-   *
-   * We do NOT fake a geographic Kanpur boundary here.
-   *
-   * Actual pickup-area verification should eventually be performed
-   * using backend/service-area data.
+   * More service areas can be added later by adding
+   * additional entries to this array. No other code
+   * needs to change.
    */
   serviceCities: [
     {
       id: "kanpur",
       name: "Kanpur",
+
+      /*
+       * Alternate names Google may return for this city.
+       */
+      aliases: ["Kanpur Nagar"],
 
       /*
        * Whether this city is currently active.
@@ -286,16 +287,19 @@ export function calculateStraightLineDistanceKm(
 | SERVICE CITY
 |--------------------------------------------------------------------------
 |
-| Find the currently configured service city.
+| Find the currently configured service city that matches the pickup's
+| ACTUAL detected city (from Google's address_components).
 |
 | IMPORTANT:
 |
-| At this stage we do NOT pretend that coordinates alone can accurately
-| determine whether a point is inside the actual Kanpur municipal/city
-| boundary.
+| We do NOT assume every pickup is in any particular city. If the
+| detected city name is missing or does not match any configured
+| service city, this returns null and the trip is rejected as
+| outside the service area.
 |
-| The booking flow will eventually pass verified service-area information
-| from the location/routing layer or backend.
+| This is what makes the rule safe to extend to multiple cities later:
+| adding a new city is just adding an entry to
+| VOYNU_TRIP_CONFIG.serviceCities. No other code changes.
 |
 |--------------------------------------------------------------------------
 */
@@ -312,13 +316,6 @@ export function findServiceCity(
     return null;
   }
 
-  /*
-   * We can only confirm a service city if we actually know
-   * which city the pickup coordinates resolved to.
-   *
-   * No detected city name means we cannot safely assume
-   * any particular city.
-   */
   if (!detectedCityName) {
     return null;
   }
@@ -360,8 +357,6 @@ export function findServiceCity(
 }
 
 
-
-
 /*
 |--------------------------------------------------------------------------
 | CALCULATE TRIP DETAILS
@@ -374,6 +369,9 @@ export function findServiceCity(
 | If Google Maps has already calculated the road distance, pass it here.
 |
 | Otherwise, we use straight-line distance as a frontend fallback.
+|
+| pickupCityName should be the city detected from Google's
+| address_components for the pickup location (see LocationPicker.jsx).
 |
 |--------------------------------------------------------------------------
 */
@@ -463,17 +461,7 @@ export function calculateTripDetails({
   result.serviceCity =
     serviceCity;
 
-serviceCities: [
-    {
-      id: "kanpur",
-      name: "Kanpur",
-      aliases: ["Kanpur Nagar"],
-      active: true,
-      pickupAllowed: true,
-      maxDropDistanceKm: 200,
-    },
-  ],
-  
+
   /*
    * --------------------------------------------------------------
    * DROP
@@ -507,6 +495,8 @@ serviceCities: [
   let oneWayDistanceKm;
 
   if (
+    distanceKm !== null &&
+    distanceKm !== undefined &&
     Number.isFinite(
       Number(distanceKm)
     ) &&
@@ -546,15 +536,12 @@ serviceCities: [
    * MAXIMUM DISTANCE
    * --------------------------------------------------------------
    *
-   * The 200 km rule applies FROM THE PICKUP LOCATION.
+   * The distance limit comes from the matched service city's
+   * configuration, falling back to the global default.
    *
-   * It is NOT:
-   *
-   *   Kanpur → destination = 200 km
-   *
-   * It IS:
-   *
-   *   selected pickup → destination = maximum 200 km
+   * Neither value is hardcoded in page.js — both live here in
+   * VOYNU_TRIP_CONFIG, so changing the limit later is a
+   * one-line edit in this file.
    */
 
   const maxDistance =
@@ -563,6 +550,9 @@ serviceCities: [
         VOYNU_TRIP_CONFIG
           .maxOneWayDistanceKm
     );
+
+  result.maxOneWayDistanceKm =
+    maxDistance;
 
 
   /*
@@ -802,4 +792,4 @@ function toRadians(
     degrees *
     (Math.PI / 180)
   );
-}
+          }
