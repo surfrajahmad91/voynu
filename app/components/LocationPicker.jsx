@@ -6,83 +6,140 @@ let googleMapsPromise = null;
 
 function loadGoogleMaps() {
   if (typeof window === "undefined") {
-    return Promise.reject(new Error("Google Maps can only load in the browser."));
+    return Promise.reject(
+      new Error("Window is unavailable.")
+    );
   }
 
-  if (window.google?.maps?.importLibrary) {
+  // Already loaded
+  if (
+    window.google &&
+    window.google.maps &&
+    window.google.maps.Map
+  ) {
     return Promise.resolve(window.google.maps);
   }
 
+  // Already loading
   if (googleMapsPromise) {
     return googleMapsPromise;
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const apiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey) {
     return Promise.reject(
-      new Error("NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not configured.")
+      new Error(
+        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing from the Vercel environment variables."
+      )
     );
   }
 
-  googleMapsPromise = new Promise((resolve, reject) => {
-    const existingScript = document.querySelector(
-      'script[data-google-maps-loader="true"]'
-    );
+  googleMapsPromise = new Promise(
+    (resolve, reject) => {
+      const existingScript =
+        document.getElementById(
+          "google-maps-script"
+        );
 
-    if (existingScript) {
-      existingScript.addEventListener("load", () => {
-        if (window.google?.maps?.importLibrary) {
+      // Script already exists
+      if (existingScript) {
+        const checkGoogleMaps = () => {
+          if (
+            window.google &&
+            window.google.maps &&
+            window.google.maps.Map
+          ) {
+            resolve(window.google.maps);
+          } else {
+            reject(
+              new Error(
+                "Google Maps script loaded, but Google Maps Map class is unavailable."
+              )
+            );
+          }
+        };
+
+        existingScript.addEventListener(
+          "load",
+          checkGoogleMaps,
+          { once: true }
+        );
+
+        existingScript.addEventListener(
+          "error",
+          () => {
+            reject(
+              new Error(
+                "Google Maps JavaScript API failed to load."
+              )
+            );
+          },
+          { once: true }
+        );
+
+        // It may have loaded before our listener was attached
+        if (
+          window.google &&
+          window.google.maps &&
+          window.google.maps.Map
+        ) {
+          resolve(window.google.maps);
+        }
+
+        return;
+      }
+
+      window.gm_authFailure = () => {
+        reject(
+          new Error(
+            "Google rejected the API key. Check API restrictions, website restrictions, billing, and enabled APIs."
+          )
+        );
+      };
+
+      const script =
+        document.createElement("script");
+
+      script.id =
+        "google-maps-script";
+
+      script.src =
+        "https://maps.googleapis.com/maps/api/js" +
+        `?key=${encodeURIComponent(apiKey)}` +
+        "&v=weekly";
+
+      script.async = true;
+      script.defer = true;
+
+      script.onload = () => {
+        if (
+          window.google &&
+          window.google.maps &&
+          window.google.maps.Map
+        ) {
           resolve(window.google.maps);
         } else {
           reject(
             new Error(
-              "Google Maps loaded, but importLibrary is unavailable."
+              "Google Maps script loaded, but Google Maps Map class is unavailable."
             )
           );
         }
-      });
+      };
 
-      existingScript.addEventListener("error", () => {
-        reject(new Error("Unable to load Google Maps."));
-      });
-
-      return;
-    }
-
-    const script = document.createElement("script");
-
-    script.src =
-      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-        apiKey
-      )}&v=weekly&loading=async`;
-
-    script.async = true;
-    script.defer = true;
-    script.dataset.googleMapsLoader = "true";
-
-    script.onload = () => {
-      if (window.google?.maps?.importLibrary) {
-        resolve(window.google.maps);
-      } else {
+      script.onerror = () => {
         reject(
           new Error(
-            "Google Maps loaded, but importLibrary is unavailable."
+            "Unable to download the Google Maps JavaScript API."
           )
         );
-      }
-    };
+      };
 
-    script.onerror = () => {
-      reject(
-        new Error(
-          "Unable to load Google Maps. Check your API key and API restrictions."
-        )
-      );
-    };
-
-    document.head.appendChild(script);
-  });
+      document.head.appendChild(script);
+    }
+  );
 
   return googleMapsPromise;
 }
@@ -90,361 +147,317 @@ function loadGoogleMaps() {
 export default function LocationPicker({
   label,
   value,
-  placeholder,
   onLocationSelect,
+  placeholder = "Search location",
   allowCurrentLocation = false,
 }) {
   const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
+  const mapInstance = useRef(null);
   const markerRef = useRef(null);
-  const autocompleteRef = useRef(null);
+  const geocoderRef = useRef(null);
 
-  const [query, setQuery] = useState(value || "");
-  const [loading, setLoading] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
-  const [error, setError] = useState("");
+  const [search, setSearch] =
+    useState(value || "");
 
+  const [loading, setLoading] =
+    useState(false);
+
+  const [searchResults, setSearchResults] =
+    useState([]);
+
+  const [mapError, setMapError] =
+    useState("");
+
+  /*
+   * Keep the input synchronized
+   * with the parent value.
+   */
   useEffect(() => {
-    setQuery(value || "");
+    setSearch(value || "");
   }, [value]);
 
   /*
-   * Load Google Maps
+   * Initialize Google Maps.
+   *
+   * IMPORTANT:
+   * We deliberately use the classic
+   * Google Maps API.
+   *
+   * No importLibrary().
    */
   useEffect(() => {
     let cancelled = false;
 
-    loadGoogleMaps()
-      .then(() => {
-        if (!cancelled) {
-          setMapReady(true);
-        }
-      })
-      .catch((err) => {
-        console.error("Google Maps loading error:", err);
-
-        if (!cancelled) {
-          setError(
-            err.message ||
-              "Unable to load Google Maps."
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  /*
-   * Initialize Google Map
-   */
-  useEffect(() => {
-    if (!mapReady || !mapRef.current || mapInstanceRef.current) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const initializeMap = async () => {
+    async function initializeMap() {
       try {
-        const google = window.google;
+        setMapError("");
 
-        const [{ Map }, { AdvancedMarkerElement }] =
-          await Promise.all([
-            google.maps.importLibrary("maps"),
-            google.maps.importLibrary("marker"),
-          ]);
+        const google =
+          await loadGoogleMaps();
 
-        if (cancelled || !mapRef.current) {
+        if (cancelled) {
           return;
         }
 
-        const map = new Map(mapRef.current, {
-          center: {
-            lat: 26.4499,
-            lng: 80.3319,
-          },
-          zoom: 11,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          mapId: "DEMO_MAP_ID",
-        });
+        if (!mapRef.current) {
+          return;
+        }
 
-        mapInstanceRef.current = map;
+        if (
+          !google ||
+          !google.maps ||
+          !google.maps.Map
+        ) {
+          throw new Error(
+            "Google Maps Map class is unavailable."
+          );
+        }
+
+        if (mapInstance.current) {
+          return;
+        }
+
+        const kanpur = {
+          lat: 26.4499,
+          lng: 80.3319,
+        };
+
+        const map =
+          new google.maps.Map(
+            mapRef.current,
+            {
+              center: kanpur,
+              zoom: 11,
+
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: true,
+
+              gestureHandling: "greedy",
+            }
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        mapInstance.current = map;
+
+        geocoderRef.current =
+          new google.maps.Geocoder();
 
         /*
-         * Click anywhere on map
+         * Allow the user to tap the map
+         * and select an exact location.
          */
-        map.addListener("click", async (event) => {
-          if (!event.latLng) return;
+        map.addListener(
+          "click",
+          async (event) => {
+            if (
+              !event.latLng
+            ) {
+              return;
+            }
 
-          const lat = event.latLng.lat();
-          const lng = event.latLng.lng();
+            const lat =
+              event.latLng.lat();
 
-          await selectCoordinates(lat, lng);
-        });
+            const lng =
+              event.latLng.lng();
 
-        /*
-         * Google Maps sometimes needs an extra resize
-         * after the component becomes visible.
-         */
-        setTimeout(() => {
-          if (mapInstanceRef.current) {
-            window.google.maps.event.trigger(
-              mapInstanceRef.current,
-              "resize"
+            await selectLocation(
+              lat,
+              lng
             );
           }
-        }, 300);
-      } catch (err) {
-        console.error("Google Maps initialization error:", err);
+        );
+      } catch (error) {
+        console.error(
+          "Google Maps initialization error:",
+          error
+        );
 
         if (!cancelled) {
-          setError(
-            "Unable to initialize Google Maps."
+          setMapError(
+            error?.message ||
+              "Google Maps could not be initialized."
           );
         }
       }
-    };
+    }
 
     initializeMap();
 
     return () => {
       cancelled = true;
 
-      if (markerRef.current) {
-        markerRef.current.map = null;
-        markerRef.current = null;
-      }
-
-      mapInstanceRef.current = null;
+      mapInstance.current = null;
+      markerRef.current = null;
+      geocoderRef.current = null;
     };
-  }, [mapReady]);
+  }, []);
 
   /*
-   * Google Places Autocomplete
+   * Create a short readable location name.
    */
-  useEffect(() => {
-    if (!mapReady) return;
-
-    let cancelled = false;
-
-    const setupAutocomplete = async () => {
-      try {
-        const google = window.google;
-
-        const { PlaceAutocompleteElement } =
-          await google.maps.importLibrary("places");
-
-        if (cancelled) return;
-
-        const inputContainer = document.getElementById(
-          "google-place-autocomplete-container"
-        );
-
-        if (!inputContainer) return;
-
-        inputContainer.innerHTML = "";
-
-        const autocomplete =
-          new PlaceAutocompleteElement();
-
-        autocomplete.placeholder =
-          placeholder || "Search for a place";
-
-        /*
-         * Restrict suggestions to India
-         */
-        autocomplete.includedRegionCodes = ["in"];
-
-        inputContainer.appendChild(autocomplete);
-
-        autocomplete.addEventListener(
-          "gmp-select",
-          async ({ placePrediction }) => {
-            try {
-              setLoading(true);
-              setError("");
-
-              const place =
-                placePrediction.toPlace();
-
-              await place.fetchFields({
-                fields: [
-                  "displayName",
-                  "formattedAddress",
-                  "location",
-                ],
-              });
-
-              if (!place.location) {
-                throw new Error(
-                  "This location does not have coordinates."
-                );
-              }
-
-              const lat = place.location.lat();
-              const lng = place.location.lng();
-
-              const name =
-                place.formattedAddress ||
-                place.displayName ||
-                "Selected location";
-
-              await selectCoordinates(
-                lat,
-                lng,
-                name
-              );
-            } catch (err) {
-              console.error(
-                "Place selection error:",
-                err
-              );
-
-              setError(
-                "Unable to select this location."
-              );
-            } finally {
-              setLoading(false);
-            }
-          }
-        );
-
-        autocompleteRef.current = autocomplete;
-      } catch (err) {
-        console.error(
-          "Places autocomplete error:",
-          err
-        );
-
-        setError(
-          "Unable to load location search."
-        );
-      }
-    };
-
-    setupAutocomplete();
-
-    return () => {
-      cancelled = true;
-
-      const container = document.getElementById(
-        "google-place-autocomplete-container"
-      );
-
-      if (container) {
-        container.innerHTML = "";
+  const createShortLocationName =
+    (result) => {
+      if (!result) {
+        return "";
       }
 
-      autocompleteRef.current = null;
+      const components =
+        result.address_components ||
+        [];
+
+      const getComponent = (
+        types
+      ) => {
+        const component =
+          components.find(
+            (item) =>
+              types.some((type) =>
+                item.types.includes(type)
+              )
+          );
+
+        return component?.long_name || "";
+      };
+
+      const parts = [
+        getComponent([
+          "route",
+        ]),
+
+        getComponent([
+          "sublocality",
+          "sublocality_level_1",
+          "neighborhood",
+        ]),
+
+        getComponent([
+          "locality",
+          "postal_town",
+        ]),
+
+        getComponent([
+          "administrative_area_level_2",
+        ]),
+      ].filter(Boolean);
+
+      return [
+        ...new Set(parts),
+      ]
+        .slice(0, 3)
+        .join(", ");
     };
-  }, [mapReady, placeholder]);
 
   /*
-   * Select coordinates
+   * Update the marker.
    */
-  const selectCoordinates = async (
+  const updateMarker = (
     lat,
-    lng,
-    name = ""
+    lng
   ) => {
-    if (!mapInstanceRef.current || !window.google) {
+    if (
+      !mapInstance.current ||
+      !window.google ||
+      !window.google.maps
+    ) {
       return;
     }
 
-    try {
-      setLoading(true);
-      setError("");
+    const position = {
+      lat,
+      lng,
+    };
 
-      const google = window.google;
-
-      const { AdvancedMarkerElement } =
-        await google.maps.importLibrary("marker");
-
-      /*
-       * Remove old marker
-       */
-      if (markerRef.current) {
-        markerRef.current.map = null;
-      }
-
-      /*
-       * Create marker
-       */
+    if (markerRef.current) {
+      markerRef.current.setPosition(
+        position
+      );
+    } else {
       markerRef.current =
-        new AdvancedMarkerElement({
-          map: mapInstanceRef.current,
-          position: {
+        new window.google.maps.Marker({
+          position,
+          map: mapInstance.current,
+        });
+    }
+
+    mapInstance.current.setCenter(
+      position
+    );
+
+    mapInstance.current.setZoom(15);
+  };
+
+  /*
+   * Reverse geocode coordinates.
+   */
+  const selectLocation = async (
+    lat,
+    lng
+  ) => {
+    if (!geocoderRef.current) {
+      setMapError(
+        "Google Maps geocoder is not ready yet. Please try again."
+      );
+
+      return;
+    }
+
+    setLoading(true);
+    setSearchResults([]);
+
+    try {
+      const response =
+        await geocoderRef.current.geocode({
+          location: {
             lat,
             lng,
           },
-          title: name || "Selected location",
         });
 
-      /*
-       * Move map
-       */
-      mapInstanceRef.current.setCenter({
+      const result =
+        response.results?.[0];
+
+      const locationName =
+        createShortLocationName(
+          result
+        ) ||
+        result?.formatted_address ||
+        `${lat.toFixed(
+          5
+        )}, ${lng.toFixed(5)}`;
+
+      setSearch(locationName);
+
+      updateMarker(
         lat,
-        lng,
-      });
-
-      mapInstanceRef.current.setZoom(15);
-
-      let locationName = name;
-
-      /*
-       * Reverse geocode when selecting directly
-       * on the map/current location.
-       */
-      if (!locationName) {
-        const { Geocoder } =
-          await google.maps.importLibrary(
-            "geocoding"
-          );
-
-        const geocoder = new Geocoder();
-
-        const response =
-          await geocoder.geocode({
-            location: {
-              lat,
-              lng,
-            },
-          });
-
-        if (
-          response.results &&
-          response.results.length > 0
-        ) {
-          locationName =
-            response.results[0].formatted_address;
-        }
-      }
-
-      if (!locationName) {
-        locationName =
-          `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      }
-
-      setQuery(locationName);
-
-      onLocationSelect({
-        name: locationName,
-        lat,
-        lon: lng,
-      });
-    } catch (err) {
-      console.error(
-        "Location selection error:",
-        err
+        lng
       );
 
-      setError(
-        "Unable to determine this location."
+      if (onLocationSelect) {
+        onLocationSelect({
+          name: locationName,
+
+          fullName:
+            result?.formatted_address ||
+            locationName,
+
+          lat,
+
+          lon: lng,
+        });
+      }
+    } catch (error) {
+      console.error(
+        "Reverse geocoding error:",
+        error
+      );
+
+      setMapError(
+        "Unable to identify this location. Please try again."
       );
     } finally {
       setLoading(false);
@@ -452,191 +465,513 @@ export default function LocationPicker({
   };
 
   /*
-   * Current location
+   * Search Google for a location.
    */
-  const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setError(
-        "Your browser does not support location services."
+  const searchLocation = async () => {
+    if (!search.trim()) {
+      return;
+    }
+
+    if (!geocoderRef.current) {
+      setMapError(
+        "Google Maps is still loading. Please try again in a moment."
       );
+
       return;
     }
 
     setLoading(true);
-    setError("");
+    setSearchResults([]);
+    setMapError("");
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const {
-          latitude,
-          longitude,
-        } = position.coords;
+    try {
+      const response =
+        await geocoderRef.current.geocode({
+          address: search,
 
-        await selectCoordinates(
-          latitude,
-          longitude
+          region: "IN",
+
+          componentRestrictions: {
+            country: "IN",
+          },
+        });
+
+      const results =
+        response.results || [];
+
+      if (
+        results.length === 0
+      ) {
+        setMapError(
+          "Location not found. Please try another search."
         );
 
         setLoading(false);
-      },
-      (err) => {
-        console.error(
-          "Geolocation error:",
-          err
-        );
-
-        setError(
-          "Unable to get your current location. Please allow location access."
-        );
-
-        setLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
+        return;
       }
-    );
+
+      setSearchResults(
+        results.slice(0, 5)
+      );
+    } catch (error) {
+      console.error(
+        "Google location search error:",
+        error
+      );
+
+      setMapError(
+        "Unable to search location right now. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+
+  /*
+   * Select one of the search results.
+   */
+  const selectSearchResult = (
+    result
+  ) => {
+    if (
+      !result.geometry ||
+      !result.geometry.location
+    ) {
+      return;
+    }
+
+    const lat =
+      result.geometry.location.lat();
+
+    const lng =
+      result.geometry.location.lng();
+
+    const shortName =
+      createShortLocationName(
+        result
+      ) ||
+      result.formatted_address;
+
+    setSearch(shortName);
+
+    setSearchResults([]);
+
+    setMapError("");
+
+    updateMarker(
+      lat,
+      lng
+    );
+
+    if (onLocationSelect) {
+      onLocationSelect({
+        name: shortName,
+
+        fullName:
+          result.formatted_address,
+
+        lat,
+
+        lon: lng,
+      });
+    }
+  };
+
+  /*
+   * Use device GPS.
+   */
+  const useCurrentLocation =
+    () => {
+      if (
+        !navigator.geolocation
+      ) {
+        setMapError(
+          "Your device does not support location services."
+        );
+
+        return;
+      }
+
+      setLoading(true);
+      setSearchResults([]);
+      setMapError("");
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat =
+            position.coords.latitude;
+
+          const lng =
+            position.coords.longitude;
+
+          await selectLocation(
+            lat,
+            lng
+          );
+        },
+
+        (error) => {
+          console.error(
+            "Geolocation error:",
+            error
+          );
+
+          setLoading(false);
+
+          if (
+            error.code ===
+            error.PERMISSION_DENIED
+          ) {
+            setMapError(
+              "Location permission was denied. Please allow location access and try again."
+            );
+          } else if (
+            error.code ===
+            error.TIMEOUT
+          ) {
+            setMapError(
+              "Your location could not be detected in time. Please try again."
+            );
+          } else {
+            setMapError(
+              "Unable to get your current location."
+            );
+          }
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000,
+        }
+      );
+    };
 
   return (
     <div className="locationPicker">
-      <div className="locationHeader">
-        <span>{label}</span>
+
+      <label className="locationLabel">
+        {label}
+      </label>
+
+      {/* SEARCH */}
+
+      <div className="locationSearch">
+
+        <input
+          type="text"
+          value={search}
+          placeholder={placeholder}
+          onChange={(event) => {
+            setSearch(
+              event.target.value
+            );
+
+            setSearchResults([]);
+            setMapError("");
+          }}
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter"
+            ) {
+              event.preventDefault();
+
+              searchLocation();
+            }
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={
+            searchLocation
+          }
+          disabled={loading}
+        >
+          {loading
+            ? "..."
+            : "Search"}
+        </button>
+
       </div>
 
-      {/* Google Places search */}
-      <div
-        id="google-place-autocomplete-container"
-        className="googleSearch"
-      />
+      {/* CURRENT LOCATION */}
 
       {allowCurrentLocation && (
         <button
           type="button"
-          className="currentLocation"
-          onClick={useCurrentLocation}
+          className="currentLocationButton"
+          onClick={
+            useCurrentLocation
+          }
           disabled={loading}
         >
-          📍{" "}
-          {loading
-            ? "Finding your location..."
-            : "Use my current location"}
+          📍 Use my current location
         </button>
       )}
+
+      {/* SEARCH RESULTS */}
+
+      {searchResults.length >
+        0 && (
+        <div className="searchResults">
+
+          {searchResults.map(
+            (result, index) => (
+              <button
+                type="button"
+                className="searchResult"
+                key={
+                  result.place_id ||
+                  `result-${index}`
+                }
+                onClick={() =>
+                  selectSearchResult(
+                    result
+                  )
+                }
+              >
+
+                <span className="resultIcon">
+                  📍
+                </span>
+
+                <span className="resultText">
+
+                  <strong>
+                    {
+                      createShortLocationName(
+                        result
+                      ) ||
+                        result.formatted_address
+                    }
+                  </strong>
+
+                  <small>
+                    {
+                      result.formatted_address
+                    }
+                  </small>
+
+                </span>
+
+              </button>
+            )
+          )}
+
+        </div>
+      )}
+
+      {/* MAP */}
 
       <div
         ref={mapRef}
         className="locationMap"
       />
 
-      {error && (
-        <div className="locationError">
-          ⚠️ {error}
-        </div>
+      {/* ERROR */}
+
+      {mapError && (
+        <p className="mapError">
+          ⚠️ {mapError}
+        </p>
       )}
 
-      <p className="locationHelp">
-        📍 Search for a place, building,
-        address or landmark, or tap the map to
-        select an exact location.
+      <p className="mapHint">
+        📍 Search for a place or tap the
+        map to select an exact location.
       </p>
 
       <style jsx>{`
+
         .locationPicker {
           width: 100%;
           position: relative;
         }
 
-        .locationHeader {
+        .locationLabel {
+          display: block;
+          font-size: 12px;
+          font-weight: 700;
+          color: #52625a;
+          margin-bottom: 7px;
+        }
+
+        .locationSearch {
+          display: flex;
+          gap: 8px;
           margin-bottom: 8px;
         }
 
-        .locationHeader span {
-          font-size: 13px;
-          font-weight: 700;
-          color: #52625a;
-        }
-
-        .googleSearch {
-          width: 100%;
-        }
-
-        .googleSearch :global(gmp-place-autocomplete) {
-          width: 100%;
-        }
-
-        .googleSearch :global(input) {
-          width: 100%;
-          min-height: 52px;
-          padding: 0 16px;
+        .locationSearch input {
+          flex: 1;
+          min-width: 0;
+          padding: 14px;
           border: 1px solid #d9e1dc;
           border-radius: 11px;
           font-size: 15px;
           outline: none;
           background: white;
-          box-sizing: border-box;
         }
 
-        .googleSearch :global(input:focus) {
+        .locationSearch input:focus {
           border-color: #08783f;
           box-shadow:
             0 0 0 3px
-            rgba(8, 120, 63, 0.1);
+            rgba(
+              8,
+              120,
+              63,
+              0.1
+            );
         }
 
-        .currentLocation {
-          width: 100%;
-          margin-top: 10px;
-          padding: 14px;
+        .locationSearch button {
+          border: 0;
+          background: #08783f;
+          color: white;
+          padding: 0 18px;
           border-radius: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .locationSearch button:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
+
+        .currentLocationButton {
+          width: 100%;
           border: 1px solid #cce3d3;
           background: #f1f8f3;
           color: #08783f;
-          font-size: 14px;
+          padding: 11px 14px;
+          border-radius: 10px;
           font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          margin-bottom: 10px;
+        }
+
+        .currentLocationButton:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
+
+        .searchResults {
+          position: relative;
+          z-index: 20;
+          background: white;
+          border: 1px solid #d9e1dc;
+          border-radius: 12px;
+          overflow: hidden;
+          margin-bottom: 10px;
+          box-shadow:
+            0 8px 25px
+            rgba(
+              0,
+              0,
+              0,
+              0.1
+            );
+        }
+
+        .searchResult {
+          width: 100%;
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 12px;
+          border: 0;
+          border-bottom: 1px solid #edf1ee;
+          background: white;
+          text-align: left;
           cursor: pointer;
         }
 
-        .currentLocation:disabled {
-          opacity: 0.7;
-          cursor: wait;
+        .searchResult:last-child {
+          border-bottom: 0;
+        }
+
+        .searchResult:hover {
+          background: #f4f8f5;
+        }
+
+        .resultIcon {
+          font-size: 18px;
+          flex-shrink: 0;
+        }
+
+        .resultText {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          min-width: 0;
+        }
+
+        .resultText strong {
+          font-size: 13px;
+          color: #10231a;
+        }
+
+        .resultText small {
+          font-size: 11px;
+          line-height: 1.35;
+          color: #65736b;
         }
 
         .locationMap {
           width: 100%;
-          height: 360px;
-          margin-top: 12px;
-          border-radius: 13px;
-          border: 1px solid #d9e1dc;
+          height: 280px;
+          border-radius: 14px;
           overflow: hidden;
+          border: 1px solid #d9e1dc;
           background: #f4f6f5;
         }
 
-        .locationError {
-          margin-top: 10px;
-          padding: 12px 14px;
-          border-radius: 11px;
-          background: #fff3f1;
-          border: 1px solid #f1c8c3;
-          color: #b3342a;
-          font-size: 13px;
+        .mapHint {
+          margin: 8px 0 0;
+          font-size: 12px;
           line-height: 1.4;
+          color: #65736b;
         }
 
-        .locationHelp {
-          margin: 10px 0 0;
-          color: #65736b;
+        .mapError {
+          margin: 8px 0 0;
+          padding: 12px 14px;
+          border-radius: 10px;
+          border: 1px solid #f0c7c2;
+          background: #fff5f4;
+          color: #b42318;
           font-size: 13px;
           line-height: 1.4;
         }
 
         @media (max-width: 750px) {
+
           .locationMap {
-            height: 300px;
+            height: 280px;
+            border-radius: 12px;
           }
+
+          .locationSearch button {
+            padding: 0 14px;
+          }
+
+          .currentLocationButton {
+            padding: 10px 12px;
+          }
+
+          .searchResult {
+            padding: 11px;
+          }
+
         }
+
       `}</style>
+
     </div>
   );
 }
