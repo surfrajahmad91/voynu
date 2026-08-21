@@ -2,224 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const GOOGLE_SCRIPT_ID = "voynu-google-maps-script";
+import {
+  loadGoogleMaps,
+  extractCityName,
+} from "../lib/googleMaps";
 
-let googleMapsPromise = null;
-
-/*
- * ------------------------------------------------------------
- * GOOGLE MAPS LOADER
- *
- * Loads Google Maps JavaScript API once for the entire app.
- *
- * Required by VOYNU:
- *
- * - Places Autocomplete
- * - Geocoder
- * - DirectionsService
- *
- * ------------------------------------------------------------
- */
-
-function loadGoogleMaps() {
-  if (typeof window === "undefined") {
-    return Promise.reject(
-      new Error("Browser environment required.")
-    );
-  }
-
-  /*
-   * Already loaded.
-   */
-  if (
-    window.google?.maps?.places &&
-    window.google?.maps?.DirectionsService &&
-    window.google?.maps?.Geocoder
-  ) {
-    return Promise.resolve(window.google.maps);
-  }
-
-  /*
-   * Loading already in progress.
-   */
-  if (googleMapsPromise) {
-    return googleMapsPromise;
-  }
-
-  const apiKey =
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  if (!apiKey) {
-    return Promise.reject(
-      new Error(
-        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not configured."
-      )
-    );
-  }
-
-  googleMapsPromise = new Promise(
-    (resolve, reject) => {
-      const existingScript =
-        document.getElementById(
-          GOOGLE_SCRIPT_ID
-        );
-
-      /*
-       * ------------------------------------------------------
-       * SCRIPT ALREADY EXISTS
-       * ------------------------------------------------------
-       */
-
-      if (existingScript) {
-        const checkReady = () => {
-          if (
-            window.google?.maps?.places &&
-            window.google?.maps?.DirectionsService &&
-            window.google?.maps?.Geocoder
-          ) {
-            resolve(window.google.maps);
-          } else {
-            reject(
-              new Error(
-                "Google Maps services are unavailable."
-              )
-            );
-          }
-        };
-
-        if (window.google?.maps) {
-          checkReady();
-          return;
-        }
-
-        existingScript.addEventListener(
-          "load",
-          checkReady,
-          { once: true }
-        );
-
-        existingScript.addEventListener(
-          "error",
-          () => {
-            reject(
-              new Error(
-                "Google Maps failed to load."
-              )
-            );
-          },
-          { once: true }
-        );
-
-        return;
-      }
-
-      /*
-       * ------------------------------------------------------
-       * CREATE SCRIPT
-       * ------------------------------------------------------
-       */
-
-      const script =
-        document.createElement("script");
-
-      script.id =
-        GOOGLE_SCRIPT_ID;
-
-      script.src =
-        `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-          apiKey
-        )}&libraries=places&v=weekly`;
-
-      script.async = true;
-      script.defer = true;
-
-      script.onload = () => {
-        if (
-          window.google?.maps?.places &&
-          window.google?.maps?.DirectionsService &&
-          window.google?.maps?.Geocoder
-        ) {
-          resolve(window.google.maps);
-        } else {
-          reject(
-            new Error(
-              "Google Maps services are unavailable."
-            )
-          );
-        }
-      };
-
-      script.onerror = () => {
-        reject(
-          new Error(
-            "Unable to load Google Maps."
-          )
-        );
-      };
-
-      document.head.appendChild(script);
-    }
-  );
-
-  /*
-   * If loading fails, allow another attempt later.
-   */
-  googleMapsPromise.catch(() => {
-    googleMapsPromise = null;
-  });
-
-  return googleMapsPromise;
-}
-
-/*
- * ------------------------------------------------------------
- * CITY EXTRACTION
- *
- * Given a Google address_components array, returns the best
- * guess for the city name.
- *
- * Prefers "locality" (city). Falls back to
- * "administrative_area_level_2" (district) for addresses
- * where Google does not return a locality, which happens
- * for some rural/outskirt addresses.
- * ------------------------------------------------------------
- */
-
-function extractCityName(
-  addressComponents
-) {
-  if (
-    !Array.isArray(
-      addressComponents
-    )
-  ) {
-    return null;
-  }
-
-  const locality =
-    addressComponents.find(
-      (component) =>
-        component.types?.includes(
-          "locality"
-        )
-    );
-
-  if (locality?.long_name) {
-    return locality.long_name;
-  }
-
-  const district =
-    addressComponents.find(
-      (component) =>
-        component.types?.includes(
-          "administrative_area_level_2"
-        )
-    );
-
-  return (
-    district?.long_name || null
-  );
-}
+import MapLocationPicker from "./MapLocationPicker";
 
 /*
  * ------------------------------------------------------------
@@ -246,6 +34,12 @@ export default function LocationPicker({
 
   const [locating, setLocating] =
     useState(false);
+
+  const [mapPickerOpen, setMapPickerOpen] =
+    useState(false);
+
+  const [currentCoords, setCurrentCoords] =
+    useState({ lat: null, lon: null });
 
   /*
    * ------------------------------------------------------------
@@ -283,9 +77,6 @@ export default function LocationPicker({
   /*
    * ------------------------------------------------------------
    * KEEP INPUT VALUE IN SYNC
-   *
-   * LocationPicker is intentionally using an uncontrolled
-   * input because Google Autocomplete modifies the input.
    * ------------------------------------------------------------
    */
 
@@ -314,9 +105,6 @@ export default function LocationPicker({
       return;
     }
 
-    /*
-     * Prevent duplicate autocomplete instances.
-     */
     if (autocompleteRef.current) {
       return;
     }
@@ -357,10 +145,6 @@ export default function LocationPicker({
           const location =
             place?.geometry?.location;
 
-          /*
-           * User typed something but didn't actually
-           * select a Google suggestion.
-           */
           if (!location) {
             setError(
               "Please select a location from the suggested locations."
@@ -386,11 +170,8 @@ export default function LocationPicker({
             );
 
           setError("");
+          setCurrentCoords({ lat, lon });
 
-          /*
-           * IMPORTANT:
-           * These are the exact keys expected by page.js.
-           */
           onLocationSelect?.({
             name,
             lat,
@@ -488,7 +269,11 @@ export default function LocationPicker({
               !results?.length
             ) {
               setError(
-                "Unable to determine your current address."
+                `Unable to determine your current address${
+                  status
+                    ? ` (${status})`
+                    : ""
+                }. Please search manually or check the Geocoding API is enabled for your Maps key.`
               );
 
               return;
@@ -510,6 +295,7 @@ export default function LocationPicker({
             }
 
             setError("");
+            setCurrentCoords({ lat, lon });
 
             onLocationSelect?.({
               name: address,
@@ -568,24 +354,42 @@ export default function LocationPicker({
 
   /*
    * ------------------------------------------------------------
+   * MAP PICKER
+   * ------------------------------------------------------------
+   */
+
+  const handleMapConfirm = (location) => {
+    if (inputRef.current) {
+      inputRef.current.value =
+        location.name;
+    }
+
+    setError("");
+    setCurrentCoords({
+      lat: location.lat,
+      lon: location.lon,
+    });
+
+    setMapPickerOpen(false);
+
+    onLocationSelect?.(location);
+  };
+
+  /*
+   * ------------------------------------------------------------
    * INPUT
    * ------------------------------------------------------------
    */
 
   const handleInputChange = () => {
-    /*
-     * IMPORTANT:
-     *
-     * If the user starts typing after selecting a location,
-     * the old coordinates should no longer be considered valid.
-     *
-     * The parent page will receive a new selection only when
-     * the user actually selects a Google suggestion.
-     *
-     * We therefore only clear the local error here.
-     */
     setError("");
   };
+
+  const buttonCount =
+    (allowCurrentLocation ? 1 : 0) + 1;
+
+  const inputRightPadding =
+    buttonCount === 2 ? 92 : 50;
 
   /*
    * ------------------------------------------------------------
@@ -616,26 +420,77 @@ export default function LocationPicker({
           autoComplete="off"
           onChange={handleInputChange}
           className="locationInput"
+          style={{
+            paddingRight:
+              `${inputRightPadding}px`,
+          }}
           aria-label={label}
         />
 
-        {allowCurrentLocation && (
+        <div className="inputActions">
+
           <button
             type="button"
-            className="currentLocationButton"
-            onClick={useCurrentLocation}
-            disabled={
-              locating ||
-              !mapsReady
+            className="actionButton"
+            onClick={() =>
+              setMapPickerOpen(true)
             }
-            aria-label="Use current location"
-            title="Use current location"
+            disabled={!mapsReady}
+            aria-label="Pick location on map"
+            title="Pick location on map"
           >
-            {locating
-              ? "..."
-              : "⌖"}
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
+              <circle
+                cx="12"
+                cy="9.5"
+                r="2.4"
+              />
+            </svg>
           </button>
-        )}
+
+          {allowCurrentLocation && (
+            <button
+              type="button"
+              className="actionButton"
+              onClick={useCurrentLocation}
+              disabled={
+                locating ||
+                !mapsReady
+              }
+              aria-label="Use current location"
+              title="Use current location"
+            >
+              {locating ? (
+                <span className="spinner" />
+              ) : (
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  />
+                  <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                </svg>
+              )}
+            </button>
+          )}
+
+        </div>
 
       </div>
 
@@ -653,6 +508,17 @@ export default function LocationPicker({
           {error}
         </div>
       )}
+
+      <MapLocationPicker
+        open={mapPickerOpen}
+        title={`Choose ${label?.toLowerCase() || "location"}`}
+        initialLat={currentCoords.lat}
+        initialLon={currentCoords.lon}
+        onConfirm={handleMapConfirm}
+        onClose={() =>
+          setMapPickerOpen(false)
+        }
+      />
 
       <style jsx>{`
 
@@ -688,7 +554,7 @@ export default function LocationPicker({
           width: 100%;
           height: 53px;
 
-          padding: 0 50px 0 15px;
+          padding: 0 15px;
 
           border: 1px solid #d9e2dc;
           border-radius: 11px;
@@ -718,17 +584,21 @@ export default function LocationPicker({
             rgba(8, 120, 63, 0.09);
         }
 
-        .currentLocationButton {
+        .inputActions {
           position: absolute;
 
           top: 50%;
           right: 9px;
 
+          transform: translateY(-50%);
+
+          display: flex;
+          gap: 6px;
+        }
+
+        .actionButton {
           width: 35px;
           height: 35px;
-
-          transform:
-            translateY(-50%);
 
           display: flex;
           align-items: center;
@@ -740,19 +610,36 @@ export default function LocationPicker({
           background: #eaf6ee;
           color: #08783f;
 
-          font-size: 20px;
-          font-weight: 800;
-
           cursor: pointer;
+
+          transition: background 0.15s ease;
         }
 
-        .currentLocationButton:hover:not(:disabled) {
+        .actionButton:hover:not(:disabled) {
           background: #dff1e5;
         }
 
-        .currentLocationButton:disabled {
+        .actionButton:disabled {
           opacity: 0.55;
           cursor: wait;
+        }
+
+        .spinner {
+          width: 14px;
+          height: 14px;
+
+          border: 2px solid rgba(8, 120, 63, 0.25);
+          border-top-color: #08783f;
+
+          border-radius: 50%;
+
+          animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         .locationHint {
