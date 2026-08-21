@@ -302,7 +302,7 @@ export function calculateStraightLineDistanceKm(
 
 export function findServiceCity(
   pickupLocation,
-  serviceCityId = null
+  detectedCityName = null
 ) {
   if (
     !isValidCoordinates(
@@ -313,37 +313,53 @@ export function findServiceCity(
   }
 
   /*
-   * If the location layer has already identified the city,
-   * use that information.
+   * We can only confirm a service city if we actually know
+   * which city the pickup coordinates resolved to.
+   *
+   * No detected city name means we cannot safely assume
+   * any particular city.
    */
-  if (serviceCityId) {
-    return (
-      VOYNU_TRIP_CONFIG.serviceCities.find(
-        (city) =>
-          city.id === serviceCityId &&
-          city.active &&
-          city.pickupAllowed
-      ) || null
-    );
+  if (!detectedCityName) {
+    return null;
   }
 
-  /*
-   * Current launch configuration.
-   *
-   * For now the booking UI is operating in Kanpur.
-   *
-   * This is intentionally isolated so the actual geographic
-   * service-area validation can be upgraded later.
-   */
+  const normalized = String(
+    detectedCityName
+  )
+    .trim()
+    .toLowerCase();
+
   return (
     VOYNU_TRIP_CONFIG.serviceCities.find(
-      (city) =>
-        city.id === "kanpur" &&
-        city.active &&
-        city.pickupAllowed
+      (city) => {
+        if (
+          !city.active ||
+          !city.pickupAllowed
+        ) {
+          return false;
+        }
+
+        if (
+          city.name.toLowerCase() ===
+          normalized
+        ) {
+          return true;
+        }
+
+        const aliases =
+          city.aliases || [];
+
+        return aliases.some(
+          (alias) =>
+            alias.toLowerCase() ===
+            normalized
+        );
+      }
     ) || null
   );
 }
+
+
 
 
 /*
@@ -367,7 +383,7 @@ export function calculateTripDetails({
   drop,
   tripType = "oneway",
   distanceKm = null,
-  serviceCityId = null,
+  pickupCityName = null,
 }) {
   const normalizedTripType =
     normalizeTripType(
@@ -434,7 +450,7 @@ export function calculateTripDetails({
   const serviceCity =
     findServiceCity(
       pickup,
-      serviceCityId
+      pickupCityName
     );
 
   if (!serviceCity) {
@@ -447,7 +463,17 @@ export function calculateTripDetails({
   result.serviceCity =
     serviceCity;
 
-
+serviceCities: [
+    {
+      id: "kanpur",
+      name: "Kanpur",
+      aliases: ["Kanpur Nagar"],
+      active: true,
+      pickupAllowed: true,
+      maxDropDistanceKm: 200,
+    },
+  ],
+  
   /*
    * --------------------------------------------------------------
    * DROP
