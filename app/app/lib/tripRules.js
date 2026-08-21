@@ -1,61 +1,74 @@
 /*
 |--------------------------------------------------------------------------
-| VOYNU Trip Rules
+| VOYNU — Trip Rules
 |--------------------------------------------------------------------------
 |
-| Central configuration for EV booking distance and service-area rules.
+| Business rules for determining whether a trip can be booked.
 |
-| Future cities can be added here without changing BookingPage.
+| IMPORTANT:
+| - This file does NOT communicate with Google Maps.
+| - This file does NOT call any API.
+| - This file only works with coordinates and trip information.
+|
+| Google Maps / LocationPicker provides:
+|   {
+|     name,
+|     lat,
+|     lon
+|   }
 |
 |--------------------------------------------------------------------------
 */
 
-export const TRIP_CONFIG = {
-  /*
-   * Current operating city.
-   */
-  serviceAreas: {
-    kanpur: {
-      id: "kanpur",
-      name: "Kanpur",
-      country: "India",
+/*
+|--------------------------------------------------------------------------
+| Default VOYNU configuration
+|--------------------------------------------------------------------------
+|
+| These values are intentionally kept in one place.
+|
+| Later these can be replaced by configuration coming from the
+| Admin Panel / backend without changing the booking UI.
+|
+*/
 
-      /*
-       * Kanpur city center.
-       */
-      center: {
-        lat: 26.4499,
-        lng: 80.3319,
-      },
-
-      /*
-       * Temporary service-area radius.
-       *
-       * This is NOT the 200 km trip limit.
-       *
-       * It is only used to determine whether a selected
-       * location belongs to our current Kanpur operating area.
-       *
-       * We can later replace this with a proper polygon.
-       */
-      serviceRadiusKm: 35,
-    },
-  },
-
-  /*
-   * Maximum allowed one-way pickup -> drop distance.
-   */
+export const VOYNU_TRIP_CONFIG = {
   maxOneWayDistanceKm: 200,
 
   /*
-   * Approximate practical EV range.
+   * Current service cities.
+   *
+   * More cities can be added as VOYNU expands.
    */
-  evRangeKm: 250,
+  serviceCities: [
+    {
+      id: "kanpur",
+      name: "Kanpur",
+      maxDropDistanceKm: 200,
+    },
+  ],
 
   /*
-   * Charging time communicated to customer.
+   * Charging rule.
+   *
+   * This is deliberately configurable.
+   *
+   * We should NOT assume that every round trip requires charging.
+   * The actual threshold can be finalized based on the vehicle/
+   * operational rules.
    */
-  chargingTimeMinutes: 60,
+  roundTripCharging: {
+    enabled: true,
+
+    /*
+     * Temporary operational threshold.
+     *
+     * Change this when the final EV operating rule is decided.
+     */
+    distanceThresholdKm: 180,
+
+    chargingBreakMinutes: 60,
+  },
 };
 
 /*
@@ -63,46 +76,56 @@ export const TRIP_CONFIG = {
 | Distance calculation
 |--------------------------------------------------------------------------
 |
-| Haversine distance between two coordinates.
+| Calculates straight-line distance between two coordinates using
+| the Haversine formula.
 |
+| NOTE:
+| This is NOT road distance.
+|
+| For final booking eligibility, Google Maps road distance should
+| ideally be used. This function is useful as a safe fallback and
+| for frontend validation.
+|
+|--------------------------------------------------------------------------
 */
 
-export function calculateDistanceKm(
-  pointA,
-  pointB
+export function calculateStraightLineDistanceKm(
+  locationA,
+  locationB
 ) {
-  if (
-    !pointA ||
-    !pointB ||
-    typeof pointA.lat !== "number" ||
-    typeof pointA.lng !== "number" ||
-    typeof pointB.lat !== "number" ||
-    typeof pointB.lng !== "number"
-  ) {
+  if (!isValidCoordinates(locationA)) {
+    return null;
+  }
+
+  if (!isValidCoordinates(locationB)) {
     return null;
   }
 
   const earthRadiusKm = 6371;
 
-  const toRadians = (degrees) =>
-    (degrees * Math.PI) / 180;
+  const lat1 =
+    toRadians(locationA.lat);
 
-  const lat1 = toRadians(pointA.lat);
-  const lat2 = toRadians(pointB.lat);
+  const lat2 =
+    toRadians(locationB.lat);
 
-  const deltaLat = toRadians(
-    pointB.lat - pointA.lat
-  );
+  const deltaLat =
+    toRadians(
+      locationB.lat -
+        locationA.lat
+    );
 
-  const deltaLng = toRadians(
-    pointB.lng - pointA.lng
-  );
+  const deltaLon =
+    toRadians(
+      locationB.lon -
+        locationA.lon
+    );
 
   const a =
     Math.sin(deltaLat / 2) ** 2 +
     Math.cos(lat1) *
       Math.cos(lat2) *
-      Math.sin(deltaLng / 2) ** 2;
+      Math.sin(deltaLon / 2) ** 2;
 
   const c =
     2 *
@@ -116,238 +139,320 @@ export function calculateDistanceKm(
 
 /*
 |--------------------------------------------------------------------------
-| Check whether a location belongs to a service area.
+| Coordinate validation
 |--------------------------------------------------------------------------
 */
 
-export function getServiceAreaForLocation(
+export function isValidCoordinates(
   location
 ) {
+  if (!location) {
+    return false;
+  }
+
+  const lat =
+    Number(location.lat);
+
+  const lon =
+    Number(location.lon);
+
   if (
-    !location ||
-    typeof location.lat !== "number" ||
-    typeof location.lon !== "number"
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lon)
   ) {
-    return null;
+    return false;
   }
 
-  const point = {
-    lat: location.lat,
-    lng: location.lon,
-  };
-
-  for (const area of Object.values(
-    TRIP_CONFIG.serviceAreas
-  )) {
-    const distance = calculateDistanceKm(
-      point,
-      area.center
-    );
-
-    if (
-      distance !== null &&
-      distance <= area.serviceRadiusKm
-    ) {
-      return {
-        ...area,
-        distanceFromCenterKm: distance,
-      };
-    }
+  if (
+    lat < -90 ||
+    lat > 90
+  ) {
+    return false;
   }
 
-  return null;
+  if (
+    lon < -180 ||
+    lon > 180
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 /*
 |--------------------------------------------------------------------------
-| Check maximum one-way distance.
+| Service city check
+|--------------------------------------------------------------------------
+|
+| For the current launch:
+|
+| Pickup must be within an active service city.
+|
+| IMPORTANT:
+| City membership should eventually be determined using proper
+| geographic boundaries / service polygons rather than the city
+| name returned by Google.
+|
+| This function currently provides the basic structure.
+|
 |--------------------------------------------------------------------------
 */
 
-export function isWithinMaximumDistance(
+export function findServiceCity(
+  pickupLocation
+) {
+  if (
+    !isValidCoordinates(
+      pickupLocation
+    )
+  ) {
+    return null;
+  }
+
+  /*
+   * TODO:
+   *
+   * Replace this with backend/service-area validation.
+   *
+   * For now, Kanpur is the active service city.
+   */
+  return VOYNU_TRIP_CONFIG.serviceCities.find(
+    (city) =>
+      city.id === "kanpur"
+  ) || null;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Calculate trip information
+|--------------------------------------------------------------------------
+|
+| Returns a normalized object that the booking page can use.
+|
+|--------------------------------------------------------------------------
+*/
+
+export function calculateTripDetails({
+  pickup,
+  drop,
+  tripType = "one_way",
+}) {
+  const result = {
+    valid: false,
+
+    pickupValid: false,
+    dropValid: false,
+
+    serviceCity: null,
+
+    oneWayDistanceKm: null,
+    roundTripDistanceKm: null,
+
+    tripType,
+
+    chargingRequired: false,
+    chargingBreakMinutes: 0,
+
+    reason: null,
+  };
+
+  /*
+   * Validate pickup.
+   */
+  if (
+    !isValidCoordinates(
+      pickup
+    )
+  ) {
+    result.reason =
+      "Please select a valid pickup location.";
+
+    return result;
+  }
+
+  result.pickupValid = true;
+
+  /*
+   * Validate that pickup is inside
+   * an active VOYNU service area.
+   */
+  const serviceCity =
+    findServiceCity(
+      pickup
+    );
+
+  if (!serviceCity) {
+    result.reason =
+      "Pickup location is outside VOYNU's current service area.";
+
+    return result;
+  }
+
+  result.serviceCity =
+    serviceCity;
+
+  /*
+   * Validate destination.
+   */
+  if (
+    !isValidCoordinates(
+      drop
+    )
+  ) {
+    result.reason =
+      "Please select a valid drop location.";
+
+    return result;
+  }
+
+  result.dropValid = true;
+
+  /*
+   * Calculate distance.
+   */
+  const oneWayDistanceKm =
+    calculateStraightLineDistanceKm(
+      pickup,
+      drop
+    );
+
+  if (
+    oneWayDistanceKm === null
+  ) {
+    result.reason =
+      "Unable to calculate trip distance.";
+
+    return result;
+  }
+
+  result.oneWayDistanceKm =
+    oneWayDistanceKm;
+
+  /*
+   * Maximum distance is based on
+   * the actual pickup location.
+   */
+  const maxDistance =
+    serviceCity.maxDropDistanceKm ??
+    VOYNU_TRIP_CONFIG
+      .maxOneWayDistanceKm;
+
+  /*
+   * Destination beyond the allowed
+   * one-way distance.
+   */
+  if (
+    oneWayDistanceKm >
+    maxDistance
+  ) {
+    result.reason =
+      `Your destination is approximately ${formatDistance(
+        oneWayDistanceKm
+      )} away. VOYNU currently supports trips up to ${maxDistance} km from the pickup location.`;
+
+    return result;
+  }
+
+  /*
+   * Round trip.
+   */
+  if (
+    tripType ===
+    "round_trip"
+  ) {
+    result.roundTripDistanceKm =
+      oneWayDistanceKm * 2;
+
+    const chargingRule =
+      VOYNU_TRIP_CONFIG
+        .roundTripCharging;
+
+    if (
+      chargingRule.enabled &&
+      oneWayDistanceKm >=
+        chargingRule.distanceThresholdKm
+    ) {
+      result.chargingRequired =
+        true;
+
+      result.chargingBreakMinutes =
+        chargingRule.chargingBreakMinutes;
+    }
+  }
+
+  result.valid = true;
+
+  return result;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Format distance
+|--------------------------------------------------------------------------
+*/
+
+export function formatDistance(
   distanceKm
 ) {
+  if (
+    !Number.isFinite(
+      Number(distanceKm)
+    )
+  ) {
+    return "";
+  }
+
+  return `${Number(
+    distanceKm
+  ).toFixed(1)} km`;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Charging message
+|--------------------------------------------------------------------------
+|
+| Customer-facing message.
+|
+|--------------------------------------------------------------------------
+*/
+
+export function getChargingMessage(
+  tripDetails
+) {
+  if (
+    !tripDetails?.chargingRequired
+  ) {
+    return null;
+  }
+
+  const minutes =
+    tripDetails.chargingBreakMinutes;
+
+  const distance =
+    formatDistance(
+      tripDetails.oneWayDistanceKm
+    );
+
   return (
-    typeof distanceKm === "number" &&
-    distanceKm <=
-      TRIP_CONFIG.maxOneWayDistanceKm
+    `Your destination is approximately ${distance} away. ` +
+    `For the return journey, a ${minutes}-minute charging break ` +
+    `will be required at the destination before departure.`
   );
 }
 
 /*
 |--------------------------------------------------------------------------
-| Determine charging requirement.
-|--------------------------------------------------------------------------
-|
-| We calculate the actual round-trip distance.
-|
-| Example:
-|
-| One way = 140 km
-| Round trip = 280 km
-|
-| EV range = 250 km
-|
-| Therefore charging is required.
-|
+| Internal helper
 |--------------------------------------------------------------------------
 */
 
-export function getChargingRequirement({
-  oneWayDistanceKm,
-  isRoundTrip,
-}) {
-  if (
-    !isRoundTrip ||
-    typeof oneWayDistanceKm !== "number"
-  ) {
-    return {
-      required: false,
-      minutes: 0,
-      roundTripDistanceKm: null,
-    };
-  }
-
-  const roundTripDistanceKm =
-    oneWayDistanceKm * 2;
-
-  const required =
-    roundTripDistanceKm >
-    TRIP_CONFIG.evRangeKm;
-
-  return {
-    required,
-    minutes: required
-      ? TRIP_CONFIG.chargingTimeMinutes
-      : 0,
-    roundTripDistanceKm,
-  };
-}
-
-/*
-|--------------------------------------------------------------------------
-| Complete trip validation.
-|--------------------------------------------------------------------------
-*/
-
-export function validateTrip({
-  pickup,
-  drop,
-  isRoundTrip = false,
-}) {
-  const errors = [];
-
-  if (
-    !pickup ||
-    typeof pickup.lat !== "number" ||
-    typeof pickup.lon !== "number"
-  ) {
-    errors.push(
-      "Please select a valid pickup location from the map or suggestions."
-    );
-  }
-
-  if (
-    !drop ||
-    typeof drop.lat !== "number" ||
-    typeof drop.lon !== "number"
-  ) {
-    errors.push(
-      "Please select a valid drop location from the map or suggestions."
-    );
-  }
-
-  if (errors.length) {
-    return {
-      valid: false,
-      errors,
-      pickupArea: null,
-      dropArea: null,
-      distanceKm: null,
-      roundTripDistanceKm: null,
-      chargingRequired: false,
-      chargingMinutes: 0,
-    };
-  }
-
-  /*
-   * Check service areas.
-   */
-  const pickupArea =
-    getServiceAreaForLocation(
-      pickup
-    );
-
-  const dropArea =
-    getServiceAreaForLocation(
-      drop
-    );
-
-  if (!pickupArea) {
-    errors.push(
-      "Pickup is currently available only within the Kanpur service area."
-    );
-  }
-
-  if (!dropArea) {
-    errors.push(
-      "Drop location is currently available only within the Kanpur service area."
-    );
-  }
-
-  /*
-   * Calculate distance even if service-area
-   * validation failed. This keeps the state
-   * useful for the UI.
-   */
-  const distanceKm =
-    calculateDistanceKm(
-      {
-        lat: pickup.lat,
-        lng: pickup.lon,
-      },
-      {
-        lat: drop.lat,
-        lng: drop.lon,
-      }
-    );
-
-  if (
-    distanceKm !== null &&
-    !isWithinMaximumDistance(distanceKm)
-  ) {
-    errors.push(
-      `This trip is ${Math.round(
-        distanceKm
-      )} km one way. Our current maximum is ${TRIP_CONFIG.maxOneWayDistanceKm} km.`
-    );
-  }
-
-  const charging =
-    getChargingRequirement({
-      oneWayDistanceKm:
-        distanceKm,
-      isRoundTrip,
-    });
-
-  return {
-    valid: errors.length === 0,
-
-    errors,
-
-    pickupArea,
-
-    dropArea,
-
-    distanceKm,
-
-    roundTripDistanceKm:
-      charging.roundTripDistanceKm,
-
-    chargingRequired:
-      charging.required,
-
-    chargingMinutes:
-      charging.minutes,
-  };
+function toRadians(
+  degrees
+) {
+  return (
+    degrees *
+    (Math.PI / 180)
+  );
 }
