@@ -19,79 +19,28 @@ export default function HomePage() {
   }, []);
 
   /* ============================================================
-     SERVICE AREA
-  ============================================================ */
+     DISTANCE LIMITS
 
-  const SERVICE_AREA = {
-    center: {
-      lat: 26.4499,
-      lon: 80.3319,
-    },
+     ONE WAY:
+     Maximum 200 km from pickup to drop.
 
-    radiusKm: 200,
-  };
+     ROUND TRIP:
+     Maximum 200 km per leg.
+     Therefore maximum total distance = 400 km.
 
-  /* ============================================================
-     STRAIGHT-LINE DISTANCE
-     
-     Used only for checking pickup service area.
-     
      IMPORTANT:
-     Journey distance uses Google's actual ROAD distance
-     further below.
+     There is NO pickup-to-Kanpur distance calculation.
   ============================================================ */
 
-  const calculateDistanceKm = (
-    lat1,
-    lon1,
-    lat2,
-    lon2
-  ) => {
-    if (
-      lat1 === null ||
-      lon1 === null ||
-      lat2 === null ||
-      lon2 === null ||
-      lat1 === undefined ||
-      lon1 === undefined ||
-      lat2 === undefined ||
-      lon2 === undefined
-    ) {
-      return null;
-    }
-
-    const toRadians = (value) =>
-      (value * Math.PI) / 180;
-
-    const earthRadiusKm = 6371;
-
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
-
-    const a =
-      Math.sin(dLat / 2) *
-        Math.sin(dLat / 2) +
-      Math.cos(toRadians(lat1)) *
-        Math.cos(toRadians(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-
-    const c =
-      2 *
-      Math.atan2(
-        Math.sqrt(a),
-        Math.sqrt(1 - a)
-      );
-
-    return earthRadiusKm * c;
-  };
+  const MAX_ONE_WAY_DISTANCE_KM = 200;
+  const MAX_ROUND_TRIP_LEG_KM = 200;
+  const MAX_ROUND_TRIP_TOTAL_KM = 400;
 
   /* ============================================================
      TRIP
   ============================================================ */
 
-  const [tripType, setTripType] =
-    useState("oneway");
+  const [tripType, setTripType] = useState("oneway");
 
   /* ============================================================
      LOCATIONS
@@ -111,8 +60,14 @@ export default function HomePage() {
 
   /* ============================================================
      JOURNEY DISTANCE
-     
-     This is the ACTUAL ROAD DISTANCE between pickup and drop.
+
+     Google Maps actual ROAD / DRIVING distance.
+
+     journeyDistanceKm:
+     One-way road distance from pickup to drop.
+
+     For round trip:
+     totalJourneyDistanceKm = journeyDistanceKm * 2
   ============================================================ */
 
   const [journeyDistanceKm, setJourneyDistanceKm] =
@@ -134,30 +89,23 @@ export default function HomePage() {
      JOURNEY
   ============================================================ */
 
-  const [travelDate, setTravelDate] =
-    useState("");
+  const [travelDate, setTravelDate] = useState("");
 
-  const [pickupTime, setPickupTime] =
-    useState("");
+  const [pickupTime, setPickupTime] = useState("");
 
-  const [returnDate, setReturnDate] =
-    useState("");
+  const [returnDate, setReturnDate] = useState("");
 
-  const [returnTime, setReturnTime] =
-    useState("");
+  const [returnTime, setReturnTime] = useState("");
 
   /* ============================================================
      PASSENGER
   ============================================================ */
 
-  const [passengerName, setPassengerName] =
-    useState("");
+  const [passengerName, setPassengerName] = useState("");
 
-  const [phone, setPhone] =
-    useState("");
+  const [phone, setPhone] = useState("");
 
-  const [whatsapp, setWhatsapp] =
-    useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
   const [whatsappSameAsPhone, setWhatsappSameAsPhone] =
     useState(true);
@@ -166,14 +114,11 @@ export default function HomePage() {
      UI STATE
   ============================================================ */
 
-  const [message, setMessage] =
-    useState("");
+  const [message, setMessage] = useState("");
 
-  const [messageType, setMessageType] =
-    useState("");
+  const [messageType, setMessageType] = useState("");
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /* ============================================================
      WHATSAPP SYNC
@@ -209,10 +154,7 @@ export default function HomePage() {
   ============================================================ */
 
   const normalizeIndianPhone = (value) => {
-    const cleaned = String(value || "").replace(
-      /\D/g,
-      ""
-    );
+    const cleaned = String(value || "").replace(/\D/g, "");
 
     if (
       cleaned.length === 10 &&
@@ -224,9 +166,7 @@ export default function HomePage() {
     if (
       cleaned.length === 12 &&
       cleaned.startsWith("91") &&
-      /^[6-9]\d{9}$/.test(
-        cleaned.slice(2)
-      )
+      /^[6-9]\d{9}$/.test(cleaned.slice(2))
     ) {
       return cleaned.slice(2);
     }
@@ -238,207 +178,144 @@ export default function HomePage() {
      TIME HELPERS
   ============================================================ */
 
-  const isTimeInPastForToday = (
-    date,
-    time
-  ) => {
+  const isTimeInPastForToday = (date, time) => {
     if (!date || !time || date !== today) {
       return false;
     }
 
     const now = new Date();
 
-    const [hours, minutes] =
-      time.split(":").map(Number);
+    const [hours, minutes] = time.split(":").map(Number);
 
     const selected = new Date();
 
-    selected.setHours(
-      hours,
-      minutes,
-      0,
-      0
-    );
+    selected.setHours(hours, minutes, 0, 0);
 
     return selected < now;
   };
 
   /* ============================================================
-     SERVICE AREA HELPERS
-  ============================================================ */
-
-  const getPickupDistanceFromServiceCenter =
-    () => {
-      return calculateDistanceKm(
-        SERVICE_AREA.center.lat,
-        SERVICE_AREA.center.lon,
-        pickup.lat,
-        pickup.lon
-      );
-    };
-
-  const isPickupWithinServiceArea = () => {
-    const distance =
-      getPickupDistanceFromServiceCenter();
-
-    if (distance === null) {
-      return false;
-    }
-
-    return (
-      distance <=
-      SERVICE_AREA.radiusKm
-    );
-  };
-
-  /* ============================================================
      GOOGLE ROAD DISTANCE
      
-     IMPORTANT:
+     This calculates ONLY:
      
-     This uses Google Maps DirectionsService and therefore
-     returns the actual DRIVING/ROAD distance.
+     PICKUP → DROP
+
+     It does NOT calculate:
+     
+     PICKUP → KANPUR
   ============================================================ */
 
   const calculateRoadDistance = (
     pickupLocation,
     dropLocation
   ) => {
-    return new Promise(
-      (resolve, reject) => {
-        if (
-          pickupLocation?.lat === null ||
-          pickupLocation?.lon === null ||
-          dropLocation?.lat === null ||
-          dropLocation?.lon === null ||
-          pickupLocation?.lat === undefined ||
-          pickupLocation?.lon === undefined ||
-          dropLocation?.lat === undefined ||
-          dropLocation?.lon === undefined
-        ) {
-          reject(
-            new Error(
-              "Both pickup and drop locations are required."
-            )
-          );
+    return new Promise((resolve, reject) => {
+      if (
+        pickupLocation?.lat === null ||
+        pickupLocation?.lon === null ||
+        dropLocation?.lat === null ||
+        dropLocation?.lon === null ||
+        pickupLocation?.lat === undefined ||
+        pickupLocation?.lon === undefined ||
+        dropLocation?.lat === undefined ||
+        dropLocation?.lon === undefined
+      ) {
+        reject(
+          new Error(
+            "Both pickup and drop locations are required."
+          )
+        );
 
-          return;
-        }
+        return;
+      }
 
-        if (
-          typeof window === "undefined" ||
-          !window.google ||
-          !window.google.maps ||
-          !window.google.maps.DirectionsService
-        ) {
-          reject(
-            new Error(
-              "Google Maps is not ready."
-            )
-          );
+      if (
+        typeof window === "undefined" ||
+        !window.google ||
+        !window.google.maps ||
+        !window.google.maps.DirectionsService
+      ) {
+        reject(new Error("Google Maps is not ready."));
+        return;
+      }
 
-          return;
-        }
+      try {
+        const directionsService =
+          new window.google.maps.DirectionsService();
 
-        try {
-          const directionsService =
-            new window.google.maps.DirectionsService();
-
-          directionsService.route(
-            {
-              origin: {
-                lat: Number(
-                  pickupLocation.lat
-                ),
-                lng: Number(
-                  pickupLocation.lon
-                ),
-              },
-
-              destination: {
-                lat: Number(
-                  dropLocation.lat
-                ),
-                lng: Number(
-                  dropLocation.lon
-                ),
-              },
-
-              travelMode:
-                window.google.maps.TravelMode
-                  .DRIVING,
-
-              provideRouteAlternatives:
-                false,
+        directionsService.route(
+          {
+            origin: {
+              lat: Number(pickupLocation.lat),
+              lng: Number(pickupLocation.lon),
             },
 
-            (result, status) => {
-              if (
-                status !==
-                window.google.maps
-                  .DirectionsStatus.OK
-              ) {
-                reject(
-                  new Error(
-                    `Google Maps route calculation failed: ${status}`
-                  )
-                );
+            destination: {
+              lat: Number(dropLocation.lat),
+              lng: Number(dropLocation.lon),
+            },
 
-                return;
-              }
+            travelMode:
+              window.google.maps.TravelMode.DRIVING,
 
-              const route =
-                result?.routes?.[0];
+            provideRouteAlternatives: false,
+          },
 
-              const leg =
-                route?.legs?.[0];
+          (result, status) => {
+            if (
+              status !==
+              window.google.maps.DirectionsStatus.OK
+            ) {
+              reject(
+                new Error(
+                  `Google Maps route calculation failed: ${status}`
+                )
+              );
 
-              if (
-                !leg ||
-                !leg.distance ||
-                typeof leg.distance.value !==
-                  "number"
-              ) {
-                reject(
-                  new Error(
-                    "Google Maps returned no road distance."
-                  )
-                );
-
-                return;
-              }
-
-              const distanceMeters =
-                leg.distance.value;
-
-              const distanceKm =
-                distanceMeters / 1000;
-
-              resolve({
-                distanceKm,
-                distanceText:
-                  leg.distance.text ||
-                  `${distanceKm.toFixed(1)} km`,
-                durationText:
-                  leg.duration?.text ||
-                  "",
-              });
+              return;
             }
-          );
-        } catch (error) {
-          reject(error);
-        }
+
+            const route = result?.routes?.[0];
+
+            const leg = route?.legs?.[0];
+
+            if (
+              !leg ||
+              !leg.distance ||
+              typeof leg.distance.value !== "number"
+            ) {
+              reject(
+                new Error(
+                  "Google Maps returned no road distance."
+                )
+              );
+
+              return;
+            }
+
+            const distanceMeters = leg.distance.value;
+
+            const distanceKm = distanceMeters / 1000;
+
+            resolve({
+              distanceKm,
+              distanceText:
+                leg.distance.text ||
+                `${distanceKm.toFixed(1)} km`,
+              durationText:
+                leg.duration?.text || "",
+            });
+          }
+        );
+      } catch (error) {
+        reject(error);
       }
-    );
+    });
   };
 
   /* ============================================================
      AUTOMATIC ROAD DISTANCE CALCULATION
-     
-     This waits for Google Maps to become available.
-     
-     This is important because LocationPicker may load Google
-     Maps asynchronously.
   ============================================================ */
 
   useEffect(() => {
@@ -504,9 +381,7 @@ export default function HomePage() {
         }
 
         if (!cancelled) {
-          setJourneyDistanceLoading(
-            false
-          );
+          setJourneyDistanceLoading(false);
 
           setJourneyDistanceError(
             "Google Maps road distance service is unavailable."
@@ -517,36 +392,27 @@ export default function HomePage() {
       }
 
       try {
-        const result =
-          await calculateRoadDistance(
-            pickup,
-            drop
-          );
+        const result = await calculateRoadDistance(
+          pickup,
+          drop
+        );
 
         if (cancelled) {
           return;
         }
 
-        setJourneyDistanceKm(
-          result.distanceKm
-        );
+        setJourneyDistanceKm(result.distanceKm);
 
-        setJourneyDistanceText(
-          result.distanceText
-        );
+        setJourneyDistanceText(result.distanceText);
 
-        setJourneyDurationText(
-          result.durationText
-        );
+        setJourneyDurationText(result.durationText);
 
         setJourneyDistanceError("");
 
-        setJourneyDistanceLoading(
-          false
-        );
+        setJourneyDistanceLoading(false);
 
         console.log(
-          "VOYNU ROAD DISTANCE:",
+          "VOYNU PICKUP → DROP ROAD DISTANCE:",
           result
         );
       } catch (error) {
@@ -558,11 +424,6 @@ export default function HomePage() {
           "VOYNU road distance error:",
           error
         );
-
-        /*
-         * Retry a few times because Google Maps can occasionally
-         * still be initializing its services.
-         */
 
         if (attempts < maxAttempts) {
           retryTimer = setTimeout(
@@ -581,9 +442,7 @@ export default function HomePage() {
           "Unable to calculate road distance."
         );
 
-        setJourneyDistanceLoading(
-          false
-        );
+        setJourneyDistanceLoading(false);
       }
     };
 
@@ -604,12 +463,31 @@ export default function HomePage() {
   ]);
 
   /* ============================================================
+     CALCULATED TOTAL JOURNEY DISTANCE
+
+     One way:
+       200 km maximum
+
+     Round trip:
+       200 km outbound
+       +
+       200 km return
+       =
+       400 km maximum
+  ============================================================ */
+
+  const totalJourneyDistanceKm =
+    journeyDistanceKm !== null
+      ? tripType === "roundtrip"
+        ? journeyDistanceKm * 2
+        : journeyDistanceKm
+      : null;
+
+  /* ============================================================
      TRIP TYPE
   ============================================================ */
 
-  const handleTripTypeChange = (
-    type
-  ) => {
+  const handleTripTypeChange = (type) => {
     clearMessage();
 
     setTripType(type);
@@ -624,9 +502,7 @@ export default function HomePage() {
      TRAVEL DATE
   ============================================================ */
 
-  const handleTravelDateChange = (
-    value
-  ) => {
+  const handleTravelDateChange = (value) => {
     clearMessage();
 
     setTravelDate(value);
@@ -656,9 +532,7 @@ export default function HomePage() {
      PICKUP TIME
   ============================================================ */
 
-  const handlePickupTimeChange = (
-    value
-  ) => {
+  const handlePickupTimeChange = (value) => {
     clearMessage();
 
     if (
@@ -683,9 +557,7 @@ export default function HomePage() {
      PHONE CHANGE
   ============================================================ */
 
-  const handlePhoneChange = (
-    event
-  ) => {
+  const handlePhoneChange = (event) => {
     const value =
       event.target.value.replace(
         /[^\d+]/g,
@@ -705,9 +577,7 @@ export default function HomePage() {
      WHATSAPP CHANGE
   ============================================================ */
 
-  const handleWhatsAppChange = (
-    event
-  ) => {
+  const handleWhatsAppChange = (event) => {
     const value =
       event.target.value.replace(
         /[^\d+]/g,
@@ -726,12 +596,9 @@ export default function HomePage() {
   const handleWhatsAppToggle = () => {
     clearMessage();
 
-    const nextState =
-      !whatsappSameAsPhone;
+    const nextState = !whatsappSameAsPhone;
 
-    setWhatsappSameAsPhone(
-      nextState
-    );
+    setWhatsappSameAsPhone(nextState);
 
     if (nextState) {
       setWhatsapp(phone);
@@ -742,9 +609,7 @@ export default function HomePage() {
      LOCATION SELECT
   ============================================================ */
 
-  const handlePickupSelect = (
-    location
-  ) => {
+  const handlePickupSelect = (location) => {
     clearMessage();
 
     if (!location) {
@@ -758,9 +623,7 @@ export default function HomePage() {
     });
   };
 
-  const handleDropSelect = (
-    location
-  ) => {
+  const handleDropSelect = (location) => {
     clearMessage();
 
     if (!location) {
@@ -785,9 +648,6 @@ export default function HomePage() {
     const normalizedWhatsApp =
       normalizeIndianPhone(whatsapp);
 
-    const pickupDistance =
-      getPickupDistanceFromServiceCenter();
-
     return {
       tripType,
 
@@ -803,34 +663,45 @@ export default function HomePage() {
         lon: drop.lon,
       },
 
-      /*
-       * ACTUAL ROAD DISTANCE
-       */
       journey: {
-        distanceKm:
+        /*
+         * One-way road distance between pickup and drop.
+         */
+        oneWayDistanceKm:
           journeyDistanceKm,
 
-        distanceText:
+        oneWayDistanceText:
           journeyDistanceText,
+
+        /*
+         * For round trip:
+         * oneWayDistanceKm × 2
+         *
+         * For one way:
+         * same as oneWayDistanceKm
+         */
+        totalDistanceKm:
+          totalJourneyDistanceKm,
+
+        totalDistanceText:
+          totalJourneyDistanceKm !== null
+            ? `${totalJourneyDistanceKm.toFixed(
+                1
+              )} km`
+            : "",
 
         durationText:
           journeyDurationText,
-      },
 
-      serviceArea: {
-        center: {
-          lat: SERVICE_AREA.center.lat,
-          lon: SERVICE_AREA.center.lon,
-        },
+        maximumOneWayLegKm:
+          MAX_ONE_WAY_DISTANCE_KM,
 
-        radiusKm:
-          SERVICE_AREA.radiusKm,
-
-        pickupDistanceKm:
-          pickupDistance,
+        maximumRoundTripTotalKm:
+          MAX_ROUND_TRIP_TOTAL_KM,
       },
 
       travelDate,
+
       pickupTime,
 
       returnDate:
@@ -892,63 +763,90 @@ export default function HomePage() {
       );
     }
 
-    /* PICKUP SERVICE AREA */
-
-    const pickupDistance =
-      getPickupDistanceFromServiceCenter();
-
-    if (pickupDistance === null) {
-      return (
-        "We couldn't verify your pickup location. Please select it again."
-      );
-    }
-
-    if (
-      !isPickupWithinServiceArea()
-    ) {
-      return (
-        "Sorry, your pickup location is outside VOYNU's current 200 km service area from Kanpur."
-      );
-    }
-
     /* SAME LOCATION */
 
+    const sameLatitude =
+      Math.abs(
+        Number(pickup.lat) -
+          Number(drop.lat)
+      ) < 0.00001;
+
+    const sameLongitude =
+      Math.abs(
+        Number(pickup.lon) -
+          Number(drop.lon)
+      ) < 0.00001;
+
     if (
-      pickup.lat !== null &&
-      pickup.lon !== null &&
-      drop.lat !== null &&
-      drop.lon !== null
+      sameLatitude &&
+      sameLongitude
     ) {
-      const sameLatitude =
-        Math.abs(
-          pickup.lat -
-            drop.lat
-        ) < 0.00001;
+      return (
+        "Pickup and drop locations cannot be the same."
+      );
+    }
 
-      const sameLongitude =
-        Math.abs(
-          pickup.lon -
-            drop.lon
-        ) < 0.00001;
+    /* ROAD DISTANCE */
 
+    if (journeyDistanceKm === null) {
+      return (
+        "Please wait while we calculate the road distance between your pickup and drop locations."
+      );
+    }
+
+    if (
+      !Number.isFinite(
+        journeyDistanceKm
+      )
+    ) {
+      return (
+        "We couldn't calculate the journey distance. Please select your locations again."
+      );
+    }
+
+    /* ========================================================
+       ONE WAY
+    ======================================================== */
+
+    if (tripType === "oneway") {
       if (
-        sameLatitude &&
-        sameLongitude
+        journeyDistanceKm >
+        MAX_ONE_WAY_DISTANCE_KM
       ) {
         return (
-          "Pickup and drop locations cannot be the same."
+          `Sorry, this one-way journey is ${journeyDistanceText || `${journeyDistanceKm.toFixed(1)} km`}. VOYNU currently accepts one-way journeys up to 200 km.`
         );
       }
     }
 
-    /* JOURNEY DISTANCE */
+    /* ========================================================
+       ROUND TRIP
 
-    if (
-      journeyDistanceKm === null
-    ) {
-      return (
-        "Please wait while we calculate the road distance between your pickup and drop locations."
-      );
+       Each leg must be ≤ 200 km.
+
+       Therefore:
+       maximum total = 400 km.
+    ======================================================== */
+
+    if (tripType === "roundtrip") {
+      if (
+        journeyDistanceKm >
+        MAX_ROUND_TRIP_LEG_KM
+      ) {
+        return (
+          `Sorry, this journey is ${journeyDistanceText || `${journeyDistanceKm.toFixed(1)} km`} one way. Each round-trip leg can be a maximum of 200 km.`
+        );
+      }
+
+      if (
+        totalJourneyDistanceKm === null ||
+        totalJourneyDistanceKm >
+          MAX_ROUND_TRIP_TOTAL_KM
+      ) {
+        return (
+          "Sorry, the maximum round-trip distance is 400 km total (200 km each way)."
+        );
+      }
     }
 
     /* TRAVEL DATE */
@@ -1012,7 +910,7 @@ export default function HomePage() {
       );
     }
 
-    /* ROUND TRIP */
+    /* ROUND TRIP DATES */
 
     if (
       tripType === "roundtrip"
@@ -1045,10 +943,8 @@ export default function HomePage() {
       }
 
       if (
-        returnDate ===
-          travelDate &&
-        returnTime <
-          pickupTime
+        returnDate === travelDate &&
+        returnTime < pickupTime
       ) {
         return (
           "Return time cannot be before the pickup time."
@@ -1125,9 +1021,7 @@ export default function HomePage() {
   return (
     <main className="page">
 
-      {/* ========================================================
-          HEADER
-      ======================================================== */}
+      {/* HEADER */}
 
       <header className="header">
         <div className="headerInner">
@@ -1169,9 +1063,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* ========================================================
-          HERO
-      ======================================================== */}
+      {/* HERO */}
 
       <section className="hero">
 
@@ -1185,11 +1077,11 @@ export default function HomePage() {
             <span className="badgeDot" />
 
             <span>
-              Serving within{" "}
+              Journeys up to{" "}
               <strong>
                 200 km
               </strong>{" "}
-              from Kanpur
+              per leg
             </span>
 
           </div>
@@ -1274,15 +1166,11 @@ export default function HomePage() {
 
       </section>
 
-      {/* ========================================================
-          BOOKING
-      ======================================================== */}
+      {/* BOOKING */}
 
       <section className="bookingSection">
 
         <div className="bookingCard">
-
-          {/* BOOKING HEADER */}
 
           <div className="bookingHeader">
 
@@ -1358,12 +1246,10 @@ export default function HomePage() {
               type="button"
               role="tab"
               aria-selected={
-                tripType ===
-                "roundtrip"
+                tripType === "roundtrip"
               }
               className={
-                tripType ===
-                "roundtrip"
+                tripType === "roundtrip"
                   ? "tripButton active"
                   : "tripButton"
               }
@@ -1385,7 +1271,7 @@ export default function HomePage() {
                 </strong>
 
                 <small>
-                  Return journey
+                  200 km each way
                 </small>
 
               </span>
@@ -1408,8 +1294,6 @@ export default function HomePage() {
 
           </div>
 
-          {/* PICKUP */}
-
           <div className="locationGrid">
 
             <div className="locationBox">
@@ -1425,8 +1309,6 @@ export default function HomePage() {
               />
 
             </div>
-
-            {/* DROP */}
 
             <div className="locationBox">
 
@@ -1444,9 +1326,7 @@ export default function HomePage() {
 
           </div>
 
-          {/* ======================================================
-              JOURNEY DISTANCE
-          ====================================================== */}
+          {/* JOURNEY DISTANCE */}
 
           <div className="journeyDistanceBox">
 
@@ -1457,7 +1337,9 @@ export default function HomePage() {
             <div className="journeyDistanceContent">
 
               <div className="journeyDistanceLabel">
-                JOURNEY DISTANCE
+                {tripType === "roundtrip"
+                  ? "JOURNEY DISTANCE"
+                  : "JOURNEY DISTANCE"}
               </div>
 
               {!(
@@ -1478,22 +1360,38 @@ export default function HomePage() {
                   Calculating road distance...
                 </div>
 
-              ) : journeyDistanceKm !==
-                null ? (
+              ) : journeyDistanceKm !== null ? (
 
                 <div>
 
                   <div className="journeyDistanceValue">
-                    {journeyDistanceText ||
-                      `${journeyDistanceKm.toFixed(
-                        1
-                      )} km`}
+
+                    {tripType === "roundtrip"
+                      ? `${journeyDistanceKm.toFixed(
+                          1
+                        )} km each way • ${totalJourneyDistanceKm.toFixed(
+                          1
+                        )} km total`
+                      : journeyDistanceText ||
+                        `${journeyDistanceKm.toFixed(
+                          1
+                        )} km`}
+
                   </div>
+
+                  {tripType === "roundtrip" && (
+                    <div className="journeyDuration">
+                      Maximum 200 km each way
+                    </div>
+                  )}
 
                   {journeyDurationText && (
                     <div className="journeyDuration">
                       Approx. driving time:{" "}
                       {journeyDurationText}
+                      {tripType === "roundtrip"
+                        ? " each way"
+                        : ""}
                     </div>
                   )}
 
@@ -1569,10 +1467,9 @@ export default function HomePage() {
 
           </div>
 
-          {/* RETURN JOURNEY */}
+          {/* RETURN */}
 
-          {tripType ===
-            "roundtrip" && (
+          {tripType === "roundtrip" && (
 
             <div className="roundTripBox">
 
@@ -1613,47 +1510,35 @@ export default function HomePage() {
                       clearMessage();
 
                       const value =
-                        event.target
-                          .value;
+                        event.target.value;
 
                       if (
                         travelDate &&
                         value &&
-                        value <
-                          travelDate
+                        value < travelDate
                       ) {
 
                         showError(
                           "Return date cannot be before the travel date."
                         );
 
-                        setReturnDate(
-                          ""
-                        );
-
-                        setReturnTime(
-                          ""
-                        );
+                        setReturnDate("");
+                        setReturnTime("");
 
                         return;
                       }
 
-                      setReturnDate(
-                        value
-                      );
+                      setReturnDate(value);
 
                       if (
-                        value ===
-                          today &&
+                        value === today &&
                         returnTime &&
                         isTimeInPastForToday(
                           value,
                           returnTime
                         )
                       ) {
-                        setReturnTime(
-                          ""
-                        );
+                        setReturnTime("");
                       }
 
                     }}
@@ -1682,12 +1567,10 @@ export default function HomePage() {
                       clearMessage();
 
                       const value =
-                        event.target
-                          .value;
+                        event.target.value;
 
                       if (
-                        returnDate ===
-                          today &&
+                        returnDate === today &&
                         isTimeInPastForToday(
                           returnDate,
                           value
@@ -1698,9 +1581,7 @@ export default function HomePage() {
                           "Return time cannot be in the past."
                         );
 
-                        setReturnTime(
-                          ""
-                        );
+                        setReturnTime("");
 
                         return;
                       }
@@ -1709,24 +1590,19 @@ export default function HomePage() {
                         returnDate ===
                           travelDate &&
                         pickupTime &&
-                        value <
-                          pickupTime
+                        value < pickupTime
                       ) {
 
                         showError(
                           "Return time cannot be before the pickup time."
                         );
 
-                        setReturnTime(
-                          ""
-                        );
+                        setReturnTime("");
 
                         return;
                       }
 
-                      setReturnTime(
-                        value
-                      );
+                      setReturnTime(value);
 
                     }}
                   />
@@ -1760,8 +1636,6 @@ export default function HomePage() {
             </div>
 
           </div>
-
-          {/* NAME */}
 
           <div className="field">
 
@@ -1818,9 +1692,7 @@ export default function HomePage() {
                 placeholder="10-digit mobile number"
                 value={phone}
                 maxLength={12}
-                onChange={
-                  handlePhoneChange
-                }
+                onChange={handlePhoneChange}
               />
 
             </div>
@@ -1892,8 +1764,7 @@ export default function HomePage() {
 
             <div
               className={
-                messageType ===
-                "success"
+                messageType === "success"
                   ? "message successMessage"
                   : "message errorMessage"
               }
@@ -1903,8 +1774,7 @@ export default function HomePage() {
 
               <span className="messageIcon">
 
-                {messageType ===
-                "success"
+                {messageType === "success"
                   ? "✓"
                   : "!"}
 
@@ -1923,12 +1793,8 @@ export default function HomePage() {
           <button
             type="button"
             className="continueButton"
-            onClick={
-              handleContinue
-            }
-            disabled={
-              isSubmitting
-            }
+            onClick={handleContinue}
+            disabled={isSubmitting}
           >
 
             <span>
@@ -1961,9 +1827,7 @@ export default function HomePage() {
 
       </section>
 
-      {/* ========================================================
-          FOOTER
-      ======================================================== */}
+      {/* FOOTER */}
 
       <footer className="footer">
 
@@ -1990,9 +1854,7 @@ export default function HomePage() {
 
       </footer>
 
-      {/* ========================================================
-          STYLES
-      ======================================================== */}
+      {/* STYLES */}
 
       <style jsx>{`
 
@@ -2014,10 +1876,6 @@ export default function HomePage() {
             Helvetica,
             sans-serif;
         }
-
-        /* ======================================================
-           HEADER
-        ====================================================== */
 
         .header {
           background: #ffffff;
@@ -2097,10 +1955,6 @@ export default function HomePage() {
           color: #08783f;
           font-size: 15px;
         }
-
-        /* ======================================================
-           HERO
-        ====================================================== */
 
         .hero {
           position: relative;
@@ -2331,10 +2185,6 @@ export default function HomePage() {
           );
         }
 
-        /* ======================================================
-           BOOKING
-        ====================================================== */
-
         .bookingSection {
           width: min(
             1180px,
@@ -2419,10 +2269,6 @@ export default function HomePage() {
           font-weight: 700;
         }
 
-        /* ======================================================
-           TRIP TOGGLE
-        ====================================================== */
-
         .tripToggle {
           width: min(620px, 100%);
 
@@ -2505,10 +2351,6 @@ export default function HomePage() {
               );
         }
 
-        /* ======================================================
-           SECTION LABELS
-        ====================================================== */
-
         .sectionLabel {
           display: flex;
           align-items: center;
@@ -2565,10 +2407,6 @@ export default function HomePage() {
           margin-top: 29px;
         }
 
-        /* ======================================================
-           LOCATION
-        ====================================================== */
-
         .locationGrid {
           display: grid;
 
@@ -2581,10 +2419,6 @@ export default function HomePage() {
         .locationBox {
           min-width: 0;
         }
-
-        /* ======================================================
-           JOURNEY DISTANCE
-        ====================================================== */
 
         .journeyDistanceBox {
           display: flex;
@@ -2651,7 +2485,7 @@ export default function HomePage() {
 
           font-size: 22px;
 
-          line-height: 1.2;
+          line-height: 1.3;
 
           font-weight: 900;
         }
@@ -2675,10 +2509,6 @@ export default function HomePage() {
 
           line-height: 1.4;
         }
-
-        /* ======================================================
-           FORM
-        ====================================================== */
 
         .formGrid {
           display: grid;
@@ -2769,10 +2599,6 @@ export default function HomePage() {
           cursor: not-allowed;
         }
 
-        /* ======================================================
-           WHATSAPP
-        ====================================================== */
-
         .samePhoneToggle {
           display: inline-flex;
           align-items: center;
@@ -2844,10 +2670,6 @@ export default function HomePage() {
               );
         }
 
-        /* ======================================================
-           ROUND TRIP
-        ====================================================== */
-
         .roundTripBox {
           margin-top: 20px;
 
@@ -2879,10 +2701,6 @@ export default function HomePage() {
         .roundTripBox .formGrid {
           margin-top: 15px;
         }
-
-        /* ======================================================
-           MESSAGE
-        ====================================================== */
 
         .message {
           display: flex;
@@ -2942,10 +2760,6 @@ export default function HomePage() {
           background: #c64a3f;
           color: #ffffff;
         }
-
-        /* ======================================================
-           CONTINUE
-        ====================================================== */
 
         .continueButton {
           width: 100%;
@@ -3020,10 +2834,6 @@ export default function HomePage() {
           line-height: 1;
         }
 
-        /* ======================================================
-           BOOKING FOOTER
-        ====================================================== */
-
         .bookingFooter {
           display: flex;
           align-items: center;
@@ -3037,10 +2847,6 @@ export default function HomePage() {
 
           font-size: 11px;
         }
-
-        /* ======================================================
-           FOOTER
-        ====================================================== */
 
         .footer {
           background: #26372f;
@@ -3078,10 +2884,6 @@ export default function HomePage() {
           letter-spacing: 0.5px;
         }
 
-        /* ======================================================
-           TABLET
-        ====================================================== */
-
         @media (max-width: 900px) {
 
           .heroGrid {
@@ -3101,10 +2903,6 @@ export default function HomePage() {
           }
 
         }
-
-        /* ======================================================
-           MOBILE
-        ====================================================== */
 
         @media (max-width: 700px) {
 
@@ -3258,8 +3056,6 @@ export default function HomePage() {
             gap: 14px;
           }
 
-          /* JOURNEY DISTANCE */
-
           .journeyDistanceBox {
             margin-top: 15px;
 
@@ -3276,7 +3072,7 @@ export default function HomePage() {
           }
 
           .journeyDistanceValue {
-            font-size: 20px;
+            font-size: 18px;
           }
 
           .journeyDistanceMessage {
@@ -3340,10 +3136,6 @@ export default function HomePage() {
           }
 
         }
-
-        /* ======================================================
-           SMALL PHONES
-        ====================================================== */
 
         @media (max-width: 380px) {
 
