@@ -7,17 +7,13 @@ const GOOGLE_SCRIPT_ID = "voynu-google-maps-script";
 let googleMapsPromise = null;
 
 function loadGoogleMaps() {
-  if (
-    typeof window === "undefined"
-  ) {
+  if (typeof window === "undefined") {
     return Promise.reject(
       new Error("Browser environment required.")
     );
   }
 
-  if (
-    window.google?.maps?.places
-  ) {
+  if (window.google?.maps?.places) {
     return Promise.resolve(window.google.maps);
   }
 
@@ -36,73 +32,77 @@ function loadGoogleMaps() {
     );
   }
 
-  googleMapsPromise = new Promise(
-    (resolve, reject) => {
-      const existingScript =
-        document.getElementById(
-          GOOGLE_SCRIPT_ID
-        );
+  googleMapsPromise = new Promise((resolve, reject) => {
+    const existingScript =
+      document.getElementById(GOOGLE_SCRIPT_ID);
 
-      if (existingScript) {
-        existingScript.addEventListener(
-          "load",
-          () => resolve(window.google.maps)
-        );
-
-        existingScript.addEventListener(
-          "error",
-          () =>
-            reject(
-              new Error(
-                "Google Maps failed to load."
-              )
-            )
-        );
-
+    if (existingScript) {
+      if (window.google?.maps?.places) {
+        resolve(window.google.maps);
         return;
       }
 
-      const script =
-        document.createElement("script");
+      existingScript.addEventListener(
+        "load",
+        () => {
+          if (window.google?.maps?.places) {
+            resolve(window.google.maps);
+          } else {
+            reject(
+              new Error(
+                "Google Places library is unavailable."
+              )
+            );
+          }
+        },
+        { once: true }
+      );
 
-      script.id =
-        GOOGLE_SCRIPT_ID;
-
-      script.src =
-        `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-          apiKey
-        )}&libraries=places&v=weekly`;
-
-      script.async = true;
-      script.defer = true;
-
-      script.onload = () => {
-        if (
-          window.google?.maps?.places
-        ) {
-          resolve(
-            window.google.maps
-          );
-        } else {
+      existingScript.addEventListener(
+        "error",
+        () => {
           reject(
-            new Error(
-              "Google Places library is unavailable."
-            )
+            new Error("Google Maps failed to load.")
           );
-        }
-      };
+        },
+        { once: true }
+      );
 
-      script.onerror = () => {
+      return;
+    }
+
+    const script = document.createElement("script");
+
+    script.id = GOOGLE_SCRIPT_ID;
+
+    script.src =
+      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
+        apiKey
+      )}&libraries=places&v=weekly`;
+
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
+      if (window.google?.maps?.places) {
+        resolve(window.google.maps);
+      } else {
         reject(
           new Error(
-            "Unable to load Google Maps."
+            "Google Places library is unavailable."
           )
         );
-      };
+      }
+    };
 
-      document.head.appendChild(script);
-    }
-  );
+    script.onerror = () => {
+      reject(
+        new Error("Unable to load Google Maps.")
+      );
+    };
+
+    document.head.appendChild(script);
+  });
 
   return googleMapsPromise;
 }
@@ -117,18 +117,15 @@ export default function LocationPicker({
   const inputRef = useRef(null);
   const autocompleteRef = useRef(null);
 
-  const [mapsReady, setMapsReady] =
-    useState(false);
+  const [mapsReady, setMapsReady] = useState(false);
+  const [error, setError] = useState("");
+  const [locating, setLocating] = useState(false);
 
-  const [error, setError] =
-    useState("");
-
-  const [locating, setLocating] =
-    useState(false);
-
-  /* ============================================================
-     LOAD GOOGLE MAPS
-  ============================================================ */
+  /*
+   * ------------------------------------------------------------
+   * LOAD GOOGLE MAPS
+   * ------------------------------------------------------------
+   */
 
   useEffect(() => {
     let cancelled = false;
@@ -157,9 +154,11 @@ export default function LocationPicker({
     };
   }, []);
 
-  /* ============================================================
-     GOOGLE AUTOCOMPLETE
-  ============================================================ */
+  /*
+   * ------------------------------------------------------------
+   * GOOGLE PLACES AUTOCOMPLETE
+   * ------------------------------------------------------------
+   */
 
   useEffect(() => {
     if (
@@ -192,8 +191,7 @@ export default function LocationPicker({
         }
       );
 
-    autocompleteRef.current =
-      autocomplete;
+    autocompleteRef.current = autocomplete;
 
     const listener =
       autocomplete.addListener(
@@ -207,17 +205,14 @@ export default function LocationPicker({
 
           if (!location) {
             setError(
-              "Please select a location from the suggestions."
+              "Please select a location from the suggested locations."
             );
 
             return;
           }
 
-          const lat =
-            location.lat();
-
-          const lon =
-            location.lng();
+          const lat = location.lat();
+          const lon = location.lng();
 
           const name =
             place.formatted_address ||
@@ -226,6 +221,10 @@ export default function LocationPicker({
 
           setError("");
 
+          /*
+           * IMPORTANT:
+           * These are the exact keys used by page.js.
+           */
           onLocationSelect?.({
             name,
             lat,
@@ -243,17 +242,15 @@ export default function LocationPicker({
         );
       }
 
-      autocompleteRef.current =
-        null;
+      autocompleteRef.current = null;
     };
-  }, [
-    mapsReady,
-    onLocationSelect,
-  ]);
+  }, [mapsReady, onLocationSelect]);
 
-  /* ============================================================
-     CURRENT LOCATION
-  ============================================================ */
+  /*
+   * ------------------------------------------------------------
+   * CURRENT LOCATION
+   * ------------------------------------------------------------
+   */
 
   const useCurrentLocation = () => {
     if (
@@ -263,11 +260,10 @@ export default function LocationPicker({
       return;
     }
 
-    clearError();
+    setError("");
 
     if (
-      typeof navigator ===
-        "undefined" ||
+      typeof navigator === "undefined" ||
       !navigator.geolocation
     ) {
       setError(
@@ -320,8 +316,8 @@ export default function LocationPicker({
             }
 
             const address =
-              results[0]
-                .formatted_address || "";
+              results[0].formatted_address ||
+              "";
 
             if (inputRef.current) {
               inputRef.current.value =
@@ -359,17 +355,13 @@ export default function LocationPicker({
         ) {
           message =
             "Location permission was denied. Please allow location access or search manually.";
-        }
-
-        if (
+        } else if (
           geoError.code ===
           geoError.POSITION_UNAVAILABLE
         ) {
           message =
             "Your current location is unavailable. Please search manually.";
-        }
-
-        if (
+        } else if (
           geoError.code ===
           geoError.TIMEOUT
         ) {
@@ -388,33 +380,21 @@ export default function LocationPicker({
     );
   };
 
-  /* ============================================================
-     INPUT CHANGE
-  ============================================================ */
+  /*
+   * ------------------------------------------------------------
+   * INPUT
+   * ------------------------------------------------------------
+   */
 
-  const handleInputChange = (
-    event
-  ) => {
-    clearError();
-
-    /*
-     * If the user manually changes
-     * the selected address, the previous
-     * coordinates are no longer guaranteed
-     * to match the text.
-     *
-     * The parent will receive the correct
-     * coordinates once a suggestion is selected.
-     */
-  };
-
-  const clearError = () => {
+  const handleInputChange = () => {
     setError("");
   };
 
-  /* ============================================================
-     RENDER
-  ============================================================ */
+  /*
+   * ------------------------------------------------------------
+   * RENDER
+   * ------------------------------------------------------------
+   */
 
   return (
     <div className="locationPicker">
@@ -444,19 +424,14 @@ export default function LocationPicker({
           <button
             type="button"
             className="currentLocationButton"
-            onClick={
-              useCurrentLocation
-            }
+            onClick={useCurrentLocation}
             disabled={
-              locating ||
-              !mapsReady
+              locating || !mapsReady
             }
             aria-label="Use current location"
             title="Use current location"
           >
-            {locating
-              ? "..."
-              : "⌖"}
+            {locating ? "..." : "⌖"}
           </button>
         )}
 
@@ -525,8 +500,8 @@ export default function LocationPicker({
           outline: none;
 
           transition:
-            border-color .2s ease,
-            box-shadow .2s ease;
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
         }
 
         .locationInput::placeholder {
@@ -538,7 +513,7 @@ export default function LocationPicker({
 
           box-shadow:
             0 0 0 3px
-              rgba(8,120,63,.09);
+            rgba(8, 120, 63, 0.09);
         }
 
         .currentLocationButton {
@@ -573,7 +548,7 @@ export default function LocationPicker({
         }
 
         .currentLocationButton:disabled {
-          opacity: .55;
+          opacity: 0.55;
           cursor: wait;
         }
 
@@ -595,12 +570,10 @@ export default function LocationPicker({
         }
 
         @media (max-width: 700px) {
-
           .locationInput {
             height: 52px;
             font-size: 14px;
           }
-
         }
 
       `}</style>
