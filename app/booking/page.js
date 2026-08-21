@@ -3,952 +3,348 @@
 import { useState } from "react";
 import LocationPicker from "../components/LocationPicker";
 
+const bookingTypes = [
+  {
+    id: "hotel",
+    title: "Hotels",
+    icon: "🏨",
+    description: "Find the perfect stay",
+  },
+  {
+    id: "cab",
+    title: "Cabs",
+    icon: "🚕",
+    description: "Travel comfortably",
+  },
+  {
+    id: "flight",
+    title: "Flights",
+    icon: "✈️",
+    description: "Fly to your destination",
+  },
+  {
+    id: "package",
+    title: "Packages",
+    icon: "🧳",
+    description: "Complete holiday packages",
+  },
+];
+
 export default function BookingPage() {
-  const [tripType, setTripType] = useState("one-way");
+  const [type, setType] = useState("hotel");
+  const [location, setLocation] = useState("");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [guests, setGuests] = useState(2);
 
-  const [from, setFrom] = useState({
-    name: "",
-    lat: null,
-    lon: null,
-  });
+  const handleSearch = (e) => {
+    e.preventDefault();
 
-  const [to, setTo] = useState({
-    name: "",
-    lat: null,
-    lon: null,
-  });
+    console.log({
+      type,
+      location,
+      checkIn,
+      checkOut,
+      guests,
+    });
 
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-
-  const [returnDate, setReturnDate] = useState("");
-  const [returnTime, setReturnTime] = useState("");
-
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-
-  const swapLocations = () => {
-    setFrom(to);
-    setTo(from);
+    // Search functionality will be connected later.
   };
 
-  const canContinue =
-    from.name &&
-    from.lat !== null &&
-    to.name &&
-    to.lat !== null &&
-    date &&
-    time;
-
   return (
-    <main className="bookingPage">
+    <main className="min-h-screen bg-white text-neutral-900">
+      {/* Header */}
+      <header className="border-b border-neutral-200 bg-white">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+          <a
+            href="/"
+            className="text-2xl font-bold tracking-tight text-neutral-900"
+          >
+            voynu
+          </a>
 
-      {/* HEADER */}
-      <header className="bookingHeader">
-        <button
-          type="button"
-          className="backButton"
-          onClick={() => window.history.back()}
-          aria-label="Go back"
-        >
-          ←
-        </button>
+          <div className="flex items-center gap-3">
+            <button className="rounded-full px-4 py-2 text-sm font-medium hover:bg-neutral-100">
+              Help
+            </button>
 
-        <div>
-          <h1>Plan your trip</h1>
-          <p>Tell us where you want to go</p>
+            <button className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50">
+              Sign in
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="bookingContainer">
+      {/* Hero */}
+      <section className="bg-neutral-950 px-5 pb-20 pt-12 text-white">
+        <div className="mx-auto max-w-6xl">
+          <p className="mb-3 text-sm font-medium text-neutral-400">
+            TRAVEL YOUR WAY
+          </p>
 
-        {/* TRIP TYPE */}
-        <section className="bookingCard">
+          <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">
+            Where are you going?
+          </h1>
 
-          <div className="sectionTitle">
-            <span className="stepNumber">1</span>
+          <p className="mt-4 max-w-xl text-base text-neutral-400">
+            Search hotels, cabs, flights and complete travel packages in one
+            place.
+          </p>
 
-            <div>
-              <h2>Trip type</h2>
-              <p>Choose how you want to travel</p>
+          {/* Search Card */}
+          <div className="mt-10 rounded-3xl bg-white p-4 text-neutral-900 shadow-2xl sm:p-6">
+            {/* Booking type */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {bookingTypes.map((item) => {
+                const active = type === item.id;
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setType(item.id)}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      active
+                        ? "border-neutral-900 bg-neutral-900 text-white"
+                        : "border-neutral-200 bg-white hover:border-neutral-400"
+                    }`}
+                  >
+                    <div className="text-2xl">{item.icon}</div>
+
+                    <div className="mt-2 text-sm font-semibold">
+                      {item.title}
+                    </div>
+
+                    <div
+                      className={`mt-1 text-xs ${
+                        active ? "text-neutral-300" : "text-neutral-500"
+                      }`}
+                    >
+                      {item.description}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </div>
 
-          <div className="tripTypes">
-
-            <button
-              type="button"
-              className={
-                tripType === "one-way"
-                  ? "tripType active"
-                  : "tripType"
-              }
-              onClick={() =>
-                setTripType("one-way")
-              }
+            {/* Search form */}
+            <form
+              onSubmit={handleSearch}
+              className="mt-6 grid gap-3 lg:grid-cols-[1.5fr_1fr_1fr_0.7fr_auto]"
             >
-              <span className="tripIcon">
-                →
-              </span>
+              {/* Location */}
+              <div className="rounded-2xl border border-neutral-300 p-3">
+                <label className="block text-xs font-medium text-neutral-500">
+                  Where
+                </label>
 
-              <span>
-                <strong>One way</strong>
-                <small>Travel to your destination</small>
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className={
-                tripType === "round-trip"
-                  ? "tripType active"
-                  : "tripType"
-              }
-              onClick={() =>
-                setTripType("round-trip")
-              }
-            >
-              <span className="tripIcon">
-                ⇄
-              </span>
-
-              <span>
-                <strong>Round trip</strong>
-                <small>Return to your starting point</small>
-              </span>
-            </button>
-
-          </div>
-        </section>
-
-
-        {/* LOCATIONS */}
-        <section className="bookingCard">
-
-          <div className="sectionTitle">
-            <span className="stepNumber">2</span>
-
-            <div>
-              <h2>Where are you going?</h2>
-              <p>Select your pickup and destination</p>
-            </div>
-          </div>
-
-          <div className="locationSection">
-
-            <LocationPicker
-              label="Pickup location"
-              value={from.name}
-              allowCurrentLocation={true}
-              placeholder="Search pickup location"
-              onLocationSelect={setFrom}
-            />
-
-            <button
-              type="button"
-              className="swapButton"
-              onClick={swapLocations}
-              aria-label="Swap pickup and destination"
-            >
-              ⇅
-            </button>
-
-            <LocationPicker
-              label="Destination"
-              value={to.name}
-              placeholder="Search destination"
-              onLocationSelect={setTo}
-            />
-
-          </div>
-        </section>
-
-
-        {/* DATE & TIME */}
-        <section className="bookingCard">
-
-          <div className="sectionTitle">
-            <span className="stepNumber">3</span>
-
-            <div>
-              <h2>When are you travelling?</h2>
-              <p>Choose your travel date and time</p>
-            </div>
-          </div>
-
-          <div className="formGrid">
-
-            <div className="field">
-              <label htmlFor="travelDate">
-                Travel date
-              </label>
-
-              <input
-                id="travelDate"
-                type="date"
-                value={date}
-                min={
-                  new Date()
-                    .toISOString()
-                    .split("T")[0]
-                }
-                onChange={(e) =>
-                  setDate(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="travelTime">
-                Pickup time
-              </label>
-
-              <input
-                id="travelTime"
-                type="time"
-                value={time}
-                onChange={(e) =>
-                  setTime(e.target.value)
-                }
-              />
-            </div>
-
-          </div>
-
-          {tripType === "round-trip" && (
-            <div className="returnSection">
-
-              <div className="returnHeading">
-                <strong>Return journey</strong>
-                <span>
-                  When will you return?
-                </span>
-              </div>
-
-              <div className="formGrid">
-
-                <div className="field">
-                  <label htmlFor="returnDate">
-                    Return date
-                  </label>
-
-                  <input
-                    id="returnDate"
-                    type="date"
-                    value={returnDate}
-                    min={date}
-                    onChange={(e) =>
-                      setReturnDate(
-                        e.target.value
-                      )
-                    }
+                <div className="mt-1">
+                  <LocationPicker
+                    value={location}
+                    onChange={setLocation}
                   />
                 </div>
-
-                <div className="field">
-                  <label htmlFor="returnTime">
-                    Return time
-                  </label>
-
-                  <input
-                    id="returnTime"
-                    type="time"
-                    value={returnTime}
-                    onChange={(e) =>
-                      setReturnTime(
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-
               </div>
-            </div>
-          )}
 
-        </section>
+              {/* Check in */}
+              <div className="rounded-2xl border border-neutral-300 p-3">
+                <label
+                  htmlFor="checkIn"
+                  className="block text-xs font-medium text-neutral-500"
+                >
+                  Check-in
+                </label>
 
+                <input
+                  id="checkIn"
+                  type="date"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className="mt-1 w-full bg-transparent text-sm outline-none"
+                />
+              </div>
 
-        {/* TRAVELLERS */}
-        <section className="bookingCard">
+              {/* Check out */}
+              <div className="rounded-2xl border border-neutral-300 p-3">
+                <label
+                  htmlFor="checkOut"
+                  className="block text-xs font-medium text-neutral-500"
+                >
+                  Check-out
+                </label>
 
-          <div className="sectionTitle">
-            <span className="stepNumber">4</span>
+                <input
+                  id="checkOut"
+                  type="date"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className="mt-1 w-full bg-transparent text-sm outline-none"
+                />
+              </div>
 
-            <div>
-              <h2>Travellers</h2>
-              <p>Tell us who is travelling</p>
-            </div>
+              {/* Guests */}
+              <div className="rounded-2xl border border-neutral-300 p-3">
+                <label
+                  htmlFor="guests"
+                  className="block text-xs font-medium text-neutral-500"
+                >
+                  Guests
+                </label>
+
+                <select
+                  id="guests"
+                  value={guests}
+                  onChange={(e) => setGuests(Number(e.target.value))}
+                  className="mt-1 w-full bg-transparent text-sm outline-none"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((number) => (
+                    <option key={number} value={number}>
+                      {number} {number === 1 ? "guest" : "guests"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search */}
+              <button
+                type="submit"
+                className="rounded-2xl bg-neutral-900 px-7 py-4 text-sm font-semibold text-white transition hover:bg-neutral-700"
+              >
+                Search
+              </button>
+            </form>
           </div>
+        </div>
+      </section>
 
-          <div className="travellerRows">
+      {/* Popular destinations */}
+      <section className="mx-auto max-w-6xl px-5 py-16">
+        <div className="mb-8">
+          <p className="text-sm font-medium text-neutral-500">
+            EXPLORE
+          </p>
 
-            <TravellerRow
-              title="Adults"
-              description="Age 13+"
-              value={adults}
-              min={1}
-              onChange={setAdults}
-            />
+          <h2 className="mt-2 text-3xl font-bold tracking-tight">
+            Popular destinations
+          </h2>
 
-            <TravellerRow
-              title="Children"
-              description="Age 2–12"
-              value={children}
-              min={0}
-              onChange={setChildren}
-            />
+          <p className="mt-2 text-neutral-500">
+            Start planning your next trip.
+          </p>
+        </div>
 
-          </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              city: "Agra",
+              description: "History & heritage",
+              image:
+                "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80",
+            },
+            {
+              city: "Goa",
+              description: "Beaches & relaxation",
+              image:
+                "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
+            },
+            {
+              city: "Delhi",
+              description: "Culture & experiences",
+              image:
+                "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
+            },
+            {
+              city: "Jaipur",
+              description: "Royal Rajasthan",
+              image:
+                "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+            },
+          ].map((destination) => (
+            <button
+              key={destination.city}
+              type="button"
+              onClick={() => setLocation(destination.city)}
+              className="group overflow-hidden rounded-3xl border border-neutral-200 bg-white text-left"
+            >
+              <div className="aspect-[4/3] overflow-hidden bg-neutral-100">
+                <img
+                  src={destination.image}
+                  alt={destination.city}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                />
+              </div>
 
-        </section>
+              <div className="p-5">
+                <h3 className="font-semibold">{destination.city}</h3>
 
+                <p className="mt-1 text-sm text-neutral-500">
+                  {destination.description}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
 
-        {/* SUMMARY */}
-        <section className="summaryCard">
-
-          <div className="summaryHeader">
+      {/* Why Voynu */}
+      <section className="border-t border-neutral-200 bg-neutral-50">
+        <div className="mx-auto max-w-6xl px-5 py-16">
+          <div className="grid gap-8 md:grid-cols-3">
             <div>
-              <h2>Your trip</h2>
-              <p>
-                Review your details before continuing
+              <div className="text-2xl">🔎</div>
+              <h3 className="mt-4 font-semibold">
+                Everything in one place
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-neutral-500">
+                Search and plan different parts of your journey without
+                jumping between platforms.
               </p>
             </div>
 
-            <span className="summaryTripType">
-              {tripType === "one-way"
-                ? "One way"
-                : "Round trip"}
-            </span>
-          </div>
-
-          <div className="routeSummary">
-
-            <div className="routePoint">
-              <span className="routeDot pickup" />
-
-              <div>
-                <small>Pickup</small>
-                <strong>
-                  {from.name ||
-                    "Select pickup location"}
-                </strong>
-              </div>
-            </div>
-
-            <div className="routeLine" />
-
-            <div className="routePoint">
-              <span className="routeDot destination" />
-
-              <div>
-                <small>Destination</small>
-                <strong>
-                  {to.name ||
-                    "Select destination"}
-                </strong>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="summaryDetails">
-
             <div>
-              <span>📅</span>
-              <strong>
-                {date || "Travel date"}
-              </strong>
+              <div className="text-2xl">💰</div>
+              <h3 className="mt-4 font-semibold">
+                Transparent pricing
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-neutral-500">
+                See what you are paying for before you confirm your booking.
+              </p>
             </div>
 
             <div>
-              <span>🕐</span>
-              <strong>
-                {time || "Pickup time"}
-              </strong>
+              <div className="text-2xl">🧳</div>
+              <h3 className="mt-4 font-semibold">
+                Built around your trip
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-neutral-500">
+                From a hotel room to a complete holiday, build your journey
+                your way.
+              </p>
             </div>
-
-            <div>
-              <span>👤</span>
-              <strong>
-                {adults + children}{" "}
-                {adults + children === 1
-                  ? "traveller"
-                  : "travellers"}
-              </strong>
-            </div>
-
           </div>
-
-        </section>
-
-
-        {/* CONTINUE */}
-        <button
-          type="button"
-          className="continueButton"
-          disabled={!canContinue}
-          onClick={() => {
-            if (!canContinue) return;
-
-            console.log(
-              "Booking details:",
-              {
-                tripType,
-                from,
-                to,
-                date,
-                time,
-                returnDate,
-                returnTime,
-                adults,
-                children,
-              }
-            );
-          }}
-        >
-          <span>Continue</span>
-          <span>→</span>
-        </button>
-
-        {!canContinue && (
-          <p className="continueHint">
-            Select your pickup, destination,
-            date and time to continue.
-          </p>
-        )}
-
-      </div>
-
-
-      <style jsx>{`
-
-        .bookingPage {
-          min-height: 100vh;
-          background: #f7f9f7;
-          padding-bottom: 60px;
-          color: #26372f;
-        }
-
-        .bookingHeader {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 25px 20px;
-          background: #ffffff;
-          border-bottom: 1px solid #e4e9e5;
-        }
-
-        .backButton {
-          width: 42px;
-          height: 42px;
-          border: 1px solid #dce4df;
-          border-radius: 12px;
-          background: #ffffff;
-          color: #26372f;
-          font-size: 23px;
-          cursor: pointer;
-        }
-
-        .bookingHeader h1 {
-          margin: 0;
-          font-size: 24px;
-          line-height: 1.2;
-        }
-
-        .bookingHeader p {
-          margin: 5px 0 0;
-          color: #718078;
-          font-size: 13px;
-        }
-
-        .bookingContainer {
-          width: min(760px, calc(100% - 32px));
-          margin: 25px auto;
-        }
-
-        .bookingCard,
-        .summaryCard {
-          margin-bottom: 18px;
-          padding: 22px;
-          border: 1px solid #e1e8e3;
-          border-radius: 18px;
-          background: #ffffff;
-          box-shadow:
-            0 4px 18px
-            rgba(27, 54, 39, 0.04);
-        }
-
-        .sectionTitle {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          margin-bottom: 22px;
-        }
-
-        .stepNumber {
-          width: 30px;
-          height: 30px;
-          flex: 0 0 30px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          background: #e8f5ed;
-          color: #08783f;
-          font-size: 13px;
-          font-weight: 900;
-        }
-
-        .sectionTitle h2 {
-          margin: 2px 0 4px;
-          font-size: 17px;
-        }
-
-        .sectionTitle p {
-          margin: 0;
-          color: #78847e;
-          font-size: 12.5px;
-        }
-
-        .tripTypes {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-        }
-
-        .tripType {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 15px;
-          text-align: left;
-          border: 1px solid #dce5df;
-          border-radius: 13px;
-          background: #ffffff;
-          color: #26372f;
-          cursor: pointer;
-        }
-
-        .tripType.active {
-          border-color: #08783f;
-          background: #f0f8f3;
-          box-shadow:
-            0 0 0 2px
-            rgba(8, 120, 63, 0.08);
-        }
-
-        .tripIcon {
-          width: 38px;
-          height: 38px;
-          flex: 0 0 38px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          background: #eef5f0;
-          color: #08783f;
-          font-size: 20px;
-          font-weight: 800;
-        }
-
-        .tripType span:last-child {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-        }
-
-        .tripType strong {
-          font-size: 14px;
-        }
-
-        .tripType small {
-          color: #7a867f;
-          font-size: 11px;
-        }
-
-        .locationSection {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          gap: 18px;
-        }
-
-        .swapButton {
-          position: absolute;
-          right: 15px;
-          top: 49%;
-          z-index: 20;
-          width: 42px;
-          height: 42px;
-          border: 1px solid #cce3d3;
-          border-radius: 50%;
-          background: #ffffff;
-          color: #08783f;
-          font-size: 21px;
-          font-weight: 800;
-          cursor: pointer;
-          box-shadow:
-            0 3px 12px
-            rgba(0, 0, 0, 0.1);
-        }
-
-        .formGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-        }
-
-        .field {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .field label {
-          color: #52625a;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .field input {
-          width: 100%;
-          min-height: 50px;
-          box-sizing: border-box;
-          padding: 12px 13px;
-          border: 1px solid #d9e1dc;
-          border-radius: 11px;
-          background: #ffffff;
-          color: #26372f;
-          font-size: 14px;
-          outline: none;
-        }
-
-        .field input:focus {
-          border-color: #08783f;
-          box-shadow:
-            0 0 0 3px
-            rgba(8, 120, 63, 0.08);
-        }
-
-        .returnSection {
-          margin-top: 18px;
-          padding-top: 18px;
-          border-top: 1px solid #e6ebe7;
-        }
-
-        .returnHeading {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-          margin-bottom: 14px;
-        }
-
-        .returnHeading strong {
-          font-size: 14px;
-        }
-
-        .returnHeading span {
-          color: #7a867f;
-          font-size: 12px;
-        }
-
-        .travellerRows {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .travellerRow {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 13px 0;
-        }
-
-        .travellerInfo {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-        }
-
-        .travellerInfo strong {
-          font-size: 14px;
-        }
-
-        .travellerInfo span {
-          color: #7a867f;
-          font-size: 11px;
-        }
-
-        .counter {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .counter button {
-          width: 34px;
-          height: 34px;
-          border: 1px solid #d4dfd8;
-          border-radius: 50%;
-          background: #ffffff;
-          color: #08783f;
-          font-size: 19px;
-          cursor: pointer;
-        }
-
-        .counter button:disabled {
-          opacity: 0.35;
-          cursor: not-allowed;
-        }
-
-        .counter strong {
-          min-width: 20px;
-          text-align: center;
-          font-size: 14px;
-        }
-
-        .summaryCard {
-          border-color: #cfe3d5;
-          background: #f9fcfa;
-        }
-
-        .summaryHeader {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 15px;
-          margin-bottom: 22px;
-        }
-
-        .summaryHeader h2 {
-          margin: 0 0 4px;
-          font-size: 17px;
-        }
-
-        .summaryHeader p {
-          margin: 0;
-          color: #7a867f;
-          font-size: 12px;
-        }
-
-        .summaryTripType {
-          padding: 6px 9px;
-          border-radius: 20px;
-          background: #e8f5ed;
-          color: #08783f;
-          font-size: 10px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .routeSummary {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .routePoint {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-        }
-
-        .routeDot {
-          width: 12px;
-          height: 12px;
-          flex: 0 0 12px;
-          margin-top: 4px;
-          border: 3px solid #08783f;
-          border-radius: 50%;
-          box-sizing: border-box;
-        }
-
-        .routeDot.destination {
-          border-radius: 3px;
-        }
-
-        .routePoint div {
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .routePoint small {
-          color: #7a867f;
-          font-size: 10px;
-          font-weight: 700;
-        }
-
-        .routePoint strong {
-          overflow: hidden;
-          font-size: 13px;
-          font-weight: 700;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .routeLine {
-          width: 2px;
-          height: 24px;
-          margin: 2px 0 2px 5px;
-          background: #cce3d3;
-        }
-
-        .summaryDetails {
-          display: grid;
-          grid-template-columns:
-            repeat(3, 1fr);
-          gap: 8px;
-          margin-top: 20px;
-          padding-top: 17px;
-          border-top: 1px solid #dfeae2;
-        }
-
-        .summaryDetails div {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          min-width: 0;
-        }
-
-        .summaryDetails span {
-          font-size: 14px;
-        }
-
-        .summaryDetails strong {
-          overflow: hidden;
-          font-size: 11px;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .continueButton {
-          width: 100%;
-          min-height: 56px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 20px;
-          border: 0;
-          border-radius: 14px;
-          background: #08783f;
-          color: #ffffff;
-          font-size: 15px;
-          font-weight: 900;
-          cursor: pointer;
-          box-shadow:
-            0 7px 20px
-            rgba(8, 120, 63, 0.18);
-        }
-
-        .continueButton:disabled {
-          background: #cbd7d0;
-          color: #ffffff;
-          box-shadow: none;
-          cursor: not-allowed;
-        }
-
-        .continueHint {
-          margin: 9px 0 0;
-          color: #7a867f;
-          text-align: center;
-          font-size: 11px;
-        }
-
-        @media (max-width: 600px) {
-
-          .bookingHeader {
-            padding: 18px 16px;
-          }
-
-          .bookingHeader h1 {
-            font-size: 21px;
-          }
-
-          .bookingContainer {
-            width: calc(100% - 22px);
-            margin-top: 16px;
-          }
-
-          .bookingCard,
-          .summaryCard {
-            padding: 17px;
-            border-radius: 15px;
-          }
-
-          .tripTypes,
-          .formGrid {
-            grid-template-columns: 1fr;
-          }
-
-          .swapButton {
-            top: 50%;
-            right: 10px;
-          }
-
-          .summaryDetails {
-            grid-template-columns: 1fr;
-          }
-        }
-
-      `}</style>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-neutral-200 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+          <div>© {new Date().getFullYear()} voynu</div>
+
+          <div className="flex gap-5">
+            <a href="#" className="hover:text-neutral-900">
+              Privacy
+            </a>
+
+            <a href="#" className="hover:text-neutral-900">
+              Terms
+            </a>
+
+            <a href="#" className="hover:text-neutral-900">
+              Contact
+            </a>
+          </div>
+        </div>
+      </footer>
     </main>
   );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Traveller counter
-|--------------------------------------------------------------------------
-*/
-
-function TravellerRow({
-  title,
-  description,
-  value,
-  min,
-  onChange,
-}) {
-  return (
-    <div className="travellerRow">
-
-      <div className="travellerInfo">
-        <strong>{title}</strong>
-        <span>{description}</span>
-      </div>
-
-      <div className="counter">
-
-        <button
-          type="button"
-          disabled={value <= min}
-          onClick={() =>
-            onChange(
-              Math.max(min, value - 1)
-            )
-          }
-          aria-label={`Decrease ${title}`}
-        >
-          −
-        </button>
-
-        <strong>{value}</strong>
-
-        <button
-          type="button"
-          onClick={() =>
-            onChange(value + 1)
-          }
-          aria-label={`Increase ${title}`}
-        >
-          +
-        </button>
-
-      </div>
-
-    </div>
-  );
-          }
+        }
