@@ -59,6 +59,54 @@ export default function MapLocationPicker({
 
   /*
    * ------------------------------------------------------------
+   * LOCK BACKGROUND PAGE WHILE OPEN
+   *
+   * IMPORTANT:
+   *
+   * Without this, touch gestures used to pan/pinch the map can
+   * also scroll or zoom the page underneath, which is what
+   * causes the sheet to appear misaligned and require manual
+   * horizontal scrolling to reach the close button.
+   * ------------------------------------------------------------
+   */
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    const previousPosition =
+      document.body.style.position;
+
+    const previousWidth =
+      document.body.style.width;
+
+    document.body.style.overflow =
+      "hidden";
+
+    document.body.style.position =
+      "fixed";
+
+    document.body.style.width =
+      "100%";
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+
+      document.body.style.position =
+        previousPosition;
+
+      document.body.style.width =
+        previousWidth;
+    };
+  }, [open]);
+
+  /*
+   * ------------------------------------------------------------
    * LOAD GOOGLE MAPS WHEN OPENED
    * ------------------------------------------------------------
    */
@@ -214,6 +262,26 @@ export default function MapLocationPicker({
       startLat,
       startLng
     );
+
+    /*
+     * Force Google Maps to recompute its size once the
+     * container has settled into its final flex-layout
+     * dimensions. Without this, the map can render at a
+     * stale size and appear to flicker/redraw as the
+     * sheet's layout finishes.
+     */
+
+    window.setTimeout(() => {
+      window.google.maps.event.trigger(
+        map,
+        "resize"
+      );
+
+      map.setCenter({
+        lat: startLat,
+        lng: startLng,
+      });
+    }, 80);
 
     const listener = map.addListener(
       "idle",
@@ -447,6 +515,9 @@ export default function MapLocationPicker({
           display: flex;
           align-items: flex-end;
           justify-content: center;
+
+          touch-action: none;
+          overscroll-behavior: contain;
         }
 
         .mapPickerSheet {
@@ -462,6 +533,8 @@ export default function MapLocationPicker({
           flex-direction: column;
 
           overflow: hidden;
+
+          touch-action: none;
         }
 
         @media (min-width: 700px) {
@@ -489,6 +562,8 @@ export default function MapLocationPicker({
           color: #16241d;
 
           border-bottom: 1px solid #eef2ef;
+
+          touch-action: manipulation;
         }
 
         .mapPickerClose {
@@ -504,10 +579,14 @@ export default function MapLocationPicker({
           font-size: 14px;
 
           cursor: pointer;
+
+          flex-shrink: 0;
         }
 
         .mapPickerSearch {
           padding: 10px 14px;
+
+          touch-action: manipulation;
         }
 
         .mapPickerSearchInput {
@@ -522,18 +601,27 @@ export default function MapLocationPicker({
           font-size: 14px;
 
           outline: none;
+
+          box-sizing: border-box;
         }
 
         .mapPickerMapWrap {
           position: relative;
           flex: 1;
+          min-height: 0;
 
           background: #eef2ef;
+
+          touch-action: none;
+
+          overflow: hidden;
         }
 
         .mapPickerMap {
           position: absolute;
           inset: 0;
+
+          touch-action: none;
         }
 
         .mapPickerPin {
@@ -557,6 +645,8 @@ export default function MapLocationPicker({
           padding: 14px 16px 18px;
 
           border-top: 1px solid #eef2ef;
+
+          touch-action: manipulation;
         }
 
         .mapPickerAddress {
@@ -593,4 +683,4 @@ export default function MapLocationPicker({
 
     </div>
   );
-}
+      }
