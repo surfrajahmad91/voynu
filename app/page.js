@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import LocationPicker from "@/app/components/LocationPicker";
 
 export default function HomePage() {
