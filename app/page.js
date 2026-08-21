@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import LocationPicker from "@/components/LocationPicker";
+import LocationPicker from "@/components/LocationPicker.js";
 
 export default function HomePage() {
   const [pickup, setPickup] = useState(null);
