@@ -19,6 +19,74 @@ export default function HomePage() {
   }, []);
 
   /* ============================================================
+     SERVICE AREA
+     
+     IMPORTANT:
+     This is currently frontend configuration only.
+     Later we will move the active service center and radius
+     to the backend/Admin Panel.
+     
+     VOYNU initial launch:
+     - Center: Kanpur
+     - Pickup radius: 200 km
+     - Destination can be outside the radius
+  ============================================================ */
+
+  const SERVICE_AREA = {
+    center: {
+      lat: 26.4499,
+      lon: 80.3319,
+    },
+
+    radiusKm: 200,
+  };
+
+  const calculateDistanceKm = (
+    lat1,
+    lon1,
+    lat2,
+    lon2
+  ) => {
+    if (
+      lat1 === null ||
+      lon1 === null ||
+      lat2 === null ||
+      lon2 === null ||
+      lat1 === undefined ||
+      lon1 === undefined ||
+      lat2 === undefined ||
+      lon2 === undefined
+    ) {
+      return null;
+    }
+
+    const toRadians = (value) =>
+      (value * Math.PI) / 180;
+
+    const earthRadiusKm = 6371;
+
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) *
+        Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) *
+        Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c =
+      2 *
+      Math.atan2(
+        Math.sqrt(a),
+        Math.sqrt(1 - a)
+      );
+
+    return earthRadiusKm * c;
+  };
+
+  /* ============================================================
      TRIP
   ============================================================ */
 
@@ -146,6 +214,32 @@ export default function HomePage() {
   };
 
   /* ============================================================
+     SERVICE AREA HELPERS
+  ============================================================ */
+
+  const getPickupDistanceFromServiceCenter = () => {
+    return calculateDistanceKm(
+      SERVICE_AREA.center.lat,
+      SERVICE_AREA.center.lon,
+      pickup.lat,
+      pickup.lon
+    );
+  };
+
+  const isPickupWithinServiceArea = () => {
+    const distance =
+      getPickupDistanceFromServiceCenter();
+
+    if (distance === null) {
+      return false;
+    }
+
+    return (
+      distance <= SERVICE_AREA.radiusKm
+    );
+  };
+
+  /* ============================================================
      TRIP TYPE
   ============================================================ */
 
@@ -203,6 +297,7 @@ export default function HomePage() {
       showError(
         "Pickup time cannot be in the past."
       );
+
       setPickupTime("");
       return;
     }
@@ -292,8 +387,12 @@ export default function HomePage() {
 
   const buildBookingData = () => {
     const normalizedPhone = normalizeIndianPhone(phone);
+
     const normalizedWhatsApp =
       normalizeIndianPhone(whatsapp);
+
+    const pickupDistance =
+      getPickupDistanceFromServiceCenter();
 
     return {
       tripType,
@@ -308,6 +407,19 @@ export default function HomePage() {
         name: drop.name.trim(),
         lat: drop.lat,
         lon: drop.lon,
+      },
+
+      serviceArea: {
+        center: {
+          lat: SERVICE_AREA.center.lat,
+          lon: SERVICE_AREA.center.lon,
+        },
+
+        radiusKm:
+          SERVICE_AREA.radiusKm,
+
+        pickupDistanceKm:
+          pickupDistance,
       },
 
       travelDate,
@@ -330,7 +442,8 @@ export default function HomePage() {
 
       whatsapp: normalizedWhatsApp,
 
-      createdAt: new Date().toISOString(),
+      createdAt:
+        new Date().toISOString(),
     };
   };
 
@@ -347,12 +460,51 @@ export default function HomePage() {
       return "Please select your pickup location.";
     }
 
+    if (
+      pickup.lat === null ||
+      pickup.lon === null
+    ) {
+      return (
+        "Please select your pickup location from the suggested locations."
+      );
+    }
+
     /* ----------------------------------------------------------
        DROP
     ---------------------------------------------------------- */
 
     if (!drop.name?.trim()) {
       return "Please select your drop location.";
+    }
+
+    if (
+      drop.lat === null ||
+      drop.lon === null
+    ) {
+      return (
+        "Please select your drop location from the suggested locations."
+      );
+    }
+
+    /* ----------------------------------------------------------
+       PICKUP SERVICE AREA
+    ---------------------------------------------------------- */
+
+    const pickupDistance =
+      getPickupDistanceFromServiceCenter();
+
+    if (pickupDistance === null) {
+      return (
+        "We couldn't verify your pickup location. Please select it again."
+      );
+    }
+
+    if (
+      !isPickupWithinServiceArea()
+    ) {
+      return (
+        "Sorry, your pickup location is outside VOYNU's current 200 km service area from Kanpur."
+      );
     }
 
     /* ----------------------------------------------------------
@@ -366,13 +518,22 @@ export default function HomePage() {
       drop.lon !== null
     ) {
       const sameLatitude =
-        Math.abs(pickup.lat - drop.lat) < 0.00001;
+        Math.abs(
+          pickup.lat - drop.lat
+        ) < 0.00001;
 
       const sameLongitude =
-        Math.abs(pickup.lon - drop.lon) < 0.00001;
+        Math.abs(
+          pickup.lon - drop.lon
+        ) < 0.00001;
 
-      if (sameLatitude && sameLongitude) {
-        return "Pickup and drop locations cannot be the same.";
+      if (
+        sameLatitude &&
+        sameLongitude
+      ) {
+        return (
+          "Pickup and drop locations cannot be the same."
+        );
       }
     }
 
