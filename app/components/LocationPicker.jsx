@@ -173,6 +173,56 @@ function loadGoogleMaps() {
 
 /*
  * ------------------------------------------------------------
+ * CITY EXTRACTION
+ *
+ * Given a Google address_components array, returns the best
+ * guess for the city name.
+ *
+ * Prefers "locality" (city). Falls back to
+ * "administrative_area_level_2" (district) for addresses
+ * where Google does not return a locality, which happens
+ * for some rural/outskirt addresses.
+ * ------------------------------------------------------------
+ */
+
+function extractCityName(
+  addressComponents
+) {
+  if (
+    !Array.isArray(
+      addressComponents
+    )
+  ) {
+    return null;
+  }
+
+  const locality =
+    addressComponents.find(
+      (component) =>
+        component.types?.includes(
+          "locality"
+        )
+    );
+
+  if (locality?.long_name) {
+    return locality.long_name;
+  }
+
+  const district =
+    addressComponents.find(
+      (component) =>
+        component.types?.includes(
+          "administrative_area_level_2"
+        )
+    );
+
+  return (
+    district?.long_name || null
+  );
+}
+
+/*
+ * ------------------------------------------------------------
  * COMPONENT
  * ------------------------------------------------------------
  */
@@ -280,6 +330,7 @@ export default function LocationPicker({
             "geometry",
             "name",
             "place_id",
+            "address_components",
           ],
 
           componentRestrictions: {
@@ -329,6 +380,11 @@ export default function LocationPicker({
             place.name ||
             "";
 
+          const city =
+            extractCityName(
+              place.address_components
+            );
+
           setError("");
 
           /*
@@ -341,6 +397,7 @@ export default function LocationPicker({
             lon,
             placeId:
               place.place_id || null,
+            city,
           });
         }
       );
@@ -441,6 +498,12 @@ export default function LocationPicker({
               results[0].formatted_address ||
               "";
 
+            const city =
+              extractCityName(
+                results[0]
+                  .address_components
+              );
+
             if (inputRef.current) {
               inputRef.current.value =
                 address;
@@ -455,6 +518,7 @@ export default function LocationPicker({
               placeId:
                 results[0].place_id ||
                 null,
+              city,
             });
           }
         );
