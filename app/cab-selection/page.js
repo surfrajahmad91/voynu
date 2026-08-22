@@ -16,12 +16,12 @@ import {
  * Replace with your real WhatsApp Business number
  * (international format, digits only, no + or spaces).
  */
-const WHATSAPP_NUMBER = "919918614844";
+const WHATSAPP_NUMBER = "919123456789";
 
 /*
  * Replace with your real UPI VPA.
  */
-const VOYNU_UPI_VPA = "surfraj@ybl";
+const VOYNU_UPI_VPA = "voynu@upi";
 
 function IconCheck({ size = 14 }) {
   return (
@@ -80,6 +80,12 @@ export default function CabSelectionPage() {
 
   const [paymentMethod, setPaymentMethod] =
     useState("cash");
+
+  const [upiPayClicked, setUpiPayClicked] =
+    useState(false);
+
+  const [upiPaymentConfirmed, setUpiPaymentConfirmed] =
+    useState(false);
 
   const [confirmed, setConfirmed] =
     useState(false);
@@ -159,6 +165,24 @@ export default function CabSelectionPage() {
 
   /*
    * ------------------------------------------------------------
+   * RESET UPI CONFIRMATION
+   *
+   * IMPORTANT:
+   *
+   * If the customer switches vehicle (different fare) or
+   * switches payment method away from and back to UPI, any
+   * previous "I've paid" confirmation is no longer valid for
+   * the new amount/context and must be cleared.
+   * ------------------------------------------------------------
+   */
+
+  useEffect(() => {
+    setUpiPayClicked(false);
+    setUpiPaymentConfirmed(false);
+  }, [selectedVehicleId, paymentMethod]);
+
+  /*
+   * ------------------------------------------------------------
    * WHATSAPP MESSAGE
    * ------------------------------------------------------------
    */
@@ -170,6 +194,11 @@ export default function CabSelectionPage() {
 
     const isRoundTrip =
       booking.tripType === "roundtrip";
+
+    const paymentLine =
+      paymentMethod === "upi"
+        ? `UPI — customer confirmed payment sent (please verify before dispatch)`
+        : "Pay on Pickup (Cash)";
 
     const lines = [
       "New VOYNU booking request:",
@@ -208,11 +237,7 @@ export default function CabSelectionPage() {
       "",
       `Cab type: ${selectedFare.vehicleName}`,
       `Estimated fare: ₹${selectedFare.totalFare}`,
-      `Payment: ${
-        paymentMethod === "upi"
-          ? "UPI"
-          : "Pay on Pickup (Cash)"
-      }`,
+      `Payment: ${paymentLine}`,
       "",
       `Passenger: ${booking.passengerName || ""}`,
       `Phone: ${booking.phone || ""}`,
@@ -238,8 +263,25 @@ export default function CabSelectionPage() {
       )}`
     : "";
 
+  /*
+   * Whether the customer is allowed to proceed to the
+   * WhatsApp confirmation step.
+   *
+   * Cash: always allowed.
+   * UPI: only after the customer has explicitly confirmed
+   * they completed the payment in their UPI app.
+   */
+  const canConfirm =
+    paymentMethod === "cash" ||
+    (paymentMethod === "upi" &&
+      upiPaymentConfirmed);
+
+  const handleUpiPayClick = () => {
+    setUpiPayClicked(true);
+  };
+
   const handleConfirm = () => {
-    if (!selectedFare) {
+    if (!selectedFare || !canConfirm) {
       return;
     }
 
@@ -552,12 +594,69 @@ export default function CabSelectionPage() {
 
         {paymentMethod === "upi" && selectedFare && (
 
-          <a
-            href={upiHref}
-            className="upiLink"
-          >
-            Pay ₹{selectedFare.totalFare} via UPI app
-          </a>
+          <div className="upiFlow">
+
+            {!upiPaymentConfirmed && (
+
+              <a
+                href={upiHref}
+                className="upiPayButton"
+                onClick={handleUpiPayClick}
+              >
+                <IconUpi size={17} />
+                <span>Pay ₹{selectedFare.totalFare} via UPI app</span>
+              </a>
+
+            )}
+
+            {upiPayClicked && !upiPaymentConfirmed && (
+
+              <div className="upiConfirmRow">
+
+                <p>
+                  Completed the payment in your
+                  UPI app?
+                </p>
+
+                <div className="upiConfirmActions">
+
+                  <button
+                    type="button"
+                    className="upiConfirmYes"
+                    onClick={() =>
+                      setUpiPaymentConfirmed(true)
+                    }
+                  >
+                    <IconCheck size={12} />
+                    Yes, I've paid
+                  </button>
+
+                  <button
+                    type="button"
+                    className="upiConfirmRetry"
+                    onClick={() =>
+                      setUpiPayClicked(false)
+                    }
+                  >
+                    Didn't pay yet
+                  </button>
+
+                </div>
+
+              </div>
+
+            )}
+
+            {upiPaymentConfirmed && (
+
+              <div className="upiConfirmedChip">
+                <IconCheck size={13} />
+                <span>Payment marked as completed</span>
+              </div>
+
+            )}
+
+          </div>
 
         )}
 
@@ -591,7 +690,7 @@ export default function CabSelectionPage() {
 
         )}
 
-        {!confirmed ? (
+        {!confirmed && canConfirm && (
 
           <button
             type="button"
@@ -603,7 +702,20 @@ export default function CabSelectionPage() {
             <span>Confirm on WhatsApp</span>
           </button>
 
-        ) : (
+        )}
+
+        {!confirmed &&
+          !canConfirm &&
+          paymentMethod === "upi" && (
+
+            <p className="upiHint">
+              Complete your UPI payment above to
+              continue to WhatsApp confirmation.
+            </p>
+
+          )}
+
+        {confirmed && (
 
           <div className="confirmedBox">
 
@@ -926,25 +1038,144 @@ export default function CabSelectionPage() {
           color: #0a7d42;
         }
 
-        .upiLink {
-          display: block;
+        .upiFlow {
+          margin-top: 12px;
+        }
 
-          margin-top: 10px;
+        .upiPayButton {
+          display: flex;
+          align-items: center;
+          justify-content: center;
 
-          padding: 12px;
+          gap: 9px;
 
-          border-radius: 12px;
+          width: 100%;
+          min-height: 52px;
 
-          background: #eaf6ee;
+          border-radius: 13px;
 
-          color: #0a7d42;
+          background: linear-gradient(135deg, #0a7d42, #075c31);
 
-          text-align: center;
+          color: #ffffff;
 
           text-decoration: none;
 
+          font-weight: 800;
+          font-size: 14px;
+
+          box-shadow: 0 10px 22px rgba(8,120,63,.24);
+        }
+
+        .upiConfirmRow {
+          margin-top: 12px;
+
+          padding: 14px 15px;
+
+          border-radius: 13px;
+
+          background: #fdf3dc;
+
+          border: 1px solid #f0dfa8;
+        }
+
+        .upiConfirmRow p {
+          margin: 0 0 10px;
+
+          color: #7a5a10;
+
+          font-size: 12.5px;
           font-weight: 700;
-          font-size: 13px;
+        }
+
+        .upiConfirmActions {
+          display: flex;
+
+          gap: 8px;
+        }
+
+        .upiConfirmYes {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 6px;
+
+          flex: 1;
+
+          min-height: 42px;
+
+          border: 0;
+          border-radius: 10px;
+
+          background: #0a7d42;
+
+          color: #ffffff;
+
+          font-family: inherit;
+
+          font-weight: 700;
+          font-size: 12.5px;
+
+          cursor: pointer;
+        }
+
+        .upiConfirmRetry {
+          flex: 1;
+
+          min-height: 42px;
+
+          border: 1.5px solid #e3d1a0;
+          border-radius: 10px;
+
+          background: transparent;
+
+          color: #7a5a10;
+
+          font-family: inherit;
+
+          font-weight: 700;
+          font-size: 12.5px;
+
+          cursor: pointer;
+        }
+
+        .upiConfirmedChip {
+          display: flex;
+          align-items: center;
+
+          gap: 8px;
+
+          margin-top: 12px;
+
+          padding: 12px 14px;
+
+          border-radius: 12px;
+
+          background: #eef9f1;
+
+          border: 1px solid #cce5d4;
+
+          color: #28734b;
+
+          font-weight: 700;
+          font-size: 12.5px;
+        }
+
+        .upiHint {
+          margin-top: 16px;
+
+          padding: 12px 14px;
+
+          border-radius: 12px;
+
+          background: #f4f6f4;
+
+          color: #6b7a72;
+
+          font-size: 12px;
+          font-weight: 600;
+
+          text-align: center;
         }
 
         .fareBreakdown {
@@ -1070,4 +1301,4 @@ export default function CabSelectionPage() {
 
     </main>
   );
-    }
+}
