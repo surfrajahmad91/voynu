@@ -7,14 +7,20 @@ import {
   useState,
 } from "react";
 
-import LocationPicker from "./components/LocationPicker";
 import { useRouter } from "next/navigation";
+
+import LocationPicker from "./components/LocationPicker";
+import AccountLink from "./components/AccountLink";
+import AuthLanding from "./components/AuthLanding";
 
 import {
   calculateTripDetails,
   getChargingMessage,
   VOYNU_TRIP_CONFIG,
 } from "./lib/tripRules";
+
+import { buildWhatsAppLink } from "./lib/contact";
+import { supabase } from "./lib/supabaseClient";
 
 /*
  * Used only as a display default before a pickup city has been
@@ -29,11 +35,6 @@ const DEFAULT_MAX_DISTANCE_KM =
 /*
 |--------------------------------------------------------------------------
 | ICONS
-|--------------------------------------------------------------------------
-|
-| Small inline SVG icon set used throughout the page, replacing
-| emoji so the UI renders consistently across devices/fonts.
-|
 |--------------------------------------------------------------------------
 */
 
@@ -66,6 +67,14 @@ function IconPhone({ size = 15 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 4h4l2 5-2.5 1.6a11.3 11.3 0 0 0 5.4 5.4L15.4 13l5 2v4a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3 6a2 2 0 0 1 2-2z" />
+    </svg>
+  );
+}
+
+function IconWhatsApp({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
     </svg>
   );
 }
@@ -139,7 +148,7 @@ function IconTaxi({ size = 22 }) {
       <circle cx="16" cy="17.6" r="1.6" />
     </svg>
   );
-    }
+}
 
 function IconAlertCircle({ size = 14 }) {
   return (
@@ -198,10 +207,43 @@ function IconCarGraphic() {
       <rect x="130" y="70" width="14" height="3" rx="1.5" fill="#075c31" />
     </svg>
   );
-          }
+}
 
 export default function HomePage() {
   const router = useRouter();
+
+  /*
+   * ------------------------------------------------------------
+   * SESSION / AUTH GATE
+   * ------------------------------------------------------------
+   */
+
+  const [session, setSession] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!cancelled) {
+        setSession(data?.session || null);
+        setCheckingSession(false);
+      }
+    });
+
+    const { data: listener } =
+      supabase.auth.onAuthStateChange(
+        (_event, newSession) => {
+          setSession(newSession);
+        }
+      );
+
+    return () => {
+      cancelled = true;
+      listener?.subscription?.unsubscribe();
+    };
+  }, []);
+
   /*
    * ------------------------------------------------------------
    * TODAY
@@ -1291,6 +1333,42 @@ export default function HomePage() {
 
   /*
    * ------------------------------------------------------------
+   * AUTH GATE
+   * ------------------------------------------------------------
+   */
+
+  if (checkingSession) {
+    return (
+      <main className="authLoadingPage">
+        <div className="authSpinner" />
+        <style jsx>{`
+          .authLoadingPage {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5faf6;
+          }
+          .authSpinner {
+            width: 34px;
+            height: 34px;
+            border: 3px solid rgba(8,120,63,0.18);
+            border-top-color: #0a7d42;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          }
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}</style>
+      </main>
+    );
+  }
+
+  if (!session) {
+    return <AuthLanding />;
+  }
+
+  /*
+   * ------------------------------------------------------------
    * UI
    * ------------------------------------------------------------
    */
@@ -1322,21 +1400,24 @@ export default function HomePage() {
 
           </div>
 
-          <a
-            href="https://wa.me/919918614844?text=Hi%20VOYNU%2C%20I%20have%20a%20question%20about%20booking%20a%20cab."
-            className="headerWhatsapp"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Chat with us on WhatsApp"
-          >
+          <div className="headerActions">
 
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
-            </svg>
+            <AccountLink />
 
-            <span>Chat with us</span>
+            <a
+              href={buildWhatsAppLink(
+                "Hi VOYNU, I have a question about booking a cab."
+              )}
+              className="headerWhatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Chat with us on WhatsApp"
+            >
+              <IconWhatsApp size={15} />
+              <span>Chat with us</span>
+            </a>
 
-          </a>
+          </div>
 
         </div>
 
@@ -1992,26 +2073,6 @@ export default function HomePage() {
 
           box-shadow: 0 6px 14px rgba(8,120,63,0.28);
         }
-        
-        .headerWhatsapp {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-
-          padding: 9px 16px;
-
-          border-radius: 30px;
-
-          background: #1fa855;
-          color: #ffffff;
-
-          text-decoration: none;
-
-          font-size: 13px;
-          font-weight: 700;
-
-          box-shadow: 0 6px 16px rgba(31,168,85,0.25);
-        }
 
         .brandName {
           color: #0a7d42;
@@ -2032,7 +2093,14 @@ export default function HomePage() {
           letter-spacing: 0.3px;
         }
 
-        .headerPhone {
+        .headerActions {
+          display: flex;
+          align-items: center;
+
+          gap: 8px;
+        }
+
+        .headerWhatsapp {
           display: flex;
           align-items: center;
           gap: 8px;
@@ -2041,18 +2109,15 @@ export default function HomePage() {
 
           border-radius: 30px;
 
-          background: #eaf6ee;
-          color: #0a5c32;
+          background: #1fa855;
+          color: #ffffff;
 
           text-decoration: none;
 
           font-size: 13px;
           font-weight: 700;
-        }
 
-        .headerPhoneIcon {
-          display: flex;
-          color: #0a7d42;
+          box-shadow: 0 6px 16px rgba(31,168,85,0.25);
         }
 
         .hero {
@@ -2109,36 +2174,6 @@ export default function HomePage() {
           border-radius: 50%;
 
           background: rgba(8,120,63,0.14);
-        }
-
-        .serviceBadge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-
-          padding: 8px 15px;
-
-          border: 1px solid #d8e7dc;
-          border-radius: 30px;
-
-          background: rgba(255,255,255,0.92);
-
-          color: #4c5d54;
-
-          font-size: 12px;
-
-          box-shadow: 0 6px 18px rgba(0,0,0,0.04);
-        }
-
-        .badgeDot {
-          width: 7px;
-          height: 7px;
-
-          border-radius: 50%;
-
-          background: #0a7d42;
-
-          box-shadow: 0 0 0 4px rgba(8,120,63,0.14);
         }
 
         .heroGrid {
@@ -2974,19 +3009,14 @@ export default function HomePage() {
             display: none;
           }
 
-          .headerPhone {
-            font-size: 11px;
-            padding: 7px 12px;
+          .headerWhatsapp span {
+            display: none;
           }
 
           .heroInner {
             width: calc(100% - 28px);
 
             padding: 28px 0 56px;
-          }
-
-          .serviceBadge {
-            font-size: 10px;
           }
 
           .heroText h1 {
@@ -3180,10 +3210,6 @@ export default function HomePage() {
         }
 
         @media (max-width: 380px) {
-
-          .headerPhone span:last-child {
-            display: none;
-          }
 
           .heroText h1 {
             font-size: 42px;
