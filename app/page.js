@@ -130,29 +130,13 @@ function IconArrowRight({ size = 18 }) {
   );
 }
 
-function IconCarGraphic() {
+function IconTaxi({ size = 22 }) {
   return (
-    <svg viewBox="0 0 220 130" width="100%" height="100%">
-      <ellipse cx="110" cy="115" rx="90" ry="8" fill="rgba(8,120,63,0.10)" />
-      <path
-        d="M20 90 C20 74 30 66 46 64 L54 46 C58 36 68 30 80 30 H150 C162 30 172 36 176 46 L184 64 C198 66 208 74 208 90 V96 C208 100 205 103 201 103 H27 C23 103 20 100 20 96 Z"
-        fill="#0a7d42"
-      />
-      <rect x="70" y="26" width="70" height="6" rx="3" fill="#075c31" />
-      <path
-        d="M60 62 L66 48 C68 44 72 41 77 41 H147 C152 41 156 44 158 48 L164 62 Z"
-        fill="#eaf6ee"
-      />
-      <rect x="110" y="41" width="5" height="21" fill="#0a7d42" />
-      <line x1="115" y1="64" x2="115" y2="96" stroke="#075c31" strokeWidth="2" />
-      <circle cx="66" cy="98" r="20" fill="#0a3d22" />
-      <circle cx="162" cy="98" r="20" fill="#0a3d22" />
-      <circle cx="66" cy="98" r="13" fill="#16241d" />
-      <circle cx="66" cy="98" r="5.5" fill="#eaf6ee" />
-      <circle cx="162" cy="98" r="13" fill="#16241d" />
-      <circle cx="162" cy="98" r="5.5" fill="#eaf6ee" />
-      <rect x="196" y="70" width="8" height="10" rx="3" fill="#f4c542" />
-      <rect x="130" y="70" width="14" height="3" rx="1.5" fill="#075c31" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16h15M5.8 16l1.6-5.2a2.2 2.2 0 0 1 2.1-1.5h5a2.2 2.2 0 0 1 2.1 1.5L18.2 16" />
+      <path d="M8 9.3V7h8v2.3" />
+      <circle cx="8" cy="17.6" r="1.6" />
+      <circle cx="16" cy="17.6" r="1.6" />
     </svg>
   );
     }
@@ -191,24 +175,30 @@ function IconMapPinDot({ size = 12, tone = "pickup" }) {
 
 function IconCarGraphic() {
   return (
-    <svg viewBox="0 0 200 124" width="100%" height="100%">
-      <ellipse cx="100" cy="109" rx="82" ry="9" fill="rgba(8,120,63,0.10)" />
+    <svg viewBox="0 0 220 130" width="100%" height="100%">
+      <ellipse cx="110" cy="115" rx="90" ry="8" fill="rgba(8,120,63,0.10)" />
       <path
-        d="M24 82c0-8 6-14 14-16l14-27c4-8 12-13 21-13h54c9 0 17 5 21 13l14 27c8 2 14 8 14 16v16a6 6 0 0 1-6 6h-9a16 16 0 0 1-32 0H80a16 16 0 0 1-32 0h-9a6 6 0 0 1-6-6V82z"
+        d="M20 90 C20 74 30 66 46 64 L54 46 C58 36 68 30 80 30 H150 C162 30 172 36 176 46 L184 64 C198 66 208 74 208 90 V96 C208 100 205 103 201 103 H27 C23 103 20 100 20 96 Z"
         fill="#0a7d42"
       />
+      <rect x="70" y="26" width="70" height="6" rx="3" fill="#075c31" />
       <path
-        d="M58 40l-9 23h102l-9-23c-2-5-7-8-12-8H70c-5 0-10 3-12 8z"
+        d="M60 62 L66 48 C68 44 72 41 77 41 H147 C152 41 156 44 158 48 L164 62 Z"
         fill="#eaf6ee"
       />
-      <rect x="88" y="52" width="24" height="7" rx="2" fill="#f4c542" />
-      <circle cx="65" cy="100" r="12" fill="#152119" />
-      <circle cx="65" cy="100" r="5" fill="#eaf6ee" />
-      <circle cx="145" cy="100" r="12" fill="#152119" />
-      <circle cx="145" cy="100" r="5" fill="#eaf6ee" />
+      <rect x="110" y="41" width="5" height="21" fill="#0a7d42" />
+      <line x1="115" y1="64" x2="115" y2="96" stroke="#075c31" strokeWidth="2" />
+      <circle cx="66" cy="98" r="20" fill="#0a3d22" />
+      <circle cx="162" cy="98" r="20" fill="#0a3d22" />
+      <circle cx="66" cy="98" r="13" fill="#16241d" />
+      <circle cx="66" cy="98" r="5.5" fill="#eaf6ee" />
+      <circle cx="162" cy="98" r="13" fill="#16241d" />
+      <circle cx="162" cy="98" r="5.5" fill="#eaf6ee" />
+      <rect x="196" y="70" width="8" height="10" rx="3" fill="#f4c542" />
+      <rect x="130" y="70" width="14" height="3" rx="1.5" fill="#075c31" />
     </svg>
   );
-}
+          }
 
 export default function HomePage() {
   const router = useRouter();
