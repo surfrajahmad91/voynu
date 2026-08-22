@@ -17,6 +17,7 @@ import {
   WHATSAPP_NUMBER,
   buildWhatsAppLink,
 } from "../lib/contact";
+import { supabase } from "../lib/supabaseClient";
 
 /*
  * Replace with your real UPI VPA.
