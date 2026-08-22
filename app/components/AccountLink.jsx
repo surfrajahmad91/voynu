@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { supabase } from "../lib/supabaseClient";
 
-function IconUser({ size = 14 }) {
+function IconUser({ size = 13 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="8" r="4" />
@@ -48,34 +48,24 @@ export default function AccountLink() {
   return (
     <Link
       href={loggedIn ? "/account" : "/login"}
-      className="accountLink"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "9px 14px",
+        borderRadius: "30px",
+        background: "#eaf6ee",
+        color: "#0a5c32",
+        textDecoration: "none",
+        fontSize: "12.5px",
+        fontWeight: 700,
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        border: "1px solid #d5ecdd",
+        whiteSpace: "nowrap",
+      }}
     >
       <IconUser size={13} />
       <span>{loggedIn ? "My Account" : "Log in"}</span>
-
-      <style jsx>{`
-
-        .accountLink {
-          display: flex;
-          align-items: center;
-
-          gap: 6px;
-
-          padding: 9px 14px;
-
-          border-radius: 30px;
-
-          background: #eaf6ee;
-          color: #0a5c32;
-
-          text-decoration: none;
-
-          font-size: 12.5px;
-          font-weight: 700;
-        }
-
-      `}</style>
-
     </Link>
   );
 }
