@@ -311,7 +311,7 @@ export default function CabSelectionPage() {
       const { data: userData } =
         await supabase.auth.getUser();
 
-      const { error: insertError } =
+            const { error: insertError } =
         await supabase.from("bookings").insert({
           user_id: userData?.user?.id || null,
 
@@ -348,23 +348,21 @@ export default function CabSelectionPage() {
         });
 
       if (insertError) {
-        window.alert(
-          "DEBUG — insert error:\n" +
-            "message: " + insertError.message + "\n" +
-            "code: " + insertError.code + "\n" +
-            "details: " + insertError.details + "\n" +
-            "hint: " + insertError.hint
+        console.error(
+          "VOYNU: unable to save booking to database:",
+          insertError
         );
-      } else {
-        window.alert("DEBUG — insert succeeded, no error returned.");
       }
     } catch (dbError) {
-      window.alert(
-        "DEBUG — thrown exception: " +
-          (dbError?.message || String(dbError))
+      console.error(
+        "VOYNU: unable to save booking to database:",
+        dbError
       );
+      /*
+       * Non-fatal — the WhatsApp confirmation still proceeds
+       * even if the database write fails.
+       */
     }
-
     /*
      * --------------------------------------------------------
      * SAVE FOR THE CONFIRMATION PAGE
