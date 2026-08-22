@@ -19,6 +19,7 @@ import {
 } from "../lib/contact";
 
 import { supabase } from "../lib/supabaseClient";
+import AccountLink from "../components/AccountLink";
 
 /*
  * Replace with your real UPI VPA.
@@ -121,6 +122,24 @@ export default function CabSelectionPage() {
       setLoaded(true);
     }
   }, []);
+
+  /*
+   * ------------------------------------------------------------
+   * NO BOOKING FOUND — REDIRECT HOME
+   *
+   * IMPORTANT:
+   *
+   * If someone lands on this page directly (no booking in
+   * session storage), silently send them back to the start
+   * of the flow instead of showing a dead-end card.
+   * ------------------------------------------------------------
+   */
+
+  useEffect(() => {
+    if (loaded && !booking) {
+      router.replace("/");
+    }
+  }, [loaded, booking, router]);
 
   /*
    * ------------------------------------------------------------
@@ -268,18 +287,6 @@ export default function CabSelectionPage() {
   /*
    * ------------------------------------------------------------
    * CONFIRM
-   *
-   * IMPORTANT:
-   *
-   * Confirming does three things, in order:
-   *
-   * 1. Saves the booking to Supabase (so it shows up in /admin).
-   * 2. Saves the full confirmed booking to sessionStorage (so
-   *    the /booking-confirmed page can display it).
-   * 3. Opens WhatsApp with the pre-filled confirmation message,
-   *    then navigates to /booking-confirmed. Nothing on this
-   *    page stays editable after confirmation because this
-   *    page is gone.
    * ------------------------------------------------------------
    */
 
@@ -343,10 +350,6 @@ export default function CabSelectionPage() {
         "VOYNU: unable to save booking to database:",
         dbError
       );
-      /*
-       * Non-fatal — the WhatsApp confirmation still proceeds
-       * even if the database write fails.
-       */
     }
 
     /*
@@ -395,110 +398,12 @@ export default function CabSelectionPage() {
 
   /*
    * ------------------------------------------------------------
-   * NO BOOKING FOUND
+   * NO BOOKING — REDIRECTING (nothing to render)
    * ------------------------------------------------------------
    */
 
   if (loaded && !booking) {
-    return (
-      <main className="page emptyState">
-
-        <div className="emptyCard">
-
-          <h1>No booking found</h1>
-
-          <p>
-            We couldn't find your trip
-            details. Please start a
-            new booking.
-          </p>
-
-          <Link
-            href="/"
-            className="emptyButton"
-          >
-            Back to booking
-          </Link>
-
-        </div>
-
-        <style jsx>{`
-
-          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-          .emptyState {
-            min-height: 100vh;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: #f5faf6;
-
-            padding: 24px;
-
-            font-family:
-              'Plus Jakarta Sans',
-              -apple-system,
-              sans-serif;
-          }
-
-          .emptyCard {
-            max-width: 380px;
-
-            text-align: center;
-
-            padding: 32px 26px;
-
-            border-radius: 20px;
-
-            background: #ffffff;
-
-            box-shadow:
-              0 20px 60px
-              rgba(10,40,25,0.10);
-          }
-
-          .emptyCard h1 {
-            margin: 0 0 8px;
-
-            font-size: 20px;
-            font-weight: 800;
-
-            color: #16241d;
-          }
-
-          .emptyCard p {
-            margin: 0 0 20px;
-
-            color: #6b7a72;
-
-            font-size: 13.5px;
-
-            line-height: 1.5;
-          }
-
-          .emptyButton {
-            display: inline-block;
-
-            padding: 12px 24px;
-
-            border-radius: 12px;
-
-            background: #0a7d42;
-
-            color: #ffffff;
-
-            text-decoration: none;
-
-            font-weight: 700;
-            font-size: 13.5px;
-          }
-
-        `}</style>
-
-      </main>
-    );
+    return null;
   }
 
   /*
@@ -565,18 +470,24 @@ export default function CabSelectionPage() {
             </div>
           </Link>
 
-          <a
-            href={buildWhatsAppLink(
-              "Hi VOYNU, I have a question about my booking."
-            )}
-            className="headerWhatsapp"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Chat with us on WhatsApp"
-          >
-            <IconWhatsApp size={15} />
-            <span>Chat with us</span>
-          </a>
+          <div className="headerActions">
+
+            <AccountLink />
+
+            <a
+              href={buildWhatsAppLink(
+                "Hi VOYNU, I have a question about my booking."
+              )}
+              className="headerWhatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Chat with us on WhatsApp"
+            >
+              <IconWhatsApp size={15} />
+              <span>Chat with us</span>
+            </a>
+
+          </div>
 
         </div>
 
@@ -932,6 +843,13 @@ export default function CabSelectionPage() {
           color: #7a8981;
 
           font-size: 8.5px;
+        }
+
+        .headerActions {
+          display: flex;
+          align-items: center;
+
+          gap: 8px;
         }
 
         .headerWhatsapp {
@@ -1405,4 +1323,4 @@ export default function CabSelectionPage() {
 
     </main>
   );
-}
+    }
