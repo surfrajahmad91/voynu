@@ -350,6 +350,11 @@ export default function CabSelectionPage() {
         "VOYNU: unable to save booking to database:",
         dbError
       );
+
+      window.alert(
+        "DEBUG — booking save failed: " +
+          (dbError?.message || String(dbError))
+      );
     }
 
     /*
