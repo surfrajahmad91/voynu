@@ -233,7 +233,9 @@ export default function AccountPage() {
               {b.payment_method === "upi" ? "UPI Payment" : "Pay on Pickup"}
             </div>
             <div style={{ fontSize: 10, color: "#a3b0aa", marginTop: 1 }}>
-              {b.status === "completed" ? "Paid" : "To pay"}
+              {b.payment_method === "upi" || b.status === "completed"
+                ? "Paid"
+                : "To pay"}
             </div>
           </div>
 
