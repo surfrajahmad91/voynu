@@ -16,12 +16,12 @@ import {
  * Replace with your real WhatsApp Business number
  * (international format, digits only, no + or spaces).
  */
-const WHATSAPP_NUMBER = "919123456789";
+const WHATSAPP_NUMBER = "919918614844";
 
 /*
  * Replace with your real UPI VPA.
  */
-const VOYNU_UPI_VPA = "voynu@upi";
+const VOYNU_UPI_VPA = "surfraj@ybl";
 
 function IconCheck({ size = 14 }) {
   return (
