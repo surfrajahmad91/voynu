@@ -62,394 +62,273 @@ function IconCarGraphic() {
   );
 }
 
+const fontFamily = "'Plus Jakarta Sans', -apple-system, sans-serif";
+
 export default function AuthLanding() {
   return (
-    <main className="page">
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(160deg, #ffffff 0%, #f1faf4 55%, #e6f5ec 100%)",
+        fontFamily,
+        color: "#16241d",
+      }}
+    >
 
-      <header className="header">
-        <div className="headerInner">
-          <div className="brand">
-            <div className="brandMark">V</div>
-            <div>
-              <div className="brandName">VOYNU</div>
-              <div className="brandTagline">Travel safe. Travel smart.</div>
+      <header
+        style={{
+          background: "rgba(255,255,255,0.92)",
+          borderBottom: "1px solid #e8eee9",
+          position: "sticky",
+          top: 0,
+          zIndex: 20,
+        }}
+      >
+        <div
+          style={{
+            width: "min(1180px, calc(100% - 32px))",
+            margin: "0 auto",
+            minHeight: 68,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 11,
+                background: "linear-gradient(135deg, #0a7d42, #075c31)",
+                color: "#ffffff",
+                fontWeight: 800,
+                fontSize: 19,
+              }}
+            >
+              V
+            </div>
+            <div style={{ color: "#0a7d42", fontWeight: 800, fontSize: 18 }}>
+              VOYNU
             </div>
           </div>
 
-          <div className="headerActions">
-            <Link href="/login" className="headerLogin">Log in</Link>
-            <Link href="/signup" className="headerSignup">Sign up</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Link
+              href="/login"
+              style={{
+                padding: "9px 16px",
+                borderRadius: 30,
+                color: "#0a5c32",
+                fontSize: 13,
+                fontWeight: 700,
+              }}
+            >
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              style={{
+                padding: "9px 18px",
+                borderRadius: 30,
+                background: "linear-gradient(135deg, #0a7d42, #075c31)",
+                color: "#ffffff",
+                fontSize: 13,
+                fontWeight: 700,
+                boxShadow: "0 6px 16px rgba(8,120,63,0.24)",
+              }}
+            >
+              Sign up
+            </Link>
           </div>
         </div>
       </header>
 
-      <section className="hero">
+      <section
+        style={{
+          width: "min(1180px, calc(100% - 32px))",
+          margin: "0 auto",
+          padding: "40px 0 60px",
+        }}
+      >
 
-        <div className="heroDecor heroDecorOne" />
-        <div className="heroDecor heroDecorTwo" />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
 
-        <div className="heroInner">
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "clamp(40px,10vw,64px)",
+              lineHeight: 1,
+              letterSpacing: "-2px",
+              fontWeight: 800,
+              color: "#10201a",
+            }}
+          >
+            Your ride,<br />
+            <span style={{ color: "#0a7d42" }}>your way.</span>
+          </h1>
 
-          <div className="heroGrid">
+          <p
+            style={{
+              margin: "18px 0 0",
+              color: "#5c6d64",
+              fontSize: 15,
+              lineHeight: 1.6,
+              maxWidth: 420,
+            }}
+          >
+            Book a reliable cab for your journey. Travel safe. Travel smart.
+          </p>
 
-            <div className="heroText">
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 10,
+              marginTop: 24,
+            }}
+          >
 
-              <h1>
-                Your ride,
-                <br />
-                <span>your way.</span>
-              </h1>
-
-              <p>
-                Book a reliable cab for your journey.
-                <br className="desktopBreak" />
-                Travel safe. Travel smart.
-              </p>
-
-              <div className="heroFeatures">
-                <div className="heroFeature">
-                  <span className="featureIcon">
-                    <IconCheckCircle size={13} />
-                  </span>
-                  <span>Verified Drivers</span>
-                </div>
-                <div className="heroFeature">
-                  <span className="featureIcon">
-                    <IconShield size={13} />
-                  </span>
-                  <span>Safe &amp; Secure</span>
-                </div>
-                <div className="heroFeature">
-                  <span className="featureIcon featureIconAmber">
-                    <IconBolt size={13} />
-                  </span>
-                  <span>EV Rides</span>
-                </div>
-              </div>
-
-              <div className="heroActions">
-                <Link href="/signup" className="primaryButton">
-                  <span>Get started</span>
-                  <IconArrowRight size={17} />
-                </Link>
-                <Link href="/login" className="secondaryButton">
-                  I already have an account
-                </Link>
-              </div>
-
+            <div style={pillStyle}>
+              <span style={pillIconStyle}><IconCheckCircle size={13} /></span>
+              Verified Drivers
             </div>
 
-            <div className="heroVehicle">
-              <div className="vehicleGlow" />
-              <div className="vehicle" aria-hidden="true">
-                <IconCarGraphic />
-              </div>
+            <div style={pillStyle}>
+              <span style={pillIconStyle}><IconShield size={13} /></span>
+              Safe &amp; Secure
             </div>
 
+            <div style={pillStyle}>
+              <span style={{ ...pillIconStyle, background: "#fdf1d8", color: "#b8790e" }}>
+                <IconBolt size={13} />
+              </span>
+              EV Rides
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 340,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              marginTop: 32,
+            }}
+          >
+
+            <Link
+              href="/signup"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 9,
+                minHeight: 54,
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #0a7d42, #075c31)",
+                color: "#ffffff",
+                fontWeight: 800,
+                fontSize: 14.5,
+                boxShadow: "0 10px 24px rgba(8,120,63,.24)",
+              }}
+            >
+              Get started
+              <IconArrowRight size={17} />
+            </Link>
+
+            <Link
+              href="/login"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 50,
+                borderRadius: 14,
+                border: "1.5px solid #dcebe1",
+                color: "#0a7d42",
+                fontWeight: 700,
+                fontSize: 13.5,
+              }}
+            >
+              I already have an account
+            </Link>
+
+          </div>
+
+          <div style={{ width: "min(320px, 82%)", marginTop: 40 }}>
+            <IconCarGraphic />
           </div>
 
         </div>
 
       </section>
 
-      <footer className="footer">
-        <div className="footerInner">
+      <footer
+        style={{
+          background: "#12211a",
+          color: "rgba(255,255,255,.72)",
+        }}
+      >
+        <div
+          style={{
+            width: "min(1180px, calc(100% - 32px))",
+            margin: "0 auto",
+            minHeight: 60,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+            fontSize: 11,
+            textAlign: "center",
+          }}
+        >
           <div>
-            <strong>VOYNU</strong>
-            <span> © {new Date().getFullYear()}</span>
+            <strong style={{ color: "#ffffff" }}>VOYNU</strong>
+            {" "}© {new Date().getFullYear()}
           </div>
           <div>Travel safe. Travel smart.</div>
         </div>
       </footer>
 
-      <style jsx>{`
-
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-        * { box-sizing: border-box; }
-
-        .page {
-          min-height: 100vh;
-          background: #f5faf6;
-          color: #16241d;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .header {
-          background: rgba(255,255,255,0.92);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid #e8eee9;
-          position: sticky;
-          top: 0;
-          z-index: 20;
-        }
-
-        .headerInner {
-          width: min(1180px, calc(100% - 40px));
-          min-height: 72px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .brand {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .brandMark {
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #0a7d42, #075c31);
-          color: #ffffff;
-          font-size: 21px;
-          font-weight: 800;
-          box-shadow: 0 6px 14px rgba(8,120,63,0.28);
-        }
-
-        .brandName {
-          color: #0a7d42;
-          font-size: 20px;
-          line-height: 1;
-          font-weight: 800;
-          letter-spacing: 0.6px;
-        }
-
-        .brandTagline {
-          margin-top: 4px;
-          color: #7a8981;
-          font-size: 9px;
-        }
-
-        .headerActions {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .headerLogin {
-          padding: 9px 16px;
-          border-radius: 30px;
-          color: #0a5c32;
-          font-size: 13px;
-          font-weight: 700;
-        }
-
-        .headerSignup {
-          padding: 9px 18px;
-          border-radius: 30px;
-          background: linear-gradient(135deg, #0a7d42, #075c31);
-          color: #ffffff;
-          font-size: 13px;
-          font-weight: 700;
-          box-shadow: 0 6px 16px rgba(8,120,63,0.24);
-        }
-
-        .hero {
-          position: relative;
-          overflow: hidden;
-          min-height: calc(100vh - 72px);
-          display: flex;
-          align-items: center;
-          background: linear-gradient(160deg, #ffffff 0%, #f1faf4 55%, #e6f5ec 100%);
-        }
-
-        .heroInner {
-          width: min(1180px, calc(100% - 40px));
-          margin: 0 auto;
-          padding: 46px 0;
-          position: relative;
-          z-index: 2;
-        }
-
-        .heroDecor {
-          position: absolute;
-          pointer-events: none;
-          filter: blur(50px);
-        }
-
-        .heroDecorOne {
-          width: 480px;
-          height: 200px;
-          right: -80px;
-          bottom: -110px;
-          border-radius: 50%;
-          background: rgba(8,60,38,0.28);
-          transform: rotate(-8deg);
-        }
-
-        .heroDecorTwo {
-          width: 260px;
-          height: 260px;
-          right: 8%;
-          top: -160px;
-          border-radius: 50%;
-          background: rgba(8,120,63,0.14);
-        }
-
-        .heroGrid {
-          display: grid;
-          grid-template-columns: 1.15fr 0.85fr;
-          align-items: center;
-          gap: 32px;
-        }
-
-        .heroText h1 {
-          margin: 0;
-          color: #10201a;
-          font-size: clamp(42px,6vw,70px);
-          line-height: 0.98;
-          letter-spacing: -3px;
-          font-weight: 800;
-        }
-
-        .heroText h1 span {
-          color: #0a7d42;
-        }
-
-        .heroText p {
-          margin: 20px 0 0;
-          color: #5c6d64;
-          font-size: 16px;
-          line-height: 1.6;
-        }
-
-        .heroFeatures {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 24px;
-        }
-
-        .heroFeature {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 14px 8px 8px;
-          border-radius: 30px;
-          background: #ffffff;
-          border: 1px solid #e5ede8;
-          color: #2c3d34;
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .featureIcon {
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          background: #e1f3e7;
-          color: #0a7d42;
-        }
-
-        .featureIconAmber {
-          background: #fdf1d8;
-          color: #b8790e;
-        }
-
-        .heroActions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-top: 30px;
-        }
-
-        .primaryButton {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          padding: 15px 26px;
-          border-radius: 14px;
-          background: linear-gradient(135deg, #0a7d42, #075c31);
-          color: #ffffff;
-          font-weight: 800;
-          font-size: 14.5px;
-          box-shadow: 0 10px 24px rgba(8,120,63,.24);
-        }
-
-        .secondaryButton {
-          display: flex;
-          align-items: center;
-          padding: 15px 22px;
-          border-radius: 14px;
-          border: 1.5px solid #dcebe1;
-          color: #0a7d42;
-          font-weight: 700;
-          font-size: 13.5px;
-        }
-
-        .heroVehicle {
-          min-height: 190px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-
-        .vehicleGlow {
-          position: absolute;
-          width: 280px;
-          height: 110px;
-          border-radius: 50%;
-          background: rgba(8,120,63,0.10);
-          filter: blur(20px);
-          transform: rotate(-6deg);
-        }
-
-        .vehicle {
-          position: relative;
-          width: min(320px, 82%);
-          filter: drop-shadow(0 18px 20px rgba(0,0,0,0.10));
-        }
-
-        .footer {
-          background: #12211a;
-          color: #ffffff;
-        }
-
-        .footerInner {
-          width: min(1180px,calc(100% - 40px));
-          min-height: 68px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin: 0 auto;
-          color: rgba(255,255,255,.72);
-          font-size: 11px;
-        }
-
-        .footerInner strong {
-          color: #ffffff;
-        }
-
-        @media (max-width: 900px) {
-          .heroGrid { grid-template-columns: 1fr; }
-          .heroVehicle { display: none; }
-        }
-
-        @media (max-width: 700px) {
-          .headerInner { width: calc(100% - 28px); min-height: 62px; }
-          .brandTagline { display: none; }
-          .heroInner { width: calc(100% - 28px); padding: 30px 0; }
-          .heroText h1 { font-size: 44px; letter-spacing: -2px; }
-          .heroText p { font-size: 14px; margin-top: 16px; }
-          .desktopBreak { display: none; }
-          .heroActions { flex-direction: column; }
-          .primaryButton, .secondaryButton { width: 100%; justify-content: center; }
-          .footerInner { width: calc(100% - 28px); flex-direction: column; gap: 4px; }
-        }
-
-      `}</style>
-
     </main>
   );
 }
+
+const pillStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "8px 14px 8px 8px",
+  borderRadius: 30,
+  background: "#ffffff",
+  border: "1px solid #e5ede8",
+  color: "#2c3d34",
+  fontSize: 12,
+  fontWeight: 700,
+};
+
+const pillIconStyle = {
+  width: 24,
+  height: 24,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: "50%",
+  background: "#e1f3e7",
+  color: "#0a7d42",
+};
