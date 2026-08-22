@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import LocationPicker from "./components/LocationPicker";
+import { useRouter } from "next/navigation";
 
 import {
   calculateTripDetails,
@@ -194,6 +195,7 @@ function IconCarGraphic() {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   /*
    * ------------------------------------------------------------
    * TODAY
@@ -1244,14 +1246,7 @@ export default function HomePage() {
         bookingData.createdAt
       );
 
-      console.log(
-        "VOYNU booking:",
-        bookingData
-      );
-
-      showSuccess(
-        "Your trip details are ready. Next, we'll help you choose your cab."
-      );
+      router.push("/cab-selection");
     } catch (error) {
       console.error(
         "Unable to save booking data:",
@@ -1261,7 +1256,7 @@ export default function HomePage() {
       showError(
         "We couldn't save your trip details. Please try again."
       );
-    } finally {
+
       setIsSubmitting(false);
     }
   };
@@ -1322,18 +1317,18 @@ export default function HomePage() {
           </div>
 
           <a
-            href="tel:+919123456789"
-            className="headerPhone"
-            aria-label="Call VOYNU"
+            href="https://wa.me/919123456789?text=Hi%20VOYNU%2C%20I%20have%20a%20question%20about%20booking%20a%20cab."
+            className="headerWhatsapp"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat with us on WhatsApp"
           >
 
-            <span className="headerPhoneIcon">
-              <IconPhone size={14} />
-            </span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
+            </svg>
 
-            <span>
-              +91 91234 56789
-            </span>
+            <span>Chat with us</span>
 
           </a>
 
@@ -1348,20 +1343,6 @@ export default function HomePage() {
         <div className="heroDecor heroDecorTwo" />
 
         <div className="heroInner">
-
-          <div className="serviceBadge">
-
-            <span className="badgeDot" />
-
-            <span>
-              Journeys up to{" "}
-              <strong>
-                {DEFAULT_MAX_DISTANCE_KM} km
-              </strong>{" "}
-              per leg
-            </span>
-
-          </div>
 
           <div className="heroGrid">
 
@@ -2005,6 +1986,26 @@ export default function HomePage() {
 
           box-shadow: 0 6px 14px rgba(8,120,63,0.28);
         }
+        
+        .headerWhatsapp {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          padding: 9px 16px;
+
+          border-radius: 30px;
+
+          background: #1fa855;
+          color: #ffffff;
+
+          text-decoration: none;
+
+          font-size: 13px;
+          font-weight: 700;
+
+          box-shadow: 0 6px 16px rgba(31,168,85,0.25);
+        }
 
         .brandName {
           color: #0a7d42;
@@ -2326,7 +2327,7 @@ export default function HomePage() {
         }
 
         .tripToggle {
-          width: min(620px,100%);
+          width: 100%;
 
           display: grid;
 
@@ -2460,6 +2461,8 @@ export default function HomePage() {
           grid-template-columns: 1fr 1fr;
 
           gap: 20px;
+
+          align-items: start;
         }
 
         .locationBox {
