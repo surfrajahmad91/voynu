@@ -25,6 +25,174 @@ import {
 const DEFAULT_MAX_DISTANCE_KM =
   VOYNU_TRIP_CONFIG.maxOneWayDistanceKm;
 
+/*
+|--------------------------------------------------------------------------
+| ICONS
+|--------------------------------------------------------------------------
+|
+| Small inline SVG icon set used throughout the page, replacing
+| emoji so the UI renders consistently across devices/fonts.
+|
+|--------------------------------------------------------------------------
+*/
+
+function IconCheckCircle({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5l2.5 2.5 5-5" />
+    </svg>
+  );
+}
+
+function IconShield({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2.5l7.5 3.5v5.5c0 5-3.2 8.3-7.5 9.9-4.3-1.6-7.5-4.9-7.5-9.9V6l7.5-3.5z" />
+    </svg>
+  );
+}
+
+function IconBolt({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" />
+    </svg>
+  );
+}
+
+function IconPhone({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 4h4l2 5-2.5 1.6a11.3 11.3 0 0 0 5.4 5.4L15.4 13l5 2v4a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3 6a2 2 0 0 1 2-2z" />
+    </svg>
+  );
+}
+
+function IconLock({ size = 13 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="10" width="16" height="10" rx="2.5" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+function IconCalendar({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="16" rx="2.5" />
+      <path d="M16 3v4M8 3v4M3 10h18" />
+    </svg>
+  );
+}
+
+function IconClock({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5v5l3.2 3.2" />
+    </svg>
+  );
+}
+
+function IconUser({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4.2 4-6.4 8-6.4s8 2.2 8 6.4" />
+    </svg>
+  );
+}
+
+function IconChat({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4 8.6 8.6 0 0 1-3.8-.9L3 20l1-5.3a8.4 8.4 0 0 1-1-4A8.5 8.5 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z" />
+    </svg>
+  );
+}
+
+function IconSwap({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 7h11l-3-3M17 17H6l3 3" />
+    </svg>
+  );
+}
+
+function IconArrowRight({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function IconTaxi({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16h15M5.8 16l1.6-5.2a2.2 2.2 0 0 1 2.1-1.5h5a2.2 2.2 0 0 1 2.1 1.5L18.2 16" />
+      <path d="M8 9.3V7h8v2.3" />
+      <circle cx="8" cy="17.6" r="1.6" />
+      <circle cx="16" cy="17.6" r="1.6" />
+    </svg>
+  );
+}
+
+function IconAlertCircle({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v5M12 16h.01" />
+    </svg>
+  );
+}
+
+function IconSpinner({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="rgba(8,120,63,0.18)" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="#08783f" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconMapPinDot({ size = 12, tone = "pickup" }) {
+  const color =
+    tone === "pickup" ? "#08783f" : "#c8622a";
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 12 12">
+      <circle cx="6" cy="6" r="5" fill="#ffffff" stroke={color} strokeWidth="2.4" />
+      {tone === "pickup" && (
+        <circle cx="6" cy="6" r="2.2" fill={color} />
+      )}
+    </svg>
+  );
+}
+
+function IconCarGraphic() {
+  return (
+    <svg viewBox="0 0 200 124" width="100%" height="100%">
+      <ellipse cx="100" cy="109" rx="82" ry="9" fill="rgba(8,120,63,0.10)" />
+      <path
+        d="M24 82c0-8 6-14 14-16l14-27c4-8 12-13 21-13h54c9 0 17 5 21 13l14 27c8 2 14 8 14 16v16a6 6 0 0 1-6 6h-9a16 16 0 0 1-32 0H80a16 16 0 0 1-32 0h-9a6 6 0 0 1-6-6V82z"
+        fill="#0a7d42"
+      />
+      <path
+        d="M58 40l-9 23h102l-9-23c-2-5-7-8-12-8H70c-5 0-10 3-12 8z"
+        fill="#eaf6ee"
+      />
+      <rect x="88" y="52" width="24" height="7" rx="2" fill="#f4c542" />
+      <circle cx="65" cy="100" r="12" fill="#152119" />
+      <circle cx="65" cy="100" r="5" fill="#eaf6ee" />
+      <circle cx="145" cy="100" r="12" fill="#152119" />
+      <circle cx="145" cy="100" r="5" fill="#eaf6ee" />
+    </svg>
+  );
+}
+
 export default function HomePage() {
   /*
    * ------------------------------------------------------------
@@ -53,18 +221,6 @@ export default function HomePage() {
   /*
    * ------------------------------------------------------------
    * LOCATIONS
-   *
-   * IMPORTANT:
-   *
-   * selected === true only after the user actually selects
-   * a location from LocationPicker.
-   *
-   * This prevents road-distance calculation from starting
-   * merely because coordinates temporarily exist.
-   *
-   * city is the detected city name (from Google's
-   * address_components), used to match against
-   * VOYNU_TRIP_CONFIG.serviceCities in tripRules.js.
    * ------------------------------------------------------------
    */
 
@@ -246,46 +402,6 @@ export default function HomePage() {
   /*
    * ------------------------------------------------------------
    * SERVER ROAD DISTANCE
-   *
-   * IMPORTANT:
-   *
-   * DO NOT use Google DirectionsService in the browser.
-   *
-   * The Google Routes API key stays on the server.
-   *
-   * Expected API:
-   *
-   * POST /api/route-distance
-   *
-   * Request:
-   *
-   * {
-   *   origin: {
-   *     lat: number,
-   *     lon: number
-   *   },
-   *   destination: {
-   *     lat: number,
-   *     lon: number
-   *   }
-   * }
-   *
-   * Response can provide:
-   *
-   * {
-   *   distanceMeters: number,
-   *   durationSeconds: number
-   * }
-   *
-   * or:
-   *
-   * {
-   *   distanceKm: number,
-   *   distanceText: string,
-   *   durationText: string
-   * }
-   *
-   * This function accepts either format.
    * ------------------------------------------------------------
    */
 
@@ -339,12 +455,6 @@ export default function HomePage() {
         );
       }
 
-      /*
-       * --------------------------------------------------------
-       * DISTANCE
-       * --------------------------------------------------------
-       */
-
       let distanceKm = null;
 
       if (
@@ -370,12 +480,6 @@ export default function HomePage() {
         );
       }
 
-      /*
-       * --------------------------------------------------------
-       * DISTANCE TEXT
-       * --------------------------------------------------------
-       */
-
       let distanceText =
         data?.distanceText || "";
 
@@ -383,12 +487,6 @@ export default function HomePage() {
         distanceText =
           `${distanceKm.toFixed(1)} km`;
       }
-
-      /*
-       * --------------------------------------------------------
-       * DURATION
-       * --------------------------------------------------------
-       */
 
       let durationText =
         data?.durationText || "";
@@ -433,38 +531,17 @@ export default function HomePage() {
   /*
    * ------------------------------------------------------------
    * AUTOMATIC DISTANCE CALCULATION
-   *
-   * IMPORTANT:
-   *
-   * Calculation happens ONLY when:
-   *
-   * pickup.selected === true
-   * AND
-   * drop.selected === true
-   *
-   * This is the key fix for the original issue.
    * ------------------------------------------------------------
    */
 
   useEffect(() => {
     let cancelled = false;
 
-    /*
-     * Only calculate after BOTH locations have actually
-     * been selected.
-     */
-
     const pickupIsSelected =
       hasSelectedLocation(pickup);
 
     const dropIsSelected =
       hasSelectedLocation(drop);
-
-    /*
-     * ----------------------------------------------------------
-     * NO COMPLETE JOURNEY
-     * ----------------------------------------------------------
-     */
 
     if (
       !pickupIsSelected ||
@@ -480,12 +557,6 @@ export default function HomePage() {
         cancelled = true;
       };
     }
-
-    /*
-     * ----------------------------------------------------------
-     * SAME LOCATION
-     * ----------------------------------------------------------
-     */
 
     const sameLatitude =
       Math.abs(
@@ -517,23 +588,11 @@ export default function HomePage() {
       };
     }
 
-    /*
-     * ----------------------------------------------------------
-     * CLEAR PREVIOUS RESULT
-     * ----------------------------------------------------------
-     */
-
     setJourneyDistanceKm(null);
     setJourneyDistanceText("");
     setJourneyDurationText("");
     setJourneyDistanceError("");
     setJourneyDistanceLoading(true);
-
-    /*
-     * ----------------------------------------------------------
-     * CALCULATE
-     * ----------------------------------------------------------
-     */
 
     const calculate = async () => {
       try {
@@ -597,14 +656,6 @@ export default function HomePage() {
   /*
    * ------------------------------------------------------------
    * TOTAL DISTANCE
-   *
-   * For round trip:
-   *
-   * Each leg is limited to the configured maximum.
-   *
-   * Total distance is still calculated as:
-   *
-   * one-way × 2
    * ------------------------------------------------------------
    */
 
@@ -618,21 +669,6 @@ export default function HomePage() {
   /*
    * ------------------------------------------------------------
    * TRIP DETAILS (business rules)
-   *
-   * Runs pickup, drop, trip type, distance, and the pickup's
-   * detected city through calculateTripDetails() in
-   * tripRules.js.
-   *
-   * This is the single source of truth for:
-   *
-   * - Whether the pickup is inside a currently active
-   *   service city (matched by detected city name, not
-   *   hardcoded).
-   *
-   * - Whether the one-way distance is within that city's
-   *   configured maximum (also not hardcoded).
-   *
-   * - Whether an EV round-trip charging break is required.
    * ------------------------------------------------------------
    */
 
@@ -746,11 +782,6 @@ export default function HomePage() {
     (location) => {
       clearMessage();
 
-      /*
-       * If LocationPicker clears its selection,
-       * completely reset pickup.
-       */
-
       if (!location) {
         setPickup({
           name: "",
@@ -781,11 +812,6 @@ export default function HomePage() {
           ? Number(location.lon)
           : null;
 
-      /*
-       * Mark selected ONLY when a real location
-       * with valid coordinates has been returned.
-       */
-
       const selected =
         Boolean(name) &&
         Number.isFinite(lat) &&
@@ -813,11 +839,6 @@ export default function HomePage() {
   const handleDropSelect = useCallback(
     (location) => {
       clearMessage();
-
-      /*
-       * If LocationPicker clears its selection,
-       * completely reset drop.
-       */
 
       if (!location) {
         setDrop({
@@ -1037,10 +1058,6 @@ export default function HomePage() {
    */
 
   const validateBooking = () => {
-    /*
-     * PICKUP
-     */
-
     if (!pickup.name.trim()) {
       return "Please select your pickup location.";
     }
@@ -1049,10 +1066,6 @@ export default function HomePage() {
       return "Please select your pickup location from the suggested locations.";
     }
 
-    /*
-     * DROP
-     */
-
     if (!drop.name.trim()) {
       return "Please select your drop location.";
     }
@@ -1060,10 +1073,6 @@ export default function HomePage() {
     if (!hasSelectedLocation(drop)) {
       return "Please select your drop location from the suggested locations.";
     }
-
-    /*
-     * SAME COORDINATES
-     */
 
     const sameLatitude =
       Math.abs(
@@ -1084,10 +1093,6 @@ export default function HomePage() {
       return "Pickup and drop locations cannot be the same.";
     }
 
-    /*
-     * DISTANCE
-     */
-
     if (journeyDistanceKm === null) {
       if (journeyDistanceLoading) {
         return "Please wait while we calculate the road distance between your pickup and drop locations.";
@@ -1107,14 +1112,6 @@ export default function HomePage() {
       return "We couldn't calculate the journey distance. Please select your locations again.";
     }
 
-    /*
-     * SERVICE AREA & MAXIMUM DISTANCE
-     *
-     * Both rules — which cities are active, and how far a
-     * trip can go — are resolved by calculateTripDetails()
-     * in tripRules.js, not hardcoded here.
-     */
-
     if (
       !tripDetails ||
       !tripDetails.valid
@@ -1125,10 +1122,6 @@ export default function HomePage() {
       );
     }
 
-    /*
-     * TRAVEL DATE
-     */
-
     if (!travelDate) {
       return "Please select your travel date.";
     }
@@ -1136,10 +1129,6 @@ export default function HomePage() {
     if (travelDate < today) {
       return "Travel date cannot be in the past.";
     }
-
-    /*
-     * PICKUP TIME
-     */
 
     if (!pickupTime) {
       return "Please select your pickup time.";
@@ -1155,10 +1144,6 @@ export default function HomePage() {
       return "Pickup time cannot be in the past.";
     }
 
-    /*
-     * PASSENGER
-     */
-
     const trimmedName =
       passengerName.trim();
 
@@ -1170,10 +1155,6 @@ export default function HomePage() {
       return "Please enter a valid passenger name.";
     }
 
-    /*
-     * PHONE
-     */
-
     const normalizedPhone =
       normalizeIndianPhone(phone);
 
@@ -1181,20 +1162,12 @@ export default function HomePage() {
       return "Please enter a valid 10-digit Indian mobile number.";
     }
 
-    /*
-     * WHATSAPP
-     */
-
     const normalizedWhatsApp =
       normalizeIndianPhone(whatsapp);
 
     if (!normalizedWhatsApp) {
       return "Please enter a valid WhatsApp mobile number.";
     }
-
-    /*
-     * ROUND TRIP DATE/TIME
-     */
 
     if (tripType === "roundtrip") {
       if (!returnDate) {
@@ -1295,6 +1268,28 @@ export default function HomePage() {
 
   /*
    * ------------------------------------------------------------
+   * DERIVED UI STATE for the route card
+   * ------------------------------------------------------------
+   */
+
+  const bothLocationsSelected =
+    hasSelectedLocation(pickup) &&
+    hasSelectedLocation(drop);
+
+  const routeCardStatus = !bothLocationsSelected
+    ? "idle"
+    : journeyDistanceLoading
+    ? "loading"
+    : journeyDistanceError
+    ? "error"
+    : tripDetails && !tripDetails.valid
+    ? "invalid"
+    : journeyDistanceKm !== null && tripDetails?.valid
+    ? "valid"
+    : "idle";
+
+  /*
+   * ------------------------------------------------------------
    * UI
    * ------------------------------------------------------------
    */
@@ -1332,8 +1327,8 @@ export default function HomePage() {
             aria-label="Call VOYNU"
           >
 
-            <span className="phoneIcon">
-              ☎
+            <span className="headerPhoneIcon">
+              <IconPhone size={14} />
             </span>
 
             <span>
@@ -1390,39 +1385,24 @@ export default function HomePage() {
               <div className="heroFeatures">
 
                 <div className="heroFeature">
-
                   <span className="featureIcon">
-                    ✓
+                    <IconCheckCircle size={14} />
                   </span>
-
-                  <span>
-                    Verified Drivers
-                  </span>
-
+                  <span>Verified Drivers</span>
                 </div>
 
                 <div className="heroFeature">
-
                   <span className="featureIcon">
-                    ⌁
+                    <IconShield size={14} />
                   </span>
-
-                  <span>
-                    Safe &amp; Secure
-                  </span>
-
+                  <span>Safe &amp; Secure</span>
                 </div>
 
                 <div className="heroFeature">
-
-                  <span className="featureIcon">
-                    ⚡
+                  <span className="featureIcon featureIconAmber">
+                    <IconBolt size={14} />
                   </span>
-
-                  <span>
-                    EV Rides
-                  </span>
-
+                  <span>EV Rides</span>
                 </div>
 
               </div>
@@ -1430,16 +1410,10 @@ export default function HomePage() {
             </div>
 
             <div className="heroVehicle">
-
               <div className="vehicleGlow" />
-
-              <div
-                className="vehicle"
-                aria-hidden="true"
-              >
-                🚙
+              <div className="vehicle" aria-hidden="true">
+                <IconCarGraphic />
               </div>
-
             </div>
 
           </div>
@@ -1455,25 +1429,13 @@ export default function HomePage() {
           <div className="bookingHeader">
 
             <div>
-
-              <h2>
-                Book your ride
-              </h2>
-
-              <p>
-                Tell us where you want to go.
-              </p>
-
+              <h2>Book your ride</h2>
+              <p>Tell us where you want to go.</p>
             </div>
 
             <div className="secureBadge">
-
-              <span>
-                🔒
-              </span>
-
+              <IconLock size={12} />
               Secure booking
-
             </div>
 
           </div>
@@ -1487,230 +1449,178 @@ export default function HomePage() {
             <button
               type="button"
               role="tab"
-              aria-selected={
-                tripType === "oneway"
-              }
+              aria-selected={tripType === "oneway"}
               className={
                 tripType === "oneway"
                   ? "tripButton active"
                   : "tripButton"
               }
-              onClick={() =>
-                handleTripTypeChange(
-                  "oneway"
-                )
-              }
+              onClick={() => handleTripTypeChange("oneway")}
             >
-
               <span className="tripIcon">
-                →
+                <IconArrowRight size={17} />
               </span>
-
               <span>
-
-                <strong>
-                  One Way
-                </strong>
-
-                <small>
-                  Single journey
-                </small>
-
+                <strong>One Way</strong>
+                <small>Single journey</small>
               </span>
-
             </button>
 
             <button
               type="button"
               role="tab"
-              aria-selected={
-                tripType ===
-                "roundtrip"
-              }
+              aria-selected={tripType === "roundtrip"}
               className={
-                tripType ===
-                "roundtrip"
+                tripType === "roundtrip"
                   ? "tripButton active"
                   : "tripButton"
               }
-              onClick={() =>
-                handleTripTypeChange(
-                  "roundtrip"
-                )
-              }
+              onClick={() => handleTripTypeChange("roundtrip")}
             >
-
               <span className="tripIcon">
-                ⇄
+                <IconSwap size={17} />
               </span>
-
               <span>
-
-                <strong>
-                  Round Trip
-                </strong>
-
-                <small>
-                  {DEFAULT_MAX_DISTANCE_KM} km each way
-                </small>
-
+                <strong>Round Trip</strong>
+                <small>{DEFAULT_MAX_DISTANCE_KM} km each way</small>
               </span>
-
             </button>
 
           </div>
 
           <div className="sectionLabel">
-
-            <span className="sectionNumber">
-              1
-            </span>
-
-            <span>
-              Journey details
-            </span>
-
+            <span className="sectionNumber">1</span>
+            <span>Journey details</span>
           </div>
 
           <div className="locationGrid">
 
             <div className="locationBox">
-
               <LocationPicker
                 label="Pickup location"
                 value={pickup.name}
                 placeholder="Search pickup location"
                 allowCurrentLocation={true}
-                onLocationSelect={
-                  handlePickupSelect
-                }
+                onLocationSelect={handlePickupSelect}
               />
-
             </div>
 
             <div className="locationBox">
-
               <LocationPicker
                 label="Drop location"
                 value={drop.name}
                 placeholder="Search destination"
                 allowCurrentLocation={false}
-                onLocationSelect={
-                  handleDropSelect
-                }
+                onLocationSelect={handleDropSelect}
               />
-
             </div>
 
           </div>
 
-          <div className="journeyDistanceBox">
+          <div
+            className={`routeCard routeCard-${routeCardStatus}`}
+          >
 
-            <div className="journeyDistanceIcon">
-              🚕
+            <div className="routeCardIcon">
+
+              {routeCardStatus === "loading" ? (
+                <IconSpinner size={20} />
+              ) : routeCardStatus === "error" ||
+                routeCardStatus === "invalid" ? (
+                <IconAlertCircle size={19} />
+              ) : (
+                <IconTaxi size={20} />
+              )}
+
             </div>
 
-            <div className="journeyDistanceContent">
+            <div className="routeCardBody">
 
-              <div className="journeyDistanceLabel">
+              <div className="routeCardLabel">
                 JOURNEY DISTANCE
               </div>
 
-              {!hasSelectedLocation(
-                pickup
-              ) ||
-              !hasSelectedLocation(
-                drop
-              ) ? (
-
-                <div className="journeyDistanceMessage">
+              {routeCardStatus === "idle" && (
+                <div className="routeCardMessage">
                   Select both locations to
                   calculate road distance.
                 </div>
+              )}
 
-              ) : journeyDistanceLoading ? (
-
-                <div className="journeyDistanceMessage">
+              {routeCardStatus === "loading" && (
+                <div className="routeCardMessage">
                   Calculating road distance...
                 </div>
+              )}
 
-              ) : journeyDistanceError ? (
-
-                <div className="journeyDistanceError">
+              {routeCardStatus === "error" && (
+                <div className="routeCardMessage routeCardMessageError">
                   {journeyDistanceError}
                 </div>
+              )}
 
-              ) : journeyDistanceKm !==
-                null &&
-                tripDetails &&
-                !tripDetails.valid ? (
-
-                <div className="journeyDistanceError">
-                  {tripDetails.reason ||
+              {routeCardStatus === "invalid" && (
+                <div className="routeCardMessage routeCardMessageError">
+                  {tripDetails?.reason ||
                     "This journey is not currently supported."}
                 </div>
+              )}
 
-              ) : journeyDistanceKm !==
-                null &&
-                tripDetails?.valid ? (
-
+              {routeCardStatus === "valid" && (
                 <div>
 
-                  <div className="journeyDistanceValue">
+                  <div className="routeCardValue">
 
-                    {tripType ===
-                    "roundtrip"
-                      ? `${journeyDistanceKm.toFixed(
-                          1
-                        )} km each way • ${totalJourneyDistanceKm.toFixed(
-                          1
-                        )} km total`
+                    {tripType === "roundtrip"
+                      ? `${journeyDistanceKm.toFixed(1)} km each way`
                       : journeyDistanceText ||
-                        `${journeyDistanceKm.toFixed(
-                          1
-                        )} km`}
+                        `${journeyDistanceKm.toFixed(1)} km`}
+
+                    {tripType === "roundtrip" && (
+                      <span className="routeCardValueSub">
+                        {" "}• {totalJourneyDistanceKm.toFixed(1)} km total
+                      </span>
+                    )}
 
                   </div>
 
-                  <div className="journeyDuration">
-                    Maximum{" "}
-                    {tripDetails.maxOneWayDistanceKm ??
-                      DEFAULT_MAX_DISTANCE_KM}{" "}
-                    km each way
-                    {tripDetails.serviceCity?.name &&
-                      ` • Pickup in ${tripDetails.serviceCity.name}`}
+                  <div className="routeCardChips">
+
+                    <span className="routeChip">
+                      Max{" "}
+                      {tripDetails.maxOneWayDistanceKm ??
+                        DEFAULT_MAX_DISTANCE_KM}{" "}
+                      km each way
+                    </span>
+
+                    {tripDetails.serviceCity?.name && (
+                      <span className="routeChip">
+                        <IconMapPinDot size={9} tone="pickup" />
+                        Pickup in {tripDetails.serviceCity.name}
+                      </span>
+                    )}
+
+                    {journeyDurationText && (
+                      <span className="routeChip">
+                        <IconClock size={11} />
+                        {journeyDurationText}
+                        {tripType === "roundtrip" && " each way"}
+                      </span>
+                    )}
+
                   </div>
-
-                  {journeyDurationText && (
-                    <div className="journeyDuration">
-                      Approx. driving time:{" "}
-                      {journeyDurationText}
-
-                      {tripType ===
-                        "roundtrip" &&
-                        " each way"}
-                    </div>
-                  )}
 
                   {tripType === "roundtrip" &&
                     tripDetails.chargingRequired && (
-                      <div className="journeyDuration">
-                        {getChargingMessage(
-                          tripDetails
-                        )}
+                      <div className="chargingChip">
+                        <IconBolt size={13} />
+                        <span>
+                          {getChargingMessage(tripDetails)}
+                        </span>
                       </div>
                     )}
 
                 </div>
-
-              ) : (
-
-                <div className="journeyDistanceError">
-
-                  Unable to calculate road distance.
-
-                </div>
-
               )}
 
             </div>
@@ -1720,54 +1630,38 @@ export default function HomePage() {
           <div className="formGrid">
 
             <div className="field">
-
               <label htmlFor="travelDate">
-
                 <span className="labelIcon">
-                  ▣
+                  <IconCalendar size={13} />
                 </span>
-
                 Travel date
-
               </label>
-
               <input
                 id="travelDate"
                 type="date"
                 value={travelDate}
                 min={today}
                 onChange={(event) =>
-                  handleTravelDateChange(
-                    event.target.value
-                  )
+                  handleTravelDateChange(event.target.value)
                 }
               />
-
             </div>
 
             <div className="field">
-
               <label htmlFor="pickupTime">
-
                 <span className="labelIcon">
-                  ◷
+                  <IconClock size={13} />
                 </span>
-
                 Pickup time
-
               </label>
-
               <input
                 id="pickupTime"
                 type="time"
                 value={pickupTime}
                 onChange={(event) =>
-                  handlePickupTimeChange(
-                    event.target.value
-                  )
+                  handlePickupTimeChange(event.target.value)
                 }
               />
-
             </div>
 
           </div>
@@ -1777,49 +1671,35 @@ export default function HomePage() {
             <div className="roundTripBox">
 
               <div className="roundTripTitle">
-
-                <span>
-                  ⇄
-                </span>
-
+                <IconSwap size={15} />
                 Return journey
-
               </div>
 
               <div className="formGrid">
 
                 <div className="field">
-
                   <label htmlFor="returnDate">
-
                     <span className="labelIcon">
-                      ▣
+                      <IconCalendar size={13} />
                     </span>
-
                     Return date
-
                   </label>
 
                   <input
                     id="returnDate"
                     type="date"
                     value={returnDate}
-                    min={
-                      travelDate ||
-                      today
-                    }
+                    min={travelDate || today}
                     onChange={(event) => {
 
                       clearMessage();
 
-                      const value =
-                        event.target.value;
+                      const value = event.target.value;
 
                       if (
                         travelDate &&
                         value &&
-                        value <
-                          travelDate
+                        value < travelDate
                       ) {
 
                         showError(
@@ -1837,29 +1717,21 @@ export default function HomePage() {
                       if (
                         value === today &&
                         returnTime &&
-                        isTimeInPastForToday(
-                          value,
-                          returnTime
-                        )
+                        isTimeInPastForToday(value, returnTime)
                       ) {
                         setReturnTime("");
                       }
 
                     }}
                   />
-
                 </div>
 
                 <div className="field">
-
                   <label htmlFor="returnTime">
-
                     <span className="labelIcon">
-                      ◷
+                      <IconClock size={13} />
                     </span>
-
                     Return time
-
                   </label>
 
                   <input
@@ -1870,15 +1742,11 @@ export default function HomePage() {
 
                       clearMessage();
 
-                      const value =
-                        event.target.value;
+                      const value = event.target.value;
 
                       if (
                         returnDate === today &&
-                        isTimeInPastForToday(
-                          returnDate,
-                          value
-                        )
+                        isTimeInPastForToday(returnDate, value)
                       ) {
 
                         showError(
@@ -1891,11 +1759,9 @@ export default function HomePage() {
                       }
 
                       if (
-                        returnDate ===
-                          travelDate &&
+                        returnDate === travelDate &&
                         pickupTime &&
-                        value <
-                          pickupTime
+                        value < pickupTime
                       ) {
 
                         showError(
@@ -1911,7 +1777,6 @@ export default function HomePage() {
 
                     }}
                   />
-
                 </div>
 
               </div>
@@ -1921,37 +1786,22 @@ export default function HomePage() {
           )}
 
           <div className="sectionLabel passengerSectionLabel">
-
-            <span className="sectionNumber">
-              2
-            </span>
-
+            <span className="sectionNumber">2</span>
             <div>
-
-              <span className="sectionTitle">
-                Passenger details
-              </span>
-
+              <span className="sectionTitle">Passenger details</span>
               <span className="sectionSubtitle">
                 Who are we booking this ride for?
               </span>
-
             </div>
-
           </div>
 
           <div className="field">
-
             <label htmlFor="passengerName">
-
               <span className="labelIcon">
-                ●
+                <IconUser size={13} />
               </span>
-
               Passenger name
-
             </label>
-
             <input
               id="passengerName"
               type="text"
@@ -1959,32 +1809,21 @@ export default function HomePage() {
               placeholder="Enter passenger name"
               value={passengerName}
               onChange={(event) => {
-
-                setPassengerName(
-                  event.target.value
-                );
-
+                setPassengerName(event.target.value);
                 clearMessage();
-
               }}
             />
-
           </div>
 
           <div className="formGrid">
 
             <div className="field">
-
               <label htmlFor="phone">
-
                 <span className="labelIcon">
-                  ☎
+                  <IconPhone size={13} />
                 </span>
-
                 Phone number
-
               </label>
-
               <input
                 id="phone"
                 type="tel"
@@ -1993,23 +1832,16 @@ export default function HomePage() {
                 placeholder="10-digit mobile number"
                 value={phone}
                 maxLength={12}
-                onChange={
-                  handlePhoneChange
-                }
+                onChange={handlePhoneChange}
               />
-
             </div>
 
             <div className="field">
-
               <label htmlFor="whatsapp">
-
                 <span className="labelIcon">
-                  ◌
+                  <IconChat size={13} />
                 </span>
-
                 WhatsApp number
-
               </label>
 
               <input
@@ -2020,12 +1852,8 @@ export default function HomePage() {
                 placeholder="WhatsApp number"
                 value={whatsapp}
                 maxLength={12}
-                disabled={
-                  whatsappSameAsPhone
-                }
-                onChange={
-                  handleWhatsAppChange
-                }
+                disabled={whatsappSameAsPhone}
+                onChange={handleWhatsAppChange}
               />
 
               <button
@@ -2035,26 +1863,15 @@ export default function HomePage() {
                     ? "samePhoneToggle active"
                     : "samePhoneToggle"
                 }
-                onClick={
-                  handleWhatsAppToggle
-                }
-                aria-pressed={
-                  whatsappSameAsPhone
-                }
+                onClick={handleWhatsAppToggle}
+                aria-pressed={whatsappSameAsPhone}
               >
-
                 <span className="toggleCheck">
-
-                  {whatsappSameAsPhone
-                    ? "✓"
-                    : ""}
-
+                  {whatsappSameAsPhone && (
+                    <IconCheckCircle size={11} />
+                  )}
                 </span>
-
-                <span>
-                  Same as phone number
-                </span>
-
+                <span>Same as phone number</span>
               </button>
 
             </div>
@@ -2065,28 +1882,21 @@ export default function HomePage() {
 
             <div
               className={
-                messageType ===
-                "success"
+                messageType === "success"
                   ? "message successMessage"
                   : "message errorMessage"
               }
               role="alert"
               aria-live="polite"
             >
-
               <span className="messageIcon">
-
-                {messageType ===
-                "success"
-                  ? "✓"
-                  : "!"}
-
+                {messageType === "success" ? (
+                  <IconCheckCircle size={13} />
+                ) : (
+                  <IconAlertCircle size={13} />
+                )}
               </span>
-
-              <span>
-                {message}
-              </span>
-
+              <span>{message}</span>
             </div>
 
           )}
@@ -2094,38 +1904,22 @@ export default function HomePage() {
           <button
             type="button"
             className="continueButton"
-            onClick={
-              handleContinue
-            }
-            disabled={
-              isSubmitting
-            }
+            onClick={handleContinue}
+            disabled={isSubmitting}
           >
-
             <span>
-
               {isSubmitting
                 ? "Preparing your trip..."
                 : "Continue to cab selection"}
-
             </span>
-
             <span className="continueArrow">
-              →
+              <IconArrowRight size={18} />
             </span>
-
           </button>
 
           <div className="bookingFooter">
-
-            <span>
-              🛡️
-            </span>
-
-            <span>
-              Your information is safe and secure.
-            </span>
-
+            <IconShield size={13} />
+            <span>Your information is safe and secure.</span>
           </div>
 
         </div>
@@ -2133,31 +1927,18 @@ export default function HomePage() {
       </section>
 
       <footer className="footer">
-
         <div className="footerInner">
-
           <div>
-
-            <strong>
-              VOYNU
-            </strong>
-
-            <span>
-              {" "}©{" "}
-              {new Date().getFullYear()}
-            </span>
-
+            <strong>VOYNU</strong>
+            <span> © {new Date().getFullYear()}</span>
           </div>
-
-          <div>
-            Travel safe. Travel smart.
-          </div>
-
+          <div>Travel safe. Travel smart.</div>
         </div>
-
       </footer>
 
       <style jsx>{`
+
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
         * {
           box-sizing: border-box;
@@ -2165,11 +1946,11 @@ export default function HomePage() {
 
         .page {
           min-height: 100vh;
-          background: #f4faf6;
-          color: #26372f;
+          background: #f5faf6;
+          color: #16241d;
 
           font-family:
-            Inter,
+            'Plus Jakarta Sans',
             -apple-system,
             BlinkMacSystemFont,
             "Segoe UI",
@@ -2179,10 +1960,13 @@ export default function HomePage() {
         }
 
         .header {
-          background: #ffffff;
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(10px);
           border-bottom: 1px solid #e8eee9;
 
-          position: relative;
+          position: sticky;
+          top: 0;
+
           z-index: 20;
         }
 
@@ -2204,30 +1988,32 @@ export default function HomePage() {
         }
 
         .brandMark {
-          width: 38px;
-          height: 38px;
+          width: 40px;
+          height: 40px;
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          border-radius: 10px;
+          border-radius: 12px;
 
-          background: #08783f;
+          background: linear-gradient(135deg, #0a7d42, #075c31);
           color: #ffffff;
 
           font-size: 21px;
-          font-weight: 900;
+          font-weight: 800;
+
+          box-shadow: 0 6px 14px rgba(8,120,63,0.28);
         }
 
         .brandName {
-          color: #08783f;
+          color: #0a7d42;
 
           font-size: 20px;
           line-height: 1;
 
-          font-weight: 900;
-          letter-spacing: 0.8px;
+          font-weight: 800;
+          letter-spacing: 0.6px;
         }
 
         .brandTagline {
@@ -2242,9 +2028,14 @@ export default function HomePage() {
         .headerPhone {
           display: flex;
           align-items: center;
-          gap: 7px;
+          gap: 8px;
 
-          color: #4f6158;
+          padding: 9px 15px;
+
+          border-radius: 30px;
+
+          background: #eaf6ee;
+          color: #0a5c32;
 
           text-decoration: none;
 
@@ -2252,9 +2043,9 @@ export default function HomePage() {
           font-weight: 700;
         }
 
-        .phoneIcon {
-          color: #08783f;
-          font-size: 15px;
+        .headerPhoneIcon {
+          display: flex;
+          color: #0a7d42;
         }
 
         .hero {
@@ -2263,10 +2054,10 @@ export default function HomePage() {
 
           background:
             linear-gradient(
-              135deg,
+              160deg,
               #ffffff 0%,
-              #f1faf4 58%,
-              #e8f6ed 100%
+              #f1faf4 55%,
+              #e6f5ec 100%
             );
         }
 
@@ -2275,7 +2066,7 @@ export default function HomePage() {
 
           margin: 0 auto;
 
-          padding: 42px 0 78px;
+          padding: 46px 0 82px;
 
           position: relative;
           z-index: 2;
@@ -2284,53 +2075,52 @@ export default function HomePage() {
         .heroDecor {
           position: absolute;
           pointer-events: none;
+          filter: blur(50px);
         }
 
         .heroDecorOne {
-          width: 520px;
-          height: 170px;
+          width: 480px;
+          height: 200px;
 
-          right: -100px;
-          bottom: -100px;
+          right: -80px;
+          bottom: -110px;
 
           border-radius: 50%;
 
-          background: #263b31;
+          background: rgba(8,60,38,0.28);
 
           transform: rotate(-8deg);
         }
 
         .heroDecorTwo {
-          width: 220px;
-          height: 220px;
+          width: 260px;
+          height: 260px;
 
-          right: 11%;
-          top: -145px;
+          right: 8%;
+          top: -160px;
 
           border-radius: 50%;
 
-          background: rgba(8,120,63,0.055);
+          background: rgba(8,120,63,0.14);
         }
 
         .serviceBadge {
           display: inline-flex;
           align-items: center;
-          gap: 7px;
+          gap: 8px;
 
-          padding: 8px 14px;
+          padding: 8px 15px;
 
           border: 1px solid #d8e7dc;
           border-radius: 30px;
 
-          background: rgba(255,255,255,0.9);
+          background: rgba(255,255,255,0.92);
 
-          color: #596a61;
+          color: #4c5d54;
 
           font-size: 12px;
 
-          box-shadow:
-            0 5px 18px
-            rgba(0,0,0,0.035);
+          box-shadow: 0 6px 18px rgba(0,0,0,0.04);
         }
 
         .badgeDot {
@@ -2339,56 +2129,57 @@ export default function HomePage() {
 
           border-radius: 50%;
 
-          background: #08783f;
+          background: #0a7d42;
+
+          box-shadow: 0 0 0 4px rgba(8,120,63,0.14);
         }
 
         .heroGrid {
           display: grid;
 
-          grid-template-columns:
-            1.2fr 0.8fr;
+          grid-template-columns: 1.15fr 0.85fr;
 
           align-items: center;
 
-          gap: 30px;
+          gap: 32px;
 
-          margin-top: 20px;
+          margin-top: 22px;
         }
 
         .heroText h1 {
           margin: 0;
 
-          color: #26372f;
+          color: #10201a;
 
-          font-size: clamp(48px,7vw,78px);
+          font-size: clamp(46px,6.6vw,76px);
 
-          line-height: 0.97;
+          line-height: 0.98;
 
-          letter-spacing: -4px;
+          letter-spacing: -3px;
 
-          font-weight: 900;
+          font-weight: 800;
         }
 
         .heroText h1 span {
-          color: #08783f;
+          color: #0a7d42;
         }
 
         .heroText p {
-          margin: 21px 0 0;
+          margin: 20px 0 0;
 
-          color: #62736a;
+          color: #5c6d64;
 
-          font-size: 17px;
-          line-height: 1.55;
+          font-size: 16.5px;
+          line-height: 1.6;
         }
 
         .heroFeatures {
           display: flex;
           flex-wrap: wrap;
 
-          gap: 28px;
+          gap: 12px;
 
-          margin-top: 27px;
+          margin-top: 26px;
         }
 
         .heroFeature {
@@ -2397,15 +2188,24 @@ export default function HomePage() {
 
           gap: 8px;
 
-          color: #35473e;
+          padding: 8px 14px 8px 8px;
+
+          border-radius: 30px;
+
+          background: #ffffff;
+          border: 1px solid #e5ede8;
+
+          color: #2c3d34;
 
           font-size: 12px;
-          font-weight: 750;
+          font-weight: 700;
+
+          box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
 
         .featureIcon {
-          width: 25px;
-          height: 25px;
+          width: 26px;
+          height: 26px;
 
           display: flex;
           align-items: center;
@@ -2414,10 +2214,12 @@ export default function HomePage() {
           border-radius: 50%;
 
           background: #e1f3e7;
-          color: #08783f;
+          color: #0a7d42;
+        }
 
-          font-size: 13px;
-          font-weight: 900;
+        .featureIconAmber {
+          background: #fdf1d8;
+          color: #b8790e;
         }
 
         .heroVehicle {
@@ -2433,55 +2235,47 @@ export default function HomePage() {
         .vehicleGlow {
           position: absolute;
 
-          width: 270px;
-          height: 100px;
+          width: 280px;
+          height: 110px;
 
           border-radius: 50%;
 
-          background: rgba(8,120,63,0.08);
+          background: rgba(8,120,63,0.10);
 
-          transform: rotate(-8deg);
+          filter: blur(20px);
+
+          transform: rotate(-6deg);
         }
 
         .vehicle {
           position: relative;
 
-          font-size: 105px;
-          line-height: 1;
+          width: min(320px, 82%);
 
-          transform: translateY(5px);
-
-          filter:
-            drop-shadow(
-              0 14px 15px
-              rgba(0,0,0,0.08)
-            );
+          filter: drop-shadow(0 18px 20px rgba(0,0,0,0.10));
         }
 
         .bookingSection {
           width: min(1180px,calc(100% - 40px));
 
-          margin: -30px auto 0;
+          margin: -34px auto 0;
 
           position: relative;
           z-index: 10;
 
-          padding-bottom: 55px;
+          padding-bottom: 60px;
         }
 
         .bookingCard {
-          padding: 30px;
+          padding: 32px;
 
-          border-radius: 24px;
+          border-radius: 26px;
 
           background: #ffffff;
 
-          border: 1px solid
-            rgba(219,231,223,0.75);
+          border: 1px solid rgba(219,231,223,0.7);
 
-          box-shadow:
-            0 20px 60px
-            rgba(25,55,39,0.1);
+          box-shadow: 0 30px 80px -20px rgba(10,40,25,0.20);
         }
 
         .bookingHeader {
@@ -2491,16 +2285,18 @@ export default function HomePage() {
 
           gap: 20px;
 
-          margin-bottom: 22px;
+          margin-bottom: 24px;
         }
 
         .bookingHeader h2 {
           margin: 0;
 
-          color: #26372f;
+          color: #14231c;
 
-          font-size: 24px;
-          font-weight: 850;
+          font-size: 25px;
+          font-weight: 800;
+
+          letter-spacing: -0.5px;
         }
 
         .bookingHeader p {
@@ -2517,13 +2313,13 @@ export default function HomePage() {
 
           gap: 6px;
 
-          padding: 7px 11px;
+          padding: 8px 13px;
 
           border-radius: 20px;
 
           background: #f1f8f3;
 
-          color: #4f6759;
+          color: #3f5b4b;
 
           font-size: 11px;
           font-weight: 700;
@@ -2534,8 +2330,7 @@ export default function HomePage() {
 
           display: grid;
 
-          grid-template-columns:
-            1fr 1fr;
+          grid-template-columns: 1fr 1fr;
 
           gap: 5px;
 
@@ -2543,13 +2338,13 @@ export default function HomePage() {
 
           margin-bottom: 28px;
 
-          border-radius: 15px;
+          border-radius: 16px;
 
           background: #eef3ef;
         }
 
         .tripButton {
-          min-height: 58px;
+          min-height: 60px;
 
           display: flex;
           align-items: center;
@@ -2558,7 +2353,7 @@ export default function HomePage() {
           gap: 10px;
 
           border: 0;
-          border-radius: 11px;
+          border-radius: 12px;
 
           background: transparent;
 
@@ -2577,7 +2372,7 @@ export default function HomePage() {
         .tripButton strong {
           display: block;
 
-          font-size: 13px;
+          font-size: 13.5px;
           font-weight: 800;
         }
 
@@ -2586,45 +2381,42 @@ export default function HomePage() {
 
           margin-top: 2px;
 
-          font-size: 10px;
+          font-size: 10.5px;
 
           opacity: .72;
         }
 
         .tripIcon {
-          font-size: 20px;
-          font-weight: 700;
+          display: flex;
         }
 
         .tripButton.active {
-          background: #08783f;
+          background: linear-gradient(135deg, #0a7d42, #086836);
 
           color: #ffffff;
 
-          box-shadow:
-            0 5px 15px
-            rgba(8,120,63,.2);
+          box-shadow: 0 8px 18px rgba(8,120,63,.26);
         }
 
         .sectionLabel {
           display: flex;
           align-items: center;
 
-          gap: 9px;
+          gap: 10px;
 
-          margin: 0 0 15px;
+          margin: 0 0 16px;
 
-          color: #34483e;
+          color: #263a30;
 
           font-size: 13px;
-          font-weight: 850;
+          font-weight: 800;
         }
 
         .sectionNumber {
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
 
-          flex: 0 0 42px;
+          flex: 0 0 40px;
 
           display: flex;
           align-items: center;
@@ -2632,19 +2424,19 @@ export default function HomePage() {
 
           border-radius: 50%;
 
-          background: #e5f4e9;
+          background: linear-gradient(135deg, #e5f4e9, #d1ecda);
 
-          color: #08783f;
+          color: #0a7d42;
 
           font-size: 14px;
-          font-weight: 900;
+          font-weight: 800;
         }
 
         .sectionTitle {
           display: block;
 
           font-size: 15px;
-          font-weight: 850;
+          font-weight: 800;
         }
 
         .sectionSubtitle {
@@ -2659,14 +2451,13 @@ export default function HomePage() {
         }
 
         .passengerSectionLabel {
-          margin-top: 29px;
+          margin-top: 30px;
         }
 
         .locationGrid {
           display: grid;
 
-          grid-template-columns:
-            1fr 1fr;
+          grid-template-columns: 1fr 1fr;
 
           gap: 20px;
         }
@@ -2675,105 +2466,161 @@ export default function HomePage() {
           min-width: 0;
         }
 
-        .journeyDistanceBox {
+        .routeCard {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
 
-          gap: 13px;
+          gap: 14px;
 
           margin-top: 20px;
 
-          padding: 15px 17px;
+          padding: 16px 18px;
 
-          border: 1px solid #dcebe1;
-
-          border-radius: 14px;
+          border-radius: 16px;
 
           background: #f4fbf6;
+
+          border: 1px solid #dcebe1;
+          border-left: 4px solid #0a7d42;
+
+          transition: border-color .2s ease, background .2s ease;
         }
 
-        .journeyDistanceIcon {
-          width: 44px;
-          height: 44px;
+        .routeCard-error,
+        .routeCard-invalid {
+          background: #fff6f4;
+          border-color: #f0d2cc;
+          border-left-color: #c64a3f;
+        }
 
-          flex: 0 0 44px;
+        .routeCard-loading {
+          border-left-color: #8fae9c;
+        }
+
+        .routeCardIcon {
+          width: 42px;
+          height: 42px;
+
+          flex: 0 0 42px;
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          border-radius: 13px;
+          border-radius: 12px;
 
           background: #e4f4e8;
-
-          font-size: 22px;
+          color: #0a7d42;
         }
 
-        .journeyDistanceContent {
+        .routeCard-error .routeCardIcon,
+        .routeCard-invalid .routeCardIcon {
+          background: #fbe4e0;
+          color: #c64a3f;
+        }
+
+        .routeCardBody {
           min-width: 0;
+          flex: 1;
         }
 
-        .journeyDistanceLabel {
+        .routeCardLabel {
           color: #718078;
 
           font-size: 10px;
 
-          font-weight: 850;
+          font-weight: 800;
 
           letter-spacing: .8px;
         }
 
-        .journeyDistanceMessage {
-          margin-top: 3px;
+        .routeCardMessage {
+          margin-top: 4px;
 
           color: #66776e;
 
           font-size: 13px;
 
-          line-height: 1.4;
+          line-height: 1.45;
         }
 
-        .journeyDistanceValue {
-          margin-top: 2px;
+        .routeCardMessageError {
+          color: #b34a42;
+        }
 
-          color: #08783f;
+        .routeCardValue {
+          margin-top: 3px;
+
+          color: #0a7d42;
 
           font-size: 22px;
 
           line-height: 1.3;
 
-          font-weight: 900;
+          font-weight: 800;
         }
 
-        .journeyDuration {
-          margin-top: 3px;
+        .routeCardValueSub {
+          font-size: 13px;
+          font-weight: 700;
+          color: #4b6b58;
+        }
 
-          color: #718078;
+        .routeCardChips {
+          display: flex;
+          flex-wrap: wrap;
+
+          gap: 7px;
+
+          margin-top: 9px;
+        }
+
+        .routeChip {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+
+          padding: 5px 10px;
+
+          border-radius: 20px;
+
+          background: #ffffff;
+          border: 1px solid #dcebe1;
+
+          color: #45564c;
 
           font-size: 11px;
-
-          font-weight: 600;
+          font-weight: 700;
         }
 
-        .journeyDistanceError {
-          margin-top: 3px;
+        .chargingChip {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
 
-          color: #b34a42;
+          margin-top: 11px;
 
-          font-size: 12px;
+          padding: 10px 12px;
 
-          line-height: 1.4;
+          border-radius: 12px;
+
+          background: #fdf3dc;
+
+          color: #7a5a10;
+
+          font-size: 11.5px;
+          line-height: 1.5;
+          font-weight: 600;
         }
 
         .formGrid {
           display: grid;
 
-          grid-template-columns:
-            1fr 1fr;
+          grid-template-columns: 1fr 1fr;
 
           gap: 20px;
 
-          margin-top: 18px;
+          margin-top: 20px;
         }
 
         .field {
@@ -2795,10 +2642,8 @@ export default function HomePage() {
         }
 
         .labelIcon {
-          color: #08783f;
-
-          font-size: 13px;
-          font-weight: 900;
+          display: flex;
+          color: #0a7d42;
         }
 
         .field input {
@@ -2807,13 +2652,13 @@ export default function HomePage() {
 
           padding: 0 15px;
 
-          border: 1px solid #d9e2dc;
+          border: 1.5px solid #e3e9e5;
 
-          border-radius: 11px;
+          border-radius: 12px;
 
-          background: #ffffff;
+          background: #f8faf9;
 
-          color: #26372f;
+          color: #16241d;
 
           font-family: inherit;
 
@@ -2832,15 +2677,14 @@ export default function HomePage() {
         }
 
         .field input:focus {
-          border-color: #08783f;
+          border-color: #0a7d42;
+          background: #ffffff;
 
-          box-shadow:
-            0 0 0 3px
-            rgba(8,120,63,.09);
+          box-shadow: 0 0 0 4px rgba(8,120,63,.10);
         }
 
         .field input:disabled {
-          background: #f4f8f5;
+          background: #f0f3f1;
 
           color: #63736a;
 
@@ -2855,7 +2699,7 @@ export default function HomePage() {
 
           gap: 8px;
 
-          margin-top: 8px;
+          margin-top: 9px;
 
           padding: 2px 0;
 
@@ -2875,12 +2719,12 @@ export default function HomePage() {
 
         .samePhoneToggle:hover,
         .samePhoneToggle.active {
-          color: #08783f;
+          color: #0a7d42;
         }
 
         .toggleCheck {
-          width: 22px;
-          height: 22px;
+          width: 20px;
+          height: 20px;
 
           display: flex;
           align-items: center;
@@ -2893,47 +2737,37 @@ export default function HomePage() {
           background: #ffffff;
 
           color: #ffffff;
-
-          font-size: 11px;
-          font-weight: 900;
         }
 
         .samePhoneToggle.active .toggleCheck {
-          border-color: #08783f;
+          border-color: #0a7d42;
 
-          background: #08783f;
+          background: #0a7d42;
 
-          box-shadow:
-            0 2px 7px
-            rgba(8,120,63,.18);
+          box-shadow: 0 2px 7px rgba(8,120,63,.18);
         }
 
         .roundTripBox {
           margin-top: 20px;
 
-          padding: 17px;
+          padding: 18px;
 
-          border: 1px solid #dcebe1;
-
-          border-radius: 14px;
+          border-radius: 16px;
 
           background: #f6fbf7;
+          border: 1px solid #dcebe1;
         }
 
         .roundTripTitle {
           display: flex;
           align-items: center;
 
-          gap: 7px;
+          gap: 8px;
 
-          color: #08783f;
+          color: #0a7d42;
 
           font-size: 12px;
-          font-weight: 850;
-        }
-
-        .roundTripTitle span {
-          font-size: 17px;
+          font-weight: 800;
         }
 
         .roundTripBox .formGrid {
@@ -2946,11 +2780,11 @@ export default function HomePage() {
 
           gap: 10px;
 
-          margin-top: 21px;
+          margin-top: 22px;
 
-          padding: 13px 14px;
+          padding: 13px 15px;
 
-          border-radius: 11px;
+          border-radius: 12px;
 
           font-size: 12px;
 
@@ -2968,29 +2802,22 @@ export default function HomePage() {
           justify-content: center;
 
           border-radius: 50%;
-
-          font-size: 11px;
-          font-weight: 900;
         }
 
         .successMessage {
           border: 1px solid #cce5d4;
-
           background: #eef9f1;
-
           color: #28734b;
         }
 
         .successMessage .messageIcon {
-          background: #08783f;
+          background: #0a7d42;
           color: #ffffff;
         }
 
         .errorMessage {
           border: 1px solid #efccc8;
-
           background: #fff5f3;
-
           color: #b33d34;
         }
 
@@ -3001,7 +2828,7 @@ export default function HomePage() {
 
         .continueButton {
           width: 100%;
-          min-height: 56px;
+          min-height: 57px;
 
           display: flex;
           align-items: center;
@@ -3009,43 +2836,35 @@ export default function HomePage() {
 
           gap: 12px;
 
-          margin-top: 20px;
+          margin-top: 22px;
 
           padding: 0 20px;
 
           border: 0;
-          border-radius: 12px;
+          border-radius: 14px;
 
-          background: #08783f;
+          background: linear-gradient(135deg, #0a7d42, #075c31);
 
           color: #ffffff;
 
           font-family: inherit;
 
           font-size: 15px;
-          font-weight: 850;
+          font-weight: 800;
 
           cursor: pointer;
 
-          box-shadow:
-            0 7px 18px
-            rgba(8,120,63,.18);
+          box-shadow: 0 10px 24px rgba(8,120,63,.24);
 
           transition:
             transform .18s ease,
-            background .18s ease,
             box-shadow .18s ease,
             opacity .18s ease;
         }
 
         .continueButton:hover:not(:disabled) {
-          background: #076d39;
-
-          transform: translateY(-1px);
-
-          box-shadow:
-            0 10px 22px
-            rgba(8,120,63,.22);
+          transform: translateY(-2px);
+          box-shadow: 0 14px 30px rgba(8,120,63,.28);
         }
 
         .continueButton:active:not(:disabled) {
@@ -3058,8 +2877,7 @@ export default function HomePage() {
         }
 
         .continueArrow {
-          font-size: 21px;
-          line-height: 1;
+          display: flex;
         }
 
         .bookingFooter {
@@ -3067,9 +2885,9 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
 
-          gap: 6px;
+          gap: 7px;
 
-          margin-top: 12px;
+          margin-top: 13px;
 
           color: #89958e;
 
@@ -3077,8 +2895,7 @@ export default function HomePage() {
         }
 
         .footer {
-          background: #26372f;
-
+          background: #12211a;
           color: #ffffff;
         }
 
@@ -3093,7 +2910,7 @@ export default function HomePage() {
 
           margin: 0 auto;
 
-          color: rgba(255,255,255,.78);
+          color: rgba(255,255,255,.72);
 
           font-size: 11px;
         }
@@ -3135,7 +2952,7 @@ export default function HomePage() {
             width: 34px;
             height: 34px;
 
-            border-radius: 9px;
+            border-radius: 10px;
 
             font-size: 18px;
           }
@@ -3150,6 +2967,7 @@ export default function HomePage() {
 
           .headerPhone {
             font-size: 11px;
+            padding: 7px 12px;
           }
 
           .heroInner {
@@ -3163,9 +2981,9 @@ export default function HomePage() {
           }
 
           .heroText h1 {
-            font-size: 50px;
+            font-size: 48px;
 
-            letter-spacing: -2.8px;
+            letter-spacing: -2.4px;
           }
 
           .heroText p {
@@ -3179,25 +2997,24 @@ export default function HomePage() {
           }
 
           .heroFeatures {
-            gap: 12px 17px;
+            gap: 8px;
 
             margin-top: 22px;
           }
 
           .heroFeature {
             font-size: 10px;
+            padding: 6px 11px 6px 6px;
           }
 
           .featureIcon {
             width: 22px;
             height: 22px;
-
-            font-size: 11px;
           }
 
           .heroDecorOne {
-            width: 350px;
-            height: 120px;
+            width: 320px;
+            height: 130px;
 
             right: -140px;
             bottom: -80px;
@@ -3206,19 +3023,19 @@ export default function HomePage() {
           .bookingSection {
             width: calc(100% - 20px);
 
-            margin-top: -23px;
+            margin-top: -25px;
 
-            padding-bottom: 30px;
+            padding-bottom: 32px;
           }
 
           .bookingCard {
-            padding: 18px 16px 17px;
+            padding: 18px 16px 18px;
 
-            border-radius: 20px;
+            border-radius: 22px;
           }
 
           .bookingHeader {
-            margin-bottom: 17px;
+            margin-bottom: 18px;
           }
 
           .bookingHeader h2 {
@@ -3238,7 +3055,7 @@ export default function HomePage() {
           }
 
           .tripButton {
-            min-height: 53px;
+            min-height: 54px;
           }
 
           .tripButton strong {
@@ -3249,19 +3066,15 @@ export default function HomePage() {
             font-size: 9px;
           }
 
-          .tripIcon {
-            font-size: 18px;
-          }
-
           .sectionLabel {
-            margin-bottom: 12px;
+            margin-bottom: 13px;
           }
 
           .sectionNumber {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
 
-            flex-basis: 40px;
+            flex-basis: 38px;
           }
 
           .sectionTitle {
@@ -3276,26 +3089,26 @@ export default function HomePage() {
             gap: 14px;
           }
 
-          .journeyDistanceBox {
+          .routeCard {
             margin-top: 15px;
 
-            padding: 13px 14px;
+            padding: 14px 14px;
+
+            gap: 11px;
           }
 
-          .journeyDistanceIcon {
-            width: 40px;
-            height: 40px;
+          .routeCardIcon {
+            width: 38px;
+            height: 38px;
 
-            flex-basis: 40px;
-
-            font-size: 20px;
+            flex-basis: 38px;
           }
 
-          .journeyDistanceValue {
-            font-size: 18px;
+          .routeCardValue {
+            font-size: 19px;
           }
 
-          .journeyDistanceMessage {
+          .routeCardMessage {
             font-size: 12px;
           }
 
@@ -3318,7 +3131,7 @@ export default function HomePage() {
           }
 
           .roundTripBox {
-            padding: 14px;
+            padding: 15px;
           }
 
           .roundTripBox .formGrid {
@@ -3326,7 +3139,7 @@ export default function HomePage() {
           }
 
           .passengerSectionLabel {
-            margin-top: 24px;
+            margin-top: 25px;
           }
 
           .message {
@@ -3359,12 +3172,12 @@ export default function HomePage() {
 
         @media (max-width: 380px) {
 
-          .headerPhone {
-            font-size: 10px;
+          .headerPhone span:last-child {
+            display: none;
           }
 
           .heroText h1 {
-            font-size: 44px;
+            font-size: 42px;
           }
 
           .bookingCard {
@@ -3389,4 +3202,4 @@ export default function HomePage() {
 
     </main>
   );
-              }
+    }
