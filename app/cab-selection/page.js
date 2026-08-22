@@ -311,48 +311,56 @@ export default function CabSelectionPage() {
       const { data: userData } =
         await supabase.auth.getUser();
 
-      await supabase.from("bookings").insert({
-        user_id: userData?.user?.id || null,
+      const { error: insertError } =
+        await supabase.from("bookings").insert({
+          user_id: userData?.user?.id || null,
 
-        trip_type: booking.tripType,
+          trip_type: booking.tripType,
 
-        pickup_name: booking.pickup?.name,
-        pickup_lat: booking.pickup?.lat,
-        pickup_lon: booking.pickup?.lon,
+          pickup_name: booking.pickup?.name,
+          pickup_lat: booking.pickup?.lat,
+          pickup_lon: booking.pickup?.lon,
 
-        drop_name: booking.drop?.name,
-        drop_lat: booking.drop?.lat,
-        drop_lon: booking.drop?.lon,
+          drop_name: booking.drop?.name,
+          drop_lat: booking.drop?.lat,
+          drop_lon: booking.drop?.lon,
 
-        one_way_distance_km:
-          booking.journey?.oneWayDistanceKm,
-        total_distance_km:
-          booking.journey?.totalDistanceKm,
+          one_way_distance_km:
+            booking.journey?.oneWayDistanceKm,
+          total_distance_km:
+            booking.journey?.totalDistanceKm,
 
-        travel_date: booking.travelDate,
-        pickup_time: booking.pickupTime,
-        return_date: booking.returnDate,
-        return_time: booking.returnTime,
+          travel_date: booking.travelDate,
+          pickup_time: booking.pickupTime,
+          return_date: booking.returnDate,
+          return_time: booking.returnTime,
 
-        passenger_name: booking.passengerName,
-        phone: booking.phone,
-        whatsapp: booking.whatsapp,
+          passenger_name: booking.passengerName,
+          phone: booking.phone,
+          whatsapp: booking.whatsapp,
 
-        vehicle_type: selectedFare.vehicleName,
-        fare: selectedFare.totalFare,
-        payment_method: paymentMethod,
+          vehicle_type: selectedFare.vehicleName,
+          fare: selectedFare.totalFare,
+          payment_method: paymentMethod,
 
-        status: "pending",
-        confirmed_at: new Date().toISOString(),
-      });
+          status: "pending",
+          confirmed_at: new Date().toISOString(),
+        });
+
+      if (insertError) {
+        window.alert(
+          "DEBUG — insert error:\n" +
+            "message: " + insertError.message + "\n" +
+            "code: " + insertError.code + "\n" +
+            "details: " + insertError.details + "\n" +
+            "hint: " + insertError.hint
+        );
+      } else {
+        window.alert("DEBUG — insert succeeded, no error returned.");
+      }
     } catch (dbError) {
-      console.error(
-        "VOYNU: unable to save booking to database:",
-        dbError
-      );
-
       window.alert(
-        "DEBUG — booking save failed: " +
+        "DEBUG — thrown exception: " +
           (dbError?.message || String(dbError))
       );
     }
