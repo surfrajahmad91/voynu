@@ -7,21 +7,21 @@ import {
 } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   calculateAllFares,
 } from "../lib/fareRules";
 
-/*
- * Replace with your real WhatsApp Business number
- * (international format, digits only, no + or spaces).
- */
-const WHATSAPP_NUMBER = "919918614844";
+import {
+  WHATSAPP_NUMBER,
+  buildWhatsAppLink,
+} from "../lib/contact";
 
 /*
  * Replace with your real UPI VPA.
  */
-const VOYNU_UPI_VPA = "surfraj@ybl";
+const VOYNU_UPI_VPA = "voynu@upi";
 
 function IconCheck({ size = 14 }) {
   return (
@@ -69,6 +69,8 @@ function IconUpi({ size = 15 }) {
 }
 
 export default function CabSelectionPage() {
+  const router = useRouter();
+
   const [booking, setBooking] =
     useState(null);
 
@@ -87,7 +89,7 @@ export default function CabSelectionPage() {
   const [upiPaymentConfirmed, setUpiPaymentConfirmed] =
     useState(false);
 
-  const [confirmed, setConfirmed] =
+  const [isConfirming, setIsConfirming] =
     useState(false);
 
   /*
@@ -166,13 +168,6 @@ export default function CabSelectionPage() {
   /*
    * ------------------------------------------------------------
    * RESET UPI CONFIRMATION
-   *
-   * IMPORTANT:
-   *
-   * If the customer switches vehicle (different fare) or
-   * switches payment method away from and back to UPI, any
-   * previous "I've paid" confirmation is no longer valid for
-   * the new amount/context and must be cleared.
    * ------------------------------------------------------------
    */
 
@@ -187,7 +182,7 @@ export default function CabSelectionPage() {
    * ------------------------------------------------------------
    */
 
-  const buildWhatsAppMessage = () => {
+  const buildConfirmationMessage = () => {
     if (!booking || !selectedFare) {
       return "";
     }
@@ -247,10 +242,6 @@ export default function CabSelectionPage() {
     return lines.join("\n");
   };
 
-  const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    buildWhatsAppMessage()
-  )}`;
-
   const upiHref = selectedFare
     ? `upi://pay?pa=${encodeURIComponent(
         VOYNU_UPI_VPA
@@ -263,14 +254,6 @@ export default function CabSelectionPage() {
       )}`
     : "";
 
-  /*
-   * Whether the customer is allowed to proceed to the
-   * WhatsApp confirmation step.
-   *
-   * Cash: always allowed.
-   * UPI: only after the customer has explicitly confirmed
-   * they completed the payment in their UPI app.
-   */
   const canConfirm =
     paymentMethod === "cash" ||
     (paymentMethod === "upi" &&
@@ -280,17 +263,60 @@ export default function CabSelectionPage() {
     setUpiPayClicked(true);
   };
 
+  /*
+   * ------------------------------------------------------------
+   * CONFIRM
+   *
+   * IMPORTANT:
+   *
+   * Confirming saves the FULL confirmed booking (original
+   * booking + chosen cab + payment method) and navigates to
+   * a dedicated confirmation page. Nothing on this page stays
+   * editable after confirmation, because this page is gone.
+   * ------------------------------------------------------------
+   */
+
   const handleConfirm = () => {
-    if (!selectedFare || !canConfirm) {
+    if (
+      !selectedFare ||
+      !canConfirm ||
+      isConfirming
+    ) {
       return;
     }
 
-    setConfirmed(true);
+    setIsConfirming(true);
+
+    const confirmedBooking = {
+      ...booking,
+      selectedFare,
+      paymentMethod,
+      confirmedAt:
+        new Date().toISOString(),
+    };
+
+    try {
+      sessionStorage.setItem(
+        "voynu_confirmed_booking",
+        JSON.stringify(
+          confirmedBooking
+        )
+      );
+    } catch (error) {
+      console.error(
+        "VOYNU: unable to save confirmed booking:",
+        error
+      );
+    }
 
     window.open(
-      whatsappHref,
+      buildWhatsAppLink(
+        buildConfirmationMessage()
+      ),
       "_blank"
     );
+
+    router.push("/booking-confirmed");
   };
 
   /*
@@ -323,6 +349,8 @@ export default function CabSelectionPage() {
         </div>
 
         <style jsx>{`
+
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
           .emptyState {
             min-height: 100vh;
@@ -457,8 +485,24 @@ export default function CabSelectionPage() {
 
           <Link href="/" className="brand">
             <div className="brandMark">V</div>
-            <div className="brandName">VOYNU</div>
+            <div>
+              <div className="brandName">VOYNU</div>
+              <div className="brandTagline">Travel safe. Travel smart.</div>
+            </div>
           </Link>
+
+          <a
+            href={buildWhatsAppLink(
+              "Hi VOYNU, I have a question about my booking."
+            )}
+            className="headerWhatsapp"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat with us on WhatsApp"
+          >
+            <IconWhatsApp size={15} />
+            <span>Chat with us</span>
+          </a>
 
         </div>
 
@@ -690,22 +734,25 @@ export default function CabSelectionPage() {
 
         )}
 
-        {!confirmed && canConfirm && (
+        {canConfirm && (
 
           <button
             type="button"
             className="confirmButton"
             onClick={handleConfirm}
-            disabled={!selectedFare}
+            disabled={!selectedFare || isConfirming}
           >
             <IconWhatsApp size={18} />
-            <span>Confirm on WhatsApp</span>
+            <span>
+              {isConfirming
+                ? "Confirming..."
+                : "Confirm on WhatsApp"}
+            </span>
           </button>
 
         )}
 
-        {!confirmed &&
-          !canConfirm &&
+        {!canConfirm &&
           paymentMethod === "upi" && (
 
             <p className="upiHint">
@@ -714,25 +761,6 @@ export default function CabSelectionPage() {
             </p>
 
           )}
-
-        {confirmed && (
-
-          <div className="confirmedBox">
-
-            <IconCheck size={18} />
-
-            <div>
-              <div className="confirmedTitle">Booking sent!</div>
-              <div className="confirmedText">
-                We'll confirm your ride on WhatsApp shortly.
-                If WhatsApp didn't open,{" "}
-                <a href={whatsappHref}>tap here</a>.
-              </div>
-            </div>
-
-          </div>
-
-        )}
 
         <p className="disclaimer">
           Fares shown are estimates. Final fare is
@@ -763,9 +791,15 @@ export default function CabSelectionPage() {
         }
 
         .header {
-          background: #ffffff;
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(10px);
 
           border-bottom: 1px solid #e8eee9;
+
+          position: sticky;
+          top: 0;
+
+          z-index: 20;
         }
 
         .headerInner {
@@ -773,44 +807,77 @@ export default function CabSelectionPage() {
 
           margin: 0 auto;
 
-          min-height: 62px;
+          min-height: 68px;
 
           display: flex;
           align-items: center;
+          justify-content: space-between;
         }
 
         .brand {
           display: flex;
           align-items: center;
 
-          gap: 9px;
+          gap: 10px;
 
           text-decoration: none;
         }
 
         .brandMark {
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          border-radius: 9px;
+          border-radius: 10px;
 
           background: linear-gradient(135deg, #0a7d42, #075c31);
 
           color: #ffffff;
 
           font-weight: 800;
-          font-size: 16px;
+          font-size: 17px;
+
+          box-shadow: 0 6px 14px rgba(8,120,63,0.24);
         }
 
         .brandName {
           color: #0a7d42;
 
           font-weight: 800;
-          font-size: 16px;
+          font-size: 17px;
+
+          line-height: 1;
+        }
+
+        .brandTagline {
+          margin-top: 3px;
+
+          color: #7a8981;
+
+          font-size: 8.5px;
+        }
+
+        .headerWhatsapp {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          padding: 9px 15px;
+
+          border-radius: 30px;
+
+          background: #1fa855;
+          color: #ffffff;
+
+          text-decoration: none;
+
+          font-size: 12.5px;
+          font-weight: 700;
+
+          box-shadow: 0 6px 16px rgba(31,168,85,0.25);
         }
 
         .content {
@@ -1246,44 +1313,7 @@ export default function CabSelectionPage() {
 
         .confirmButton:disabled {
           opacity: .6;
-          cursor: not-allowed;
-        }
-
-        .confirmedBox {
-          display: flex;
-          align-items: flex-start;
-
-          gap: 10px;
-
-          margin-top: 20px;
-
-          padding: 15px 16px;
-
-          border-radius: 14px;
-
-          background: #eef9f1;
-
-          border: 1px solid #cce5d4;
-
-          color: #28734b;
-        }
-
-        .confirmedTitle {
-          font-weight: 800;
-          font-size: 13.5px;
-        }
-
-        .confirmedText {
-          margin-top: 3px;
-
-          font-size: 12px;
-
-          line-height: 1.5;
-        }
-
-        .confirmedText a {
-          color: #0a7d42;
-          font-weight: 700;
+          cursor: wait;
         }
 
         .disclaimer {
@@ -1301,4 +1331,4 @@ export default function CabSelectionPage() {
 
     </main>
   );
-}
+      }
