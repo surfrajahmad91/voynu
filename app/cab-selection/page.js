@@ -393,7 +393,36 @@ export default function CabSelectionPage() {
 
     /*
      * --------------------------------------------------------
+     * CLEAR THE ORIGINAL BOOKING
+     *
+     * IMPORTANT:
+     *
+     * Once confirmed, this booking must not still be "live" and
+     * re-submittable. Clearing it here means that if someone
+     * somehow lands back on this page (bookmark, forward button,
+     * etc.), the "no booking found" check below correctly
+     * redirects them home instead of showing a stale,
+     * re-confirmable screen.
+     * --------------------------------------------------------
+     */
+
+    try {
+      sessionStorage.removeItem("voynu_booking");
+    } catch (error) {
+      console.error(
+        "VOYNU: unable to clear booking data:",
+        error
+      );
+    }
+
+    /*
+     * --------------------------------------------------------
      * WHATSAPP + NAVIGATE
+     *
+     * router.replace (not push) swaps this page out of the
+     * browser history entirely, so pressing "back" from the
+     * confirmation page goes straight to the home page —
+     * this cab-selection screen is never reachable again.
      * --------------------------------------------------------
      */
 
@@ -404,9 +433,8 @@ export default function CabSelectionPage() {
       "_blank"
     );
 
-    router.push("/booking-confirmed");
+    router.replace("/booking-confirmed");
   };
-
   /*
    * ------------------------------------------------------------
    * NO BOOKING — REDIRECTING (nothing to render)
