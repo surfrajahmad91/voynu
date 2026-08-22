@@ -17,6 +17,7 @@ import {
   WHATSAPP_NUMBER,
   buildWhatsAppLink,
 } from "../lib/contact";
+
 import { supabase } from "../lib/supabaseClient";
 
 /*
@@ -270,14 +271,19 @@ export default function CabSelectionPage() {
    *
    * IMPORTANT:
    *
-   * Confirming saves the FULL confirmed booking (original
-   * booking + chosen cab + payment method) and navigates to
-   * a dedicated confirmation page. Nothing on this page stays
-   * editable after confirmation, because this page is gone.
+   * Confirming does three things, in order:
+   *
+   * 1. Saves the booking to Supabase (so it shows up in /admin).
+   * 2. Saves the full confirmed booking to sessionStorage (so
+   *    the /booking-confirmed page can display it).
+   * 3. Opens WhatsApp with the pre-filled confirmation message,
+   *    then navigates to /booking-confirmed. Nothing on this
+   *    page stays editable after confirmation because this
+   *    page is gone.
    * ------------------------------------------------------------
    */
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (
       !selectedFare ||
       !canConfirm ||
@@ -287,6 +293,67 @@ export default function CabSelectionPage() {
     }
 
     setIsConfirming(true);
+
+    /*
+     * --------------------------------------------------------
+     * SAVE TO SUPABASE
+     * --------------------------------------------------------
+     */
+
+    try {
+      const { data: userData } =
+        await supabase.auth.getUser();
+
+      await supabase.from("bookings").insert({
+        user_id: userData?.user?.id || null,
+
+        trip_type: booking.tripType,
+
+        pickup_name: booking.pickup?.name,
+        pickup_lat: booking.pickup?.lat,
+        pickup_lon: booking.pickup?.lon,
+
+        drop_name: booking.drop?.name,
+        drop_lat: booking.drop?.lat,
+        drop_lon: booking.drop?.lon,
+
+        one_way_distance_km:
+          booking.journey?.oneWayDistanceKm,
+        total_distance_km:
+          booking.journey?.totalDistanceKm,
+
+        travel_date: booking.travelDate,
+        pickup_time: booking.pickupTime,
+        return_date: booking.returnDate,
+        return_time: booking.returnTime,
+
+        passenger_name: booking.passengerName,
+        phone: booking.phone,
+        whatsapp: booking.whatsapp,
+
+        vehicle_type: selectedFare.vehicleName,
+        fare: selectedFare.totalFare,
+        payment_method: paymentMethod,
+
+        status: "pending",
+        confirmed_at: new Date().toISOString(),
+      });
+    } catch (dbError) {
+      console.error(
+        "VOYNU: unable to save booking to database:",
+        dbError
+      );
+      /*
+       * Non-fatal — the WhatsApp confirmation still proceeds
+       * even if the database write fails.
+       */
+    }
+
+    /*
+     * --------------------------------------------------------
+     * SAVE FOR THE CONFIRMATION PAGE
+     * --------------------------------------------------------
+     */
 
     const confirmedBooking = {
       ...booking,
@@ -309,6 +376,12 @@ export default function CabSelectionPage() {
         error
       );
     }
+
+    /*
+     * --------------------------------------------------------
+     * WHATSAPP + NAVIGATE
+     * --------------------------------------------------------
+     */
 
     window.open(
       buildWhatsAppLink(
@@ -1332,4 +1405,4 @@ export default function CabSelectionPage() {
 
     </main>
   );
-      }
+}
