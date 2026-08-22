@@ -552,7 +552,7 @@ export default function LocationPicker({
 
         .locationInput {
           width: 100%;
-          height: 53px;
+          height: 48px;
 
           padding: 0 15px;
 
@@ -662,7 +662,7 @@ export default function LocationPicker({
         @media (max-width: 700px) {
 
           .locationInput {
-            height: 52px;
+            height: 46px;
             font-size: 14px;
           }
 
