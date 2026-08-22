@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   buildWhatsAppLink,
 } from "../lib/contact";
+
+import AccountLink from "../components/AccountLink";
 
 function IconCheckBig() {
   return (
@@ -33,6 +36,8 @@ function IconWhatsApp({ size = 17 }) {
 }
 
 export default function BookingConfirmedPage() {
+  const router = useRouter();
+
   const [booking, setBooking] =
     useState(null);
 
@@ -58,99 +63,20 @@ export default function BookingConfirmedPage() {
     }
   }, []);
 
+  /*
+   * ------------------------------------------------------------
+   * NO CONFIRMED BOOKING — REDIRECT HOME
+   * ------------------------------------------------------------
+   */
+
+  useEffect(() => {
+    if (loaded && !booking) {
+      router.replace("/");
+    }
+  }, [loaded, booking, router]);
+
   if (loaded && !booking) {
-    return (
-      <main className="page emptyState">
-
-        <div className="emptyCard">
-
-          <h1>No confirmed booking found</h1>
-
-          <p>
-            We couldn't find a recent
-            confirmation. If you just
-            completed a booking, please
-            check WhatsApp for confirmation.
-          </p>
-
-          <Link href="/" className="emptyButton">
-            Back to home
-          </Link>
-
-        </div>
-
-        <style jsx>{`
-
-          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-          .emptyState {
-            min-height: 100vh;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: #f5faf6;
-
-            padding: 24px;
-
-            font-family: 'Plus Jakarta Sans', sans-serif;
-          }
-
-          .emptyCard {
-            max-width: 380px;
-
-            text-align: center;
-
-            padding: 32px 26px;
-
-            border-radius: 20px;
-
-            background: #ffffff;
-
-            box-shadow: 0 20px 60px rgba(10,40,25,0.10);
-          }
-
-          .emptyCard h1 {
-            margin: 0 0 8px;
-
-            font-size: 19px;
-            font-weight: 800;
-
-            color: #16241d;
-          }
-
-          .emptyCard p {
-            margin: 0 0 20px;
-
-            color: #6b7a72;
-
-            font-size: 13px;
-
-            line-height: 1.5;
-          }
-
-          .emptyButton {
-            display: inline-block;
-
-            padding: 12px 24px;
-
-            border-radius: 12px;
-
-            background: #0a7d42;
-
-            color: #ffffff;
-
-            text-decoration: none;
-
-            font-weight: 700;
-            font-size: 13.5px;
-          }
-
-        `}</style>
-
-      </main>
-    );
+    return null;
   }
 
   if (!loaded || !booking) {
@@ -161,23 +87,18 @@ export default function BookingConfirmedPage() {
 
           .loadingState {
             min-height: 100vh;
-
             display: flex;
             align-items: center;
             justify-content: center;
-
             background: #f5faf6;
           }
 
           .spinnerBox {
             width: 34px;
             height: 34px;
-
             border: 3px solid rgba(8,120,63,0.18);
             border-top-color: #0a7d42;
-
             border-radius: 50%;
-
             animation: spin 0.8s linear infinite;
           }
 
@@ -217,6 +138,8 @@ export default function BookingConfirmedPage() {
               <div className="brandTagline">Travel safe. Travel smart.</div>
             </div>
           </Link>
+
+          <AccountLink />
 
         </div>
 
@@ -388,6 +311,7 @@ export default function BookingConfirmedPage() {
 
           display: flex;
           align-items: center;
+          justify-content: space-between;
         }
 
         .brand {
@@ -680,4 +604,4 @@ export default function BookingConfirmedPage() {
 
     </main>
   );
-                }
+    }
