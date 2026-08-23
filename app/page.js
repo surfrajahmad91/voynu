@@ -10,7 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import LocationPicker from "./components/LocationPicker";
-import AccountLink from "./components/AccountLink";
+import PageHeader from "./components/PageHeader";
 import AuthLanding from "./components/AuthLanding";
 
 import {
@@ -21,6 +21,7 @@ import {
 
 import { buildWhatsAppLink } from "./lib/contact";
 import { supabase } from "./lib/supabaseClient";
+import { theme } from "./lib/theme";
 
 /*
  * Used only as a display default before a pickup city has been
@@ -67,14 +68,6 @@ function IconPhone({ size = 15 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 4h4l2 5-2.5 1.6a11.3 11.3 0 0 0 5.4 5.4L15.4 13l5 2v4a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3 6a2 2 0 0 1 2-2z" />
-    </svg>
-  );
-}
-
-function IconWhatsApp({ size = 15 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
     </svg>
   );
 }
@@ -1339,26 +1332,20 @@ export default function HomePage() {
 
   if (checkingSession) {
     return (
-      <main className="authLoadingPage">
-        <div className="authSpinner" />
-        <style jsx>{`
-          .authLoadingPage {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f5faf6;
-          }
-          .authSpinner {
-            width: 34px;
-            height: 34px;
-            border: 3px solid rgba(8,120,63,0.18);
-            border-top-color: #0a7d42;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          }
-          @keyframes spin { to { transform: rotate(360deg); } }
-        `}</style>
+      <main style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: theme.colors.bg,
+      }}>
+        <div style={{
+          width: 34,
+          height: 34,
+          border: "3px solid rgba(8,120,63,0.18)",
+          borderTopColor: theme.colors.primary,
+          borderRadius: "50%",
+        }} />
       </main>
     );
   }
@@ -1376,52 +1363,12 @@ export default function HomePage() {
   return (
     <main className="page">
 
-      <header className="header">
-
-        <div className="headerInner">
-
-          <div className="brand">
-
-            <div className="brandMark">
-              V
-            </div>
-
-            <div>
-
-              <div className="brandName">
-                VOYNU
-              </div>
-
-              <div className="brandTagline">
-                Travel safe. Travel smart.
-              </div>
-
-            </div>
-
-          </div>
-
-          <div className="headerActions">
-
-            <AccountLink />
-
-            <a
-              href={buildWhatsAppLink(
-                "Hi VOYNU, I have a question about booking a cab."
-              )}
-              className="headerWhatsapp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Chat with us on WhatsApp"
-            >
-              <IconWhatsApp size={15} />
-              <span>Chat with us</span>
-            </a>
-
-          </div>
-
-        </div>
-
-      </header>
+      <PageHeader
+        maxWidth={theme.maxWidth.wide}
+        whatsappHref={buildWhatsAppLink(
+          "Hi VOYNU, I have a question about booking a cab."
+        )}
+      />
 
       <section className="hero">
 
@@ -2025,99 +1972,6 @@ export default function HomePage() {
             Arial,
             Helvetica,
             sans-serif;
-        }
-
-        .header {
-          background: rgba(255,255,255,0.92);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid #e8eee9;
-
-          position: sticky;
-          top: 0;
-
-          z-index: 20;
-        }
-
-        .headerInner {
-          width: min(1180px, calc(100% - 40px));
-          min-height: 72px;
-
-          margin: 0 auto;
-
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .brand {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .brandMark {
-          width: 40px;
-          height: 40px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          border-radius: 12px;
-
-          background: linear-gradient(135deg, #0a7d42, #075c31);
-          color: #ffffff;
-
-          font-size: 21px;
-          font-weight: 800;
-
-          box-shadow: 0 6px 14px rgba(8,120,63,0.28);
-        }
-
-        .brandName {
-          color: #0a7d42;
-
-          font-size: 20px;
-          line-height: 1;
-
-          font-weight: 800;
-          letter-spacing: 0.6px;
-        }
-
-        .brandTagline {
-          margin-top: 4px;
-
-          color: #7a8981;
-
-          font-size: 9px;
-          letter-spacing: 0.3px;
-        }
-
-        .headerActions {
-          display: flex;
-          align-items: center;
-
-          gap: 8px;
-        }
-
-        .headerWhatsapp {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-
-          padding: 9px 15px;
-
-          border-radius: 30px;
-
-          background: #1fa855;
-          color: #ffffff;
-
-          text-decoration: none;
-
-          font-size: 13px;
-          font-weight: 700;
-
-          box-shadow: 0 6px 16px rgba(31,168,85,0.25);
         }
 
         .hero {
@@ -2986,32 +2840,6 @@ export default function HomePage() {
         }
 
         @media (max-width: 700px) {
-
-          .headerInner {
-            width: calc(100% - 28px);
-            min-height: 62px;
-          }
-
-          .brandMark {
-            width: 34px;
-            height: 34px;
-
-            border-radius: 10px;
-
-            font-size: 18px;
-          }
-
-          .brandName {
-            font-size: 18px;
-          }
-
-          .brandTagline {
-            display: none;
-          }
-
-          .headerWhatsapp span {
-            display: none;
-          }
 
           .heroInner {
             width: calc(100% - 28px);
