@@ -9,7 +9,6 @@ import { ADMIN_EMAILS } from "../lib/admin";
 import { theme } from "../lib/theme";
 
 const STATUS_OPTIONS = ["pending", "confirmed", "completed", "cancelled"];
-
 const STATUS_FILTERS = ["all", ...STATUS_OPTIONS];
 
 function IconLogout({ size = 13 }) {
@@ -39,17 +38,69 @@ const statusColors = {
   cancelled: { bg: theme.colors.errorBg, text: theme.colors.error },
 };
 
+const bookingStatusColors = {
+  pending_payment: { bg: theme.colors.warningBg, text: theme.colors.warning },
+  confirmed: { bg: theme.colors.primaryTint, text: theme.colors.primary },
+  driver_assigned: { bg: "#e0edf7", text: "#2563a8" },
+  trip_completed: { bg: "#e5ede8", text: "#45564c" },
+  cancelled: { bg: theme.colors.errorBg, text: theme.colors.error },
+};
+
+const tabStyle = (active) => ({
+  padding: "8px 14px",
+  borderRadius: 6,
+  border: `1px solid ${active ? theme.colors.primary : "#d9e0dc"}`,
+  background: active ? theme.colors.primary : "#ffffff",
+  color: active ? "#ffffff" : "#45564c",
+  fontFamily: "ui-monospace, monospace",
+  fontWeight: 700,
+  fontSize: 11,
+  textTransform: "uppercase",
+  cursor: "pointer",
+});
+
 export default function AdminPage() {
   const router = useRouter();
 
   const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+
+  const [tab, setTab] = useState("bookings");
+
   const [bookings, setBookings] = useState([]);
-  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [drivers, setDrivers] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+
+  const [assigningBookingId, setAssigningBookingId] = useState(null);
+  const [selectedDriverId, setSelectedDriverId] = useState("");
+
+  const [newVehicle, setNewVehicle] = useState({
+    registration_number: "",
+    make: "",
+    model: "",
+    category: "hatchback",
+    seating_capacity: 4,
+    fuel_type: "petrol",
+  });
+
+  const [newDriver, setNewDriver] = useState({
+    full_name: "",
+    phone: "",
+    vehicle_id: "",
+  });
+
+  /*
+   * ------------------------------------------------------------
+   * AUTH
+   * ------------------------------------------------------------
+   */
 
   useEffect(() => {
     let cancelled = false;
@@ -84,29 +135,71 @@ export default function AdminPage() {
     };
   }, [router]);
 
+  /*
+   * ------------------------------------------------------------
+   * DATA FETCHING
+   * ------------------------------------------------------------
+   */
+
+  const fetchBookings = async () => {
+    setLoading(true);
+
+    const { data, error: fetchError } = await supabase
+      .from("bookings")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    setLoading(false);
+
+    if (fetchError) {
+      setError(fetchError.message);
+      return;
+    }
+
+    setBookings(data || []);
+  };
+
+  const fetchDrivers = async () => {
+    const { data, error: fetchError } = await supabase
+      .from("drivers")
+      .select("*, vehicles(*)")
+      .order("created_at", { ascending: false });
+
+    if (fetchError) {
+      setError(fetchError.message);
+      return;
+    }
+
+    setDrivers(data || []);
+  };
+
+  const fetchVehicles = async () => {
+    const { data, error: fetchError } = await supabase
+      .from("vehicles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (fetchError) {
+      setError(fetchError.message);
+      return;
+    }
+
+    setVehicles(data || []);
+  };
+
   useEffect(() => {
     if (!authorized) return;
 
-    const fetchBookings = async () => {
-      setLoadingBookings(true);
-
-      const { data, error: fetchError } = await supabase
-        .from("bookings")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      setLoadingBookings(false);
-
-      if (fetchError) {
-        setError(fetchError.message);
-        return;
-      }
-
-      setBookings(data || []);
-    };
-
     fetchBookings();
+    fetchDrivers();
+    fetchVehicles();
   }, [authorized]);
+
+  /*
+   * ------------------------------------------------------------
+   * BOOKING STATUS (legacy display field)
+   * ------------------------------------------------------------
+   */
 
   const handleStatusChange = async (id, newStatus) => {
     setBookings((prev) =>
@@ -116,10 +209,243 @@ export default function AdminPage() {
     await supabase.from("bookings").update({ status: newStatus }).eq("id", id);
   };
 
+  /*
+   * ------------------------------------------------------------
+   * CONFIRM UPI PAYMENT
+   *
+   * BUSINESS RULE: a UPI booking's payment_status only moves
+   * from "pending" to "paid" once admin has manually verified
+   * the money actually arrived (e.g. checked their UPI app).
+   * The customer's "I've paid" tap is never treated as
+   * verification on its own.
+   * ------------------------------------------------------------
+   */
+
+  const handleConfirmPayment = async (booking) => {
+    setNotice("");
+    setError("");
+
+    const { error: updateError } = await supabase
+      .from("bookings")
+      .update({
+        payment_status: "paid",
+        booking_status: "confirmed",
+      })
+      .eq("id", booking.id);
+
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? { ...b, payment_status: "paid", booking_status: "confirmed" }
+          : b
+      )
+    );
+
+    setNotice(
+      `Payment confirmed for booking #${shortBookingId(booking.id)}.`
+    );
+  };
+
+  /*
+   * ------------------------------------------------------------
+   * DRIVER ASSIGNMENT
+   *
+   * BUSINESS RULE: only admin assigns drivers. This creates a
+   * driver_assignments record (preserving history if later
+   * reassigned), links the driver/vehicle onto the booking, and
+   * advances booking_status to driver_assigned.
+   * ------------------------------------------------------------
+   */
+
+  const openAssign = (bookingId) => {
+    setAssigningBookingId(bookingId);
+    setSelectedDriverId("");
+    setNotice("");
+    setError("");
+  };
+
+  const handleAssignDriver = async (booking) => {
+    if (!selectedDriverId) {
+      setError("Select a driver first.");
+      return;
+    }
+
+    const driver = drivers.find((d) => d.id === selectedDriverId);
+
+    if (!driver) {
+      setError("Driver not found.");
+      return;
+    }
+
+    if (driver.availability_status !== "available") {
+      setError(
+        `${driver.full_name} is currently marked as ${driver.availability_status}, not available.`
+      );
+      return;
+    }
+
+    setError("");
+
+    const { error: assignError } = await supabase
+      .from("driver_assignments")
+      .insert({
+        booking_id: booking.id,
+        driver_id: driver.id,
+        vehicle_id: driver.vehicle_id,
+        status: "assigned",
+      });
+
+    if (assignError) {
+      setError(assignError.message);
+      return;
+    }
+
+    const { error: bookingError } = await supabase
+      .from("bookings")
+      .update({
+        driver_id: driver.id,
+        vehicle_id: driver.vehicle_id,
+        booking_status: "driver_assigned",
+      })
+      .eq("id", booking.id);
+
+    if (bookingError) {
+      setError(bookingError.message);
+      return;
+    }
+
+    await supabase
+      .from("drivers")
+      .update({ availability_status: "busy" })
+      .eq("id", driver.id);
+
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              driver_id: driver.id,
+              vehicle_id: driver.vehicle_id,
+              booking_status: "driver_assigned",
+            }
+          : b
+      )
+    );
+
+    setDrivers((prev) =>
+      prev.map((d) =>
+        d.id === driver.id
+          ? { ...d, availability_status: "busy" }
+          : d
+      )
+    );
+
+    setAssigningBookingId(null);
+    setNotice(
+      `${driver.full_name} assigned to booking #${shortBookingId(booking.id)}.`
+    );
+  };
+
+  /*
+   * ------------------------------------------------------------
+   * ADD VEHICLE / DRIVER
+   * ------------------------------------------------------------
+   */
+
+  const handleAddVehicle = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!newVehicle.registration_number.trim()) {
+      setError("Registration number is required.");
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from("vehicles")
+      .insert({
+        registration_number: newVehicle.registration_number.trim(),
+        make: newVehicle.make.trim(),
+        model: newVehicle.model.trim(),
+        category: newVehicle.category,
+        seating_capacity: Number(newVehicle.seating_capacity) || 4,
+        fuel_type: newVehicle.fuel_type,
+      });
+
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
+
+    setNewVehicle({
+      registration_number: "",
+      make: "",
+      model: "",
+      category: "hatchback",
+      seating_capacity: 4,
+      fuel_type: "petrol",
+    });
+
+    fetchVehicles();
+    setNotice("Vehicle added.");
+  };
+
+  const handleAddDriver = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!newDriver.full_name.trim() || !newDriver.phone.trim()) {
+      setError("Driver name and phone are required.");
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from("drivers")
+      .insert({
+        full_name: newDriver.full_name.trim(),
+        phone: newDriver.phone.trim(),
+        vehicle_id: newDriver.vehicle_id || null,
+        availability_status: "available",
+      });
+
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
+
+    setNewDriver({ full_name: "", phone: "", vehicle_id: "" });
+    fetchDrivers();
+    setNotice("Driver added.");
+  };
+
+  const handleDriverAvailability = async (driverId, status) => {
+    setDrivers((prev) =>
+      prev.map((d) =>
+        d.id === driverId ? { ...d, availability_status: status } : d
+      )
+    );
+
+    await supabase
+      .from("drivers")
+      .update({ availability_status: status })
+      .eq("id", driverId);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
+
+  /*
+   * ------------------------------------------------------------
+   * FILTERED BOOKINGS
+   * ------------------------------------------------------------
+   */
 
   const filteredBookings = useMemo(() => {
     let list = bookings;
@@ -154,8 +480,35 @@ export default function AdminPage() {
       .filter((b) => b.status === "completed")
       .reduce((sum, b) => sum + (Number(b.fare) || 0), 0);
 
-    return { total: bookings.length, pending, confirmed, completed, revenue };
+    const awaitingPayment = bookings.filter(
+      (b) => b.payment_status === "pending"
+    ).length;
+
+    const awaitingAssignment = bookings.filter(
+      (b) =>
+        b.booking_status === "confirmed" && !b.driver_id
+    ).length;
+
+    return {
+      total: bookings.length,
+      pending,
+      confirmed,
+      completed,
+      revenue,
+      awaitingPayment,
+      awaitingAssignment,
+    };
   }, [bookings]);
+
+  const availableDrivers = drivers.filter(
+    (d) => d.active && d.availability_status === "available"
+  );
+
+  /*
+   * ------------------------------------------------------------
+   * RENDER GATES
+   * ------------------------------------------------------------
+   */
 
   if (checking) {
     return (
@@ -220,6 +573,12 @@ export default function AdminPage() {
     );
   }
 
+  /*
+   * ------------------------------------------------------------
+   * MAIN
+   * ------------------------------------------------------------
+   */
+
   return (
     <main style={{
       minHeight: "100vh",
@@ -228,10 +587,7 @@ export default function AdminPage() {
       color: theme.colors.text,
     }}>
 
-      <div style={{
-        background: "#16241d",
-        color: "#ffffff",
-      }}>
+      <div style={{ background: "#16241d", color: "#ffffff" }}>
         <div style={{
           width: `min(${theme.maxWidth.wide}px, calc(100% - 28px))`,
           margin: "0 auto",
@@ -289,66 +645,39 @@ export default function AdminPage() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
           gap: 8,
-          marginBottom: 18,
+          marginBottom: 16,
         }}>
           <StatBox label="TOTAL" value={stats.total} />
-          <StatBox label="PENDING" value={stats.pending} accent={theme.colors.warning} />
-          <StatBox label="CONFIRMED" value={stats.confirmed} accent={theme.colors.primary} />
+          <StatBox label="AWAITING PAYMENT" value={stats.awaitingPayment} accent={theme.colors.warning} />
+          <StatBox label="AWAITING ASSIGNMENT" value={stats.awaitingAssignment} accent="#2563a8" />
           <StatBox label="COMPLETED" value={stats.completed} accent="#45564c" />
           <StatBox label="REVENUE" value={`₹${stats.revenue}`} accent={theme.colors.primary} />
         </div>
 
-        <div style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 8,
-          marginBottom: 14,
-          alignItems: "center",
-        }}>
-
-          <input
-            type="text"
-            placeholder="search: id / name / phone / location"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              flex: "1 1 220px",
-              minWidth: 0,
-              height: 34,
-              padding: "0 10px",
-              border: "1px solid #d9e0dc",
-              borderRadius: 6,
-              background: "#ffffff",
-              fontFamily: "ui-monospace, monospace",
-              fontSize: 11.5,
-              outline: "none",
-            }}
-          />
-
-          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-            {STATUS_FILTERS.map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 6,
-                  border: `1px solid ${statusFilter === s ? theme.colors.primary : "#d9e0dc"}`,
-                  background: statusFilter === s ? theme.colors.primary : "#ffffff",
-                  color: statusFilter === s ? "#ffffff" : "#45564c",
-                  fontFamily: "ui-monospace, monospace",
-                  fontWeight: 700,
-                  fontSize: 10.5,
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-
+        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+          <button style={tabStyle(tab === "bookings")} onClick={() => setTab("bookings")}>
+            Bookings
+          </button>
+          <button style={tabStyle(tab === "drivers")} onClick={() => setTab("drivers")}>
+            Drivers
+          </button>
+          <button style={tabStyle(tab === "vehicles")} onClick={() => setTab("vehicles")}>
+            Vehicles
+          </button>
         </div>
+
+        {notice && (
+          <div style={{
+            padding: "10px 12px",
+            borderRadius: 6,
+            background: theme.colors.primaryTint,
+            color: theme.colors.primary,
+            fontSize: 11.5,
+            marginBottom: 12,
+          }}>
+            {notice}
+          </div>
+        )}
 
         {error && (
           <div style={{
@@ -363,146 +692,474 @@ export default function AdminPage() {
           </div>
         )}
 
-        {loadingBookings ? (
-          <p style={{ color: theme.colors.textFaint, fontSize: 12 }}>loading...</p>
-        ) : filteredBookings.length === 0 ? (
-          <p style={{ color: theme.colors.textFaint, fontSize: 12 }}>no matching bookings.</p>
-        ) : (
+        {tab === "bookings" && (
+          <>
 
-          <div style={{
-            border: "1px solid #d9e0dc",
-            borderRadius: 8,
-            overflow: "hidden",
-            background: "#ffffff",
-          }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14, alignItems: "center" }}>
 
-            {/* header row - desktop only */}
-            <div className="adminTableHeader" style={{
-              display: "grid",
-              gridTemplateColumns: "90px 1fr 1fr 90px 110px 130px 70px 90px 120px",
-              gap: 8,
-              padding: "8px 12px",
-              background: "#eef1ef",
-              fontSize: 10,
-              fontWeight: 700,
-              color: "#6b7a72",
-              textTransform: "uppercase",
-              letterSpacing: 0.3,
-            }}>
-              <span>ID</span>
-              <span>Pickup</span>
-              <span>Drop</span>
-              <span>Type</span>
-              <span>Date/Time</span>
-              <span>Customer</span>
-              <span>Fare</span>
-              <span>Pay</span>
-              <span>Status</span>
+              <input
+                type="text"
+                placeholder="search: id / name / phone / location"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  flex: "1 1 220px",
+                  minWidth: 0,
+                  height: 34,
+                  padding: "0 10px",
+                  border: "1px solid #d9e0dc",
+                  borderRadius: 6,
+                  background: "#ffffff",
+                  fontFamily: "ui-monospace, monospace",
+                  fontSize: 11.5,
+                  outline: "none",
+                }}
+              />
+
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                {STATUS_FILTERS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    style={tabStyle(statusFilter === s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+
             </div>
 
-            {filteredBookings.map((b, i) => {
-              const status = statusColors[b.status] || statusColors.pending;
+            {loading ? (
+              <p style={{ color: theme.colors.textFaint, fontSize: 12 }}>loading...</p>
+            ) : filteredBookings.length === 0 ? (
+              <p style={{ color: theme.colors.textFaint, fontSize: 12 }}>no matching bookings.</p>
+            ) : (
 
-              return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {filteredBookings.map((b) => {
+                  const status = statusColors[b.status] || statusColors.pending;
+
+                  const bStatus =
+                    bookingStatusColors[b.booking_status] ||
+                    bookingStatusColors.confirmed;
+
+                  const assignedDriver = drivers.find(
+                    (d) => d.id === b.driver_id
+                  );
+
+                  const needsPaymentConfirmation =
+                    b.payment_method === "upi" &&
+                    b.payment_status === "pending";
+
+                  const needsAssignment =
+                    b.booking_status === "confirmed" && !b.driver_id;
+
+                  return (
+                    <div
+                      key={b.id}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: 8,
+                        background: "#ffffff",
+                        border: "1px solid #d9e0dc",
+                        fontSize: 11.5,
+                      }}
+                    >
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+                        <span style={{ color: "#8a9790", fontWeight: 700 }}>
+                          #{shortBookingId(b.id)} · {new Date(b.created_at).toLocaleString()}
+                        </span>
+
+                        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                          <select
+                            value={b.status}
+                            onChange={(e) => handleStatusChange(b.id, e.target.value)}
+                            style={{
+                              padding: "3px 6px",
+                              borderRadius: 5,
+                              border: "1px solid #d9e0dc",
+                              fontFamily: "ui-monospace, monospace",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              background: status.bg,
+                              color: status.text,
+                            }}
+                          >
+                            {STATUS_OPTIONS.map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+
+                          {b.booking_status && (
+                            <span style={{
+                              padding: "3px 8px",
+                              borderRadius: 5,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              background: bStatus.bg,
+                              color: bStatus.text,
+                            }}>
+                              {b.booking_status}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: 6 }}>
+                        {shortLocationName(b.pickup_name)} → {shortLocationName(b.drop_name)}
+                        {" · "}{b.trip_type === "roundtrip" ? "RT" : "OW"}
+                        {" · "}{b.travel_date} {b.pickup_time}
+                        {" · "}{b.vehicle_type}
+                        {" · "}₹{b.fare}
+                      </div>
+
+                      <div style={{ marginBottom: 8, color: "#6b7a72" }}>
+                        {b.passenger_name} · {b.phone}
+                        {" · "}{b.payment_method}
+                        {" · payment: "}
+                        <strong style={{ color: b.payment_status === "paid" ? theme.colors.primary : theme.colors.warning }}>
+                          {b.payment_status || "—"}
+                        </strong>
+                        {assignedDriver && (
+                          <> · driver: <strong>{assignedDriver.full_name}</strong></>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+
+                        {needsPaymentConfirmation && (
+                          <button
+                            onClick={() => handleConfirmPayment(b)}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 6,
+                              border: 0,
+                              background: theme.colors.primary,
+                              color: "#ffffff",
+                              fontFamily: "ui-monospace, monospace",
+                              fontWeight: 700,
+                              fontSize: 10.5,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Confirm payment received
+                          </button>
+                        )}
+
+                        {needsAssignment && assigningBookingId !== b.id && (
+                          <button
+                            onClick={() => openAssign(b.id)}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 6,
+                              border: "1px solid #2563a8",
+                              background: "#e0edf7",
+                              color: "#2563a8",
+                              fontFamily: "ui-monospace, monospace",
+                              fontWeight: 700,
+                              fontSize: 10.5,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Assign driver
+                          </button>
+                        )}
+
+                      </div>
+
+                      {assigningBookingId === b.id && (
+                        <div style={{
+                          marginTop: 10,
+                          padding: 10,
+                          borderRadius: 6,
+                          background: "#f4f6f5",
+                          border: "1px solid #d9e0dc",
+                        }}>
+                          {availableDrivers.length === 0 ? (
+                            <p style={{ margin: 0, color: theme.colors.textFaint }}>
+                              No available drivers. Add one in the Drivers tab.
+                            </p>
+                          ) : (
+                            <>
+                              <select
+                                value={selectedDriverId}
+                                onChange={(e) => setSelectedDriverId(e.target.value)}
+                                style={{
+                                  width: "100%",
+                                  padding: "6px 8px",
+                                  borderRadius: 5,
+                                  border: "1px solid #d9e0dc",
+                                  fontFamily: "ui-monospace, monospace",
+                                  fontSize: 11,
+                                  marginBottom: 8,
+                                }}
+                              >
+                                <option value="">Select a driver...</option>
+                                {availableDrivers.map((d) => (
+                                  <option key={d.id} value={d.id}>
+                                    {d.full_name} — {d.vehicles?.registration_number || "no vehicle"} ({d.vehicles?.category || "—"})
+                                  </option>
+                                ))}
+                              </select>
+
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button
+                                  onClick={() => handleAssignDriver(b)}
+                                  style={{
+                                    padding: "6px 12px",
+                                    borderRadius: 6,
+                                    border: 0,
+                                    background: theme.colors.primary,
+                                    color: "#ffffff",
+                                    fontFamily: "ui-monospace, monospace",
+                                    fontWeight: 700,
+                                    fontSize: 10.5,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Confirm assignment
+                                </button>
+                                <button
+                                  onClick={() => setAssigningBookingId(null)}
+                                  style={{
+                                    padding: "6px 12px",
+                                    borderRadius: 6,
+                                    border: "1px solid #d9e0dc",
+                                    background: "#ffffff",
+                                    color: "#45564c",
+                                    fontFamily: "ui-monospace, monospace",
+                                    fontWeight: 700,
+                                    fontSize: 10.5,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })}
+              </div>
+
+            )}
+
+          </>
+        )}
+
+        {tab === "drivers" && (
+          <>
+            <form
+              onSubmit={handleAddDriver}
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+                marginBottom: 16,
+                padding: 12,
+                borderRadius: 8,
+                background: "#ffffff",
+                border: "1px solid #d9e0dc",
+              }}
+            >
+              <input
+                placeholder="Full name"
+                value={newDriver.full_name}
+                onChange={(e) => setNewDriver({ ...newDriver, full_name: e.target.value })}
+                style={inputStyle}
+              />
+              <input
+                placeholder="Phone"
+                value={newDriver.phone}
+                onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
+                style={inputStyle}
+              />
+              <select
+                value={newDriver.vehicle_id}
+                onChange={(e) => setNewDriver({ ...newDriver, vehicle_id: e.target.value })}
+                style={inputStyle}
+              >
+                <option value="">No vehicle yet</option>
+                {vehicles.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.registration_number} ({v.category})
+                  </option>
+                ))}
+              </select>
+              <button type="submit" style={submitButtonStyle}>
+                Add driver
+              </button>
+            </form>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {drivers.map((d) => (
                 <div
-                  key={b.id}
-                  className="adminRow"
+                  key={d.id}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "90px 1fr 1fr 90px 110px 130px 70px 90px 120px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
                     gap: 8,
                     padding: "10px 12px",
-                    borderTop: i === 0 ? "none" : "1px solid #eef1ef",
+                    borderRadius: 8,
+                    background: "#ffffff",
+                    border: "1px solid #d9e0dc",
                     fontSize: 11.5,
-                    alignItems: "center",
                   }}
                 >
-                  <span style={{ color: "#8a9790", fontWeight: 700 }}>
-                    {shortBookingId(b.id)}
-                  </span>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={b.pickup_name}>
-                    {shortLocationName(b.pickup_name)}
-                  </span>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={b.drop_name}>
-                    {shortLocationName(b.drop_name)}
-                  </span>
-                  <span>
-                    {b.trip_type === "roundtrip" ? "RT" : "OW"} · {b.vehicle_type?.slice(0, 3).toUpperCase()}
-                  </span>
-                  <span>{b.travel_date} {b.pickup_time}</span>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {b.passenger_name}<br />
-                    <span style={{ color: "#8a9790" }}>{b.phone}</span>
-                  </span>
-                  <span style={{ fontWeight: 700, color: theme.colors.primary }}>
-                    ₹{b.fare}
-                  </span>
-                  <span style={{ fontSize: 10.5, color: "#6b7a72" }}>
-                    {b.payment_method}
-                  </span>
+                  <div>
+                    <strong>{d.full_name}</strong> · {d.phone}
+                    {d.vehicles && (
+                      <> · {d.vehicles.registration_number} ({d.vehicles.category})</>
+                    )}
+                  </div>
+
                   <select
-                    value={b.status}
-                    onChange={(e) => handleStatusChange(b.id, e.target.value)}
+                    value={d.availability_status}
+                    onChange={(e) => handleDriverAvailability(d.id, e.target.value)}
                     style={{
-                      padding: "4px 6px",
+                      padding: "4px 8px",
                       borderRadius: 5,
                       border: "1px solid #d9e0dc",
                       fontFamily: "ui-monospace, monospace",
                       fontSize: 10.5,
                       fontWeight: 700,
-                      background: status.bg,
-                      color: status.text,
                     }}
                   >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
+                    <option value="available">available</option>
+                    <option value="busy">busy</option>
+                    <option value="offline">offline</option>
+                    <option value="suspended">suspended</option>
                   </select>
                 </div>
-              );
-            })}
+              ))}
 
-          </div>
+              {drivers.length === 0 && (
+                <p style={{ color: theme.colors.textFaint, fontSize: 12 }}>No drivers yet.</p>
+              )}
+            </div>
+          </>
+        )}
 
+        {tab === "vehicles" && (
+          <>
+            <form
+              onSubmit={handleAddVehicle}
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+                marginBottom: 16,
+                padding: 12,
+                borderRadius: 8,
+                background: "#ffffff",
+                border: "1px solid #d9e0dc",
+              }}
+            >
+              <input
+                placeholder="Registration number"
+                value={newVehicle.registration_number}
+                onChange={(e) => setNewVehicle({ ...newVehicle, registration_number: e.target.value })}
+                style={inputStyle}
+              />
+              <input
+                placeholder="Make"
+                value={newVehicle.make}
+                onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
+                style={{ ...inputStyle, width: 110 }}
+              />
+              <input
+                placeholder="Model"
+                value={newVehicle.model}
+                onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
+                style={{ ...inputStyle, width: 110 }}
+              />
+              <select
+                value={newVehicle.category}
+                onChange={(e) => setNewVehicle({ ...newVehicle, category: e.target.value })}
+                style={inputStyle}
+              >
+                <option value="hatchback">Hatchback</option>
+                <option value="sedan">Sedan</option>
+                <option value="suv">SUV</option>
+                <option value="ev">EV</option>
+              </select>
+              <input
+                type="number"
+                placeholder="Seats"
+                value={newVehicle.seating_capacity}
+                onChange={(e) => setNewVehicle({ ...newVehicle, seating_capacity: e.target.value })}
+                style={{ ...inputStyle, width: 70 }}
+              />
+              <button type="submit" style={submitButtonStyle}>
+                Add vehicle
+              </button>
+            </form>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {vehicles.map((v) => (
+                <div
+                  key={v.id}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    background: "#ffffff",
+                    border: "1px solid #d9e0dc",
+                    fontSize: 11.5,
+                  }}
+                >
+                  <strong>{v.registration_number}</strong>
+                  {" · "}{v.make} {v.model}
+                  {" · "}{v.category}
+                  {" · "}{v.seating_capacity} seats
+                </div>
+              ))}
+
+              {vehicles.length === 0 && (
+                <p style={{ color: theme.colors.textFaint, fontSize: 12 }}>No vehicles yet.</p>
+              )}
+            </div>
+          </>
         )}
 
       </div>
 
-      <style jsx>{`
-
-        @media (max-width: 900px) {
-
-          .adminTableHeader {
-            display: none !important;
-          }
-
-          .adminRow {
-            display: grid !important;
-            grid-template-columns: 1fr !important;
-            gap: 4px !important;
-            padding: 12px !important;
-          }
-
-          .adminRow > span:nth-child(1)::before { content: "ID: "; color: #8a9790; }
-          .adminRow > span:nth-child(2)::before { content: "From: "; color: #8a9790; }
-          .adminRow > span:nth-child(3)::before { content: "To: "; color: #8a9790; }
-          .adminRow > span:nth-child(4)::before { content: "Type: "; color: #8a9790; }
-          .adminRow > span:nth-child(5)::before { content: "When: "; color: #8a9790; }
-          .adminRow > span:nth-child(7)::before { content: "Fare: "; color: #8a9790; }
-          .adminRow > span:nth-child(8)::before { content: "Pay: "; color: #8a9790; }
-
-          .adminRow > span {
-            white-space: normal !important;
-            overflow: visible !important;
-          }
-
-        }
-
-      `}</style>
-
     </main>
   );
 }
+
+const inputStyle = {
+  flex: "1 1 140px",
+  minWidth: 0,
+  height: 34,
+  padding: "0 10px",
+  border: "1px solid #d9e0dc",
+  borderRadius: 6,
+  background: "#ffffff",
+  fontFamily: "ui-monospace, monospace",
+  fontSize: 11.5,
+  outline: "none",
+};
+
+const submitButtonStyle = {
+  padding: "0 16px",
+  height: 34,
+  borderRadius: 6,
+  border: 0,
+  background: theme.colors.primary,
+  color: "#ffffff",
+  fontFamily: "ui-monospace, monospace",
+  fontWeight: 700,
+  fontSize: 11,
+  cursor: "pointer",
+};
 
 function StatBox({ label, value, accent = theme.colors.text }) {
   return (
@@ -520,4 +1177,4 @@ function StatBox({ label, value, accent = theme.colors.text }) {
       </div>
     </div>
   );
-                }
+}
