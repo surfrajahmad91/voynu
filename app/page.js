@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import LocationPicker from "./components/LocationPicker";
 import PageHeader from "./components/PageHeader";
 import AuthLanding from "./components/AuthLanding";
+import { fetchActiveServiceAreas } from "./lib/serviceAreas";
 
 import {
   calculateTripDetails,
@@ -340,6 +341,11 @@ export default function HomePage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serviceAreas, setServiceAreas] = useState([]);
+
+  useEffect(() => {
+    fetchActiveServiceAreas().then(setServiceAreas);
+  }, []);
 
   /*
    * ------------------------------------------------------------
