@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "../lib/supabaseClient";
+import { theme } from "../lib/theme";
+import AuthShell from "../components/AuthShell";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -50,172 +52,95 @@ export default function SignupPage() {
     router.push("/");
   };
 
+  const inputStyle = {
+    width: "100%",
+    height: 50,
+    border: "1.5px solid #e3e9e5",
+    borderRadius: 12,
+    padding: "0 14px",
+    fontSize: 14,
+    fontFamily: theme.fontFamily,
+    outline: "none",
+    boxSizing: "border-box",
+    background: "#f8faf9",
+  };
+
   return (
-    <main className="page">
+    <AuthShell>
 
-      <div className="authCard">
-
-        <Link href="/" className="brand">
-          <div className="brandMark">V</div>
-          <div className="brandName">VOYNU</div>
-        </Link>
-
-        <h1>Create your account</h1>
-
-        <form onSubmit={handleSubmit}>
-
-          <input
-            type="text"
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="Password (min 6 characters)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          {error && <div className="authError">{error}</div>}
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Sign up"}
-          </button>
-
-        </form>
-
-        <p className="authFooter">
-          Already have an account?{" "}
-          <Link href="/login">Log in</Link>
+      <div style={{ marginBottom: 22 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
+          Create your account
+        </h1>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
+          Join VOYNU to start booking rides.
         </p>
-
       </div>
 
-      <style jsx>{`
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        <input
+          type="text"
+          placeholder="Full name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={inputStyle}
+        />
 
-        .page {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f5faf6;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          padding: 20px;
-        }
+        <input
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={inputStyle}
+        />
 
-        .authCard {
-          width: 100%;
-          max-width: 380px;
-          padding: 32px 28px;
-          border-radius: 20px;
-          background: #ffffff;
-          box-shadow: 0 20px 60px rgba(10,40,25,0.10);
-        }
+        <input
+          type="password"
+          placeholder="Password (min 6 characters)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={inputStyle}
+        />
 
-        .brand {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          text-decoration: none;
-          margin-bottom: 24px;
-        }
+        {error && (
+          <div style={{ color: theme.colors.error, fontSize: 12.5, fontWeight: 600 }}>
+            {error}
+          </div>
+        )}
 
-        .brandMark {
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 9px;
-          background: linear-gradient(135deg, #0a7d42, #075c31);
-          color: #fff;
-          font-weight: 800;
-        }
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            height: 52,
+            border: 0,
+            borderRadius: 13,
+            background: theme.gradients.primary,
+            color: "#ffffff",
+            fontFamily: theme.fontFamily,
+            fontWeight: 800,
+            fontSize: 14,
+            cursor: loading ? "wait" : "pointer",
+            opacity: loading ? 0.7 : 1,
+            marginTop: 6,
+            boxShadow: theme.shadow.button,
+          }}
+        >
+          {loading ? "Creating account..." : "Sign up"}
+        </button>
 
-        .brandName {
-          color: #0a7d42;
-          font-weight: 800;
-          font-size: 16px;
-        }
+      </form>
 
-        h1 {
-          font-size: 20px;
-          font-weight: 800;
-          margin: 0 0 20px;
-          color: #16241d;
-        }
+      <p style={{ marginTop: 20, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
+        Already have an account?{" "}
+        <Link href="/login" style={{ color: theme.colors.primary, fontWeight: 700 }}>
+          Log in
+        </Link>
+      </p>
 
-        form {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        input {
-          height: 48px;
-          border: 1.5px solid #e3e9e5;
-          border-radius: 11px;
-          padding: 0 14px;
-          font-size: 14px;
-          font-family: inherit;
-          outline: none;
-        }
-
-        input:focus {
-          border-color: #0a7d42;
-        }
-
-        button {
-          height: 50px;
-          border: 0;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #0a7d42, #075c31);
-          color: #fff;
-          font-weight: 800;
-          font-size: 14px;
-          cursor: pointer;
-          margin-top: 6px;
-        }
-
-        button:disabled {
-          opacity: 0.6;
-          cursor: wait;
-        }
-
-        .authError {
-          color: #b33d34;
-          font-size: 12.5px;
-          font-weight: 600;
-        }
-
-        .authFooter {
-          margin-top: 18px;
-          text-align: center;
-          font-size: 13px;
-          color: #6b7a72;
-        }
-
-        .authFooter a {
-          color: #0a7d42;
-          font-weight: 700;
-          text-decoration: none;
-        }
-
-      `}</style>
-
-    </main>
+    </AuthShell>
   );
-              }
+}
