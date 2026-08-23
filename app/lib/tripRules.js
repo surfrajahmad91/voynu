@@ -5,119 +5,55 @@
 |
 | Central business rules for determining whether a trip can be booked.
 |
+| BUSINESS RULE:
+| Pickup validity is determined by actual coordinates checked
+| against a geographic service area (circle or polygon), never
+| by matching text like "Kanpur" from a geocoded address string.
+| See app/lib/geofence.js and app/lib/serviceAreas.js.
+|
 | IMPORTANT:
 | - This file does NOT communicate with Google Maps.
-| - This file does NOT call any API.
-| - This file does NOT know how LocationPicker works.
-| - This file works only with normalized location/trip data.
-|
-| LocationPicker / Google Maps can provide:
-|
-| {
-|   name,
-|   lat,
-|   lon,
-|   city
-| }
+| - This file does NOT call any API directly (service areas are
+|   fetched separately and passed in, keeping this module pure
+|   and easy to reuse/test).
 |
 |--------------------------------------------------------------------------
 */
 
+import { isPointInServiceArea } from "./geofence";
 
 /*
 |--------------------------------------------------------------------------
 | VOYNU TRIP CONFIGURATION
 |--------------------------------------------------------------------------
 |
-| Keep operational rules here.
-|
-| Later, these values can come from the backend/Admin Panel without
-| requiring changes to the booking UI.
+| Non-geographic trip rules. Geographic service-area config now
+| lives in the `service_areas` table (see serviceAreas.js),
+| since that needs to be configurable without a redeploy.
 |
 |--------------------------------------------------------------------------
 */
 
 export const VOYNU_TRIP_CONFIG = {
   /*
-   * Maximum ONE-WAY road distance from the selected pickup
-   * to the selected destination.
+   * Fallback maximum one-way distance if a matched service
+   * area doesn't specify its own max_drop_distance_km.
    *
-   * Example:
-   *
-   * Pickup → Drop = 195 km
-   *              = ALLOWED
-   *
-   * Pickup → Drop = 201 km
-   *              = NOT ALLOWED
+   * BUSINESS RULE: this is a PER-LEG limit, not a round-trip
+   * total. See calculateTripDetails() below for how round
+   * trips are validated leg-by-leg.
    */
   maxOneWayDistanceKm: 200,
-
-
-  /*
-   * Current VOYNU service areas.
-   *
-   * At launch, pickup service is available in Kanpur.
-   *
-   * More service areas can be added later by adding
-   * additional entries to this array. No other code
-   * needs to change.
-   */
-  serviceCities: [
-    {
-      id: "kanpur",
-      name: "Kanpur",
-
-      /*
-       * Alternate names Google may return for this city.
-       */
-      aliases: ["Kanpur Nagar"],
-
-      /*
-       * Whether this city is currently active.
-       */
-      active: true,
-
-      /*
-       * Pickup availability.
-       */
-      pickupAllowed: true,
-
-      /*
-       * Maximum destination distance for trips starting here.
-       */
-      maxDropDistanceKm: 200,
-    },
-  ],
-
 
   /*
    * EV ROUND-TRIP CHARGING RULE
    *
-   * The distance below represents the ONE-WAY distance.
-   *
-   * Example:
-   *
-   * 195 km one way
-   * 390 km round trip
-   *
-   * Charging break is required.
+   * A trip of this one-way distance or more requires a
+   * charging break when booked as a round trip.
    */
   roundTripCharging: {
     enabled: true,
-
-    /*
-     * Current operational threshold.
-     *
-     * A trip of 180 km or more one way requires a charging break
-     * when booked as a round trip.
-     *
-     * This can be changed later without modifying page.js.
-     */
     distanceThresholdKm: 180,
-
-    /*
-     * Required charging break at destination.
-     */
     chargingBreakMinutes: 60,
   },
 };
@@ -127,25 +63,9 @@ export const VOYNU_TRIP_CONFIG = {
 |--------------------------------------------------------------------------
 | TRIP TYPE NORMALIZATION
 |--------------------------------------------------------------------------
-|
-| page.js currently uses:
-|
-|   "oneway"
-|   "roundtrip"
-|
-| Older trip rules used:
-|
-|   "one_way"
-|   "round_trip"
-|
-| Support both formats so existing code does not break.
-|
-|--------------------------------------------------------------------------
 */
 
-export function normalizeTripType(
-  tripType
-) {
+export function normalizeTripType(tripType) {
   if (
     tripType === "roundtrip" ||
     tripType === "round_trip" ||
@@ -164,39 +84,23 @@ export function normalizeTripType(
 |--------------------------------------------------------------------------
 */
 
-export function isValidCoordinates(
-  location
-) {
+export function isValidCoordinates(location) {
   if (!location) {
     return false;
   }
 
-  const lat = Number(
-    location.lat
-  );
+  const lat = Number(location.lat);
+  const lon = Number(location.lon);
 
-  const lon = Number(
-    location.lon
-  );
-
-  if (
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lon)
-  ) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return false;
   }
 
-  if (
-    lat < -90 ||
-    lat > 90
-  ) {
+  if (lat < -90 || lat > 90) {
     return false;
   }
 
-  if (
-    lon < -180 ||
-    lon > 180
-  ) {
+  if (lon < -180 || lon > 180) {
     return false;
   }
 
@@ -206,19 +110,12 @@ export function isValidCoordinates(
 
 /*
 |--------------------------------------------------------------------------
-| STRAIGHT-LINE DISTANCE
+| STRAIGHT-LINE DISTANCE (fallback only)
 |--------------------------------------------------------------------------
 |
-| Calculates distance between two coordinates using Haversine.
-|
-| IMPORTANT:
-|
-| This is NOT road distance.
-|
-| It is useful as a fallback and for preliminary UI feedback.
-|
-| Final booking eligibility should preferably use the road distance
-| supplied by the Google Maps routing/distance calculation.
+| NOT road distance. Used only as a frontend fallback if the
+| Google road-distance API is unavailable. Final booking
+| eligibility should always prefer the road distance.
 |
 |--------------------------------------------------------------------------
 */
@@ -227,40 +124,20 @@ export function calculateStraightLineDistanceKm(
   locationA,
   locationB
 ) {
-  if (
-    !isValidCoordinates(
-      locationA
-    )
-  ) {
-    return null;
-  }
-
-  if (
-    !isValidCoordinates(
-      locationB
-    )
-  ) {
-    return null;
-  }
+  if (!isValidCoordinates(locationA)) return null;
+  if (!isValidCoordinates(locationB)) return null;
 
   const earthRadiusKm = 6371;
 
-  const lat1 = toRadians(
-    Number(locationA.lat)
-  );
-
-  const lat2 = toRadians(
-    Number(locationB.lat)
-  );
+  const lat1 = toRadians(Number(locationA.lat));
+  const lat2 = toRadians(Number(locationB.lat));
 
   const deltaLat = toRadians(
-    Number(locationB.lat) -
-      Number(locationA.lat)
+    Number(locationB.lat) - Number(locationA.lat)
   );
 
   const deltaLon = toRadians(
-    Number(locationB.lon) -
-      Number(locationA.lon)
+    Number(locationB.lon) - Number(locationA.lon)
   );
 
   const a =
@@ -269,89 +146,45 @@ export function calculateStraightLineDistanceKm(
       Math.cos(lat2) *
       Math.sin(deltaLon / 2) ** 2;
 
-  const c =
-    2 *
-    Math.atan2(
-      Math.sqrt(a),
-      Math.sqrt(1 - a)
-    );
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  return (
-    earthRadiusKm * c
-  );
+  return earthRadiusKm * c;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| SERVICE CITY
+| FIND SERVICE AREA (geofence-based)
 |--------------------------------------------------------------------------
 |
-| Find the currently configured service city that matches the pickup's
-| ACTUAL detected city (from Google's address_components).
+| BUSINESS RULE:
+| Determines whether the pickup point falls inside any
+| currently active VOYNU service area, using actual coordinate
+| geometry (circle or polygon) — not text matching.
 |
-| IMPORTANT:
-|
-| We do NOT assume every pickup is in any particular city. If the
-| detected city name is missing or does not match any configured
-| service city, this returns null and the trip is rejected as
-| outside the service area.
-|
-| This is what makes the rule safe to extend to multiple cities later:
-| adding a new city is just adding an entry to
-| VOYNU_TRIP_CONFIG.serviceCities. No other code changes.
+| serviceAreas: array of rows from the `service_areas` table
+| (fetched via serviceAreas.js). Passed in rather than fetched
+| here, so this function stays a pure, synchronous, easily
+| testable business-rule check.
 |
 |--------------------------------------------------------------------------
 */
 
-export function findServiceCity(
-  pickupLocation,
-  detectedCityName = null
-) {
-  if (
-    !isValidCoordinates(
-      pickupLocation
-    )
-  ) {
+export function findServiceArea(pickupLocation, serviceAreas) {
+  if (!isValidCoordinates(pickupLocation)) {
     return null;
   }
 
-  if (!detectedCityName) {
+  if (!Array.isArray(serviceAreas) || serviceAreas.length === 0) {
     return null;
   }
 
-  const normalized = String(
-    detectedCityName
-  )
-    .trim()
-    .toLowerCase();
+  const lat = Number(pickupLocation.lat);
+  const lon = Number(pickupLocation.lon);
 
   return (
-    VOYNU_TRIP_CONFIG.serviceCities.find(
-      (city) => {
-        if (
-          !city.active ||
-          !city.pickupAllowed
-        ) {
-          return false;
-        }
-
-        if (
-          city.name.toLowerCase() ===
-          normalized
-        ) {
-          return true;
-        }
-
-        const aliases =
-          city.aliases || [];
-
-        return aliases.some(
-          (alias) =>
-            alias.toLowerCase() ===
-            normalized
-        );
-      }
+    serviceAreas.find((area) =>
+      isPointInServiceArea(lat, lon, area)
     ) || null
   );
 }
@@ -364,14 +197,12 @@ export function findServiceCity(
 |
 | Main business-rule function.
 |
-| distanceKm is optional.
+| serviceAreas: active service areas from the database, used
+| for the geofence check (required — no default areas are
+| hardcoded here anymore).
 |
-| If Google Maps has already calculated the road distance, pass it here.
-|
-| Otherwise, we use straight-line distance as a frontend fallback.
-|
-| pickupCityName should be the city detected from Google's
-| address_components for the pickup location (see LocationPicker.jsx).
+| distanceKm: road distance from Google, if available. Falls
+| back to straight-line distance only if omitted.
 |
 |--------------------------------------------------------------------------
 */
@@ -381,12 +212,9 @@ export function calculateTripDetails({
   drop,
   tripType = "oneway",
   distanceKm = null,
-  pickupCityName = null,
+  serviceAreas = [],
 }) {
-  const normalizedTripType =
-    normalizeTripType(
-      tripType
-    );
+  const normalizedTripType = normalizeTripType(tripType);
 
   const result = {
     valid: false,
@@ -394,23 +222,15 @@ export function calculateTripDetails({
     pickupValid: false,
     dropValid: false,
 
-    serviceCity: null,
+    serviceArea: null,
 
-    /*
-     * Distance used for the booking rule.
-     */
     oneWayDistanceKm: null,
-
     roundTripDistanceKm: null,
+    maxOneWayDistanceKm: null,
 
-    /*
-     * Lets the UI know whether the distance came from Google
-     * road distance or our fallback calculation.
-     */
     distanceSource: null,
 
-    tripType:
-      normalizedTripType,
+    tripType: normalizedTripType,
 
     chargingRequired: false,
     chargingBreakMinutes: 0,
@@ -418,49 +238,38 @@ export function calculateTripDetails({
     reason: null,
   };
 
-
   /*
    * --------------------------------------------------------------
    * PICKUP
    * --------------------------------------------------------------
    */
 
-  if (
-    !isValidCoordinates(
-      pickup
-    )
-  ) {
-    result.reason =
-      "Please select a valid pickup location.";
-
+  if (!isValidCoordinates(pickup)) {
+    result.reason = "Please select a valid pickup location.";
     return result;
   }
 
   result.pickupValid = true;
 
-
   /*
    * --------------------------------------------------------------
-   * SERVICE AREA
+   * SERVICE AREA (geofence check)
    * --------------------------------------------------------------
+   *
+   * BUSINESS RULE: pickup must fall inside VOYNU's current
+   * service area, determined geographically. The destination
+   * is NOT restricted to being inside this area — only pickup.
    */
 
-  const serviceCity =
-    findServiceCity(
-      pickup,
-      pickupCityName
-    );
+  const serviceArea = findServiceArea(pickup, serviceAreas);
 
-  if (!serviceCity) {
+  if (!serviceArea) {
     result.reason =
-      "Pickup location is outside VOYNU's current service area.";
-
+      "VOYNU pickup is currently available only within Kanpur.";
     return result;
   }
 
-  result.serviceCity =
-    serviceCity;
-
+  result.serviceArea = serviceArea;
 
   /*
    * --------------------------------------------------------------
@@ -468,28 +277,20 @@ export function calculateTripDetails({
    * --------------------------------------------------------------
    */
 
-  if (
-    !isValidCoordinates(
-      drop
-    )
-  ) {
-    result.reason =
-      "Please select a valid drop location.";
-
+  if (!isValidCoordinates(drop)) {
+    result.reason = "Please select a valid drop location.";
     return result;
   }
 
   result.dropValid = true;
-
 
   /*
    * --------------------------------------------------------------
    * DISTANCE
    * --------------------------------------------------------------
    *
-   * Prefer Google Maps road distance.
-   *
-   * Otherwise use Haversine as a frontend fallback.
+   * Prefer Google Maps road distance. Fall back to Haversine
+   * only if no road distance was supplied.
    */
 
   let oneWayDistanceKm;
@@ -497,124 +298,78 @@ export function calculateTripDetails({
   if (
     distanceKm !== null &&
     distanceKm !== undefined &&
-    Number.isFinite(
-      Number(distanceKm)
-    ) &&
+    Number.isFinite(Number(distanceKm)) &&
     Number(distanceKm) >= 0
   ) {
-    oneWayDistanceKm =
-      Number(distanceKm);
-
-    result.distanceSource =
-      "google";
+    oneWayDistanceKm = Number(distanceKm);
+    result.distanceSource = "google";
   } else {
-    oneWayDistanceKm =
-      calculateStraightLineDistanceKm(
-        pickup,
-        drop
-      );
-
-    result.distanceSource =
-      "straight_line";
+    oneWayDistanceKm = calculateStraightLineDistanceKm(
+      pickup,
+      drop
+    );
+    result.distanceSource = "straight_line";
   }
 
-  if (
-    oneWayDistanceKm === null
-  ) {
-    result.reason =
-      "Unable to calculate trip distance.";
-
+  if (oneWayDistanceKm === null) {
+    result.reason = "Unable to calculate trip distance.";
     return result;
   }
 
-  result.oneWayDistanceKm =
-    oneWayDistanceKm;
-
+  result.oneWayDistanceKm = oneWayDistanceKm;
 
   /*
    * --------------------------------------------------------------
    * MAXIMUM DISTANCE
    * --------------------------------------------------------------
    *
-   * The distance limit comes from the matched service city's
-   * configuration, falling back to the global default.
-   *
-   * Neither value is hardcoded in page.js — both live here in
-   * VOYNU_TRIP_CONFIG, so changing the limit later is a
-   * one-line edit in this file.
+   * BUSINESS RULE: this is a PER-LEG limit (200km by default,
+   * configurable per service area), not a round-trip total.
+   * A round trip of 180km one-way (360km total) is allowed;
+   * a one-way trip of 205km is not, even though it's under
+   * the "400km total" some might assume as the round-trip cap.
    */
 
-  const maxDistance =
-    Number(
-      serviceCity.maxDropDistanceKm ??
-        VOYNU_TRIP_CONFIG
-          .maxOneWayDistanceKm
-    );
+  const maxDistance = Number(
+    serviceArea.max_drop_distance_km ??
+      VOYNU_TRIP_CONFIG.maxOneWayDistanceKm
+  );
 
-  result.maxOneWayDistanceKm =
-    maxDistance;
+  result.maxOneWayDistanceKm = maxDistance;
 
-
-  /*
-   * Destination outside supported distance.
-   */
-
-  if (
-    oneWayDistanceKm >
-    maxDistance
-  ) {
-    result.reason =
-      `Your destination is approximately ${formatDistance(
-        oneWayDistanceKm
-      )} away. VOYNU currently supports trips up to ${maxDistance} km from your pickup location.`;
-
+  if (oneWayDistanceKm > maxDistance) {
+    result.reason = `Your destination is approximately ${formatDistance(
+      oneWayDistanceKm
+    )} away. VOYNU currently supports trips up to ${maxDistance} km from your pickup location.`;
     return result;
   }
-
 
   /*
    * --------------------------------------------------------------
    * ROUND TRIP
    * --------------------------------------------------------------
+   *
+   * BUSINESS RULE: each leg is validated independently against
+   * maxDistance above (already done). Round trip total is
+   * informational only — it is NOT re-validated against a
+   * separate "400km total" limit, since that would be
+   * redundant with (and could conflict with) the per-leg rule.
    */
 
-  if (
-    normalizedTripType ===
-    "roundtrip"
-  ) {
-    result.roundTripDistanceKm =
-      oneWayDistanceKm * 2;
+  if (normalizedTripType === "roundtrip") {
+    result.roundTripDistanceKm = oneWayDistanceKm * 2;
 
-
-    const chargingRule =
-      VOYNU_TRIP_CONFIG
-        .roundTripCharging;
-
-
-    /*
-     * Charging is based on the ONE-WAY distance.
-     *
-     * Example:
-     *
-     * 195 km × 2 = 390 km total
-     *
-     * → charging break required.
-     */
+    const chargingRule = VOYNU_TRIP_CONFIG.roundTripCharging;
 
     if (
       chargingRule.enabled &&
-      oneWayDistanceKm >=
-        chargingRule.distanceThresholdKm
+      oneWayDistanceKm >= chargingRule.distanceThresholdKm
     ) {
-      result.chargingRequired =
-        true;
-
+      result.chargingRequired = true;
       result.chargingBreakMinutes =
-        chargingRule
-          .chargingBreakMinutes;
+        chargingRule.chargingBreakMinutes;
     }
   }
-
 
   /*
    * --------------------------------------------------------------
@@ -630,87 +385,44 @@ export function calculateTripDetails({
 
 /*
 |--------------------------------------------------------------------------
-| FORMAT DISTANCE
+| FORMAT HELPERS
 |--------------------------------------------------------------------------
 */
 
-export function formatDistance(
-  distanceKm
-) {
-  const numericDistance =
-    Number(distanceKm);
+export function formatDistance(distanceKm) {
+  const numericDistance = Number(distanceKm);
 
-  if (
-    !Number.isFinite(
-      numericDistance
-    )
-  ) {
+  if (!Number.isFinite(numericDistance)) {
     return "";
   }
 
-  return `${numericDistance.toFixed(
-    1
-  )} km`;
+  return `${numericDistance.toFixed(1)} km`;
 }
 
+export function formatRoundTripDistance(distanceKm) {
+  const numericDistance = Number(distanceKm);
 
-/*
-|--------------------------------------------------------------------------
-| FORMAT ROUND-TRIP DISTANCE
-|--------------------------------------------------------------------------
-*/
-
-export function formatRoundTripDistance(
-  distanceKm
-) {
-  const numericDistance =
-    Number(distanceKm);
-
-  if (
-    !Number.isFinite(
-      numericDistance
-    )
-  ) {
+  if (!Number.isFinite(numericDistance)) {
     return "";
   }
 
-  return `${numericDistance.toFixed(
-    1
-  )} km total`;
+  return `${numericDistance.toFixed(1)} km total`;
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| CHARGING MESSAGE
-|--------------------------------------------------------------------------
-|
-| Customer-facing charging message.
-|
-|--------------------------------------------------------------------------
-*/
-
-export function getChargingMessage(
-  tripDetails
-) {
-  if (
-    !tripDetails?.chargingRequired
-  ) {
+export function getChargingMessage(tripDetails) {
+  if (!tripDetails?.chargingRequired) {
     return null;
   }
 
-  const minutes =
-    tripDetails.chargingBreakMinutes;
+  const minutes = tripDetails.chargingBreakMinutes;
 
-  const oneWayDistance =
-    formatDistance(
-      tripDetails.oneWayDistanceKm
-    );
+  const oneWayDistance = formatDistance(
+    tripDetails.oneWayDistanceKm
+  );
 
-  const roundTripDistance =
-    formatRoundTripDistance(
-      tripDetails.roundTripDistanceKm
-    );
+  const roundTripDistance = formatRoundTripDistance(
+    tripDetails.roundTripDistanceKm
+  );
 
   return (
     `Your destination is approximately ${oneWayDistance} away (${roundTripDistance}). ` +
@@ -719,65 +431,28 @@ export function getChargingMessage(
   );
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| DISTANCE STATUS
-|--------------------------------------------------------------------------
-|
-| Useful for the booking UI.
-|
-| Returns:
-|
-| {
-|   allowed,
-|   remainingKm,
-|   nearLimit
-| }
-|
-|--------------------------------------------------------------------------
-*/
-
 export function getDistanceStatus(
   distanceKm,
   maxDistanceKm = VOYNU_TRIP_CONFIG.maxOneWayDistanceKm
 ) {
-  const distance =
-    Number(distanceKm);
-
-  const maxDistance =
-    Number(maxDistanceKm);
+  const distance = Number(distanceKm);
+  const maxDistance = Number(maxDistanceKm);
 
   if (
     !Number.isFinite(distance) ||
     !Number.isFinite(maxDistance)
   ) {
-    return {
-      allowed: false,
-      remainingKm: null,
-      nearLimit: false,
-    };
+    return { allowed: false, remainingKm: null, nearLimit: false };
   }
 
-  const remainingKm =
-    maxDistance - distance;
+  const remainingKm = maxDistance - distance;
 
   return {
-    allowed:
-      distance <= maxDistance,
-
+    allowed: distance <= maxDistance,
     remainingKm,
-
-    /*
-     * Useful for showing a subtle warning when the customer
-     * is getting close to the service limit.
-     */
-    nearLimit:
-      distance >=
-      maxDistance * 0.9,
+    nearLimit: distance >= maxDistance * 0.9,
   };
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -785,11 +460,6 @@ export function getDistanceStatus(
 |--------------------------------------------------------------------------
 */
 
-function toRadians(
-  degrees
-) {
-  return (
-    degrees *
-    (Math.PI / 180)
-  );
-          }
+function toRadians(degrees) {
+  return degrees * (Math.PI / 180);
+}
