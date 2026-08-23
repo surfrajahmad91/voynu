@@ -237,9 +237,16 @@ export default function CabSelectionPage() {
           fare: selectedFare.totalFare,
           payment_method: paymentMethod,
 
-          status: "pending",
-          confirmed_at: new Date().toISOString(),
-        });
+          payment_status:
+          paymentMethod === "upi" ? "pending" : "pay_on_pickup",
+
+        booking_status:
+          paymentMethod === "upi" ? "pending_payment" : "confirmed",
+
+        status: "pending", // kept for existing account/admin display compatibility
+
+        confirmed_at: new Date().toISOString(),
+      });
 
       if (insertError) {
         console.error(
