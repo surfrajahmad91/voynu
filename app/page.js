@@ -1060,8 +1060,8 @@ export default function HomePage() {
           tripDetails?.maxOneWayDistanceKm ??
           DEFAULT_MAX_DISTANCE_KM,
 
-        serviceCityId:
-          tripDetails?.serviceCity?.id ??
+        serviceAreaId:
+          tripDetails?.serviceArea?.id ??
           null,
 
         chargingRequired:
@@ -1615,10 +1615,10 @@ export default function HomePage() {
                       km each way
                     </span>
 
-                    {tripDetails.serviceCity?.name && (
+                    {tripDetails.serviceArea?.name && (
                       <span className="routeChip">
                         <IconMapPinDot size={9} tone="pickup" />
-                        Pickup in {tripDetails.serviceCity.name}
+                        Pickup in {tripDetails.serviceArea.name}
                       </span>
                     )}
 
