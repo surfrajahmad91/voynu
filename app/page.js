@@ -730,18 +730,19 @@ export default function HomePage() {
       return null;
     }
 
-    return calculateTripDetails({
+      return calculateTripDetails({
       pickup,
       drop,
       tripType,
       distanceKm: journeyDistanceKm,
-      pickupCityName: pickup.city,
+      serviceAreas,
     });
   }, [
     pickup,
     drop,
     tripType,
     journeyDistanceKm,
+    serviceAreas,
   ]);
 
   /*
