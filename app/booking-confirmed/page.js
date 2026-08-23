@@ -9,7 +9,8 @@ import {
   buildWhatsAppLink,
 } from "../lib/contact";
 
-import AccountLink from "../components/AccountLink";
+import { theme } from "../lib/theme";
+import PageHeader from "../components/PageHeader";
 
 function IconCheckBig() {
   return (
@@ -38,36 +39,21 @@ function IconWhatsApp({ size = 17 }) {
 export default function BookingConfirmedPage() {
   const router = useRouter();
 
-  const [booking, setBooking] =
-    useState(null);
-
-  const [loaded, setLoaded] =
-    useState(false);
+  const [booking, setBooking] = useState(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem(
-        "voynu_confirmed_booking"
-      );
-
+      const raw = sessionStorage.getItem("voynu_confirmed_booking");
       if (raw) {
         setBooking(JSON.parse(raw));
       }
     } catch (error) {
-      console.error(
-        "VOYNU: unable to read confirmed booking:",
-        error
-      );
+      console.error("VOYNU: unable to read confirmed booking:", error);
     } finally {
       setLoaded(true);
     }
   }, []);
-
-  /*
-   * ------------------------------------------------------------
-   * NO CONFIRMED BOOKING — REDIRECT HOME
-   * ------------------------------------------------------------
-   */
 
   useEffect(() => {
     if (loaded && !booking) {
@@ -81,527 +67,219 @@ export default function BookingConfirmedPage() {
 
   if (!loaded || !booking) {
     return (
-      <main className="page loadingState">
-        <div className="spinnerBox" />
-        <style jsx>{`
-
-          .loadingState {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f5faf6;
-          }
-
-          .spinnerBox {
-            width: 34px;
-            height: 34px;
-            border: 3px solid rgba(8,120,63,0.18);
-            border-top-color: #0a7d42;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          }
-
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-
-        `}</style>
+      <main style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: theme.colors.bg,
+      }}>
+        <div style={{
+          width: 34,
+          height: 34,
+          border: "3px solid rgba(8,120,63,0.18)",
+          borderTopColor: theme.colors.primary,
+          borderRadius: "50%",
+        }} />
       </main>
     );
   }
 
-  const isRoundTrip =
-    booking.tripType === "roundtrip";
+  const isRoundTrip = booking.tripType === "roundtrip";
 
   const helpMessage = `Hi VOYNU, I need help with my booking:\n\nPickup: ${
     booking.pickup?.name || ""
-  }\nDrop: ${
-    booking.drop?.name || ""
-  }\nTravel date: ${
+  }\nDrop: ${booking.drop?.name || ""}\nTravel date: ${
     booking.travelDate || ""
   }\nPickup time: ${
     booking.pickupTime || ""
   }\n\nI'd like to make an amendment / ask a question.`;
 
   return (
-    <main className="page">
+    <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}>
 
-      <header className="header">
+      <PageHeader
+        maxWidth={theme.maxWidth.content}
+        whatsappHref={buildWhatsAppLink(helpMessage)}
+      />
 
-        <div className="headerInner">
+      <div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", padding: "32px 0 60px" }}>
 
-          <Link href="/" className="brand">
-            <div className="brandMark">V</div>
-            <div>
-              <div className="brandName">VOYNU</div>
-              <div className="brandTagline">Travel safe. Travel smart.</div>
-            </div>
-          </Link>
+        <div style={{ textAlign: "center", marginBottom: 26 }}>
 
-          <AccountLink />
-
-        </div>
-
-      </header>
-
-      <div className="content">
-
-        <div className="confirmedHero">
-
-          <div className="confirmedIcon">
+          <div
+            style={{
+              width: 68,
+              height: 68,
+              margin: "0 auto 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #1fa855, #0a7d42)",
+              color: "#ffffff",
+              boxShadow: "0 14px 30px rgba(31,168,85,0.28)",
+            }}
+          >
             <IconCheckBig />
           </div>
 
-          <h1>Booking Confirmed!</h1>
+          <h1 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>
+            Booking Confirmed!
+          </h1>
 
-          <p>
+          <p style={{ margin: 0, color: theme.colors.textMuted, fontSize: 13.5, lineHeight: 1.55 }}>
             You'll receive a call{" "}
-            <strong>1 hour before your journey</strong>{" "}
+            <strong style={{ color: theme.colors.primary }}>1 hour before your journey</strong>{" "}
             to confirm the pickup details.
           </p>
 
         </div>
 
-        <div className="detailsCard">
+        <div
+          style={{
+            padding: 20,
+            borderRadius: theme.radius.lg,
+            background: theme.colors.surface,
+            border: `1px solid ${theme.colors.border}`,
+            boxShadow: theme.shadow.card,
+          }}
+        >
 
-          <div className="detailsRow">
-
-            <div className="routeDot routeDotPickup" />
-            <div className="routeText">{booking.pickup?.name}</div>
-
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
+            <div style={{ width: 10, height: 10, marginTop: 4, borderRadius: "50%", background: theme.colors.primary, flexShrink: 0 }} />
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "#24352b", lineHeight: 1.4 }}>
+              {booking.pickup?.name}
+            </div>
           </div>
 
-          <div className="routeLine" />
+          <div style={{ width: 1.5, height: 16, marginLeft: 4.25, background: "#dbe6df" }} />
 
-          <div className="detailsRow">
-
-            <div className="routeDot routeDotDrop" />
-            <div className="routeText">{booking.drop?.name}</div>
-
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
+            <div style={{ width: 10, height: 10, marginTop: 4, borderRadius: "50%", background: theme.colors.accent, flexShrink: 0 }} />
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "#24352b", lineHeight: 1.4 }}>
+              {booking.drop?.name}
+            </div>
           </div>
 
-          <div className="detailsGrid">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 14,
+              marginTop: 16,
+              paddingTop: 16,
+              borderTop: `1px dashed ${theme.colors.border}`,
+            }}
+          >
 
-            <div className="detailsCell">
-              <span className="detailsLabel">Trip type</span>
-              <span className="detailsValue">
-                {isRoundTrip ? "Round Trip" : "One Way"}
-              </span>
-            </div>
-
-            <div className="detailsCell">
-              <span className="detailsLabel">Distance</span>
-              <span className="detailsValue">
-                {booking.journey?.oneWayDistanceText}
-              </span>
-            </div>
-
-            <div className="detailsCell">
-              <span className="detailsLabel">Travel date</span>
-              <span className="detailsValue">{booking.travelDate}</span>
-            </div>
-
-            <div className="detailsCell">
-              <span className="detailsLabel">Pickup time</span>
-              <span className="detailsValue">{booking.pickupTime}</span>
-            </div>
-
-            <div className="detailsCell">
-              <span className="detailsLabel">Cab type</span>
-              <span className="detailsValue">
-                {booking.selectedFare?.vehicleName}
-              </span>
-            </div>
-
-            <div className="detailsCell">
-              <span className="detailsLabel">Fare</span>
-              <span className="detailsValue">
-                ₹{booking.selectedFare?.totalFare}
-              </span>
-            </div>
-
-            <div className="detailsCell">
-              <span className="detailsLabel">Payment</span>
-              <span className="detailsValue">
-                {booking.paymentMethod === "upi"
-                  ? "UPI"
-                  : "Pay on Pickup"}
-              </span>
-            </div>
-
-            <div className="detailsCell">
-              <span className="detailsLabel">Passenger</span>
-              <span className="detailsValue">
-                {booking.passengerName}
-              </span>
-            </div>
+            <DetailCell label="Trip type" value={isRoundTrip ? "Round Trip" : "One Way"} />
+            <DetailCell label="Distance" value={booking.journey?.oneWayDistanceText} />
+            <DetailCell label="Travel date" value={booking.travelDate} />
+            <DetailCell label="Pickup time" value={booking.pickupTime} />
+            <DetailCell label="Cab type" value={booking.selectedFare?.vehicleName} />
+            <DetailCell label="Fare" value={`₹${booking.selectedFare?.totalFare}`} />
+            <DetailCell
+              label="Payment"
+              value={booking.paymentMethod === "upi" ? "UPI" : "Pay on Pickup"}
+            />
+            <DetailCell label="Passenger" value={booking.passengerName} />
 
           </div>
 
         </div>
 
-        <div className="helpCard">
-
-          <div className="helpIcon">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            marginTop: 22,
+            padding: "16px 18px",
+            borderRadius: theme.radius.lg,
+            background: theme.colors.warningBg,
+            border: "1px solid #f0dfa8",
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              flex: "0 0 36px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 10,
+              background: "#f7e3ac",
+              color: theme.colors.warning,
+            }}
+          >
             <IconPhoneCall size={17} />
           </div>
-
-          <div className="helpBody">
-            <div className="helpTitle">Need help in the meantime?</div>
-            <div className="helpText">
-              You can reach out any time to ask about
-              your booking or request an amendment.
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: theme.colors.warning }}>
+              Need help in the meantime?
+            </div>
+            <div style={{ marginTop: 3, fontSize: 12, lineHeight: 1.5, color: "#8a6b1c" }}>
+              You can reach out any time to ask about your booking or request an amendment.
             </div>
           </div>
-
         </div>
 
         <a
           href={buildWhatsAppLink(helpMessage)}
-          className="helpButton"
           target="_blank"
           rel="noopener noreferrer"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 9,
+            width: "100%",
+            minHeight: 54,
+            marginTop: 14,
+            borderRadius: theme.radius.lg,
+            background: "#1fa855",
+            color: "#ffffff",
+            textDecoration: "none",
+            fontWeight: 800,
+            fontSize: 14,
+            boxShadow: "0 10px 24px rgba(31,168,85,.24)",
+          }}
         >
           <IconWhatsApp size={17} />
           <span>Chat with us on WhatsApp</span>
         </a>
 
-        <Link href="/" className="bookAnotherLink">
+        <Link
+          href="/"
+          style={{
+            display: "block",
+            marginTop: 18,
+            textAlign: "center",
+            color: theme.colors.primary,
+            fontWeight: 700,
+            fontSize: 13,
+          }}
+        >
           Book another ride
         </Link>
 
       </div>
 
-      <style jsx>{`
-
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-        * {
-          box-sizing: border-box;
-        }
-
-        .page {
-          min-height: 100vh;
-
-          background: #f5faf6;
-          color: #16241d;
-
-          font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .header {
-          background: rgba(255,255,255,0.92);
-          backdrop-filter: blur(10px);
-
-          border-bottom: 1px solid #e8eee9;
-
-          position: sticky;
-          top: 0;
-
-          z-index: 20;
-        }
-
-        .headerInner {
-          width: min(720px, calc(100% - 32px));
-
-          margin: 0 auto;
-
-          min-height: 68px;
-
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .brand {
-          display: flex;
-          align-items: center;
-
-          gap: 10px;
-
-          text-decoration: none;
-        }
-
-        .brandMark {
-          width: 36px;
-          height: 36px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          border-radius: 10px;
-
-          background: linear-gradient(135deg, #0a7d42, #075c31);
-
-          color: #ffffff;
-
-          font-weight: 800;
-          font-size: 17px;
-
-          box-shadow: 0 6px 14px rgba(8,120,63,0.24);
-        }
-
-        .brandName {
-          color: #0a7d42;
-
-          font-weight: 800;
-          font-size: 17px;
-
-          line-height: 1;
-        }
-
-        .brandTagline {
-          margin-top: 3px;
-
-          color: #7a8981;
-
-          font-size: 8.5px;
-        }
-
-        .content {
-          width: min(640px, calc(100% - 32px));
-
-          margin: 0 auto;
-
-          padding: 32px 0 60px;
-        }
-
-        .confirmedHero {
-          text-align: center;
-
-          margin-bottom: 26px;
-        }
-
-        .confirmedIcon {
-          width: 68px;
-          height: 68px;
-
-          margin: 0 auto 16px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          border-radius: 50%;
-
-          background: linear-gradient(135deg, #1fa855, #0a7d42);
-
-          color: #ffffff;
-
-          box-shadow: 0 14px 30px rgba(31,168,85,0.28);
-        }
-
-        .confirmedHero h1 {
-          margin: 0 0 8px;
-
-          font-size: 24px;
-          font-weight: 800;
-
-          letter-spacing: -0.5px;
-        }
-
-        .confirmedHero p {
-          margin: 0;
-
-          color: #5c6d64;
-
-          font-size: 13.5px;
-
-          line-height: 1.55;
-        }
-
-        .confirmedHero strong {
-          color: #0a7d42;
-        }
-
-        .detailsCard {
-          padding: 20px;
-
-          border-radius: 18px;
-
-          background: #ffffff;
-
-          border: 1px solid #e5ede8;
-
-          box-shadow: 0 12px 30px rgba(10,40,25,0.06);
-        }
-
-        .detailsRow {
-          display: flex;
-          align-items: flex-start;
-
-          gap: 11px;
-        }
-
-        .routeDot {
-          width: 10px;
-          height: 10px;
-
-          margin-top: 4px;
-
-          border-radius: 50%;
-
-          flex-shrink: 0;
-        }
-
-        .routeDotPickup {
-          background: #0a7d42;
-        }
-
-        .routeDotDrop {
-          background: #c8622a;
-        }
-
-        .routeLine {
-          width: 1.5px;
-          height: 16px;
-
-          margin-left: 4.25px;
-
-          background: #dbe6df;
-        }
-
-        .routeText {
-          font-size: 13.5px;
-          font-weight: 600;
-
-          color: #24352b;
-
-          line-height: 1.4;
-        }
-
-        .detailsGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-
-          gap: 14px;
-
-          margin-top: 16px;
-
-          padding-top: 16px;
-
-          border-top: 1px dashed #e5ede8;
-        }
-
-        .detailsCell {
-          display: flex;
-          flex-direction: column;
-
-          gap: 3px;
-        }
-
-        .detailsLabel {
-          color: #8a9790;
-
-          font-size: 10.5px;
-          font-weight: 700;
-
-          letter-spacing: 0.3px;
-        }
-
-        .detailsValue {
-          color: #16241d;
-
-          font-size: 13px;
-          font-weight: 700;
-        }
-
-        .helpCard {
-          display: flex;
-          align-items: flex-start;
-
-          gap: 12px;
-
-          margin-top: 22px;
-
-          padding: 16px 18px;
-
-          border-radius: 16px;
-
-          background: #fdf3dc;
-
-          border: 1px solid #f0dfa8;
-        }
-
-        .helpIcon {
-          width: 36px;
-          height: 36px;
-
-          flex: 0 0 36px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          border-radius: 10px;
-
-          background: #f7e3ac;
-
-          color: #7a5a10;
-        }
-
-        .helpTitle {
-          font-size: 13px;
-          font-weight: 800;
-
-          color: #7a5a10;
-        }
-
-        .helpText {
-          margin-top: 3px;
-
-          font-size: 12px;
-
-          line-height: 1.5;
-
-          color: #8a6b1c;
-        }
-
-        .helpButton {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          gap: 9px;
-
-          width: 100%;
-          min-height: 54px;
-
-          margin-top: 14px;
-
-          border-radius: 14px;
-
-          background: #1fa855;
-
-          color: #ffffff;
-
-          text-decoration: none;
-
-          font-weight: 800;
-          font-size: 14px;
-
-          box-shadow: 0 10px 24px rgba(31,168,85,.24);
-        }
-
-        .bookAnotherLink {
-          display: block;
-
-          margin-top: 18px;
-
-          text-align: center;
-
-          color: #0a7d42;
-
-          text-decoration: none;
-
-          font-weight: 700;
-          font-size: 13px;
-        }
-
-      `}</style>
-
     </main>
+  );
+}
+
+function DetailCell({ label, value }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <span style={{ color: theme.colors.textFaint, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3 }}>
+        {label}
+      </span>
+      <span style={{ color: theme.colors.text, fontSize: 13, fontWeight: 700 }}>
+        {value}
+      </span>
+    </div>
   );
     }
