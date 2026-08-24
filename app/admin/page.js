@@ -93,6 +93,7 @@ export default function AdminPage() {
   const [newDriver, setNewDriver] = useState({
     full_name: "",
     phone: "",
+    email: "",
     vehicle_id: "",
   });
 
@@ -201,12 +202,41 @@ export default function AdminPage() {
    * ------------------------------------------------------------
    */
 
-  const handleStatusChange = async (id, newStatus) => {
+    /*
+   * BUSINESS RULE: cancelling a booking automatically releases
+   * its driver assignment — a driver should never remain tied
+   * to a trip that's been cancelled.
+   */
+  const handleStatusChange = async (booking, newStatus) => {
+    const isCancelling =
+      newStatus === "cancelled" && Boolean(booking.driver_id);
+
+    const updates = { status: newStatus };
+
+    if (isCancelling) {
+      updates.booking_status = "cancelled";
+      updates.driver_id = null;
+      updates.vehicle_id = null;
+    }
+
     setBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
+      prev.map((b) =>
+        b.id === booking.id ? { ...b, ...updates } : b
+      )
     );
 
-    await supabase.from("bookings").update({ status: newStatus }).eq("id", id);
+    if (isCancelling) {
+      await supabase
+        .from("driver_assignments")
+        .update({ status: "cancelled" })
+        .eq("booking_id", booking.id)
+        .eq("driver_id", booking.driver_id);
+    }
+
+    await supabase
+      .from("bookings")
+      .update(updates)
+      .eq("id", booking.id);
   };
 
   /*
@@ -282,14 +312,7 @@ export default function AdminPage() {
       return;
     }
 
-    if (driver.availability_status !== "available") {
-      setError(
-        `${driver.full_name} is currently marked as ${driver.availability_status}, not available.`
-      );
-      return;
-    }
-
-    setError("");
+      setError("");
 
     const { error: assignError } = await supabase
       .from("driver_assignments")
@@ -319,10 +342,6 @@ export default function AdminPage() {
       return;
     }
 
-    await supabase
-      .from("drivers")
-      .update({ availability_status: "busy" })
-      .eq("id", driver.id);
 
     setBookings((prev) =>
       prev.map((b) =>
@@ -337,13 +356,6 @@ export default function AdminPage() {
       )
     );
 
-    setDrivers((prev) =>
-      prev.map((d) =>
-        d.id === driver.id
-          ? { ...d, availability_status: "busy" }
-          : d
-      )
-    );
 
     setAssigningBookingId(null);
     setNotice(
@@ -409,6 +421,7 @@ export default function AdminPage() {
       .insert({
         full_name: newDriver.full_name.trim(),
         phone: newDriver.phone.trim(),
+        email: newDriver.email.trim() || null,
         vehicle_id: newDriver.vehicle_id || null,
         availability_status: "available",
       });
@@ -418,7 +431,7 @@ export default function AdminPage() {
       return;
     }
 
-    setNewDriver({ full_name: "", phone: "", vehicle_id: "" });
+    setNewDriver({ full_name: "", phone: "", email: "", vehicle_id: "" });
     fetchDrivers();
     setNotice("Driver added.");
   };
@@ -500,9 +513,14 @@ export default function AdminPage() {
     };
   }, [bookings]);
 
-  const availableDrivers = drivers.filter(
-    (d) => d.active && d.availability_status === "available"
-  );
+    /*
+   * BUSINESS RULE: availability_status is informational only —
+   * admin decides who to assign based on real-world schedule
+   * knowledge, not a hard system gate. A driver assigned to a
+   * booking 5 days out shouldn't be blocked from other trips
+   * happening today.
+   */
+  const assignableDrivers = drivers.filter((d) => d.active);
 
   /*
    * ------------------------------------------------------------
@@ -773,9 +791,9 @@ export default function AdminPage() {
                         </span>
 
                         <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                          <select
+                           <select
                             value={b.status}
-                            onChange={(e) => handleStatusChange(b.id, e.target.value)}
+                            onChange={(e) => handleStatusChange(b, e.target.value)}
                             style={{
                               padding: "3px 6px",
                               borderRadius: 5,
@@ -877,7 +895,7 @@ export default function AdminPage() {
                           background: "#f4f6f5",
                           border: "1px solid #d9e0dc",
                         }}>
-                          {availableDrivers.length === 0 ? (
+                          {assignableDrivers.length === 0 ? (
                             <p style={{ margin: 0, color: theme.colors.textFaint }}>
                               No available drivers. Add one in the Drivers tab.
                             </p>
@@ -897,9 +915,9 @@ export default function AdminPage() {
                                 }}
                               >
                                 <option value="">Select a driver...</option>
-                                {availableDrivers.map((d) => (
+                                {assignableDrivers.map((d) => (
                                   <option key={d.id} value={d.id}>
-                                    {d.full_name} — {d.vehicles?.registration_number || "no vehicle"} ({d.vehicles?.category || "—"})
+                                    {d.full_name} — {d.vehicles?.registration_number || "no vehicle"} ({d.vehicles?.category || "—"}) · {d.availability_status}
                                   </option>
                                 ))}
                               </select>
@@ -978,6 +996,13 @@ export default function AdminPage() {
                 placeholder="Phone"
                 value={newDriver.phone}
                 onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
+                style={inputStyle}
+              />
+               <input
+                type="email"
+                placeholder="Login email (for driver app)"
+                value={newDriver.email || ""}
+                onChange={(e) => setNewDriver({ ...newDriver, email: e.target.value })}
                 style={inputStyle}
               />
               <select
