@@ -39,10 +39,21 @@ export default function LoginPage() {
 
     if (ADMIN_EMAILS.includes(loggedInEmail)) {
       router.push("/admin");
-    } else {
-      router.push("/");
+      return;
     }
-  };
+
+    const { data: driverRow } = await supabase
+      .from("drivers")
+      .select("id")
+      .eq("email", loggedInEmail)
+      .maybeSingle();
+
+    if (driverRow) {
+      router.push("/driver");
+      return;
+    }
+
+    router.push("/");
 
   const inputStyle = {
     width: "100%",
