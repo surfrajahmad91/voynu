@@ -93,7 +93,7 @@ export default function LoginPage() {
           style={inputStyle}
         />
 
-        <input
+          <input
           type="password"
           placeholder="Password"
           value={password}
@@ -101,6 +101,19 @@ export default function LoginPage() {
           required
           style={inputStyle}
         />
+
+        <Link
+          href="/forgot-password"
+          style={{
+            alignSelf: "flex-end",
+            fontSize: 12,
+            color: theme.colors.primary,
+            fontWeight: 600,
+            marginTop: -4,
+          }}
+        >
+          Forgot password?
+        </Link>
 
         {error && (
           <div style={{ color: theme.colors.error, fontSize: 12.5, fontWeight: 600 }}>
