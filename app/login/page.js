@@ -28,9 +28,8 @@ export default function LoginPage() {
         password,
       });
 
-    setLoading(false);
-
     if (signInError) {
+      setLoading(false);
       setError(signInError.message);
       return;
     }
@@ -48,12 +47,15 @@ export default function LoginPage() {
       .eq("email", loggedInEmail)
       .maybeSingle();
 
+    setLoading(false);
+
     if (driverRow) {
       router.push("/driver");
       return;
     }
 
     router.push("/");
+  };
 
   const inputStyle = {
     width: "100%",
