@@ -8,8 +8,25 @@ import { supabase } from "../lib/supabaseClient";
 import { ADMIN_EMAILS } from "../lib/admin";
 import { theme } from "../lib/theme";
 
-const STATUS_OPTIONS = ["pending", "confirmed", "completed", "cancelled"];
-const STATUS_FILTERS = ["all", ...STATUS_OPTIONS];
+/*
+ * BUSINESS RULE: these are the only valid booking_status values,
+ * enforced both here (UI) and by a database CHECK constraint +
+ * transition trigger (Phase 2 migration) — the database is the
+ * authoritative enforcement layer, this list just drives filters.
+ */
+const BOOKING_STATUS_FILTERS = [
+  "all",
+  "pending_payment",
+  "confirmed",
+  "driver_assigned",
+  "on_the_way",
+  "arrived",
+  "trip_started",
+  "trip_completed",
+  "cancelled",
+];
+
+const TERMINAL_STATUSES = ["trip_completed", "cancelled"];
 
 function IconLogout({ size = 13 }) {
   return (
@@ -31,17 +48,13 @@ function shortBookingId(id) {
   return id.slice(0, 8).toUpperCase();
 }
 
-const statusColors = {
-  pending: { bg: theme.colors.warningBg, text: theme.colors.warning },
-  confirmed: { bg: theme.colors.primaryTint, text: theme.colors.primary },
-  completed: { bg: "#e5ede8", text: "#45564c" },
-  cancelled: { bg: theme.colors.errorBg, text: theme.colors.error },
-};
-
 const bookingStatusColors = {
   pending_payment: { bg: theme.colors.warningBg, text: theme.colors.warning },
   confirmed: { bg: theme.colors.primaryTint, text: theme.colors.primary },
   driver_assigned: { bg: "#e0edf7", text: "#2563a8" },
+  on_the_way: { bg: "#e0edf7", text: "#2563a8" },
+  arrived: { bg: "#e0edf7", text: "#2563a8" },
+  trip_started: { bg: theme.colors.primaryTint, text: theme.colors.primary },
   trip_completed: { bg: "#e5ede8", text: "#45564c" },
   cancelled: { bg: theme.colors.errorBg, text: theme.colors.error },
 };
@@ -198,56 +211,12 @@ export default function AdminPage() {
 
   /*
    * ------------------------------------------------------------
-   * BOOKING STATUS (legacy display field)
-   * ------------------------------------------------------------
-   */
-
-    /*
-   * BUSINESS RULE: cancelling a booking automatically releases
-   * its driver assignment — a driver should never remain tied
-   * to a trip that's been cancelled.
-   */
-  const handleStatusChange = async (booking, newStatus) => {
-    const isCancelling =
-      newStatus === "cancelled" && Boolean(booking.driver_id);
-
-    const updates = { status: newStatus };
-
-    if (isCancelling) {
-      updates.booking_status = "cancelled";
-      updates.driver_id = null;
-      updates.vehicle_id = null;
-    }
-
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === booking.id ? { ...b, ...updates } : b
-      )
-    );
-
-    if (isCancelling) {
-      await supabase
-        .from("driver_assignments")
-        .update({ status: "cancelled" })
-        .eq("booking_id", booking.id)
-        .eq("driver_id", booking.driver_id);
-    }
-
-    await supabase
-      .from("bookings")
-      .update(updates)
-      .eq("id", booking.id);
-  };
-
-  /*
-   * ------------------------------------------------------------
    * CONFIRM UPI PAYMENT
    *
    * BUSINESS RULE: a UPI booking's payment_status only moves
    * from "pending" to "paid" once admin has manually verified
-   * the money actually arrived (e.g. checked their UPI app).
-   * The customer's "I've paid" tap is never treated as
-   * verification on its own.
+   * the money actually arrived. The customer's "I've paid" tap
+   * is never treated as verification on its own.
    * ------------------------------------------------------------
    */
 
@@ -284,11 +253,6 @@ export default function AdminPage() {
   /*
    * ------------------------------------------------------------
    * DRIVER ASSIGNMENT
-   *
-   * BUSINESS RULE: only admin assigns drivers. This creates a
-   * driver_assignments record (preserving history if later
-   * reassigned), links the driver/vehicle onto the booking, and
-   * advances booking_status to driver_assigned.
    * ------------------------------------------------------------
    */
 
@@ -312,7 +276,7 @@ export default function AdminPage() {
       return;
     }
 
-      setError("");
+    setError("");
 
     const { error: assignError } = await supabase
       .from("driver_assignments")
@@ -342,7 +306,6 @@ export default function AdminPage() {
       return;
     }
 
-
     setBookings((prev) =>
       prev.map((b) =>
         b.id === booking.id
@@ -356,11 +319,73 @@ export default function AdminPage() {
       )
     );
 
-
     setAssigningBookingId(null);
     setNotice(
       `${driver.full_name} assigned to booking #${shortBookingId(booking.id)}.`
     );
+  };
+
+  /*
+   * ------------------------------------------------------------
+   * CANCEL BOOKING
+   *
+   * BUSINESS RULE: cancelling automatically releases the driver
+   * assignment (booking.driver_id/vehicle_id cleared, the
+   * corresponding driver_assignments row marked cancelled) so a
+   * driver never remains tied to a cancelled trip. Assignment
+   * history is preserved, not deleted.
+   *
+   * Only non-terminal bookings can be cancelled — the database's
+   * state-machine trigger enforces this too, as a second layer.
+   * ------------------------------------------------------------
+   */
+
+  const handleCancelBooking = async (booking) => {
+    setNotice("");
+    setError("");
+
+    if (TERMINAL_STATUSES.includes(booking.booking_status)) {
+      return;
+    }
+
+    const previousDriverId = booking.driver_id;
+
+    const { error: updateError } = await supabase
+      .from("bookings")
+      .update({
+        booking_status: "cancelled",
+        driver_id: null,
+        vehicle_id: null,
+      })
+      .eq("id", booking.id);
+
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+
+    if (previousDriverId) {
+      await supabase
+        .from("driver_assignments")
+        .update({ status: "cancelled" })
+        .eq("booking_id", booking.id)
+        .eq("driver_id", previousDriverId);
+    }
+
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              booking_status: "cancelled",
+              driver_id: null,
+              vehicle_id: null,
+            }
+          : b
+      )
+    );
+
+    setNotice(`Booking #${shortBookingId(booking.id)} cancelled.`);
   };
 
   /*
@@ -456,7 +481,7 @@ export default function AdminPage() {
 
   /*
    * ------------------------------------------------------------
-   * FILTERED BOOKINGS
+   * FILTERED BOOKINGS + STATS
    * ------------------------------------------------------------
    */
 
@@ -464,7 +489,7 @@ export default function AdminPage() {
     let list = bookings;
 
     if (statusFilter !== "all") {
-      list = list.filter((b) => b.status === statusFilter);
+      list = list.filter((b) => b.booking_status === statusFilter);
     }
 
     const q = search.trim().toLowerCase();
@@ -485,12 +510,20 @@ export default function AdminPage() {
   }, [bookings, statusFilter, search]);
 
   const stats = useMemo(() => {
-    const pending = bookings.filter((b) => b.status === "pending").length;
-    const confirmed = bookings.filter((b) => b.status === "confirmed").length;
-    const completed = bookings.filter((b) => b.status === "completed").length;
+    const pendingPayment = bookings.filter(
+      (b) => b.booking_status === "pending_payment"
+    ).length;
+
+    const confirmed = bookings.filter(
+      (b) => b.booking_status === "confirmed"
+    ).length;
+
+    const completed = bookings.filter(
+      (b) => b.booking_status === "trip_completed"
+    ).length;
 
     const revenue = bookings
-      .filter((b) => b.status === "completed")
+      .filter((b) => b.booking_status === "trip_completed")
       .reduce((sum, b) => sum + (Number(b.fare) || 0), 0);
 
     const awaitingPayment = bookings.filter(
@@ -498,13 +531,12 @@ export default function AdminPage() {
     ).length;
 
     const awaitingAssignment = bookings.filter(
-      (b) =>
-        b.booking_status === "confirmed" && !b.driver_id
+      (b) => b.booking_status === "confirmed" && !b.driver_id
     ).length;
 
     return {
       total: bookings.length,
-      pending,
+      pendingPayment,
       confirmed,
       completed,
       revenue,
@@ -513,13 +545,6 @@ export default function AdminPage() {
     };
   }, [bookings]);
 
-    /*
-   * BUSINESS RULE: availability_status is informational only —
-   * admin decides who to assign based on real-world schedule
-   * knowledge, not a hard system gate. A driver assigned to a
-   * booking 5 days out shouldn't be blocked from other trips
-   * happening today.
-   */
   const assignableDrivers = drivers.filter((d) => d.active);
 
   /*
@@ -735,13 +760,13 @@ export default function AdminPage() {
               />
 
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                {STATUS_FILTERS.map((s) => (
+                {BOOKING_STATUS_FILTERS.map((s) => (
                   <button
                     key={s}
                     onClick={() => setStatusFilter(s)}
                     style={tabStyle(statusFilter === s)}
                   >
-                    {s}
+                    {s.replace(/_/g, " ")}
                   </button>
                 ))}
               </div>
@@ -756,8 +781,6 @@ export default function AdminPage() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {filteredBookings.map((b) => {
-                  const status = statusColors[b.status] || statusColors.pending;
-
                   const bStatus =
                     bookingStatusColors[b.booking_status] ||
                     bookingStatusColors.confirmed;
@@ -772,6 +795,9 @@ export default function AdminPage() {
 
                   const needsAssignment =
                     b.booking_status === "confirmed" && !b.driver_id;
+
+                  const canCancel =
+                    !TERMINAL_STATUSES.includes(b.booking_status);
 
                   return (
                     <div
@@ -790,39 +816,17 @@ export default function AdminPage() {
                           #{shortBookingId(b.id)} · {new Date(b.created_at).toLocaleString()}
                         </span>
 
-                        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                           <select
-                            value={b.status}
-                            onChange={(e) => handleStatusChange(b, e.target.value)}
-                            style={{
-                              padding: "3px 6px",
-                              borderRadius: 5,
-                              border: "1px solid #d9e0dc",
-                              fontFamily: "ui-monospace, monospace",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              background: status.bg,
-                              color: status.text,
-                            }}
-                          >
-                            {STATUS_OPTIONS.map((s) => (
-                              <option key={s} value={s}>{s}</option>
-                            ))}
-                          </select>
-
-                          {b.booking_status && (
-                            <span style={{
-                              padding: "3px 8px",
-                              borderRadius: 5,
-                              fontSize: 10,
-                              fontWeight: 700,
-                              background: bStatus.bg,
-                              color: bStatus.text,
-                            }}>
-                              {b.booking_status}
-                            </span>
-                          )}
-                        </div>
+                        <span style={{
+                          padding: "3px 8px",
+                          borderRadius: 5,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          textTransform: "capitalize",
+                          background: bStatus.bg,
+                          color: bStatus.text,
+                        }}>
+                          {(b.booking_status || "").replace(/_/g, " ")}
+                        </span>
                       </div>
 
                       <div style={{ marginBottom: 6 }}>
@@ -885,6 +889,25 @@ export default function AdminPage() {
                           </button>
                         )}
 
+                        {canCancel && (
+                          <button
+                            onClick={() => handleCancelBooking(b)}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 6,
+                              border: `1px solid ${theme.colors.error}`,
+                              background: theme.colors.errorBg,
+                              color: theme.colors.error,
+                              fontFamily: "ui-monospace, monospace",
+                              fontWeight: 700,
+                              fontSize: 10.5,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Cancel booking
+                          </button>
+                        )}
+
                       </div>
 
                       {assigningBookingId === b.id && (
@@ -897,7 +920,7 @@ export default function AdminPage() {
                         }}>
                           {assignableDrivers.length === 0 ? (
                             <p style={{ margin: 0, color: theme.colors.textFaint }}>
-                              No available drivers. Add one in the Drivers tab.
+                              No drivers available. Add one in the Drivers tab.
                             </p>
                           ) : (
                             <>
@@ -998,10 +1021,10 @@ export default function AdminPage() {
                 onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
                 style={inputStyle}
               />
-               <input
+              <input
                 type="email"
                 placeholder="Login email (for driver app)"
-                value={newDriver.email || ""}
+                value={newDriver.email}
                 onChange={(e) => setNewDriver({ ...newDriver, email: e.target.value })}
                 style={inputStyle}
               />
@@ -1041,8 +1064,12 @@ export default function AdminPage() {
                 >
                   <div>
                     <strong>{d.full_name}</strong> · {d.phone}
+                    {d.email && <> · {d.email}</>}
                     {d.vehicles && (
                       <> · {d.vehicles.registration_number} ({d.vehicles.category})</>
+                    )}
+                    {!d.user_id && (
+                      <span style={{ color: theme.colors.warning }}> · no login linked yet</span>
                     )}
                   </div>
 
@@ -1202,4 +1229,4 @@ function StatBox({ label, value, accent = theme.colors.text }) {
       </div>
     </div>
   );
-}
+        }
