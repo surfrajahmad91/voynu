@@ -238,12 +238,17 @@ export default function CabSelectionPage() {
           payment_method: paymentMethod,
 
           payment_status:
-          paymentMethod === "upi" ? "pending" : "pay_on_pickup",
+          paymentMethod === "upi" ? "pending" : "due_on_pickup",
 
         booking_status:
           paymentMethod === "upi" ? "pending_payment" : "confirmed",
 
-        status: "pending", // kept for existing account/admin display compatibility
+        /*
+         * NOTE: `status` is intentionally not set here anymore.
+         * It is now automatically derived from booking_status by
+         * a database trigger (Phase 2), so the two fields can
+         * never disagree again.
+         */
 
         confirmed_at: new Date().toISOString(),
       });
