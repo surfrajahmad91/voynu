@@ -9,6 +9,12 @@ function db() {
   return createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
+function validCoordinates(location) {
+  const lat = Number(location?.lat);
+  const lon = Number(location?.lon);
+  return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -21,7 +27,8 @@ export async function POST(request) {
 
     const { data: category, error: categoryError } = await client.from("vehicle_categories").select("id, name, slug, active, bookable, passenger_capacity, luggage_capacity").eq("id", vehicleCategoryId).maybeSingle();
     if (categoryError || !category || !category.active || !category.bookable) return NextResponse.json({ error: "Selected vehicle category is unavailable" }, { status: 409 });
-    if (Number(passengerCount) > Number(category.passenger_capacity) || Number(luggageCount) > Number(category.luggage_capacity)) return NextResponse.json({ error: "Selected vehicle cannot accommodate the booking" }, { status: 409 });
+    if (Number(passengerCount) < 1 || Number(passengerCount) > Number(category.passenger_capacity) || Number(luggageCount) < 0 || Number(luggageCount) > Number(category.luggage_capacity)) return NextResponse.json({ error: "Selected vehicle cannot accommodate the booking" }, { status: 409 });
+    if (!validCoordinates(booking.pickup) || !validCoordinates(booking.drop)) return NextResponse.json({ error: "Valid pickup and destination locations are required" }, { status: 400 });
 
     const { data: pricing, error: pricingError } = await client.from("pricing_versions").select("id").eq("active", true).order("created_at", { ascending: false }).limit(1).maybeSingle();
     if (pricingError || !pricing) return NextResponse.json({ error: "Current pricing is unavailable" }, { status: 503 });
@@ -39,8 +46,7 @@ export async function POST(request) {
     const fare = Math.round(Math.max(rawFare, minimum) / unit) * unit;
 
     const row = {
-      user_id: body.userId || null,
-      trip_type: tripType,
+      user_id: body.userId || null, trip_type: tripType,
       pickup_name: booking.pickup?.name, pickup_lat: booking.pickup?.lat, pickup_lon: booking.pickup?.lon,
       drop_name: booking.drop?.name, drop_lat: booking.drop?.lat, drop_lon: booking.drop?.lon,
       one_way_distance_km: oneWayKm, total_distance_km: booking?.journey?.totalDistanceKm,
