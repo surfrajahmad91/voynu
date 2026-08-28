@@ -1,5 +1,6 @@
 import "./globals.css";
 import VehicleCategoryBootstrap from "./components/VehicleCategoryBootstrap";
+import PricingBootstrap from "./components/PricingBootstrap";
 
 export const metadata = {
   title: "Voynu",
@@ -11,6 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <VehicleCategoryBootstrap />
+        <PricingBootstrap />
         {children}
       </body>
     </html>
