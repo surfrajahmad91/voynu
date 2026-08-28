@@ -12,11 +12,21 @@ import { validateCapacity } from "../../lib/capacityValidation";
 
 const VOYNU_UPI_VPA = "voynu@upi";
 
-function IconCheck({ size = 14 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>; }
-function IconWhatsApp({ size = 18 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" /></svg>; }
-function IconUsers({ size = 13 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5" /><path d="M16 8.5a3 3 0 1 1 3.6 2.9" /><path d="M17.5 14.6c2.6.3 4 2 4 5.4" /></svg>; }
-function IconCash({ size = 15 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5" /><circle cx="12" cy="12" r="3" /></svg>; }
-function IconUpi({ size = 15 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>; }
+function IconCheck({ size = 14 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>;
+}
+function IconWhatsApp({ size = 18 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" /></svg>;
+}
+function IconUsers({ size = 13 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5" /><path d="M16 8.5a3 3 0 1 1 3.6 2.9" /><path d="M17.5 14.6c2.6.3 4 2 4 5.4" /></svg>;
+}
+function IconCash({ size = 15 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5" /><circle cx="12" cy="12" r="3" /></svg>;
+}
+function IconUpi({ size = 15 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>;
+}
 
 export default function CabSelectionPage() {
   const router = useRouter();
@@ -31,12 +41,24 @@ export default function CabSelectionPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [capacityError, setCapacityError] = useState("");
 
-  useEffect(() => { try { const raw = sessionStorage.getItem("voynu_booking"); if (raw) { const parsed = JSON.parse(raw); setBooking(parsed); setPassengerCount(Math.max(1, Number(parsed?.passengerCount) || 1)); setLuggageCount(Math.max(0, Number(parsed?.luggageCount) || 0)); } } catch (error) { console.error("VOYNU: unable to read booking data:", error); } finally { setLoaded(true); } }, []);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("voynu_booking");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setBooking(parsed);
+        setPassengerCount(Math.max(1, Number(parsed?.passengerCount) || 1));
+        setLuggageCount(Math.max(0, Number(parsed?.luggageCount) || 0));
+      }
+    } catch (error) { console.error("VOYNU: unable to read booking data:", error); }
+    finally { setLoaded(true); }
+  }, []);
+
   useEffect(() => { if (loaded && !booking) router.replace("/"); }, [loaded, booking, router]);
   const fares = useMemo(() => { if (!booking || !Number.isFinite(Number(booking?.journey?.oneWayDistanceKm))) return []; return calculateAllFares({ oneWayDistanceKm: booking.journey.oneWayDistanceKm, tripType: booking.tripType }); }, [booking]);
   const eligibleFares = useMemo(() => fares.filter((fare) => validateCapacity({ passengerCount, luggageCount, passengerCapacity: fare.capacity, luggageCapacity: fare.luggageCapacity }).valid), [fares, passengerCount, luggageCount]);
   useEffect(() => { if (!eligibleFares.length) { setSelectedVehicleId(null); return; } if (!eligibleFares.some((fare) => fare.vehicleTypeId === selectedVehicleId)) setSelectedVehicleId(eligibleFares[0].vehicleTypeId); }, [eligibleFares, selectedVehicleId]);
-  useEffect(() => { const result = selectedVehicleId ? eligibleFares.find((f) => f.vehicleTypeId === selectedVehicleId) : null; setCapacityError(result || eligibleFares.length ? "" : "No vehicle category can accommodate this passenger and luggage requirement."); }, [eligibleFares, selectedVehicleId]);
+  useEffect(() => { const result = selectedVehicleId ? eligibleFares.find((f) => f.vehicleTypeId === selectedVehicleId) : null; if (!result) setCapacityError(eligibleFares.length ? "Please select a suitable vehicle category." : "No vehicle category can accommodate this passenger and luggage requirement."); else setCapacityError(""); }, [eligibleFares, selectedVehicleId]);
   useEffect(() => { setUpiPayClicked(false); setUpiPaymentConfirmed(false); }, [selectedVehicleId, paymentMethod]);
 
   const selectedFare = eligibleFares.find((f) => f.vehicleTypeId === selectedVehicleId) || null;
@@ -82,7 +104,15 @@ export default function CabSelectionPage() {
         {!canConfirm && paymentMethod === "upi" && <p className="upiHint">Complete your UPI payment above to continue to WhatsApp confirmation.</p>}
         <p className="disclaimer">Fares shown are estimates. Final fare is confirmed by our team on WhatsApp before your ride is dispatched.</p>
       </div>
-      <style jsx>{`* { box-sizing:border-box; } .page { min-height:100vh; background:#f5faf6; color:#16241d; font-family:'Plus Jakarta Sans',sans-serif; } .content { width:min(720px,calc(100% - 32px)); margin:0 auto; padding:24px 0 60px; } .loading { min-height:100vh; display:flex; align-items:center; justify-content:center; background:${theme.colors.bg}; } .spinner { width:34px; height:34px; border:3px solid rgba(8,120,63,.18); border-top-color:${theme.colors.primary}; border-radius:50%; } .summaryCard,.requirementsCard,.fareBreakdown { padding:18px; border-radius:16px; background:#fff; border:1px solid #e5ede8; box-shadow:0 12px 30px rgba(10,40,25,.06); } .summaryRoute { display:flex; align-items:flex-start; gap:11px; }`}</style>
+      <style jsx>{`
+        * { box-sizing: border-box; }
+        .page { min-height:100vh; background:#f5faf6; color:#16241d; font-family:'Plus Jakarta Sans',sans-serif; }
+        .content { width:min(720px,calc(100% - 32px)); margin:0 auto; padding:24px 0 60px; }
+        .loading { min-height:100vh; display:flex; align-items:center; justify-content:center; background:${theme.colors.bg}; }
+        .spinner { width:34px; height:34px; border:3px solid rgba(8,120,63,.18); border-top-color:${theme.colors.primary}; border-radius:50%; }
+        .summaryCard,.requirementsCard,.fareBreakdown { padding:18px; border-radius:16px; background:#fff; border:1px solid #e5ede8; box-shadow:0 12px 30px rgba(10,40,25,.06); }
+        .summaryRoute { display:flex; align-items:flex-start; gap:11px; }
+      `}</style>
     </main>
   );
 }
