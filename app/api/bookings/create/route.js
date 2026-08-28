@@ -45,8 +45,10 @@ export async function POST(request) {
     const unit = Number(rule.rounding_unit) || 1;
     const fare = Math.round(Math.max(rawFare, minimum) / unit) * unit;
 
+    const isUpi = paymentMethod === "upi";
     const row = {
-      user_id: body.userId || null, trip_type: tripType,
+      user_id: body.userId || null,
+      trip_type: tripType,
       pickup_name: booking.pickup?.name, pickup_lat: booking.pickup?.lat, pickup_lon: booking.pickup?.lon,
       drop_name: booking.drop?.name, drop_lat: booking.drop?.lat, drop_lon: booking.drop?.lon,
       one_way_distance_km: oneWayKm, total_distance_km: booking?.journey?.totalDistanceKm,
@@ -54,11 +56,12 @@ export async function POST(request) {
       passenger_name: booking.passengerName, phone: booking.phone, whatsapp: booking.whatsapp,
       vehicle_type: category.slug || category.name, vehicle_category_id: category.id,
       passenger_count: Number(passengerCount), luggage_count: Number(luggageCount), fare,
-      payment_method: paymentMethod, payment_status: paymentMethod === "upi" ? "verification_required" : "due_on_pickup",
-      booking_status: paymentMethod === "upi" ? "payment_verification_required" : "confirmed",
+      payment_method: paymentMethod,
+      payment_status: isUpi ? "pending" : "due_on_pickup",
+      booking_status: isUpi ? "pending_payment" : "confirmed",
       pricing_version_id: pricing.id, quoted_fare: fare, idempotency_key: idempotencyKey,
       fare_breakdown: { baseFare: Number(rule.base_fare), distanceFare: billedKm * Number(rule.per_km_rate), driverAllowance: tripType === "roundtrip" ? Number(rule.driver_allowance_per_day || 0) : 0, billedDistanceKm: billedKm },
-      confirmed_at: paymentMethod === "upi" ? null : new Date().toISOString(),
+      confirmed_at: isUpi ? null : new Date().toISOString(),
     };
     const { data, error } = await client.from("bookings").insert(row).select("id, booking_status, payment_status, fare, quoted_fare, pricing_version_id").single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
