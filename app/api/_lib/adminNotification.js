@@ -1,5 +1,4 @@
 const DEFAULT_ADMIN_EMAIL = "surfrajah@gmail.com";
-const DEFAULT_FROM_EMAIL = "VOYNU <onboarding@resend.dev>";
 
 function formatMoney(value) {
   const amount = Number(value);
@@ -106,11 +105,16 @@ function buildHtml({ booking, category, savedBooking }) {
 export async function notifyAdminOfBooking({ booking, category, savedBooking }) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL;
-  const from = process.env.RESEND_FROM_EMAIL || DEFAULT_FROM_EMAIL;
+  const from = process.env.RESEND_FROM_EMAIL;
 
   if (!apiKey) {
     console.warn("VOYNU: admin email notification skipped because RESEND_API_KEY is not configured.");
     return { sent: false, skipped: true, reason: "RESEND_API_KEY_MISSING" };
+  }
+
+  if (!from) {
+    console.warn("VOYNU: admin email notification skipped because RESEND_FROM_EMAIL is not configured.");
+    return { sent: false, skipped: true, reason: "RESEND_FROM_EMAIL_MISSING" };
   }
 
   const controller = new AbortController();
