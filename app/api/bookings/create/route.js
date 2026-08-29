@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 import { validateCapacity } from "../../../../lib/capacityValidation";
+import { notifyAdminOfBooking } from "../../_lib/adminNotification";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -337,6 +338,15 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    // Notifications are deliberately best-effort. A mail-provider outage or
+    // missing mail configuration must never turn a successfully saved booking
+    // into a customer-facing booking failure.
+    await notifyAdminOfBooking({
+      booking: { ...booking, passengerCount: Number(passengerCount), luggageCount: Number(luggageCount), paymentMethod },
+      category,
+      savedBooking: data,
+    });
 
     return NextResponse.json({ booking: data, duplicate: false });
   } catch (error) {
