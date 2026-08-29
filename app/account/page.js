@@ -57,6 +57,9 @@ function estimatedMinutes(distanceKm) {
   return Math.max(1, Math.ceil((distanceKm / 30) * 60));
 }
 
+const ACTIVE_STATUSES = ["driver_assigned", "on_the_way", "arrived", "trip_started"];
+const PAST_STATUSES = ["trip_completed", "cancelled"];
+
 export default function AccountPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
@@ -79,7 +82,7 @@ export default function AccountPage() {
   const fetchBookings = async () => {
     if (!user) return;
     setLoadingBookings(true);
-    const { data } = await supabase.from("bookings").select("*").order("travel_date", { ascending: false });
+    const { data } = await supabase.from("bookings").select("*").eq("user_id", user.id).order("travel_date", { ascending: false });
     setLoadingBookings(false);
     setBookings(data || []);
   };
@@ -100,7 +103,7 @@ export default function AccountPage() {
     if (!user) return;
     let cancelled = false;
     const loadDrivers = async () => {
-      const assigned = bookings.filter((b) => b.driver_id && ["driver_assigned", "on_the_way", "arrived", "trip_started"].includes(b.booking_status));
+      const assigned = bookings.filter((b) => b.driver_id && ACTIVE_STATUSES.includes(b.booking_status));
       if (!assigned.length) { setDriverDetails({}); return; }
       const entries = await Promise.all(assigned.map(async (booking) => {
         const { data } = await supabase.rpc("get_my_booking_driver", { p_booking_id: booking.id });
@@ -125,8 +128,9 @@ export default function AccountPage() {
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
 
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = bookings.filter((b) => b.travel_date >= today);
-  const past = bookings.filter((b) => b.travel_date < today);
+  const activeBookings = useMemo(() => bookings.filter((b) => ACTIVE_STATUSES.includes(b.booking_status)), [bookings]);
+  const pastBookings = useMemo(() => bookings.filter((b) => PAST_STATUSES.includes(b.booking_status)), [bookings]);
+  const upcomingBookings = useMemo(() => bookings.filter((b) => !ACTIVE_STATUSES.includes(b.booking_status) && !PAST_STATUSES.includes(b.booking_status) && b.travel_date >= today), [bookings, today]);
 
   const renderDriverCard = (booking) => {
     const driver = driverDetails[booking.id];
@@ -148,7 +152,7 @@ export default function AccountPage() {
 
   const renderBookingCard = (b) => {
     const status = statusColor(b.booking_status);
-    const active = ["driver_assigned", "on_the_way", "arrived", "trip_started"].includes(b.booking_status);
+    const active = ACTIVE_STATUSES.includes(b.booking_status);
     return <div key={b.id} style={{ padding: "16px 18px", borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: "0 8px 20px rgba(10,40,25,0.05)", marginBottom: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
         <span style={{ fontSize: 10.5, fontWeight: 700, color: theme.colors.textFaint, letterSpacing: 0.3 }}>BOOKING #{shortBookingId(b.id)}</span>
@@ -169,10 +173,12 @@ export default function AccountPage() {
     <div style={{ background: theme.colors.surface, borderBottom: `1px solid ${theme.colors.border}` }}><div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", minHeight: 46, display: "flex", alignItems: "center", justifyContent: "flex-end" }}><button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", margin: "8px 0", borderRadius: 20, border: `1.5px solid ${theme.colors.border}`, background: "#ffffff", color: "#45564c", fontFamily: theme.fontFamily, fontWeight: 700, fontSize: 11.5, cursor: "pointer" }}><IconLogout size={12} />Log out</button></div></div>
     <div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", padding: "24px 0 60px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, padding: 18, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}><div style={{ width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: theme.gradients.primary, color: "#ffffff", fontWeight: 800, fontSize: 18, flexShrink: 0 }}>{(user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase()}</div><div><div style={{ fontSize: 15, fontWeight: 800 }}>{user?.user_metadata?.full_name || "VOYNU Customer"}</div><div style={{ fontSize: 12, color: theme.colors.textFaint, marginTop: 2 }}>{user?.email}</div></div></div>
+      <h2 style={{ margin: "24px 0 12px", fontSize: 15, fontWeight: 800 }}>Active journeys</h2>
+      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : activeBookings.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No active journeys.</p> : activeBookings.map(renderBookingCard)}
       <h2 style={{ margin: "24px 0 12px", fontSize: 15, fontWeight: 800 }}>Upcoming journeys</h2>
-      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : upcoming.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No upcoming bookings.</p> : upcoming.map(renderBookingCard)}
+      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : upcomingBookings.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No upcoming bookings.</p> : upcomingBookings.map(renderBookingCard)}
       <h2 style={{ margin: "24px 0 12px", fontSize: 15, fontWeight: 800 }}>Past journeys</h2>
-      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : past.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No past bookings yet.</p> : past.map(renderBookingCard)}
+      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : pastBookings.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No past bookings yet.</p> : pastBookings.map(renderBookingCard)}
       <a href={buildWhatsAppLink("Hi VOYNU, I need help with my account/booking.")} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 26, textAlign: "center", color: theme.colors.primary, fontWeight: 700, fontSize: 13 }}>Need help? Chat with us on WhatsApp</a>
     </div>
   </main>;
