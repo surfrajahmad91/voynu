@@ -310,31 +310,17 @@ export default function AdminPage() {
 
     setError("");
 
-    const { error: assignError } = await supabase
-      .from("driver_assignments")
-      .insert({
-        booking_id: booking.id,
-        driver_id: driver.id,
-        vehicle_id: driver.vehicle_id,
-        status: "assigned",
-      });
+    const { data: assignedBooking, error: assignError } = await supabase.rpc(
+      "assign_booking_driver",
+      {
+        p_booking_id: booking.id,
+        p_driver_id: driver.id,
+        p_vehicle_id: driver.vehicle_id,
+      }
+    );
 
     if (assignError) {
       setError(assignError.message);
-      return;
-    }
-
-    const { error: bookingError } = await supabase
-      .from("bookings")
-      .update({
-        driver_id: driver.id,
-        vehicle_id: driver.vehicle_id,
-        booking_status: "driver_assigned",
-      })
-      .eq("id", booking.id);
-
-    if (bookingError) {
-      setError(bookingError.message);
       return;
     }
 
@@ -343,9 +329,9 @@ export default function AdminPage() {
         b.id === booking.id
           ? {
               ...b,
-              driver_id: driver.id,
-              vehicle_id: driver.vehicle_id,
-              booking_status: "driver_assigned",
+              driver_id: assignedBooking?.driver_id || driver.id,
+              vehicle_id: assignedBooking?.vehicle_id || driver.vehicle_id,
+              booking_status: assignedBooking?.booking_status || "driver_assigned",
             }
           : b
       )
@@ -595,7 +581,7 @@ export default function AdminPage() {
     };
   }, [bookings]);
 
-  const assignableDrivers = drivers.filter((d) => d.active);
+  const assignableDrivers = drivers.filter((d) => d.active && d.availability_status === "available");
 
   /*
    * ------------------------------------------------------------
