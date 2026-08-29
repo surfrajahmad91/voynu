@@ -27,9 +27,29 @@ function bookingReference(id) {
   return id ? `VOY-${String(id).slice(0, 8).toUpperCase()}` : "—";
 }
 
+function isUpiPending(booking) {
+  return booking?.paymentMethod === "upi" && booking?.paymentStatus !== "paid";
+}
+
 function paymentLabel(booking) {
   if (booking?.paymentMethod !== "upi") return "Pay on Pickup";
   return booking?.paymentStatus === "paid" ? "UPI — Paid" : "UPI — Verification pending";
+}
+
+function statusCopy(booking) {
+  if (isUpiPending(booking)) {
+    return {
+      title: "Booking Received!",
+      message: "Your booking has been saved successfully. Your UPI payment is awaiting verification, and our team will contact you 1 hour before your journey to confirm the pickup details.",
+      badge: "Payment verification pending",
+    };
+  }
+
+  return {
+    title: "Booking Confirmed!",
+    message: "Your booking has been received successfully. Our team will contact you 1 hour before your journey to confirm the pickup details.",
+    badge: "Booking confirmed",
+  };
 }
 
 export default function BookingConfirmedPage() {
@@ -66,6 +86,7 @@ export default function BookingConfirmedPage() {
   const reference = bookingReference(booking.bookingId || booking.selectedFare?.serverBookingId);
   const passengerCount = Number(booking.passengerCount) || 1;
   const luggageCount = Number(booking.luggageCount) || 0;
+  const copy = statusCopy(booking);
 
   return (
     <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}>
@@ -76,17 +97,14 @@ export default function BookingConfirmedPage() {
           <div style={{ width: 68, height: 68, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "linear-gradient(135deg, #1fa855, #0a7d42)", color: "#ffffff", boxShadow: "0 14px 30px rgba(31,168,85,0.28)" }}>
             <IconCheckBig />
           </div>
-          <h1 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>
-            Booking Confirmed!
-          </h1>
-          <p style={{ margin: 0, color: theme.colors.textMuted, fontSize: 13.5, lineHeight: 1.55 }}>
-            Your booking has been received successfully. Our team will contact you <strong style={{ color: theme.colors.primary }}>1 hour before your journey</strong> to confirm the pickup details.
-          </p>
+          <h1 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>{copy.title}</h1>
+          <p style={{ maxWidth: 560, margin: "0 auto", color: theme.colors.textMuted, fontSize: 13.5, lineHeight: 1.55 }}>{copy.message}</p>
         </div>
 
         <div style={{ marginBottom: 14, padding: "13px 16px", borderRadius: theme.radius.lg, background: theme.colors.primaryTint, border: `1px solid ${theme.colors.border}`, textAlign: "center" }}>
           <div style={{ color: theme.colors.textFaint, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase" }}>Booking reference</div>
           <div style={{ marginTop: 3, color: theme.colors.primary, fontSize: 18, fontWeight: 800, letterSpacing: 0.5 }}>{reference}</div>
+          <div style={{ marginTop: 7, color: theme.colors.textMuted, fontSize: 11.5, fontWeight: 700 }}>{copy.badge}</div>
         </div>
 
         <div style={{ padding: 20, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}>
