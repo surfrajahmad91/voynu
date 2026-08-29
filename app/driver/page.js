@@ -9,189 +9,38 @@ import { theme } from "../lib/theme";
 import LiveTripMap from "../components/LiveTripMap";
 import DriverNavigationMode from "../components/DriverNavigationMode";
 
-const NEXT_STATUS = {
-  driver_assigned: { next: "on_the_way", label: "Mark: On the way" },
-  on_the_way: { next: "arrived", label: "Mark: Arrived" },
-  arrived: { next: "trip_started", label: "Start Trip" },
-  trip_started: { next: "trip_completed", label: "Complete Trip" },
-};
-
+const NEXT_STATUS = { driver_assigned: { next: "on_the_way", label: "Mark: On the way" }, on_the_way: { next: "arrived", label: "Mark: Arrived" }, arrived: { next: "trip_started", label: "Start Trip" }, trip_started: { next: "trip_completed", label: "Complete Trip" } };
 const ACTIVE_STATUSES = ["on_the_way", "arrived", "trip_started"];
-
-const statusColors = {
-  driver_assigned: { bg: "#e0edf7", text: "#2563a8" },
-  on_the_way: { bg: theme.colors.warningBg, text: theme.colors.warning },
-  arrived: { bg: theme.colors.warningBg, text: theme.colors.warning },
-  trip_started: { bg: theme.colors.primaryTint, text: theme.colors.primary },
-  trip_completed: { bg: "#e5ede8", text: "#45564c" },
-};
-
-function IconLogout({ size = 13 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5M21 12H9" /></svg>;
-}
-
-function formatTripDate(b) {
-  return `${b.travel_date} · ${b.pickup_time}`;
-}
+const statusColors = { driver_assigned: { bg: "#e0edf7", text: "#2563a8" }, on_the_way: { bg: theme.colors.warningBg, text: theme.colors.warning }, arrived: { bg: theme.colors.warningBg, text: theme.colors.warning }, trip_started: { bg: theme.colors.primaryTint, text: theme.colors.primary }, trip_completed: { bg: "#e5ede8", text: "#45564c" } };
+function IconLogout({ size = 13 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5M21 12H9" /></svg>; }
+function formatTripDate(b) { return `${b.travel_date} · ${b.pickup_time}`; }
 
 export default function DriverPage() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
-  const [driver, setDriver] = useState(null);
-  const [notADriver, setNotADriver] = useState(false);
-  const [bookings, setBookings] = useState([]);
-  const [loadingBookings, setLoadingBookings] = useState(false);
-  const [error, setError] = useState("");
-  const [locationStatus, setLocationStatus] = useState("Location tracking is off");
-  const [driverLocation, setDriverLocation] = useState(null);
-  const [navigationBookingId, setNavigationBookingId] = useState(null);
+  const [checking, setChecking] = useState(true), [driver, setDriver] = useState(null), [notADriver, setNotADriver] = useState(false), [bookings, setBookings] = useState([]), [loadingBookings, setLoadingBookings] = useState(false), [error, setError] = useState(""), [locationStatus, setLocationStatus] = useState("Location tracking is off"), [driverLocation, setDriverLocation] = useState(null), [navigationBookingId, setNavigationBookingId] = useState(null);
   const lastLocationSent = useRef(0);
+  const navigationDismissedRef = useRef(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        router.push("/login");
-        return;
-      }
-      const email = sessionData.session.user.email;
-      const { data: driverRow, error: driverError } = await supabase.from("drivers").select("*, vehicles(*)").eq("email", email).maybeSingle();
-      if (cancelled) return;
-      if (driverError || !driverRow || driverRow.active === false) {
-        setNotADriver(true);
-        setChecking(false);
-        return;
-      }
-      setDriver(driverRow);
-      setChecking(false);
-    })();
-    return () => { cancelled = true; };
-  }, [router]);
-
-  const fetchBookings = async () => {
-    if (!driver) return;
-    setLoadingBookings(true);
-    const { data, error: fetchError } = await supabase.from("bookings").select("*").eq("driver_id", driver.id).order("travel_date", { ascending: true });
-    setLoadingBookings(false);
-    if (fetchError) {
-      setError(fetchError.message);
-      return;
-    }
-    setBookings(data || []);
-  };
-
+  useEffect(() => { let cancelled = false; (async () => { const { data: sessionData } = await supabase.auth.getSession(); if (!sessionData?.session) { router.push("/login"); return; } const email = sessionData.session.user.email; const { data: driverRow, error: driverError } = await supabase.from("drivers").select("*, vehicles(*)").eq("email", email).maybeSingle(); if (cancelled) return; if (driverError || !driverRow || driverRow.active === false) { setNotADriver(true); setChecking(false); return; } setDriver(driverRow); setChecking(false); })(); return () => { cancelled = true; }; }, [router]);
+  const fetchBookings = async () => { if (!driver) return; setLoadingBookings(true); const { data, error: fetchError } = await supabase.from("bookings").select("*").eq("driver_id", driver.id).order("travel_date", { ascending: true }); setLoadingBookings(false); if (fetchError) { setError(fetchError.message); return; } setBookings(data || []); };
   useEffect(() => { fetchBookings(); }, [driver]);
+  useEffect(() => { if (!driver) return; const channel = supabase.channel(`voynu-driver-bookings-${driver.id}`).on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `driver_id=eq.${driver.id}` }, () => fetchBookings()).subscribe(); return () => { supabase.removeChannel(channel); }; }, [driver]);
+  useEffect(() => { if (!driver || typeof navigator === "undefined" || !navigator.geolocation) { if (driver) setLocationStatus("Location is not available on this device"); return; } const activeTrip = bookings.find((b) => ACTIVE_STATUSES.includes(b.booking_status)); if (!activeTrip) { setDriverLocation(null); setLocationStatus("Location tracking will start when a trip is active"); return; } setLocationStatus("Requesting location permission…"); const watchId = navigator.geolocation.watchPosition(async (position) => { const point = { lat: position.coords.latitude, lon: position.coords.longitude, updatedAt: new Date().toISOString() }; setDriverLocation(point); const now = Date.now(); if (now - lastLocationSent.current < 5000) return; lastLocationSent.current = now; const { error: locationError } = await supabase.rpc("update_driver_location", { p_booking_id: activeTrip.id, p_lat: point.lat, p_lon: point.lon }); if (locationError) { setLocationStatus(locationError.message); return; } setLocationStatus(`Live location updated ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`); }, (geoError) => { setLocationStatus(geoError.code === 1 ? "Location permission is required for live tracking" : "Unable to read device location"); }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }); return () => navigator.geolocation.clearWatch(watchId); }, [driver, bookings]);
 
-  useEffect(() => {
-    if (!driver) return;
-    const channel = supabase.channel(`voynu-driver-bookings-${driver.id}`).on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `driver_id=eq.${driver.id}` }, () => fetchBookings()).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [driver]);
-
-  useEffect(() => {
-    if (!driver || typeof navigator === "undefined" || !navigator.geolocation) {
-      if (driver) setLocationStatus("Location is not available on this device");
-      return;
-    }
-    const activeTrip = bookings.find((b) => ACTIVE_STATUSES.includes(b.booking_status));
-    if (!activeTrip) {
-      setDriverLocation(null);
-      setLocationStatus("Location tracking will start when a trip is active");
-      return;
-    }
-    setLocationStatus("Requesting location permission…");
-    const watchId = navigator.geolocation.watchPosition(async (position) => {
-      const point = { lat: position.coords.latitude, lon: position.coords.longitude, updatedAt: new Date().toISOString() };
-      setDriverLocation(point);
-      const now = Date.now();
-      if (now - lastLocationSent.current < 5000) return;
-      lastLocationSent.current = now;
-      const { error: locationError } = await supabase.rpc("update_driver_location", { p_booking_id: activeTrip.id, p_lat: point.lat, p_lon: point.lon });
-      if (locationError) {
-        setLocationStatus(locationError.message);
-        return;
-      }
-      setLocationStatus(`Live location updated ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`);
-    }, (geoError) => {
-      setLocationStatus(geoError.code === 1 ? "Location permission is required for live tracking" : "Unable to read device location");
-    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [driver, bookings]);
-
-  const handleAdvanceStatus = async (booking) => {
-    const step = NEXT_STATUS[booking.booking_status];
-    if (!step) return;
-    setError("");
-    const { data, error: updateError } = await supabase.rpc("advance_driver_booking_status", { p_booking_id: booking.id, p_next_status: step.next });
-    if (updateError) {
-      setError(updateError.message);
-      return;
-    }
-    if (data) {
-      setBookings((prev) => prev.map((b) => b.id === booking.id ? data : b));
-      if (step.next === "trip_started") setNavigationBookingId(booking.id);
-    }
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
+  const handleAdvanceStatus = async (booking) => { const step = NEXT_STATUS[booking.booking_status]; if (!step) return; setError(""); const { data, error: updateError } = await supabase.rpc("advance_driver_booking_status", { p_booking_id: booking.id, p_next_status: step.next }); if (updateError) { setError(updateError.message); return; } if (data) { setBookings((prev) => prev.map((b) => b.id === booking.id ? data : b)); if (step.next === "trip_started") { navigationDismissedRef.current = false; setNavigationBookingId(booking.id); } } };
+  const handleLogout = async () => { await supabase.auth.signOut(); router.push("/login"); };
   const activeNavigationBooking = useMemo(() => bookings.find((b) => b.id === navigationBookingId && b.booking_status === "trip_started") || null, [bookings, navigationBookingId]);
-
-  useEffect(() => {
-    const startedTrip = bookings.find((b) => b.booking_status === "trip_started");
-    if (startedTrip && !navigationBookingId) setNavigationBookingId(startedTrip.id);
-    if (navigationBookingId && !startedTrip) setNavigationBookingId(null);
-  }, [bookings, navigationBookingId]);
-
-  const exitNavigation = () => setNavigationBookingId(null);
-
-  const completeNavigationTrip = async () => {
-    if (!activeNavigationBooking) return;
-    await handleAdvanceStatus(activeNavigationBooking);
-    setNavigationBookingId(null);
-  };
+  useEffect(() => { const startedTrip = bookings.find((b) => b.booking_status === "trip_started"); if (startedTrip && !navigationBookingId && !navigationDismissedRef.current) setNavigationBookingId(startedTrip.id); if (navigationBookingId && !startedTrip) { navigationDismissedRef.current = false; setNavigationBookingId(null); } }, [bookings, navigationBookingId]);
+  const exitNavigation = () => { navigationDismissedRef.current = true; setNavigationBookingId(null); };
+  const completeNavigationTrip = async () => { if (!activeNavigationBooking) return; await handleAdvanceStatus(activeNavigationBooking); setNavigationBookingId(null); };
 
   if (checking) return <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: theme.colors.bg }}><div style={{ width: 34, height: 34, border: "3px solid rgba(8,120,63,0.18)", borderTopColor: theme.colors.primary, borderRadius: "50%" }} /></main>;
-
   if (notADriver) return <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: theme.colors.bg, fontFamily: theme.fontFamily, padding: 24 }}><div style={{ maxWidth: 380, textAlign: "center", padding: "32px 26px", borderRadius: theme.radius.xl, background: theme.colors.surface, boxShadow: theme.shadow.card }}><h1 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 800 }}>No driver profile found</h1><p style={{ margin: "0 0 20px", color: theme.colors.textFaint, fontSize: 13 }}>This account isn't linked to an active driver record. Ask your admin to add or reactivate your driver profile.</p><Link href="/" style={{ display: "inline-block", padding: "12px 24px", borderRadius: 12, background: theme.colors.primary, color: "#ffffff", textDecoration: "none", fontWeight: 700, fontSize: 13.5 }}>Back to home</Link></div></main>;
-
-  if (activeNavigationBooking) {
-    return <DriverNavigationMode booking={activeNavigationBooking} driverLocation={driverLocation} targetType="destination" onExit={exitNavigation} onComplete={completeNavigationTrip} />;
-  }
+  if (activeNavigationBooking) return <DriverNavigationMode booking={activeNavigationBooking} driverLocation={driverLocation} targetType="destination" onExit={exitNavigation} onComplete={completeNavigationTrip} />;
 
   const activeTrips = bookings.filter((b) => ACTIVE_STATUSES.includes(b.booking_status));
   const upcomingTrips = bookings.filter((b) => b.booking_status === "driver_assigned");
   const pastTrips = bookings.filter((b) => b.booking_status === "trip_completed");
-
-  const renderTripCard = (b) => {
-    const step = NEXT_STATUS[b.booking_status];
-    const status = statusColors[b.booking_status] || statusColors.driver_assigned;
-    const active = ACTIVE_STATUSES.includes(b.booking_status);
-    const targetType = b.booking_status === "trip_started" ? "destination" : "pickup";
-    return <div key={b.id} style={{ padding: "16px 18px", borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}><span style={{ fontSize: 13, fontWeight: 700 }}>{formatTripDate(b)}</span><span style={{ padding: "4px 10px", borderRadius: 20, fontSize: 10.5, fontWeight: 700, textTransform: "capitalize", background: status.bg, color: status.text }}>{(b.booking_status || "").replace(/_/g, " ")}</span></div>
-      <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.6, marginBottom: 10 }}>📍 {b.pickup_name}<br />🏁 {b.drop_name}</div>
-      <div style={{ fontSize: 12, color: theme.colors.textMuted, marginBottom: 12 }}>Passenger: <strong>{b.passenger_name}</strong> · {b.phone}<br />{b.trip_type === "roundtrip" ? "Round Trip" : "One Way"} · {b.vehicle_type} · ₹{b.fare} · {b.payment_method}</div>
-      {active && <div style={{ marginBottom: 12 }}><LiveTripMap pickup={{ lat: b.pickup_lat, lon: b.pickup_lon }} destination={{ lat: b.drop_lat, lon: b.drop_lon }} driverLocation={driverLocation} targetType={targetType} compact /><div style={{ marginTop: 8, padding: "9px 11px", borderRadius: 10, background: theme.colors.primaryTint, color: theme.colors.primary, fontSize: 11.5, fontWeight: 800 }}>Current target: {targetType === "pickup" ? "Pickup location" : "Destination"} · Navigation is inside the VOYNU map</div></div>}
-      {step && <button onClick={() => handleAdvanceStatus(b)} style={{ width: "100%", minHeight: 46, border: 0, borderRadius: 12, background: theme.gradients.primary, color: "#ffffff", fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 13.5, cursor: "pointer" }}>{step.label}</button>}
-    </div>;
-  };
-
-  return <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}>
-    <header style={{ background: "rgba(255,255,255,0.92)", borderBottom: `1px solid ${theme.colors.border}`, position: "sticky", top: 0, zIndex: 20 }}><div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", minHeight: 66, display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: theme.gradients.primary, color: "#ffffff", fontWeight: 800 }}>V</div><div><div style={{ color: theme.colors.primary, fontWeight: 800, fontSize: 16 }}>VOYNU Driver</div><div style={{ fontSize: 11, color: theme.colors.textFaint }}>{driver.full_name}</div></div></div><button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${theme.colors.border}`, background: "#ffffff", color: "#45564c", fontFamily: theme.fontFamily, fontWeight: 700, fontSize: 12, cursor: "pointer" }}><IconLogout size={13} />Log out</button></div></header>
-    <div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", padding: "24px 0 60px" }}>
-      <div style={{ padding: 16, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, marginBottom: 12 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{driver.vehicles?.registration_number || "No vehicle assigned"}</div><div style={{ fontSize: 12, color: theme.colors.textFaint, marginTop: 2 }}>{driver.vehicles ? `${driver.vehicles.make} ${driver.vehicles.model} · ${driver.vehicles.category}` : "—"}</div></div>
-      <div style={{ padding: "10px 12px", borderRadius: 10, background: theme.colors.primaryTint, color: theme.colors.primary, fontSize: 11.5, fontWeight: 700, marginBottom: 22 }}>{locationStatus}</div>
-      {error && <div style={{ padding: "12px 14px", borderRadius: 10, background: theme.colors.errorBg, color: theme.colors.error, fontSize: 12.5, marginBottom: 16 }}>{error}</div>}
-      <h2 style={{ fontSize: 15, fontWeight: 800, margin: "0 0 12px" }}>Active journeys</h2>
-      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : activeTrips.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13, marginBottom: 24 }}>No active journeys right now.</p> : <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>{activeTrips.map(renderTripCard)}</div>}
-      <h2 style={{ fontSize: 15, fontWeight: 800, margin: "24px 0 12px" }}>Upcoming trips</h2>
-      {upcomingTrips.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13, marginBottom: 24 }}>No upcoming trips assigned.</p> : <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>{upcomingTrips.map(renderTripCard)}</div>}
-      {pastTrips.length > 0 && <><h2 style={{ fontSize: 15, fontWeight: 800, margin: "24px 0 12px" }}>Completed</h2><div style={{ display: "flex", flexDirection: "column", gap: 10 }}>{pastTrips.map((b) => <div key={b.id} style={{ padding: "12px 16px", borderRadius: 12, background: "#ffffff", border: `1px solid ${theme.colors.border}`, fontSize: 12.5, color: theme.colors.textMuted }}>{formatTripDate(b)} · {b.pickup_name} → {b.drop_name} · ₹{b.fare}</div>)}</div></>}
-    </div>
-  </main>;
+  const renderTripCard = (b) => { const step = NEXT_STATUS[b.booking_status]; const status = statusColors[b.booking_status] || statusColors.driver_assigned; const active = ACTIVE_STATUSES.includes(b.booking_status); const targetType = b.booking_status === "trip_started" ? "destination" : "pickup"; return <div key={b.id} style={{ padding: "16px 18px", borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}><span style={{ fontSize: 13, fontWeight: 700 }}>{formatTripDate(b)}</span><span style={{ padding: "4px 10px", borderRadius: 20, fontSize: 10.5, fontWeight: 700, textTransform: "capitalize", background: status.bg, color: status.text }}>{(b.booking_status || "").replace(/_/g, " ")}</span></div><div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.6, marginBottom: 10 }}>📍 {b.pickup_name}<br />🏁 {b.drop_name}</div><div style={{ fontSize: 12, color: theme.colors.textMuted, marginBottom: 12 }}>Passenger: <strong>{b.passenger_name}</strong> · {b.phone}<br />{b.trip_type === "roundtrip" ? "Round Trip" : "One Way"} · {b.vehicle_type} · ₹{b.fare} · {b.payment_method}</div>{active && <div style={{ marginBottom: 12 }}><LiveTripMap pickup={{ lat: b.pickup_lat, lon: b.pickup_lon }} destination={{ lat: b.drop_lat, lon: b.drop_lon }} driverLocation={driverLocation} targetType={targetType} compact /><div style={{ marginTop: 8, padding: "9px 11px", borderRadius: 10, background: theme.colors.primaryTint, color: theme.colors.primary, fontSize: 11.5, fontWeight: 800 }}>Current target: {targetType === "pickup" ? "Pickup location" : "Destination"} · Navigation is inside the VOYNU map</div></div>}{step && <button onClick={() => handleAdvanceStatus(b)} style={{ width: "100%", minHeight: 46, border: 0, borderRadius: 12, background: theme.gradients.primary, color: "#ffffff", fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 13.5, cursor: "pointer" }}>{step.label}</button>}</div>; };
+  return <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}><header style={{ background: "rgba(255,255,255,0.92)", borderBottom: `1px solid ${theme.colors.border}`, position: "sticky", top: 0, zIndex: 20 }}><div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", minHeight: 66, display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: theme.gradients.primary, color: "#ffffff", fontWeight: 800 }}>V</div><div><div style={{ color: theme.colors.primary, fontWeight: 800, fontSize: 16 }}>VOYNU Driver</div><div style={{ fontSize: 11, color: theme.colors.textFaint }}>{driver.full_name}</div></div></div><button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${theme.colors.border}`, background: "#ffffff", color: "#45564c", fontFamily: theme.fontFamily, fontWeight: 700, fontSize: 12, cursor: "pointer" }}><IconLogout size={13} />Log out</button></div></header><div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", padding: "24px 0 60px" }}><div style={{ padding: 16, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, marginBottom: 12 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{driver.vehicles?.registration_number || "No vehicle assigned"}</div><div style={{ fontSize: 12, color: theme.colors.textFaint, marginTop: 2 }}>{driver.vehicles ? `${driver.vehicles.make} ${driver.vehicles.model} · ${driver.vehicles.category}` : "—"}</div></div><div style={{ padding: "10px 12px", borderRadius: 10, background: theme.colors.primaryTint, color: theme.colors.primary, fontSize: 11.5, fontWeight: 700, marginBottom: 22 }}>{locationStatus}</div>{error && <div style={{ padding: "12px 14px", borderRadius: 10, background: theme.colors.errorBg, color: theme.colors.error, fontSize: 12.5, marginBottom: 16 }}>{error}</div>}<h2 style={{ fontSize: 15, fontWeight: 800, margin: "0 0 12px" }}>Active journeys</h2>{loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : activeTrips.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13, marginBottom: 24 }}>No active journeys right now.</p> : <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>{activeTrips.map(renderTripCard)}</div>}<h2 style={{ fontSize: 15, fontWeight: 800, margin: "24px 0 12px" }}>Upcoming trips</h2>{upcomingTrips.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13, marginBottom: 24 }}>No upcoming trips assigned.</p> : <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>{upcomingTrips.map(renderTripCard)}</div>}{pastTrips.length > 0 && <><h2 style={{ fontSize: 15, fontWeight: 800, margin: "24px 0 12px" }}>Completed</h2><div style={{ display: "flex", flexDirection: "column", gap: 10 }}>{pastTrips.map((b) => <div key={b.id} style={{ padding: "12px 16px", borderRadius: 12, background: "#ffffff", border: `1px solid ${theme.colors.border}`, fontSize: 12.5, color: theme.colors.textMuted }}>{formatTripDate(b)} · {b.pickup_name} → {b.drop_name} · ₹{b.fare}</div>)}</div></>}</div></main>;
 }
