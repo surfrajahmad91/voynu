@@ -152,6 +152,25 @@ export default function AccountPage() {
     </div>;
   };
 
+  const renderFareBreakdown = (booking) => {
+    const breakdown = booking.fare_breakdown;
+    if (!breakdown) return null;
+    const baseFare = Number(breakdown.baseFare) || 0;
+    const distanceFare = Number(breakdown.distanceFare) || 0;
+    const driverAllowance = Number(breakdown.driverAllowance) || 0;
+    const billedDistanceKm = Number(breakdown.billedDistanceKm);
+    return <div style={{ marginTop: 12, padding: "13px 14px", borderRadius: 12, background: "#f7faf8", border: `1px solid ${theme.colors.border}` }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
+        <div style={{ fontSize: 11, color: theme.colors.text, fontWeight: 800 }}>Fare breakup</div>
+        <div style={{ fontSize: 10, color: theme.colors.textFaint, fontWeight: 700 }}>Transparent pricing</div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", color: theme.colors.textMuted, fontSize: 11.5 }}><span>Base fare</span><span>₹{baseFare}</span></div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", color: theme.colors.textMuted, fontSize: 11.5 }}><span>Distance{Number.isFinite(billedDistanceKm) ? ` (${billedDistanceKm.toFixed(1)} km)` : ""}</span><span>₹{distanceFare}</span></div>
+      {driverAllowance > 0 && <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", color: theme.colors.textMuted, fontSize: 11.5 }}><span>Driver allowance</span><span>₹{driverAllowance}</span></div>}
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 5, paddingTop: 9, borderTop: `1px solid ${theme.colors.border}`, color: theme.colors.text, fontSize: 13, fontWeight: 800 }}><span>Total fare</span><span>₹{booking.fare}</span></div>
+    </div>;
+  };
+
   const renderBookingCard = (b) => {
     const status = statusColor(b.booking_status);
     const active = ACTIVE_STATUSES.includes(b.booking_status);
@@ -164,6 +183,7 @@ export default function AccountPage() {
       <div style={{ fontSize: 11, color: theme.colors.textFaint, marginBottom: 10, lineHeight: 1.5 }}>{b.pickup_name} → {b.drop_name}</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}><InfoChip label={b.trip_type === "roundtrip" ? "Round Trip" : "One Way"} /><InfoChip label={`${b.travel_date} • ${b.pickup_time}`} /><InfoChip label={b.vehicle_type} />{b.one_way_distance_km && <InfoChip label={`${Number(b.one_way_distance_km).toFixed(1)} km`} />}</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px dashed ${theme.colors.border}` }}><div><div style={{ fontSize: 10.5, color: theme.colors.textFaint, fontWeight: 700 }}>{b.payment_method === "upi" ? "UPI Payment" : "Pay on Pickup"}</div><div style={{ fontSize: 10, color: "#a3b0aa", marginTop: 1 }}>{b.payment_status === "paid" ? "Paid" : b.payment_method === "upi" ? "Verification pending" : "To pay"}</div></div><div style={{ fontSize: 18, fontWeight: 800, color: theme.colors.primary }}>₹{b.fare}</div></div>
+      {renderFareBreakdown(b)}
       {active && renderDriverCard(b)}
     </div>;
   };
