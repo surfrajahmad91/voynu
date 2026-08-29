@@ -30,8 +30,22 @@ function IconCash({ size = 15 }) {
 function IconUpi({ size = 15 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>;
 }
-function IconAlert({ size = 16 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>;
+function IconInfo({ size = 15 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 10v6M12 7h.01" /></svg>;
+}
+
+function getCustomerCapacityMessage(capacity) {
+  if (!capacity) return "This vehicle is not available for the current passenger and luggage selection.";
+
+  if (capacity.code === "PASSENGER_CAPACITY_EXCEEDED") {
+    return `This vehicle accommodates up to ${capacity.maxPassengers} passengers. Please choose a larger vehicle for ${capacity.passengers} passengers.`;
+  }
+
+  if (capacity.code === "LUGGAGE_CAPACITY_EXCEEDED") {
+    return `With ${capacity.passengerCount} passenger${capacity.passengerCount === 1 ? "" : "s"}, this vehicle can accommodate up to ${capacity.maxLuggage} luggage item${capacity.maxLuggage === 1 ? "" : "s"}.`;
+  }
+
+  return "This vehicle is not available for the current selection. Please choose another vehicle.";
 }
 
 export default function CabSelectionPage() {
@@ -306,7 +320,13 @@ export default function CabSelectionPage() {
                   <div className="cabCardLeft">
                     <div className="cabName">{fare.vehicleName}</div>
                     <div className="cabMeta"><IconUsers size={12} /><span>{fare.capacity} passengers</span><span>•</span><span>{fare.luggageCapacity} luggage</span><span>•</span><span>{fare.description}</span></div>
-                    {!available && <div className="cabUnavailableReason">Unavailable: {capacity.reason}</div>}
+                    {!available && (
+                      <div className="cabUnavailableReason">
+                        <div className="cabUnavailableTitle"><IconInfo size={14} /><span>Not available for this selection</span></div>
+                        <div className="cabUnavailableText">{getCustomerCapacityMessage(capacity)}</div>
+                        {capacity.code === "LUGGAGE_CAPACITY_EXCEEDED" && <div className="cabUnavailableHint">A larger vehicle can provide additional luggage space.</div>}
+                      </div>
+                    )}
                   </div>
                   <div className="cabCardRight"><div className="cabPrice">₹{fare.totalFare}</div><div className={active ? "cabRadio active" : "cabRadio"}>{active && <IconCheck size={11} />}</div></div>
                 </button>
@@ -315,11 +335,11 @@ export default function CabSelectionPage() {
           </div>
         )}
 
-        {dataStatus === "ready" && !eligibleFares.length && <section className="errorCard"><strong>No suitable vehicle is available.</strong><p>{capacityError}</p><p className="diagnosticLine">Requested: {passengerCount} passenger{passengerCount === 1 ? "" : "s"}, {luggageCount} luggage item{luggageCount === 1 ? "" : "s"}. Loaded {vehicleCategories.length} vehicle categories and {pricingRules.filter((rule) => rule.trip_type === normalizeTripType(booking.tripType)).length} matching pricing rules.</p></section>}
+        {dataStatus === "ready" && !eligibleFares.length && <section className="availabilityNotice"><div className="availabilityNoticeIcon"><IconInfo size={18} /></div><div><strong>We need a larger vehicle for this request.</strong><p>{capacityError}</p><p className="diagnosticLine">Try reducing the luggage or passenger count, or choose a larger vehicle when available.</p></div></section>}
 
         {dataStatus === "ready" && selectedFare && (
           <>
-            <div className="dataHealth"><span>Pricing v{pricingVersion?.version}</span><span>•</span><span>{vehicleCategories.length} vehicles</span><span>•</span><span>{pricingRules.filter((rule) => rule.trip_type === normalizeTripType(booking.tripType)).length} matching rules</span></div>
+            <div className="dataHealth"><span>Current VOYNU fare estimate</span></div>
             <h2 className="sectionHeading">Payment</h2>
             <div className="paymentGrid">
               <button type="button" className={paymentMethod === "cash" ? "paymentCard active" : "paymentCard"} onClick={() => setPaymentMethod("cash")}><IconCash size={16} /><span>Pay on Pickup</span></button>
@@ -346,7 +366,7 @@ export default function CabSelectionPage() {
         .spinner { width: 34px; height: 34px; border: 3px solid rgba(8,120,63,.18); border-top-color: ${theme.colors.primary}; border-radius: 50%; animation: spin .8s linear infinite; }
         .spinner.small { width: 24px; height: 24px; flex: 0 0 24px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .summaryCard, .requirementsCard, .fareBreakdown, .statusCard, .errorCard { padding: 18px; border-radius: 18px; background: #fff; border: 1px solid ${theme.colors.border}; box-shadow: ${theme.shadow.card}; }
+        .summaryCard, .requirementsCard, .fareBreakdown, .statusCard, .errorCard, .availabilityNotice { padding: 18px; border-radius: 18px; background: #fff; border: 1px solid ${theme.colors.border}; box-shadow: ${theme.shadow.card}; }
         .summaryRoute { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; font-weight: 600; line-height: 1.45; }
         .routeDot { width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; flex: 0 0 10px; }
         .routeDot.pickup { background: ${theme.colors.primary}; box-shadow: 0 0 0 4px ${theme.colors.primaryTint}; }
@@ -369,12 +389,15 @@ export default function CabSelectionPage() {
         .cabList { display: grid; gap: 12px; }
         .cabCard { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 16px; border: 1px solid ${theme.colors.border}; border-radius: 18px; background: #fff; color: inherit; text-align: left; cursor: pointer; box-shadow: 0 7px 18px rgba(10,40,25,.04); }
         .cabCard.active { border: 2px solid ${theme.colors.primary}; background: #f7fcf8; padding: 16px 15px; }
-        .cabCard.unavailable { cursor: not-allowed; opacity: .72; background: #f8faf9; }
-        .cabCard.unavailable .cabPrice { color: ${theme.colors.textMuted}; }
+        .cabCard.unavailable { cursor: not-allowed; background: #fafcfb; border-color: #e1e8e3; }
+        .cabCard.unavailable .cabName, .cabCard.unavailable .cabPrice { color: ${theme.colors.textMuted}; }
         .cabCardLeft { min-width: 0; }
         .cabName { font-size: 16px; font-weight: 800; }
         .cabMeta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; color: ${theme.colors.textMuted}; font-size: 11.5px; line-height: 1.4; }
-        .cabUnavailableReason { margin-top: 7px; color: #8e3029; font-size: 11.5px; font-weight: 700; line-height: 1.4; }
+        .cabUnavailableReason { margin-top: 9px; padding: 9px 10px; border-radius: 11px; background: #f3f8f5; border: 1px solid #dce9e1; }
+        .cabUnavailableTitle { display: flex; align-items: center; gap: 6px; color: #4e6659; font-size: 11.5px; font-weight: 800; }
+        .cabUnavailableText { margin-top: 4px; color: #5e6d65; font-size: 11.5px; line-height: 1.45; }
+        .cabUnavailableHint { margin-top: 3px; color: #75827b; font-size: 10.5px; line-height: 1.4; }
         .cabCardRight { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
         .cabPrice { font-size: 20px; font-weight: 800; }
         .cabRadio { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 2px solid #c7d1cb; border-radius: 50%; color: #fff; }
@@ -395,6 +418,11 @@ export default function CabSelectionPage() {
         .fareBreakdown { margin-top: 14px; }
         .fareRow { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0; color: ${theme.colors.textMuted}; }
         .fareRow.total { margin-top: 7px; padding-top: 14px; border-top: 1px solid ${theme.colors.border}; color: ${theme.colors.text}; font-size: 17px; font-weight: 800; }
+        .availabilityNotice { margin-top: 12px; display: flex; gap: 12px; align-items: flex-start; background: #f7faf8; border-color: #dce9e1; }
+        .availabilityNoticeIcon { width: 34px; height: 34px; flex: 0 0 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e7f2eb; color: ${theme.colors.primary}; }
+        .availabilityNotice strong { display: block; font-size: 14px; }
+        .availabilityNotice p { margin: 5px 0 0; color: ${theme.colors.textMuted}; font-size: 12px; line-height: 1.5; }
+        .availabilityNotice .diagnosticLine { color: #738079; }
         .confirmError { margin-top: 14px; }
         .confirmButton { width: 100%; min-height: 56px; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 9px; border: 0; border-radius: 16px; background: ${theme.colors.primary}; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: ${theme.shadow.button}; }
         .confirmButton:disabled { opacity: .65; cursor: wait; }
