@@ -16,9 +16,7 @@ function getBearerToken(request) {
 
 function dbForUser(accessToken) {
   if (!supabaseUrl || !anonKey) {
-    throw new Error(
-      "Server database configuration is missing: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is not configured."
-    );
+    throw new Error("Server database configuration is missing.");
   }
 
   return createClient(supabaseUrl, anonKey, {
@@ -117,13 +115,12 @@ export async function POST(request) {
       .maybeSingle();
 
     if (existingError) {
+      console.error("VOYNU booking idempotency lookup failed:", existingError);
       return NextResponse.json(
         {
-          error: `Could not check for an existing booking: ${existingError.message}`,
-          code: existingError.code || "BOOKING_LOOKUP_FAILED",
+          error: "We could not verify whether this booking was already submitted. Please try again.",
+          code: "BOOKING_LOOKUP_FAILED",
           stage: "bookings.existing.lookup",
-          details: existingError.details || null,
-          hint: existingError.hint || null,
         },
         { status: 503 }
       );
@@ -140,13 +137,12 @@ export async function POST(request) {
       .maybeSingle();
 
     if (categoryError) {
+      console.error("VOYNU vehicle category lookup failed:", categoryError);
       return NextResponse.json(
         {
-          error: `Selected vehicle category could not be checked: ${categoryError.message}`,
-          code: categoryError.code || "VEHICLE_CATEGORY_LOOKUP_FAILED",
+          error: "The selected vehicle could not be verified. Please return to cab selection and try again.",
+          code: "VEHICLE_CATEGORY_LOOKUP_FAILED",
           stage: "vehicle_categories.lookup",
-          details: categoryError.details || null,
-          hint: categoryError.hint || null,
         },
         { status: 503 }
       );
@@ -215,13 +211,12 @@ export async function POST(request) {
       .maybeSingle();
 
     if (pricingError) {
+      console.error("VOYNU active pricing lookup failed:", pricingError);
       return NextResponse.json(
         {
-          error: `Current pricing could not be loaded: ${pricingError.message}`,
-          code: pricingError.code || "PRICING_VERSION_LOOKUP_FAILED",
+          error: "Current pricing could not be loaded. Please try again shortly.",
+          code: "PRICING_VERSION_LOOKUP_FAILED",
           stage: "pricing_versions.lookup",
-          details: pricingError.details || null,
-          hint: pricingError.hint || null,
         },
         { status: 503 }
       );
@@ -247,13 +242,12 @@ export async function POST(request) {
       .maybeSingle();
 
     if (ruleError) {
+      console.error("VOYNU pricing rule lookup failed:", ruleError);
       return NextResponse.json(
         {
-          error: `Pricing rule lookup failed for ${category.name}: ${ruleError.message}`,
-          code: ruleError.code || "PRICING_RULE_LOOKUP_FAILED",
+          error: "Pricing for the selected vehicle could not be loaded. Please try again shortly.",
+          code: "PRICING_RULE_LOOKUP_FAILED",
           stage: "pricing_rules.lookup",
-          details: ruleError.details || null,
-          hint: ruleError.hint || null,
         },
         { status: 503 }
       );
@@ -327,13 +321,12 @@ export async function POST(request) {
       .single();
 
     if (error) {
+      console.error("VOYNU booking insert failed:", error);
       return NextResponse.json(
         {
-          error: `Booking could not be saved: ${error.message}`,
-          code: error.code || "BOOKING_INSERT_FAILED",
+          error: "Booking could not be saved. Please try again.",
+          code: "BOOKING_INSERT_FAILED",
           stage: "bookings.insert",
-          details: error.details || null,
-          hint: error.hint || null,
         },
         { status: 400 }
       );
@@ -353,7 +346,7 @@ export async function POST(request) {
     console.error("VOYNU booking create error", error);
     return NextResponse.json(
       {
-        error: error?.message || "Unable to create booking.",
+        error: "Unable to create booking right now. Please try again.",
         code: "BOOKING_CREATE_UNHANDLED_ERROR",
         stage: "bookings.create.unhandled",
       },
