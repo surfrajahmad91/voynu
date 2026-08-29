@@ -18,9 +18,6 @@ const MAX_LUGGAGE = 10;
 function IconCheck({ size = 14 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>;
 }
-function IconWhatsApp({ size = 18 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" /></svg>;
-}
 function IconUsers({ size = 13 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5" /><path d="M16 8.5a3 3 0 1 1 3.6 2.9" /><path d="M17.5 14.6c2.6.3 4 2 4 5.4" /></svg>;
 }
@@ -244,15 +241,6 @@ export default function CabSelectionPage() {
     ? `No available vehicle can accommodate ${passengerCount} passenger${passengerCount === 1 ? "" : "s"} and ${luggageCount} luggage item${luggageCount === 1 ? "" : "s"}.`
     : selectedCapacity?.valid === false ? selectedCapacity.reason : "";
 
-  const buildConfirmationMessage = () => {
-    if (!booking || !selectedFare) return "";
-    const paymentLine = paymentMethod === "upi" ? "UPI — payment marked by customer as completed; VOYNU verification pending" : "Pay on Pickup (Cash)";
-    const lines = ["New VOYNU booking request:", "", `Trip type: ${isRoundTrip ? "Round Trip" : "One Way"}`, `Pickup: ${booking.pickup?.name || ""}`, `Drop: ${booking.drop?.name || ""}`, `Distance: ${booking.journey?.oneWayDistanceText || ""}${isRoundTrip ? ` (round trip: ${booking.journey?.totalDistanceText || ""})` : ""}`, `Travel date: ${booking.travelDate || ""}`, `Pickup time: ${booking.pickupTime || ""}`];
-    if (isRoundTrip) lines.push(`Return date: ${booking.returnDate || ""}`, `Return time: ${booking.returnTime || ""}`);
-    lines.push("", `Passengers: ${passengerCount}`, `Luggage: ${luggageCount}`, `Cab type: ${selectedFare.vehicleName}`, `Estimated fare: ₹${selectedFare.totalFare}`, `Payment: ${paymentLine}`, "", `Passenger: ${booking.passengerName || ""}`, `Phone: ${booking.phone || ""}`, `WhatsApp: ${booking.whatsapp || ""}`);
-    return lines.join("\n");
-  };
-
   const upiHref = selectedFare ? `upi://pay?pa=${encodeURIComponent(VOYNU_UPI_VPA)}&pn=${encodeURIComponent("VOYNU")}&am=${selectedFare.totalFare}&cu=INR&tn=${encodeURIComponent("VOYNU Cab Booking")}` : "";
   const canConfirm = Boolean(selectedFare && selectedCapacity?.valid) && (paymentMethod === "cash" || (paymentMethod === "upi" && upiPaymentConfirmed));
 
@@ -278,7 +266,6 @@ export default function CabSelectionPage() {
       const confirmedBooking = { ...booking, passengerCount, luggageCount, selectedFare: { ...selectedFare, totalFare: Number(result.booking.fare), serverBookingId: result.booking.id }, paymentMethod, bookingId: result.booking.id, paymentStatus: result.booking.payment_status, bookingStatus: result.booking.booking_status, confirmedAt: new Date().toISOString() };
       sessionStorage.setItem("voynu_confirmed_booking", JSON.stringify(confirmedBooking));
       sessionStorage.removeItem("voynu_booking");
-      sessionStorage.setItem("voynu_confirmation_message", buildConfirmationMessage());
       router.replace("/booking-confirmed");
     } catch (error) {
       console.error("VOYNU: unable to create booking", error);
@@ -352,7 +339,7 @@ export default function CabSelectionPage() {
             </div>}
             <section className="fareBreakdown"><div className="fareRow"><span>Base fare</span><span>₹{selectedFare.baseFare}</span></div><div className="fareRow"><span>Distance ({selectedFare.billedDistanceKm.toFixed(1)} km)</span><span>₹{selectedFare.distanceFare}</span></div>{selectedFare.driverAllowance > 0 && <div className="fareRow"><span>Driver allowance</span><span>₹{selectedFare.driverAllowance}</span></div>}<div className="fareRow total"><span>Total</span><span>₹{selectedFare.totalFare}</span></div></section>
             {flowError && <section className="errorCard confirmError"><strong>Booking could not be confirmed.</strong><p>{flowError}</p><details open><summary>Technical diagnostic</summary><pre>{JSON.stringify({ stage: "booking.create", vehicleCategoryId: selectedFare.vehicleCategoryId, passengerCount, luggageCount, paymentMethod }, null, 2)}</pre></details></section>}
-            {canConfirm && <button type="button" className="confirmButton" onClick={handleConfirm} disabled={isConfirming}><IconWhatsApp size={18} /><span>{isConfirming ? "Saving booking…" : "Confirm booking"}</span></button>}
+            {canConfirm && <button type="button" className="confirmButton" onClick={handleConfirm} disabled={isConfirming}><IconCheck size={18} /><span>{isConfirming ? "Saving booking…" : "Confirm booking"}</span></button>}
             {!canConfirm && paymentMethod === "upi" && <p className="upiHint">Complete your UPI payment above to continue with booking confirmation.</p>}
             <p className="disclaimer">Fares shown are estimates. Final fare is confirmed by our team on WhatsApp before your ride is dispatched.</p>
           </>
