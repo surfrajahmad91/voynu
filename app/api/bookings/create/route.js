@@ -3,10 +3,20 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 function db() {
   if (!supabaseUrl || !serviceRoleKey) throw new Error("Server database configuration is missing");
   return createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+async function authenticatedUser(request) {
+  if (!anonKey) return null;
+  const authorization = request.headers.get("authorization");
+  if (!authorization?.startsWith("Bearer ")) return null;
+  const userClient = createClient(supabaseUrl, anonKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  const { data } = await userClient.auth.getUser(authorization.slice(7));
+  return data?.user || null;
 }
 
 function validCoordinates(location) {
@@ -22,7 +32,8 @@ export async function POST(request) {
     if (!booking || !vehicleCategoryId || !idempotencyKey) return NextResponse.json({ error: "Invalid booking request" }, { status: 400 });
 
     const client = db();
-    const { data: existing } = await client.from("bookings").select("id, booking_status, fare, payment_status").eq("idempotency_key", idempotencyKey).maybeSingle();
+    const user = await authenticatedUser(request);
+    const { data: existing } = await client.from("bookings").select("id, booking_status, fare, payment_status, user_id").eq("idempotency_key", idempotencyKey).maybeSingle();
     if (existing) return NextResponse.json({ booking: existing, duplicate: true });
 
     const { data: category, error: categoryError } = await client.from("vehicle_categories").select("id, name, slug, active, bookable, passenger_capacity, luggage_capacity").eq("id", vehicleCategoryId).maybeSingle();
@@ -47,7 +58,7 @@ export async function POST(request) {
 
     const isUpi = paymentMethod === "upi";
     const row = {
-      user_id: body.userId || null,
+      user_id: user?.id || null,
       trip_type: tripType,
       pickup_name: booking.pickup?.name, pickup_lat: booking.pickup?.lat, pickup_lon: booking.pickup?.lon,
       drop_name: booking.drop?.name, drop_lat: booking.drop?.lat, drop_lon: booking.drop?.lon,
@@ -63,7 +74,7 @@ export async function POST(request) {
       fare_breakdown: { baseFare: Number(rule.base_fare), distanceFare: billedKm * Number(rule.per_km_rate), driverAllowance: tripType === "roundtrip" ? Number(rule.driver_allowance_per_day || 0) : 0, billedDistanceKm: billedKm },
       confirmed_at: isUpi ? null : new Date().toISOString(),
     };
-    const { data, error } = await client.from("bookings").insert(row).select("id, booking_status, payment_status, fare, quoted_fare, pricing_version_id").single();
+    const { data, error } = await client.from("bookings").insert(row).select("id, booking_status, payment_status, fare, quoted_fare, pricing_version_id, user_id").single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ booking: data, duplicate: false });
   } catch (error) {
