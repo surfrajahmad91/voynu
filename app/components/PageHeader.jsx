@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { theme } from "../lib/theme";
 import AccountLink from "./AccountLink";
+import NotificationBell from "./NotificationBell";
 
 function IconWhatsApp({ size = 15 }) {
   return (
@@ -81,6 +82,7 @@ export default function PageHeader({
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <NotificationBell />
           {showAccountLink && <AccountLink />}
 
           {showWhatsapp && (
