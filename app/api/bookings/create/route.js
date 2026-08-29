@@ -1,29 +1,46 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+import { validateCapacity } from "../../../../lib/capacityValidation";
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-function db() {
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Server database configuration is missing: SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL is not configured.");
+function getBearerToken(request) {
+  const authorization = request.headers.get("authorization");
+  if (!authorization?.startsWith("Bearer ")) return null;
+  const token = authorization.slice(7).trim();
+  return token || null;
+}
+
+function dbForUser(accessToken) {
+  if (!supabaseUrl || !anonKey) {
+    throw new Error(
+      "Server database configuration is missing: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is not configured."
+    );
   }
-  return createClient(supabaseUrl, serviceRoleKey, {
+
+  return createClient(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
   });
 }
 
 async function authenticatedUser(request) {
-  if (!anonKey || !supabaseUrl) return null;
-  const authorization = request.headers.get("authorization");
-  if (!authorization?.startsWith("Bearer ")) return null;
+  const accessToken = getBearerToken(request);
+  if (!accessToken || !anonKey || !supabaseUrl) return null;
 
   const userClient = createClient(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { data } = await userClient.auth.getUser(authorization.slice(7));
-  return data?.user || null;
+  const { data, error } = await userClient.auth.getUser(accessToken);
+
+  if (error || !data?.user) return null;
+  return { user: data.user, accessToken };
 }
 
 function validCoordinates(location) {
@@ -31,39 +48,12 @@ function validCoordinates(location) {
   const lon = Number(location?.lon);
   return (
     Number.isFinite(lat) &&
-    Number.isFinite(lon) &&
     lat >= -90 &&
     lat <= 90 &&
+    Number.isFinite(lon) &&
     lon >= -180 &&
     lon <= 180
   );
-}
-
-function validatePassengerAndLuggage(passengerCount, luggageCount, category) {
-  const passengers = Number(passengerCount);
-  const luggage = Number(luggageCount);
-  const passengerCapacity = Number(category?.passenger_capacity);
-  const luggageCapacity = Number(category?.luggage_capacity);
-
-  if (!Number.isInteger(passengers) || passengers < 1) {
-    return "Passenger count must be at least 1.";
-  }
-  if (!Number.isInteger(luggage) || luggage < 0) {
-    return "Luggage count cannot be negative.";
-  }
-  if (passengers > passengerCapacity) {
-    return `Selected ${category.name} can accommodate up to ${passengerCapacity} passengers, but ${passengers} were requested.`;
-  }
-
-  const requestLuggageLimit = passengers * 3;
-  if (luggage > requestLuggageLimit) {
-    return `Luggage limit exceeded: maximum 3 luggage items per passenger. With ${passengers} passenger${passengers === 1 ? "" : "s"}, the maximum is ${requestLuggageLimit}.`;
-  }
-  if (luggage > luggageCapacity) {
-    return `Selected ${category.name} can accommodate up to ${luggageCapacity} luggage items, but ${luggage} were requested.`;
-  }
-
-  return null;
 }
 
 export async function POST(request) {
@@ -80,48 +70,65 @@ export async function POST(request) {
 
     if (!booking || !vehicleCategoryId || !idempotencyKey) {
       return NextResponse.json(
-        { error: "Invalid booking request: booking, vehicle category and idempotency key are required." },
+        {
+          error: "Invalid booking request: booking, vehicle category and idempotency key are required.",
+          code: "INVALID_BOOKING_REQUEST",
+          stage: "request.validation",
+        },
         { status: 400 }
       );
     }
 
     if (paymentMethod !== "cash" && paymentMethod !== "upi") {
       return NextResponse.json(
-        { error: "Invalid payment method. Choose Pay on Pickup or UPI." },
+        {
+          error: "Invalid payment method. Choose Pay on Pickup or UPI.",
+          code: "INVALID_PAYMENT_METHOD",
+          stage: "request.validation",
+        },
         { status: 400 }
       );
     }
 
-    const user = await authenticatedUser(request);
-    if (!user) {
+    const auth = await authenticatedUser(request);
+    if (!auth) {
       return NextResponse.json(
-        { error: "You must be logged in to complete a booking." },
+        {
+          error: "You must be logged in to complete a booking. Your login session may have expired; please sign in again.",
+          code: "AUTHENTICATION_FAILED",
+          stage: "authentication",
+        },
         { status: 401 }
       );
     }
 
-    const client = db();
+    const { user, accessToken } = auth;
+    const client = dbForUser(accessToken);
 
+    // Use the signed-in user's Supabase session for every database operation.
+    // Booking creation does not require a service-role key because the existing
+    // RLS policies explicitly allow authenticated users to create their own rows.
     const { data: existing, error: existingError } = await client
       .from("bookings")
       .select("id, booking_status, fare, payment_status, user_id")
       .eq("idempotency_key", idempotencyKey)
+      .eq("user_id", user.id)
       .maybeSingle();
 
     if (existingError) {
       return NextResponse.json(
-        { error: `Could not check for an existing booking: ${existingError.message}` },
+        {
+          error: `Could not check for an existing booking: ${existingError.message}`,
+          code: existingError.code || "BOOKING_LOOKUP_FAILED",
+          stage: "bookings.existing.lookup",
+          details: existingError.details || null,
+          hint: existingError.hint || null,
+        },
         { status: 503 }
       );
     }
 
     if (existing) {
-      if (existing.user_id !== user.id) {
-        return NextResponse.json(
-          { error: "This booking request does not belong to the signed-in user." },
-          { status: 403 }
-        );
-      }
       return NextResponse.json({ booking: existing, duplicate: true });
     }
 
@@ -133,29 +140,54 @@ export async function POST(request) {
 
     if (categoryError) {
       return NextResponse.json(
-        { error: `Selected vehicle category could not be checked: ${categoryError.message}` },
+        {
+          error: `Selected vehicle category could not be checked: ${categoryError.message}`,
+          code: categoryError.code || "VEHICLE_CATEGORY_LOOKUP_FAILED",
+          stage: "vehicle_categories.lookup",
+          details: categoryError.details || null,
+          hint: categoryError.hint || null,
+        },
         { status: 503 }
       );
     }
+
     if (!category || !category.active || !category.bookable) {
       return NextResponse.json(
-        { error: "Selected vehicle category is unavailable. Please return to cab selection and choose another vehicle." },
+        {
+          error: "Selected vehicle category is unavailable. Please return to cab selection and choose another vehicle.",
+          code: "VEHICLE_CATEGORY_UNAVAILABLE",
+          stage: "vehicle_categories.validation",
+        },
         { status: 409 }
       );
     }
 
-    const capacityError = validatePassengerAndLuggage(
+    const capacity = validateCapacity({
       passengerCount,
       luggageCount,
-      category
-    );
-    if (capacityError) {
-      return NextResponse.json({ error: capacityError }, { status: 409 });
+      passengerCapacity: category.passenger_capacity,
+      luggageCapacity: category.luggage_capacity,
+    });
+
+    if (!capacity.valid) {
+      return NextResponse.json(
+        {
+          error: capacity.reason,
+          code: capacity.code || "CAPACITY_INVALID",
+          stage: "vehicle_capacity.validation",
+          details: capacity,
+        },
+        { status: 409 }
+      );
     }
 
     if (!validCoordinates(booking.pickup) || !validCoordinates(booking.drop)) {
       return NextResponse.json(
-        { error: "Valid pickup and destination locations are required before a booking can be confirmed." },
+        {
+          error: "Valid pickup and destination locations are required before a booking can be confirmed.",
+          code: "INVALID_LOCATION_COORDINATES",
+          stage: "booking.location.validation",
+        },
         { status: 400 }
       );
     }
@@ -164,12 +196,15 @@ export async function POST(request) {
     const oneWayKm = Number(booking?.journey?.oneWayDistanceKm);
     if (!Number.isFinite(oneWayKm) || oneWayKm < 0) {
       return NextResponse.json(
-        { error: "Invalid journey distance. Please return to the trip details and select the locations again." },
+        {
+          error: "Invalid journey distance. Please return to the trip details and select the locations again.",
+          code: "INVALID_JOURNEY_DISTANCE",
+          stage: "booking.journey.validation",
+        },
         { status: 400 }
       );
     }
 
-    // pricing_versions uses `status`, not the legacy `active` column.
     const { data: pricing, error: pricingError } = await client
       .from("pricing_versions")
       .select("id, version, status")
@@ -180,13 +215,24 @@ export async function POST(request) {
 
     if (pricingError) {
       return NextResponse.json(
-        { error: `Current pricing could not be loaded: ${pricingError.message}` },
+        {
+          error: `Current pricing could not be loaded: ${pricingError.message}`,
+          code: pricingError.code || "PRICING_VERSION_LOOKUP_FAILED",
+          stage: "pricing_versions.lookup",
+          details: pricingError.details || null,
+          hint: pricingError.hint || null,
+        },
         { status: 503 }
       );
     }
+
     if (!pricing) {
       return NextResponse.json(
-        { error: "No active pricing version is configured. Please contact VOYNU before trying again." },
+        {
+          error: "No active pricing version is configured. Please contact VOYNU before trying again.",
+          code: "NO_ACTIVE_PRICING",
+          stage: "pricing_versions.validation",
+        },
         { status: 503 }
       );
     }
@@ -201,13 +247,24 @@ export async function POST(request) {
 
     if (ruleError) {
       return NextResponse.json(
-        { error: `Pricing rule lookup failed for ${category.name}: ${ruleError.message}` },
+        {
+          error: `Pricing rule lookup failed for ${category.name}: ${ruleError.message}`,
+          code: ruleError.code || "PRICING_RULE_LOOKUP_FAILED",
+          stage: "pricing_rules.lookup",
+          details: ruleError.details || null,
+          hint: ruleError.hint || null,
+        },
         { status: 503 }
       );
     }
+
     if (!rule) {
       return NextResponse.json(
-        { error: `No ${tripType} pricing rule exists for ${category.name} in active pricing version ${pricing.version}.` },
+        {
+          error: `No ${tripType} pricing rule exists for ${category.name} in active pricing version ${pricing.version}.`,
+          code: "NO_PRICING_RULE",
+          stage: "pricing_rules.validation",
+        },
         { status: 503 }
       );
     }
@@ -270,7 +327,13 @@ export async function POST(request) {
 
     if (error) {
       return NextResponse.json(
-        { error: `Booking could not be saved: ${error.message}` },
+        {
+          error: `Booking could not be saved: ${error.message}`,
+          code: error.code || "BOOKING_INSERT_FAILED",
+          stage: "bookings.insert",
+          details: error.details || null,
+          hint: error.hint || null,
+        },
         { status: 400 }
       );
     }
@@ -279,7 +342,11 @@ export async function POST(request) {
   } catch (error) {
     console.error("VOYNU booking create error", error);
     return NextResponse.json(
-      { error: error?.message || "Unable to create booking." },
+      {
+        error: error?.message || "Unable to create booking.",
+        code: "BOOKING_CREATE_UNHANDLED_ERROR",
+        stage: "bookings.create.unhandled",
+      },
       { status: 500 }
     );
   }
