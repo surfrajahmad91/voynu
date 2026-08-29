@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 const TILE_SIZE = 256;
 const MAP_HEIGHT = 280;
 const OSM = "https://tile.openstreetmap.org";
+const ETA_REFRESH_MS = 60000;
 
 function validPoint(point) {
   const lat = Number(point?.lat);
@@ -20,9 +21,7 @@ function project(lat, lon, zoom) {
   return { x, y };
 }
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
+function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 
 function chooseZoom(points, width) {
   const valid = points.filter(validPoint);
@@ -36,22 +35,32 @@ function chooseZoom(points, width) {
   return clamp(Math.floor(Math.log2((usable * 360) / (span * 256 * 1.7))), 6, 16);
 }
 
+function formatDuration(seconds) {
+  if (!Number.isFinite(Number(seconds))) return "";
+  const totalMinutes = Math.max(0, Math.round(Number(seconds) / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours > 0 ? (minutes ? `${hours} hr ${minutes} min` : `${hours} hr`) : `${minutes} min`;
+}
+
 function Marker({ point, center, zoom, type, transition = true }) {
   if (!validPoint(point)) return null;
   const p = project(point.lat, point.lon, zoom);
   const c = project(center.lat, center.lon, zoom);
-  const x = MAP_HEIGHT ? p.x - c.x : 0;
+  const x = p.x - c.x;
   const y = p.y - c.y;
-  const icon = type === "driver" ? "🚗" : type === "destination" ? "●" : "●";
   const size = type === "driver" ? 38 : 18;
   return <div style={{ position: "absolute", left: "50%", top: "50%", width: size, height: size, transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`, transition: transition ? "transform 4.4s linear" : "none", zIndex: type === "driver" ? 5 : 3, pointerEvents: "none" }}>
-    {type === "driver" ? <div style={{ width: 38, height: 38, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b8750", border: "3px solid #ffffff", boxShadow: "0 3px 12px rgba(0,0,0,.25)", fontSize: 19 }}>{icon}</div> : <div style={{ width: size, height: size, borderRadius: "50%", background: type === "destination" ? "#c96a2b" : "#0b8750", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,.25)" }} />}
+    {type === "driver" ? <div style={{ width: 38, height: 38, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b8750", border: "3px solid #ffffff", boxShadow: "0 3px 12px rgba(0,0,0,.25)", fontSize: 19 }}>🚗</div> : <div style={{ width: size, height: size, borderRadius: "50%", background: type === "destination" ? "#c96a2b" : "#0b8750", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,.25)" }} />}
   </div>;
 }
 
-export default function LiveTripMap({ pickup, destination, driverLocation, targetType = "pickup", compact = false }) {
+export default function LiveTripMap({ pickup, destination, driverLocation, targetType = "pickup", compact = false, trafficEta = false }) {
   const [width, setWidth] = useState(360);
   const [driverPoint, setDriverPoint] = useState(driverLocation || null);
+  const [route, setRoute] = useState(null);
+  const [routeStatus, setRouteStatus] = useState("loading");
+  const [etaText, setEtaText] = useState("");
 
   useEffect(() => setDriverPoint(driverLocation || null), [driverLocation?.lat, driverLocation?.lon]);
 
@@ -66,11 +75,77 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
   const points = useMemo(() => [pickup, destination, driverPoint].filter(validPoint), [pickup, destination, driverPoint]);
   const zoom = chooseZoom(points, width);
   const center = useMemo(() => {
-    const usable = points.length ? points : [pickup, destination];
-    const lat = usable.reduce((sum, p) => sum + Number(p.lat), 0) / usable.length;
-    const lon = usable.reduce((sum, p) => sum + Number(p.lon), 0) / usable.length;
-    return { lat, lon };
+    const usable = points.length ? points : [pickup, destination].filter(validPoint);
+    if (!usable.length) return { lat: 0, lon: 0 };
+    return {
+      lat: usable.reduce((sum, p) => sum + Number(p.lat), 0) / usable.length,
+      lon: usable.reduce((sum, p) => sum + Number(p.lon), 0) / usable.length,
+    };
   }, [points, pickup, destination]);
+
+  // Route is calculated from the driver's current phone GPS to the current target.
+  // It uses the OpenStreetMap routing service, not Google, so map redraws do not consume Google API calls.
+  useEffect(() => {
+    if (!validPoint(driverPoint) || !validPoint(target)) {
+      setRoute(null);
+      setRouteStatus("waiting");
+      return;
+    }
+    let cancelled = false;
+    const loadRoute = async () => {
+      setRouteStatus("loading");
+      try {
+        const response = await fetch("/api/route-map", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin: driverPoint, destination: target }),
+        });
+        const data = await response.json();
+        if (cancelled) return;
+        if (!response.ok || !Array.isArray(data.coordinates)) throw new Error(data.error || "Route unavailable");
+        setRoute(data);
+        setRouteStatus("ready");
+        if (!trafficEta && Number.isFinite(Number(data.durationSeconds))) setEtaText(formatDuration(data.durationSeconds));
+      } catch (error) {
+        if (!cancelled) {
+          setRoute(null);
+          setRouteStatus("error");
+          if (!trafficEta) setEtaText("");
+        }
+      }
+    };
+    loadRoute();
+    return () => { cancelled = true; };
+  }, [driverPoint?.lat, driverPoint?.lon, target?.lat, target?.lon, trafficEta]);
+
+  // Google is deliberately used only for traffic-aware ETA, never for GPS or map rendering.
+  // Requests are client-throttled to once per minute and only run while a live driver + target exist.
+  useEffect(() => {
+    if (!trafficEta || !validPoint(driverPoint) || !validPoint(target)) {
+      if (!trafficEta) return;
+      setEtaText("");
+      return;
+    }
+    let cancelled = false;
+    let timer = null;
+    const loadEta = async () => {
+      try {
+        const response = await fetch("/api/route-distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin: driverPoint, destination: target, purpose: "eta" }),
+          cache: "no-store",
+        });
+        const data = await response.json();
+        if (!cancelled && response.ok && data?.durationText) setEtaText(data.durationText);
+      } catch {
+        // Keep the existing ETA rather than flashing an error into the live-trip UI.
+      }
+      if (!cancelled) timer = window.setTimeout(loadEta, ETA_REFRESH_MS);
+    };
+    loadEta();
+    return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
+  }, [trafficEta, driverPoint?.lat, driverPoint?.lon, target?.lat, target?.lon]);
 
   const centerPx = project(center.lat, center.lon, zoom);
   const tileX = Math.floor(centerPx.x / TILE_SIZE);
@@ -89,15 +164,28 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
     }
   }
 
-  const targetLabel = targetType === "destination" ? "Destination" : targetType === "pickup" ? "Pickup" : "Journey route";
+  const routePoints = useMemo(() => {
+    if (!route?.coordinates?.length) return "";
+    return route.coordinates.map(([lon, lat]) => {
+      const p = project(lat, lon, zoom);
+      return `${width / 2 + (p.x - centerPx.x)},${MAP_HEIGHT / 2 + (p.y - centerPx.y)}`;
+    }).join(" ");
+  }, [route, zoom, width, centerPx.x, centerPx.y]);
+
+  const targetLabel = targetType === "destination" ? "Destination" : "Pickup";
   return <div style={{ position: "relative", overflow: "hidden", height: compact ? 240 : MAP_HEIGHT, borderRadius: 16, border: "1px solid #dce6df", background: "#e7efe9", boxShadow: "0 8px 20px rgba(10,40,25,.06)" }}>
     <div style={{ position: "absolute", inset: 0 }}>{tiles}</div>
-    <div style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, background: "linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.02))", pointerEvents: "none" }} />
+    <svg viewBox={`0 0 ${width} ${MAP_HEIGHT}`} preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2 }}>
+      {routePoints && <polyline points={routePoints} fill="none" stroke="#0b8750" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.82" />}
+    </svg>
+    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.02))", pointerEvents: "none", zIndex: 2 }} />
     <Marker point={pickup} center={center} zoom={zoom} type="pickup" transition={false} />
     <Marker point={destination} center={center} zoom={zoom} type="destination" transition={false} />
     <Marker point={driverPoint} center={center} zoom={zoom} type="driver" />
-    <div style={{ position: "absolute", left: 12, top: 12, padding: "7px 10px", borderRadius: 20, background: "rgba(255,255,255,.94)", color: "#173c2a", fontSize: 11, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,.12)" }}>{driverPoint ? `Driver → ${targetLabel}` : "Waiting for driver's live location"}</div>
-    <div style={{ position: "absolute", left: 12, bottom: 9, padding: "3px 6px", borderRadius: 5, background: "rgba(255,255,255,.88)", color: "#59665f", fontSize: 8.5 }}>© OpenStreetMap contributors</div>
-    <div style={{ position: "absolute", right: 10, bottom: 10, padding: "6px 9px", borderRadius: 10, background: "rgba(255,255,255,.94)", color: "#43544c", fontSize: 10, fontWeight: 700 }}>{targetLabel}</div>
+    <div style={{ position: "absolute", left: 12, top: 12, padding: "7px 10px", borderRadius: 20, background: "rgba(255,255,255,.94)", color: "#173c2a", fontSize: 11, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,.12)", zIndex: 7 }}>{driverPoint ? `Driver → ${targetLabel}` : "Waiting for driver's live location"}</div>
+    {etaText && driverPoint && <div style={{ position: "absolute", right: 12, top: 12, padding: "7px 10px", borderRadius: 20, background: "rgba(255,255,255,.95)", color: "#0b8750", fontSize: 11, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,.12)", zIndex: 7 }}>ETA ~{etaText}</div>}
+    {driverPoint && routeStatus === "loading" && <div style={{ position: "absolute", left: 12, bottom: 34, padding: "5px 8px", borderRadius: 8, background: "rgba(255,255,255,.9)", color: "#59665f", fontSize: 9.5, zIndex: 7 }}>Updating route…</div>}
+    <div style={{ position: "absolute", left: 12, bottom: 9, padding: "3px 6px", borderRadius: 5, background: "rgba(255,255,255,.88)", color: "#59665f", fontSize: 8.5, zIndex: 7 }}>© OpenStreetMap contributors</div>
+    <div style={{ position: "absolute", right: 10, bottom: 10, padding: "6px 9px", borderRadius: 10, background: "rgba(255,255,255,.94)", color: "#43544c", fontSize: 10, fontWeight: 700, zIndex: 7 }}>{targetLabel}</div>
   </div>;
 }
