@@ -57,7 +57,9 @@ function estimatedMinutes(distanceKm) {
   return Math.max(1, Math.ceil((distanceKm / 30) * 60));
 }
 
-const ACTIVE_STATUSES = ["driver_assigned", "on_the_way", "arrived", "trip_started"];
+// A booking is active only once operations have actually started.
+// Driver assignment by itself does not make a future booking an active journey.
+const ACTIVE_STATUSES = ["on_the_way", "arrived", "trip_started"];
 const PAST_STATUSES = ["trip_completed", "cancelled"];
 
 export default function AccountPage() {
