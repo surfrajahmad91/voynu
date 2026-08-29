@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const CACHE_KEY = "voynu_vehicle_categories_v1";
+const READY_EVENT = "voynu-vehicle-categories-ready";
 
 export default function VehicleCategoryBootstrap() {
   useEffect(() => {
@@ -12,6 +13,9 @@ export default function VehicleCategoryBootstrap() {
     let cancelled = false;
 
     const syncCategories = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (cancelled || !sessionData?.session?.user) return;
+
       const { data, error } = await supabase
         .from("vehicle_categories")
         .select(
@@ -33,22 +37,26 @@ export default function VehicleCategoryBootstrap() {
         luggage_capacity: Number(category.luggage_capacity) || 0,
         sort_order: Number(category.sort_order) || 0,
         image_url: category.image_url || null,
+        active: true,
+        bookable: true,
       }));
 
       const next = JSON.stringify(normalized);
-      const previous = window.localStorage.getItem(CACHE_KEY);
-
       window.localStorage.setItem(CACHE_KEY, next);
-
-      if (previous !== next) {
-        window.location.reload();
-      }
+      window.dispatchEvent(new CustomEvent(READY_EVENT));
     };
 
     syncCategories();
 
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        window.setTimeout(() => { syncCategories(); }, 0);
+      }
+    });
+
     return () => {
       cancelled = true;
+      authListener?.subscription?.unsubscribe();
     };
   }, []);
 
