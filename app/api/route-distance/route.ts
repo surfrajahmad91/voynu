@@ -1,429 +1,169 @@
 import { NextResponse } from "next/server";
 
-/*
- * ============================================================
- * VOYNU - ROAD DISTANCE API
- * ============================================================
- *
- * Endpoint:
- *
- * POST /api/route-distance
- *
- * This endpoint keeps the Google Maps API key on the server.
- *
- * The browser sends:
- *
- * {
- *   origin: {
- *     lat: number,
- *     lon: number
- *   },
- *   destination: {
- *     lat: number,
- *     lon: number
- *   }
- * }
- *
- * The API returns:
- *
- * {
- *   distanceMeters: number,
- *   distanceKm: number,
- *   distanceText: string,
- *   durationSeconds: number,
- *   durationText: string
- * }
- *
- * ============================================================
- */
+const ROUTES_TIMEOUT_MS = 10000;
+const MAX_COORDINATE_DECIMALS = 6;
+
+function normalizeCoordinate(value: unknown, min: number, max: number): number | null {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < min || number > max) return null;
+  return Number(number.toFixed(MAX_COORDINATE_DECIMALS));
+}
+
+function parseDurationSeconds(duration: unknown): number | null {
+  if (typeof duration !== "string") return null;
+  const match = duration.match(/^([\d.]+)s$/);
+  if (!match) return null;
+  const seconds = Number(match[1]);
+  return Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
+}
+
+function formatDuration(seconds: number): string {
+  const totalMinutes = Math.round(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
+  return `${minutes} min`;
+}
 
 export async function POST(request: Request) {
   try {
-    /*
-     * --------------------------------------------------------
-     * READ REQUEST
-     * --------------------------------------------------------
-     */
-
     const body = await request.json();
-
     const origin = body?.origin;
     const destination = body?.destination;
 
-    /*
-     * --------------------------------------------------------
-     * VALIDATE ORIGIN
-     * --------------------------------------------------------
-     */
-
-    const originLat = Number(origin?.lat);
-    const originLon = Number(origin?.lon);
-
-    /*
-     * --------------------------------------------------------
-     * VALIDATE DESTINATION
-     * --------------------------------------------------------
-     */
-
-    const destinationLat =
-      Number(destination?.lat);
-
-    const destinationLon =
-      Number(destination?.lon);
+    const originLat = normalizeCoordinate(origin?.lat, -90, 90);
+    const originLon = normalizeCoordinate(origin?.lon, -180, 180);
+    const destinationLat = normalizeCoordinate(destination?.lat, -90, 90);
+    const destinationLon = normalizeCoordinate(destination?.lon, -180, 180);
 
     if (
-      !Number.isFinite(originLat) ||
-      !Number.isFinite(originLon) ||
-      !Number.isFinite(destinationLat) ||
-      !Number.isFinite(destinationLon)
+      originLat === null ||
+      originLon === null ||
+      destinationLat === null ||
+      destinationLon === null
     ) {
       return NextResponse.json(
-        {
-          error:
-            "Valid pickup and drop coordinates are required.",
-        },
-        {
-          status: 400,
-        }
+        { error: "Valid pickup and drop coordinates are required." },
+        { status: 400 }
       );
     }
 
-    /*
-     * --------------------------------------------------------
-     * GOOGLE MAPS SERVER API KEY
-     * --------------------------------------------------------
-     *
-     * IMPORTANT:
-     *
-     * This MUST be a server-side environment variable.
-     *
-     * Do NOT use:
-     *
-     * NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-     *
-     * here.
-     * --------------------------------------------------------
-     */
+    // Avoid spending a paid Google Routes request when both points are effectively identical.
+    if (originLat === destinationLat && originLon === destinationLon) {
+      return NextResponse.json({
+        distanceMeters: 0,
+        distanceKm: 0,
+        distanceText: "0.0 km",
+        durationSeconds: 0,
+        durationText: "0 min",
+      });
+    }
 
-    const apiKey =
-      process.env.GOOGLE_MAPS_SERVER_API_KEY;
-
+    const apiKey = process.env.GOOGLE_MAPS_SERVER_API_KEY;
     if (!apiKey) {
-      console.error(
-        "VOYNU: GOOGLE_MAPS_SERVER_API_KEY is missing."
-      );
-
+      console.error("VOYNU: GOOGLE_MAPS_SERVER_API_KEY is missing.");
       return NextResponse.json(
-        {
-          error:
-            "Road-distance service is not configured.",
-        },
-        {
-          status: 500,
-        }
+        { error: "Road-distance service is not configured." },
+        { status: 500 }
       );
     }
 
-    /*
-     * --------------------------------------------------------
-     * GOOGLE ROUTES API
-     * --------------------------------------------------------
-     */
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ROUTES_TIMEOUT_MS);
 
-    const googleResponse = await fetch(
-      "https://routes.googleapis.com/directions/v2:computeRoutes",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-
-          "X-Goog-Api-Key": apiKey,
-
-          "X-Goog-FieldMask":
-            "routes.distanceMeters,routes.duration",
-        },
-
-        body: JSON.stringify({
-          origin: {
-            location: {
-              latLng: {
-                latitude: originLat,
-                longitude: originLon,
-              },
-            },
-          },
-
-          destination: {
-            location: {
-              latLng: {
-                latitude: destinationLat,
-                longitude: destinationLon,
-              },
-            },
-          },
-
-          /*
-           * Driving route.
-           */
-          travelMode: "DRIVE",
-
-          /*
-           * Use traffic-aware routing.
-           */
-          routingPreference: "TRAFFIC_AWARE",
-
-          /*
-           * We are not forcing avoidance
-           * of tolls/highways/ferries.
-           */
-          routeModifiers: {
-            avoidTolls: false,
-            avoidHighways: false,
-            avoidFerries: false,
-          },
-
-          languageCode: "en",
-
-          units: "METRIC",
-        }),
-      }
-    );
-
-    /*
-     * --------------------------------------------------------
-     * READ GOOGLE RESPONSE
-     * --------------------------------------------------------
-     */
-
+    let googleResponse: Response;
     let googleData: any = null;
 
     try {
-      googleData =
-        await googleResponse.json();
-    } catch {
-      googleData = null;
-    }
+      googleResponse = await fetch(
+        "https://routes.googleapis.com/directions/v2:computeRoutes",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
+          },
+          body: JSON.stringify({
+            origin: {
+              location: {
+                latLng: { latitude: originLat, longitude: originLon },
+              },
+            },
+            destination: {
+              location: {
+                latLng: { latitude: destinationLat, longitude: destinationLon },
+              },
+            },
+            travelMode: "DRIVE",
+            routingPreference: "TRAFFIC_AWARE",
+            routeModifiers: {
+              avoidTolls: false,
+              avoidHighways: false,
+              avoidFerries: false,
+            },
+            languageCode: "en",
+            units: "METRIC",
+          }),
+          signal: controller.signal,
+        }
+      );
 
-    /*
-     * --------------------------------------------------------
-     * GOOGLE API ERROR
-     * --------------------------------------------------------
-     */
+      try {
+        googleData = await googleResponse.json();
+      } catch {
+        googleData = null;
+      }
+    } catch (error) {
+      console.error("VOYNU Google Routes request error:", error);
+      return NextResponse.json(
+        { error: "Road-distance service is temporarily unavailable. Please try again." },
+        { status: 504 }
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!googleResponse.ok) {
-      console.error(
-        "VOYNU Google Routes API error:",
-        googleResponse.status,
-        googleData
-      );
-
+      // Do not expose Google's internal error payload or API details to the browser.
+      console.error("VOYNU Google Routes API error:", googleResponse.status, googleData);
       return NextResponse.json(
-        {
-          error:
-            googleData?.error?.message ||
-            "Google Maps could not calculate the road distance.",
-        },
-        {
-          status: googleResponse.status,
-        }
+        { error: "Road-distance service could not calculate this route." },
+        { status: 502 }
       );
     }
 
-    /*
-     * --------------------------------------------------------
-     * GET FIRST ROUTE
-     * --------------------------------------------------------
-     */
-
-    const route =
-      googleData?.routes?.[0];
-
+    const route = googleData?.routes?.[0];
     if (!route) {
       return NextResponse.json(
-        {
-          error:
-            "No drivable route could be found between these locations.",
-        },
-        {
-          status: 422,
-        }
+        { error: "No drivable route could be found between these locations." },
+        { status: 422 }
       );
     }
 
-    /*
-     * --------------------------------------------------------
-     * DISTANCE
-     * --------------------------------------------------------
-     */
-
-    const distanceMeters =
-      Number(route.distanceMeters);
-
-    if (
-      !Number.isFinite(
-        distanceMeters
-      )
-    ) {
+    const distanceMeters = Number(route.distanceMeters);
+    if (!Number.isFinite(distanceMeters) || distanceMeters < 0) {
       return NextResponse.json(
-        {
-          error:
-            "Google Maps returned an invalid road distance.",
-        },
-        {
-          status: 502,
-        }
+        { error: "Google Maps returned an invalid road distance." },
+        { status: 502 }
       );
     }
 
-    const distanceKm =
-      distanceMeters / 1000;
-
-    /*
-     * --------------------------------------------------------
-     * DURATION
-     * --------------------------------------------------------
-     */
-
-    const durationSeconds =
-      parseDurationSeconds(
-        route.duration
-      );
-
-    const durationText =
-      Number.isFinite(
-        durationSeconds
-      )
-        ? formatDuration(
-            durationSeconds
-          )
-        : "";
-
-    /*
-     * --------------------------------------------------------
-     * RETURN RESPONSE
-     * --------------------------------------------------------
-     */
+    const distanceKm = distanceMeters / 1000;
+    const durationSeconds = parseDurationSeconds(route.duration);
 
     return NextResponse.json({
       distanceMeters,
-
-      distanceKm: Number(
-        distanceKm.toFixed(2)
-      ),
-
-      distanceText:
-        `${distanceKm.toFixed(1)} km`,
-
+      distanceKm: Number(distanceKm.toFixed(2)),
+      distanceText: `${distanceKm.toFixed(1)} km`,
       durationSeconds,
-
-      durationText,
+      durationText: Number.isFinite(durationSeconds) ? formatDuration(durationSeconds as number) : "",
     });
   } catch (error) {
-    /*
-     * --------------------------------------------------------
-     * UNEXPECTED ERROR
-     * --------------------------------------------------------
-     */
-
-    console.error(
-      "VOYNU route-distance error:",
-      error
-    );
-
+    console.error("VOYNU route-distance error:", error);
     return NextResponse.json(
-      {
-        error:
-          "Unable to calculate the road distance right now.",
-      },
-      {
-        status: 500,
-      }
+      { error: "Unable to calculate the road distance right now." },
+      { status: 500 }
     );
   }
 }
-
-/*
- * ============================================================
- * GOOGLE DURATION PARSER
- * ============================================================
- *
- * Google can return duration like:
- *
- * "5234s"
- *
- * This converts it into:
- *
- * 5234
- * ============================================================
- */
-
-function parseDurationSeconds(
-  duration: unknown
-): number | null {
-  if (
-    typeof duration !== "string"
-  ) {
-    return null;
-  }
-
-  const match =
-    duration.match(
-      /^([\d.]+)s$/
-    );
-
-  if (!match) {
-    return null;
-  }
-
-  const seconds =
-    Number(match[1]);
-
-  if (
-    !Number.isFinite(seconds)
-  ) {
-    return null;
-  }
-
-  return seconds;
-}
-
-/*
- * ============================================================
- * FORMAT DURATION
- * ============================================================
- *
- * Examples:
- *
- * 45 minutes
- * 1 hr 20 min
- * 3 hr
- * ============================================================
- */
-
-function formatDuration(
-  seconds: number
-): string {
-  const totalMinutes =
-    Math.round(
-      seconds / 60
-    );
-
-  const hours =
-    Math.floor(
-      totalMinutes / 60
-    );
-
-  const minutes =
-    totalMinutes % 60;
-
-  if (hours > 0) {
-    if (minutes > 0) {
-      return `${hours} hr ${minutes} min`;
-    }
-
-    return `${hours} hr`;
-  }
-
-  return `${minutes} min`;
-  }
