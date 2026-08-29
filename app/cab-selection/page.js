@@ -8,10 +8,7 @@ import { buildWhatsAppLink } from "../lib/contact";
 import { supabase } from "../lib/supabaseClient";
 import { theme } from "../lib/theme";
 import PageHeader from "../components/PageHeader";
-import {
-  getMaxLuggageForPassengers,
-  validateCapacity,
-} from "../../lib/capacityValidation";
+import { getMaxLuggageForPassengers, validateCapacity } from "../../lib/capacityValidation";
 import { normalizeTripType } from "../lib/tripRules";
 
 const VOYNU_UPI_VPA = "voynu@upi";
@@ -21,23 +18,18 @@ const MAX_LUGGAGE = 10;
 function IconCheck({ size = 14 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>;
 }
-
 function IconWhatsApp({ size = 18 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1s-.7.8-.9 1c-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4a.5.5 0 0 0 0-.5c-.1-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3c0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3a16 16 0 0 0 1.6.6 3.9 3.9 0 0 0 1.8.1c.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" /></svg>;
 }
-
 function IconUsers({ size = 13 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5" /><path d="M16 8.5a3 3 0 1 1 3.6 2.9" /><path d="M17.5 14.6c2.6.3 4 2 4 5.4" /></svg>;
 }
-
 function IconCash({ size = 15 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5" /><circle cx="12" cy="12" r="3" /></svg>;
 }
-
 function IconUpi({ size = 15 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>;
 }
-
 function IconAlert({ size = 16 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>;
 }
@@ -46,14 +38,12 @@ export default function CabSelectionPage() {
   const router = useRouter();
   const [booking, setBooking] = useState(null);
   const [loaded, setLoaded] = useState(false);
-
   const [dataStatus, setDataStatus] = useState("loading");
   const [dataError, setDataError] = useState("");
   const [dataDiagnostics, setDataDiagnostics] = useState(null);
   const [vehicleCategories, setVehicleCategories] = useState([]);
   const [pricingRules, setPricingRules] = useState([]);
   const [pricingVersion, setPricingVersion] = useState(null);
-
   const [passengerCount, setPassengerCount] = useState(1);
   const [luggageCount, setLuggageCount] = useState(0);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
@@ -88,21 +78,16 @@ export default function CabSelectionPage() {
   );
 
   useEffect(() => {
-    if (luggageCount > maxLuggageForPassengers) {
-      setLuggageCount(maxLuggageForPassengers);
-    }
+    if (luggageCount > maxLuggageForPassengers) setLuggageCount(maxLuggageForPassengers);
   }, [luggageCount, maxLuggageForPassengers]);
 
   useEffect(() => {
     let cancelled = false;
-
     async function loadCabData() {
       if (!booking) return;
-
       setDataStatus("loading");
       setDataError("");
       setDataDiagnostics(null);
-
       const tripType = normalizeTripType(booking.tripType);
       const distance = Number(booking?.journey?.oneWayDistanceKm);
 
@@ -136,7 +121,6 @@ export default function CabSelectionPage() {
         .eq("bookable", true)
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true });
-
       if (cancelled) return;
       if (categoryError) {
         setDataStatus("error");
@@ -158,7 +142,6 @@ export default function CabSelectionPage() {
         .order("version", { ascending: false })
         .limit(1)
         .maybeSingle();
-
       if (cancelled) return;
       if (versionError) {
         setDataStatus("error");
@@ -177,7 +160,6 @@ export default function CabSelectionPage() {
         .from("pricing_rules")
         .select("vehicle_category_id,trip_type,base_fare,per_km_rate,driver_allowance_per_day,minimum_fare,rounding_unit")
         .eq("pricing_version_id", version.id);
-
       if (cancelled) return;
       if (pricingError) {
         setDataStatus("error");
@@ -195,13 +177,7 @@ export default function CabSelectionPage() {
         return;
       }
 
-      const fares = calculateAllFaresFromData({
-        vehicleCategories: categories,
-        pricingRules: rules || [],
-        oneWayDistanceKm: distance,
-        tripType,
-      });
-
+      const fares = calculateAllFaresFromData({ vehicleCategories: categories, pricingRules: rules || [], oneWayDistanceKm: distance, tripType });
       if (!fares.length) {
         setDataStatus("error");
         setDataError("Pricing data loaded, but fare calculation produced no vehicle fares. The category-to-pricing mapping is inconsistent.");
@@ -215,44 +191,30 @@ export default function CabSelectionPage() {
       setDataDiagnostics({ stage: "ready", tripType, distance, pricingVersion: version.version, categoryCount: categories.length, matchingRuleCount: matchingRules.length, fareCount: fares.length });
       setDataStatus("ready");
     }
-
     loadCabData().catch((error) => {
       if (cancelled) return;
       setDataStatus("error");
       setDataError(`Unexpected cab-selection data error: ${error?.message || String(error)}`);
       setDataDiagnostics({ stage: "loadCabData.unhandled", tripType: normalizeTripType(booking?.tripType), distance: booking?.journey?.oneWayDistanceKm ?? null });
     });
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [booking, router]);
 
   const fares = useMemo(() => {
     if (dataStatus !== "ready" || !booking) return [];
-    return calculateAllFaresFromData({
-      vehicleCategories,
-      pricingRules,
-      oneWayDistanceKm: booking.journey.oneWayDistanceKm,
-      tripType: booking.tripType,
-    });
+    return calculateAllFaresFromData({ vehicleCategories, pricingRules, oneWayDistanceKm: booking.journey.oneWayDistanceKm, tripType: booking.tripType });
   }, [booking, dataStatus, pricingRules, vehicleCategories]);
 
-  const eligibleFares = useMemo(
-    () => fares.filter((fare) => validateCapacity({
-      passengerCount,
-      luggageCount,
-      passengerCapacity: fare.capacity,
-      luggageCapacity: fare.luggageCapacity,
-    }).valid),
-    [fares, passengerCount, luggageCount]
-  );
+  const fareAvailability = useMemo(() => fares.map((fare) => ({
+    fare,
+    capacity: validateCapacity({ passengerCount, luggageCount, passengerCapacity: fare.capacity, luggageCapacity: fare.luggageCapacity }),
+  })), [fares, passengerCount, luggageCount]);
+
+  const eligibleFares = useMemo(() => fareAvailability.filter(({ capacity }) => capacity.valid).map(({ fare }) => fare), [fareAvailability]);
 
   useEffect(() => {
     if (dataStatus !== "ready") return;
-    if (!eligibleFares.some((fare) => fare.vehicleTypeId === selectedVehicleId)) {
-      setSelectedVehicleId(eligibleFares[0]?.vehicleTypeId || null);
-    }
+    if (!eligibleFares.some((fare) => fare.vehicleTypeId === selectedVehicleId)) setSelectedVehicleId(eligibleFares[0]?.vehicleTypeId || null);
   }, [dataStatus, eligibleFares, selectedVehicleId]);
 
   useEffect(() => {
@@ -262,139 +224,52 @@ export default function CabSelectionPage() {
   }, [selectedVehicleId, paymentMethod]);
 
   const selectedFare = eligibleFares.find((fare) => fare.vehicleTypeId === selectedVehicleId) || null;
+  const selectedCapacity = fareAvailability.find(({ fare }) => fare.vehicleTypeId === selectedVehicleId)?.capacity || null;
   const isRoundTrip = normalizeTripType(booking?.tripType) === "roundtrip";
-  const capacityResult = selectedFare
-    ? validateCapacity({
-        passengerCount,
-        luggageCount,
-        passengerCapacity: selectedFare.capacity,
-        luggageCapacity: selectedFare.luggageCapacity,
-      })
-    : null;
-
   const capacityError = !selectedFare && dataStatus === "ready"
     ? `No available vehicle can accommodate ${passengerCount} passenger${passengerCount === 1 ? "" : "s"} and ${luggageCount} luggage item${luggageCount === 1 ? "" : "s"}.`
-    : capacityResult?.valid === false
-      ? capacityResult.reason
-      : "";
+    : selectedCapacity?.valid === false ? selectedCapacity.reason : "";
 
   const buildConfirmationMessage = () => {
     if (!booking || !selectedFare) return "";
-    const paymentLine = paymentMethod === "upi"
-      ? "UPI — payment marked by customer as completed; VOYNU verification pending"
-      : "Pay on Pickup (Cash)";
-    const lines = [
-      "New VOYNU booking request:",
-      "",
-      `Trip type: ${isRoundTrip ? "Round Trip" : "One Way"}`,
-      `Pickup: ${booking.pickup?.name || ""}`,
-      `Drop: ${booking.drop?.name || ""}`,
-      `Distance: ${booking.journey?.oneWayDistanceText || ""}${isRoundTrip ? ` (round trip: ${booking.journey?.totalDistanceText || ""})` : ""}`,
-      `Travel date: ${booking.travelDate || ""}`,
-      `Pickup time: ${booking.pickupTime || ""}`,
-    ];
+    const paymentLine = paymentMethod === "upi" ? "UPI — payment marked by customer as completed; VOYNU verification pending" : "Pay on Pickup (Cash)";
+    const lines = ["New VOYNU booking request:", "", `Trip type: ${isRoundTrip ? "Round Trip" : "One Way"}`, `Pickup: ${booking.pickup?.name || ""}`, `Drop: ${booking.drop?.name || ""}`, `Distance: ${booking.journey?.oneWayDistanceText || ""}${isRoundTrip ? ` (round trip: ${booking.journey?.totalDistanceText || ""})` : ""}`, `Travel date: ${booking.travelDate || ""}`, `Pickup time: ${booking.pickupTime || ""}`];
     if (isRoundTrip) lines.push(`Return date: ${booking.returnDate || ""}`, `Return time: ${booking.returnTime || ""}`);
-    lines.push(
-      "",
-      `Passengers: ${passengerCount}`,
-      `Luggage: ${luggageCount}`,
-      `Cab type: ${selectedFare.vehicleName}`,
-      `Estimated fare: ₹${selectedFare.totalFare}`,
-      `Payment: ${paymentLine}`,
-      "",
-      `Passenger: ${booking.passengerName || ""}`,
-      `Phone: ${booking.phone || ""}`,
-      `WhatsApp: ${booking.whatsapp || ""}`,
-    );
+    lines.push("", `Passengers: ${passengerCount}`, `Luggage: ${luggageCount}`, `Cab type: ${selectedFare.vehicleName}`, `Estimated fare: ₹${selectedFare.totalFare}`, `Payment: ${paymentLine}`, "", `Passenger: ${booking.passengerName || ""}`, `Phone: ${booking.phone || ""}`, `WhatsApp: ${booking.whatsapp || ""}`);
     return lines.join("\n");
   };
 
-  const upiHref = selectedFare
-    ? `upi://pay?pa=${encodeURIComponent(VOYNU_UPI_VPA)}&pn=${encodeURIComponent("VOYNU")}&am=${selectedFare.totalFare}&cu=INR&tn=${encodeURIComponent("VOYNU Cab Booking")}`
-    : "";
-
-  const canConfirm = Boolean(selectedFare && capacityResult?.valid) &&
-    (paymentMethod === "cash" || (paymentMethod === "upi" && upiPaymentConfirmed));
+  const upiHref = selectedFare ? `upi://pay?pa=${encodeURIComponent(VOYNU_UPI_VPA)}&pn=${encodeURIComponent("VOYNU")}&am=${selectedFare.totalFare}&cu=INR&tn=${encodeURIComponent("VOYNU Cab Booking")}` : "";
+  const canConfirm = Boolean(selectedFare && selectedCapacity?.valid) && (paymentMethod === "cash" || (paymentMethod === "upi" && upiPaymentConfirmed));
 
   const handleConfirm = async () => {
     if (!canConfirm || !selectedFare || isConfirming) return;
-
     setFlowError("");
-    const validation = validateCapacity({
-      passengerCount,
-      luggageCount,
-      passengerCapacity: selectedFare.capacity,
-      luggageCapacity: selectedFare.luggageCapacity,
-    });
-    if (!validation.valid) {
-      setFlowError(validation.reason);
-      return;
-    }
-
+    const validation = validateCapacity({ passengerCount, luggageCount, passengerCapacity: selectedFare.capacity, luggageCapacity: selectedFare.luggageCapacity });
+    if (!validation.valid) { setFlowError(validation.reason); return; }
     setIsConfirming(true);
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData?.user) {
-        throw new Error(`Authentication check failed: ${userError?.message || "You are not logged in."}`);
-      }
-
+      if (userError || !userData?.user) throw new Error(`Authentication check failed: ${userError?.message || "You are not logged in."}`);
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData?.session?.access_token) {
-        throw new Error(`Authenticated session token unavailable: ${sessionError?.message || "Please log in again."}`);
-      }
-
+      if (sessionError || !sessionData?.session?.access_token) throw new Error(`Authenticated session token unavailable: ${sessionError?.message || "Please log in again."}`);
       const idempotencyKey = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const response = await fetch("/api/bookings/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-        body: JSON.stringify({
-          vehicleCategoryId: selectedFare.vehicleCategoryId,
-          passengerCount,
-          luggageCount,
-          paymentMethod,
-          idempotencyKey,
-          booking,
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session.access_token}` },
+        body: JSON.stringify({ vehicleCategoryId: selectedFare.vehicleCategoryId, passengerCount, luggageCount, paymentMethod, idempotencyKey, booking }),
       });
-
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result?.booking?.id) {
-        throw new Error(result?.error || `Booking API failed with HTTP ${response.status}.`);
-      }
-
-      const confirmedBooking = {
-        ...booking,
-        passengerCount,
-        luggageCount,
-        selectedFare: {
-          ...selectedFare,
-          totalFare: Number(result.booking.fare),
-          serverBookingId: result.booking.id,
-        },
-        paymentMethod,
-        bookingId: result.booking.id,
-        paymentStatus: result.booking.payment_status,
-        bookingStatus: result.booking.booking_status,
-        confirmedAt: new Date().toISOString(),
-      };
-
+      if (!response.ok || !result?.booking?.id) throw new Error(result?.error || `Booking API failed with HTTP ${response.status}.`);
+      const confirmedBooking = { ...booking, passengerCount, luggageCount, selectedFare: { ...selectedFare, totalFare: Number(result.booking.fare), serverBookingId: result.booking.id }, paymentMethod, bookingId: result.booking.id, paymentStatus: result.booking.payment_status, bookingStatus: result.booking.booking_status, confirmedAt: new Date().toISOString() };
       sessionStorage.setItem("voynu_confirmed_booking", JSON.stringify(confirmedBooking));
       sessionStorage.removeItem("voynu_booking");
-
-      // Do not open WhatsApp from inside an awaited click handler. Mobile browsers
-      // can block that popup. The confirmation page provides the same pre-filled
-      // WhatsApp action after the booking has been saved successfully.
       sessionStorage.setItem("voynu_confirmation_message", buildConfirmationMessage());
       router.replace("/booking-confirmed");
     } catch (error) {
       console.error("VOYNU: unable to create booking", error);
       setFlowError(error?.message || "Unable to create booking. Please try again.");
-    } finally {
-      setIsConfirming(false);
-    }
+    } finally { setIsConfirming(false); }
   };
 
   if (!loaded) return <main className="loading"><div className="spinner" /></main>;
@@ -413,43 +288,25 @@ export default function CabSelectionPage() {
 
         <h2 className="sectionHeading">Passengers & luggage</h2>
         <section className="requirementsCard">
-          <label>
-            <span>Passengers</span>
-            <select value={passengerCount} onChange={(event) => setPassengerCount(Number(event.target.value))}>
-              {Array.from({ length: MAX_PASSENGERS }, (_, index) => index + 1).map((number) => <option key={number} value={number}>{number}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Luggage</span>
-            <select value={luggageCount} onChange={(event) => setLuggageCount(Number(event.target.value))}>
-              {Array.from({ length: maxLuggageForPassengers + 1 }, (_, index) => index).map((number) => <option key={number} value={number}>{number}</option>)}
-            </select>
-          </label>
-          <p className="fieldHint">Maximum 3 luggage items per passenger. Vehicle capacity is checked separately.</p>
+          <label><span>Passengers</span><select value={passengerCount} onChange={(event) => setPassengerCount(Number(event.target.value))}>{Array.from({ length: MAX_PASSENGERS }, (_, index) => index + 1).map((number) => <option key={number} value={number}>{number}</option>)}</select></label>
+          <label><span>Luggage</span><select value={luggageCount} onChange={(event) => setLuggageCount(Number(event.target.value))}>{Array.from({ length: maxLuggageForPassengers + 1 }, (_, index) => index).map((number) => <option key={number} value={number}>{number}</option>)}</select></label>
         </section>
 
         <h2 className="sectionHeading">Choose your ride</h2>
-
         {dataStatus === "loading" && <div className="statusCard"><div className="spinner small" /><div><strong>Loading vehicle availability and pricing…</strong><p>Checking your authenticated session, active vehicle categories and active pricing rules.</p></div></div>}
+        {dataStatus === "error" && <section className="errorCard"><strong>Cab selection could not load.</strong><p>{dataError}</p>{dataDiagnostics && <details open><summary>Technical diagnostic</summary><pre>{JSON.stringify(dataDiagnostics, null, 2)}</pre></details>}<button type="button" className="retryButton" onClick={() => window.location.reload()}>Retry</button></section>}
 
-        {dataStatus === "error" && (
-          <section className="errorCard">
-            <strong>Cab selection could not load.</strong>
-            <p>{dataError}</p>
-            {dataDiagnostics && <details open><summary>Technical diagnostic</summary><pre>{JSON.stringify(dataDiagnostics, null, 2)}</pre></details>}
-            <button type="button" className="retryButton" onClick={() => window.location.reload()}>Retry</button>
-          </section>
-        )}
-
-        {dataStatus === "ready" && eligibleFares.length > 0 && (
+        {dataStatus === "ready" && fares.length > 0 && (
           <div className="cabList">
-            {eligibleFares.map((fare) => {
-              const active = selectedVehicleId === fare.vehicleTypeId;
+            {fareAvailability.map(({ fare, capacity }) => {
+              const available = capacity.valid;
+              const active = available && selectedVehicleId === fare.vehicleTypeId;
               return (
-                <button key={fare.vehicleTypeId} type="button" className={active ? "cabCard active" : "cabCard"} onClick={() => setSelectedVehicleId(fare.vehicleTypeId)}>
+                <button key={fare.vehicleTypeId} type="button" disabled={!available} className={`cabCard${active ? " active" : ""}${!available ? " unavailable" : ""}`} onClick={() => available && setSelectedVehicleId(fare.vehicleTypeId)}>
                   <div className="cabCardLeft">
                     <div className="cabName">{fare.vehicleName}</div>
                     <div className="cabMeta"><IconUsers size={12} /><span>{fare.capacity} passengers</span><span>•</span><span>{fare.luggageCapacity} luggage</span><span>•</span><span>{fare.description}</span></div>
+                    {!available && <div className="cabUnavailableReason">Unavailable: {capacity.reason}</div>}
                   </div>
                   <div className="cabCardRight"><div className="cabPrice">₹{fare.totalFare}</div><div className={active ? "cabRadio active" : "cabRadio"}>{active && <IconCheck size={11} />}</div></div>
                 </button>
@@ -458,47 +315,29 @@ export default function CabSelectionPage() {
           </div>
         )}
 
-        {dataStatus === "ready" && !eligibleFares.length && (
-          <section className="errorCard">
-            <strong>No suitable vehicle is available.</strong>
-            <p>{capacityError}</p>
-            <p className="diagnosticLine">Requested: {passengerCount} passenger{passengerCount === 1 ? "" : "s"}, {luggageCount} luggage item{luggageCount === 1 ? "" : "s"}. Loaded {vehicleCategories.length} vehicle categories and {pricingRules.filter((rule) => rule.trip_type === normalizeTripType(booking.tripType)).length} matching pricing rules.</p>
-          </section>
-        )}
+        {dataStatus === "ready" && !eligibleFares.length && <section className="errorCard"><strong>No suitable vehicle is available.</strong><p>{capacityError}</p><p className="diagnosticLine">Requested: {passengerCount} passenger{passengerCount === 1 ? "" : "s"}, {luggageCount} luggage item{luggageCount === 1 ? "" : "s"}. Loaded {vehicleCategories.length} vehicle categories and {pricingRules.filter((rule) => rule.trip_type === normalizeTripType(booking.tripType)).length} matching pricing rules.</p></section>}
 
         {dataStatus === "ready" && selectedFare && (
           <>
-            {capacityError && <div className="capacityError"><IconAlert size={15} />{capacityError}</div>}
             <div className="dataHealth"><span>Pricing v{pricingVersion?.version}</span><span>•</span><span>{vehicleCategories.length} vehicles</span><span>•</span><span>{pricingRules.filter((rule) => rule.trip_type === normalizeTripType(booking.tripType)).length} matching rules</span></div>
-
             <h2 className="sectionHeading">Payment</h2>
             <div className="paymentGrid">
               <button type="button" className={paymentMethod === "cash" ? "paymentCard active" : "paymentCard"} onClick={() => setPaymentMethod("cash")}><IconCash size={16} /><span>Pay on Pickup</span></button>
               <button type="button" className={paymentMethod === "upi" ? "paymentCard active" : "paymentCard"} onClick={() => setPaymentMethod("upi")}><IconUpi size={16} /><span>UPI</span></button>
             </div>
-
             {paymentMethod === "upi" && <div className="upiFlow">
               {!upiPaymentConfirmed && <a href={upiHref} className="upiPayButton" onClick={() => setUpiPayClicked(true)}><IconUpi size={17} /><span>Pay ₹{selectedFare.totalFare} via UPI app</span></a>}
               {upiPayClicked && !upiPaymentConfirmed && <div className="upiConfirmRow"><p>Completed the payment in your UPI app?</p><div className="upiConfirmActions"><button type="button" className="upiConfirmYes" onClick={() => setUpiPaymentConfirmed(true)}><IconCheck size={12} />Yes, I've paid</button><button type="button" className="upiConfirmRetry" onClick={() => setUpiPayClicked(false)}>Didn't pay yet</button></div></div>}
               {upiPaymentConfirmed && <div className="upiConfirmedChip"><IconCheck size={13} /><span>Payment marked as completed</span></div>}
             </div>}
-
-            <section className="fareBreakdown">
-              <div className="fareRow"><span>Base fare</span><span>₹{selectedFare.baseFare}</span></div>
-              <div className="fareRow"><span>Distance ({selectedFare.billedDistanceKm.toFixed(1)} km)</span><span>₹{selectedFare.distanceFare}</span></div>
-              {selectedFare.driverAllowance > 0 && <div className="fareRow"><span>Driver allowance</span><span>₹{selectedFare.driverAllowance}</span></div>}
-              <div className="fareRow total"><span>Total</span><span>₹{selectedFare.totalFare}</span></div>
-            </section>
-
-            {flowError && <section className="errorCard confirmError"><strong>Booking could not be confirmed.</strong><p>{flowError}</p><details><summary>Technical diagnostic</summary><pre>{JSON.stringify({ stage: "booking.create", vehicleCategoryId: selectedFare.vehicleCategoryId, passengerCount, luggageCount, paymentMethod }, null, 2)}</pre></details></section>}
-
+            <section className="fareBreakdown"><div className="fareRow"><span>Base fare</span><span>₹{selectedFare.baseFare}</span></div><div className="fareRow"><span>Distance ({selectedFare.billedDistanceKm.toFixed(1)} km)</span><span>₹{selectedFare.distanceFare}</span></div>{selectedFare.driverAllowance > 0 && <div className="fareRow"><span>Driver allowance</span><span>₹{selectedFare.driverAllowance}</span></div>}<div className="fareRow total"><span>Total</span><span>₹{selectedFare.totalFare}</span></div></section>
+            {flowError && <section className="errorCard confirmError"><strong>Booking could not be confirmed.</strong><p>{flowError}</p><details open><summary>Technical diagnostic</summary><pre>{JSON.stringify({ stage: "booking.create", vehicleCategoryId: selectedFare.vehicleCategoryId, passengerCount, luggageCount, paymentMethod }, null, 2)}</pre></details></section>}
             {canConfirm && <button type="button" className="confirmButton" onClick={handleConfirm} disabled={isConfirming}><IconWhatsApp size={18} /><span>{isConfirming ? "Saving booking…" : "Confirm booking"}</span></button>}
             {!canConfirm && paymentMethod === "upi" && <p className="upiHint">Complete your UPI payment above to continue with booking confirmation.</p>}
             <p className="disclaimer">Fares shown are estimates. Final fare is confirmed by our team on WhatsApp before your ride is dispatched.</p>
           </>
         )}
       </div>
-
       <style jsx>{`
         * { box-sizing: border-box; }
         .page { min-height: 100vh; background: ${theme.colors.bg}; color: ${theme.colors.text}; font-family: ${theme.fontFamily}; }
@@ -518,7 +357,6 @@ export default function CabSelectionPage() {
         .requirementsCard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
         .requirementsCard label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
         select { min-width: 82px; height: 46px; padding: 0 12px; border: 1px solid #d3ddd7; border-radius: 12px; background: #fff; color: ${theme.colors.text}; font: inherit; }
-        .fieldHint { grid-column: 1 / -1; margin: 0; color: ${theme.colors.textMuted}; font-size: 12px; line-height: 1.45; }
         .statusCard { display: flex; gap: 14px; align-items: center; }
         .statusCard strong, .errorCard strong { font-size: 15px; }
         .statusCard p, .errorCard p { margin: 7px 0 0; color: ${theme.colors.textMuted}; font-size: 13px; line-height: 1.5; }
@@ -531,15 +369,17 @@ export default function CabSelectionPage() {
         .cabList { display: grid; gap: 12px; }
         .cabCard { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 16px; border: 1px solid ${theme.colors.border}; border-radius: 18px; background: #fff; color: inherit; text-align: left; cursor: pointer; box-shadow: 0 7px 18px rgba(10,40,25,.04); }
         .cabCard.active { border: 2px solid ${theme.colors.primary}; background: #f7fcf8; padding: 16px 15px; }
+        .cabCard.unavailable { cursor: not-allowed; opacity: .72; background: #f8faf9; }
+        .cabCard.unavailable .cabPrice { color: ${theme.colors.textMuted}; }
         .cabCardLeft { min-width: 0; }
         .cabName { font-size: 16px; font-weight: 800; }
         .cabMeta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; color: ${theme.colors.textMuted}; font-size: 11.5px; line-height: 1.4; }
+        .cabUnavailableReason { margin-top: 7px; color: #8e3029; font-size: 11.5px; font-weight: 700; line-height: 1.4; }
         .cabCardRight { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
         .cabPrice { font-size: 20px; font-weight: 800; }
         .cabRadio { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border: 2px solid #c7d1cb; border-radius: 50%; color: #fff; }
         .cabRadio.active { border-color: ${theme.colors.primary}; background: ${theme.colors.primary}; }
         .dataHealth { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; color: ${theme.colors.textMuted}; font-size: 11px; }
-        .capacityError { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 11px 13px; border-radius: 12px; background: ${theme.colors.errorBg}; color: #8e3029; font-size: 12px; font-weight: 700; }
         .paymentGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .paymentCard { min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid ${theme.colors.border}; border-radius: 16px; background: #fff; color: ${theme.colors.text}; font: inherit; font-weight: 800; cursor: pointer; }
         .paymentCard.active { border-color: ${theme.colors.primary}; background: ${theme.colors.primaryTint}; color: ${theme.colors.primary}; }
