@@ -1,0 +1,53 @@
+name: VOYNU Phase 3.5 driver assignment cleanup
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Switch admin assignment to authoritative RPC
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('app/admin/page.js')
+          text = p.read_text()
+
+          old = '''    const { error: assignError } = await supabase\n      .from("driver_assignments")\n      .insert({\n        booking_id: booking.id,\n        driver_id: driver.id,\n        vehicle_id: driver.vehicle_id,\n        status: "assigned",\n      });\n\n    if (assignError) {\n      setError(assignError.message);\n      return;\n    }\n\n    const { error: bookingError } = await supabase\n      .from("bookings")\n      .update({\n        driver_id: driver.id,\n        vehicle_id: driver.vehicle_id,\n        booking_status: "driver_assigned",\n      })\n      .eq("id", booking.id);\n\n    if (bookingError) {\n      setError(bookingError.message);\n      return;\n    }\n\n    setBookings((prev) =>\n      prev.map((b) =>\n        b.id === booking.id\n          ? {\n              ...b,\n              driver_id: driver.id,\n              vehicle_id: driver.vehicle_id,\n              booking_status: "driver_assigned",\n            }\n          : b\n      )\n    );\n'''
+          assert old in text, 'legacy direct driver assignment block not found'
+
+          new = '''    const { data: assignedBooking, error: assignError } = await supabase.rpc(\n      "assign_booking_driver",\n      {\n        p_booking_id: booking.id,\n        p_driver_id: driver.id,\n        p_vehicle_id: driver.vehicle_id,\n      }\n    );\n\n    if (assignError) {\n      setError(assignError.message);\n      return;\n    }\n\n    setBookings((prev) =>\n      prev.map((b) =>\n        b.id === booking.id\n          ? {\n              ...b,\n              driver_id: assignedBooking?.driver_id || driver.id,\n              vehicle_id: assignedBooking?.vehicle_id || driver.vehicle_id,\n              booking_status: assignedBooking?.booking_status || "driver_assigned",\n            }\n          : b\n      )\n    );\n'''
+          text = text.replace(old, new, 1)
+
+          old_filter = '  const assignableDrivers = drivers.filter((d) => d.active);\n'
+          assert old_filter in text, 'assignable driver filter not found'
+          new_filter = '  const assignableDrivers = drivers.filter((d) => d.active && d.availability_status === "available");\n'
+          text = text.replace(old_filter, new_filter, 1)
+
+          p.write_text(text)
+
+      - name: Validate
+        run: |
+          grep -q 'supabase.rpc(' app/admin/page.js
+          grep -q 'assign_booking_driver' app/admin/page.js
+          ! grep -q '.from("driver_assignments")' app/admin/page.js
+          grep -q 'availability_status === "available"' app/admin/page.js
+
+      - name: Commit and remove workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/admin/page.js
+          git commit -m 'refactor: use driver assignment RPC from admin'
+          git rm .github/workflows/one-time-phase35-driver-assignment.yml
+          git commit -m 'chore: remove temporary Phase 3.5 workflow'
+          git push
