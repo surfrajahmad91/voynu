@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const TILE_SIZE = 256;
-const MAP_HEIGHT = 320;
+const MAP_HEIGHT = 420;
 const OSM = "https://tile.openstreetmap.org";
 const ETA_REFRESH_MS = 60000;
 const ROUTE_REFRESH_MS = 15000;
+const ROUTE_MOVE_THRESHOLD_KM = 0.05;
+const NAV_ZOOM = 16;
 
 function validPoint(point) {
   const lat = Number(point?.lat);
@@ -16,25 +18,16 @@ function validPoint(point) {
 
 function project(lat, lon, zoom) {
   const scale = TILE_SIZE * 2 ** zoom;
-  const sin = Math.sin((Number(lat) * Math.PI) / 180);
+  const safeLat = Math.max(-85.05112878, Math.min(85.05112878, Number(lat)));
+  const sin = Math.sin((safeLat * Math.PI) / 180);
   return {
     x: ((Number(lon) + 180) / 360) * scale,
-    y: (0.5 - Math.log((1 + Math.max(-0.9999, Math.min(0.9999, sin))) / (1 - Math.max(-0.9999, Math.min(0.9999, sin)))) / (4 * Math.PI)) * scale,
+    y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * scale,
   };
 }
 
-function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
-
-function chooseZoom(points, width) {
-  const valid = points.filter(validPoint);
-  if (valid.length < 2) return 13;
-  const lats = valid.map((p) => Number(p.lat));
-  const lons = valid.map((p) => Number(p.lon));
-  const latSpan = Math.max(...lats) - Math.min(...lats);
-  const lonSpan = Math.max(...lons) - Math.min(...lons);
-  const span = Math.max(latSpan, lonSpan * Math.cos((Math.max(...lats) * Math.PI) / 180), 0.002);
-  const usable = Math.max(220, Math.min(width - 40, 520));
-  return clamp(Math.floor(Math.log2((usable * 360) / (span * 256 * 1.7))), 6, 16);
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function formatDuration(seconds) {
@@ -105,36 +98,44 @@ function maneuverArrow(type, modifier) {
 }
 
 function instructionForStep(step, targetLabel) {
-  if (!step) return { title: `Continue to ${targetLabel}`, detail: "Follow the route shown on the map", arrow: "↑" };
+  if (!step) return { title: `Continue to ${targetLabel}`, detail: "Follow the highlighted route", arrow: "↑" };
   const type = String(step.maneuver || "").toLowerCase();
   const modifier = String(step.modifier || "").toLowerCase();
-  const road = step.name || "the road";
+  const road = step.name || "";
   const arrow = maneuverArrow(type, modifier);
   if (type === "arrive") return { title: `Arrive at ${targetLabel}`, detail: "You are approaching your destination", arrow: "✓" };
-  if (type === "depart") return { title: `Head toward ${road}`, detail: "Follow the highlighted route", arrow };
+  if (type === "depart") return { title: road ? `Head toward ${road}` : `Head toward ${targetLabel}`, detail: "Follow the highlighted route", arrow };
   if (type === "roundabout" || type === "rotary") {
-    const exitText = step.exit ? `, take exit ${step.exit}` : "";
+    const exitText = step.exit ? ` — take exit ${step.exit}` : "";
     return { title: `Take the roundabout${exitText}`, detail: road ? `Continue on ${road}` : "Follow the highlighted route", arrow };
   }
-  if (type === "merge") return { title: `Merge ${modifier || "ahead"}`, detail: `Continue on ${road}`, arrow };
+  if (type === "merge") return { title: `Merge ${modifier || "ahead"}`, detail: road ? `Continue on ${road}` : "Follow the highlighted route", arrow };
   if (type === "fork") return { title: `Keep ${modifier || "ahead"}`, detail: road ? `Continue on ${road}` : "Follow the highlighted route", arrow };
   if (type === "on ramp" || type === "on_ramp") return { title: `Take the ramp ${modifier || "ahead"}`, detail: road ? `Continue on ${road}` : "Follow the highlighted route", arrow };
   if (type === "off ramp" || type === "off_ramp") return { title: `Take the exit ${modifier || "ahead"}`, detail: road ? `Continue on ${road}` : "Follow the highlighted route", arrow };
   if (type === "end of road" || type === "end_of_road") return { title: `Turn ${modifier || "ahead"} at the end of the road`, detail: road ? `Continue on ${road}` : "Follow the highlighted route", arrow };
   if (type === "new name" || type === "new_name" || type === "continue") return { title: road ? `Continue on ${road}` : "Continue straight", detail: "Stay on the highlighted route", arrow };
-  if (modifier.includes("left")) return { title: `Turn left${road && road !== "the road" ? ` onto ${road}` : ""}`, detail: "Follow the highlighted route", arrow };
-  if (modifier.includes("right")) return { title: `Turn right${road && road !== "the road" ? ` onto ${road}` : ""}`, detail: "Follow the highlighted route", arrow };
+  if (modifier.includes("left")) return { title: `Turn left${road ? ` onto ${road}` : ""}`, detail: "Follow the highlighted route", arrow };
+  if (modifier.includes("right")) return { title: `Turn right${road ? ` onto ${road}` : ""}`, detail: "Follow the highlighted route", arrow };
   return { title: road ? `Continue on ${road}` : "Continue ahead", detail: "Follow the highlighted route", arrow };
 }
 
-function Marker({ point, center, zoom, type, transition = true }) {
-  if (!validPoint(point)) return null;
+function Marker({ point, center, zoom, type }) {
+  if (!validPoint(point) || !validPoint(center)) return null;
   const p = project(point.lat, point.lon, zoom);
   const c = project(center.lat, center.lon, zoom);
   const x = p.x - c.x;
   const y = p.y - c.y;
-  const size = type === "driver" ? 38 : 18;
-  return <div style={{ position: "absolute", left: "50%", top: "50%", width: size, height: size, transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`, transition: transition ? "transform 4.4s linear" : "none", zIndex: type === "driver" ? 5 : 3, pointerEvents: "none" }}>{type === "driver" ? <div style={{ width: 38, height: 38, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b8750", border: "3px solid #ffffff", boxShadow: "0 3px 12px rgba(0,0,0,.25)", fontSize: 19 }}>🚗</div> : <div style={{ width: size, height: size, borderRadius: "50%", background: type === "destination" ? "#c96a2b" : "#0b8750", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,.25)" }} />}</div>;
+  const size = type === "driver" ? 44 : 20;
+  return (
+    <div style={{ position: "absolute", left: "50%", top: "50%", width: size, height: size, transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`, zIndex: type === "driver" ? 8 : 4, pointerEvents: "none" }}>
+      {type === "driver" ? (
+        <div style={{ width: 44, height: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b8750", border: "3px solid #fff", boxShadow: "0 3px 14px rgba(0,0,0,.28)", fontSize: 22 }}>🚗</div>
+      ) : (
+        <div style={{ width: size, height: size, borderRadius: "50%", background: type === "destination" ? "#c96a2b" : "#0b8750", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,.25)" }} />
+      )}
+    </div>
+  );
 }
 
 export default function LiveTripMap({ pickup, destination, driverLocation, targetType = "pickup", compact = false, trafficEta = false }) {
@@ -159,18 +160,16 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
   }, []);
 
   const target = targetType === "destination" ? destination : pickup;
-  const points = useMemo(() => [pickup, destination, driverPoint].filter(validPoint), [pickup, destination, driverPoint]);
-  const zoom = chooseZoom(points, width);
-  const center = useMemo(() => {
-    const usable = points.length ? points : [pickup, destination].filter(validPoint);
-    if (!usable.length) return { lat: 0, lon: 0 };
-    return {
-      lat: usable.reduce((sum, p) => sum + Number(p.lat), 0) / usable.length,
-      lon: usable.reduce((sum, p) => sum + Number(p.lon), 0) / usable.length,
-    };
-  }, [points, pickup, destination]);
+  const mapHeight = compact ? 360 : MAP_HEIGHT;
 
-  // Routing stays independent from high-frequency GPS updates: a new route is requested only about every 15 seconds or after 50m of movement.
+  // During active navigation the camera follows the driver instead of fitting the whole trip into one bird's-eye view.
+  const center = useMemo(() => {
+    if (validPoint(driverPoint)) return driverPoint;
+    if (validPoint(target)) return target;
+    if (validPoint(pickup)) return pickup;
+    return { lat: 0, lon: 0 };
+  }, [driverPoint, target, pickup]);
+
   useEffect(() => {
     if (!validPoint(driverPoint) || !validPoint(target)) {
       setRoute(null);
@@ -181,13 +180,17 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
     const now = Date.now();
     const movedKm = haversineKm(previous.point, driverPoint);
     const targetChanged = !previous.target || Number(previous.target.lat) !== Number(target.lat) || Number(previous.target.lon) !== Number(target.lon);
-    if (!targetChanged && now - previous.at < ROUTE_REFRESH_MS && movedKm < 0.05) return;
+    if (!targetChanged && now - previous.at < ROUTE_REFRESH_MS && movedKm < ROUTE_MOVE_THRESHOLD_KM) return;
     lastRouteRef.current = { point: driverPoint, target, at: now };
     let cancelled = false;
     const loadRoute = async () => {
       setRouteStatus("loading");
       try {
-        const response = await fetch("/api/route-map", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ origin: driverPoint, destination: target }) });
+        const response = await fetch("/api/route-map", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin: driverPoint, destination: target }),
+        });
         const data = await response.json();
         if (cancelled) return;
         if (!response.ok || !Array.isArray(data.coordinates)) throw new Error(data.error || "Route unavailable");
@@ -206,7 +209,7 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
     return () => { cancelled = true; };
   }, [driverPoint?.lat, driverPoint?.lon, target?.lat, target?.lon, trafficEta]);
 
-  // Google is used only for traffic-aware ETA. GPS and map rendering never call Google, and this timer is independent of GPS changes.
+  // Google is intentionally isolated to traffic-aware ETA. GPS, map tiles, route geometry and turn instructions do not use Google APIs.
   useEffect(() => {
     if (!trafficEta || !validPoint(target)) {
       if (trafficEta) setEtaText("");
@@ -221,7 +224,12 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
         return;
       }
       try {
-        const response = await fetch("/api/route-distance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ origin: point, destination: target, purpose: "eta" }), cache: "no-store" });
+        const response = await fetch("/api/route-distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin: point, destination: target, purpose: "eta" }),
+          cache: "no-store",
+        });
         const data = await response.json();
         if (!cancelled && response.ok && data?.durationText) setEtaText(data.durationText);
       } catch {}
@@ -231,11 +239,12 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
     return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
   }, [trafficEta, target?.lat, target?.lon]);
 
+  const zoom = NAV_ZOOM;
   const centerPx = project(center.lat, center.lon, zoom);
   const tileX = Math.floor(centerPx.x / TILE_SIZE);
   const tileY = Math.floor(centerPx.y / TILE_SIZE);
   const offsetX = width / 2 - (centerPx.x - tileX * TILE_SIZE);
-  const offsetY = MAP_HEIGHT / 2 - (centerPx.y - tileY * TILE_SIZE);
+  const offsetY = mapHeight / 2 - (centerPx.y - tileY * TILE_SIZE);
   const tiles = [];
   for (let dx = -2; dx <= 2; dx += 1) {
     for (let dy = -2; dy <= 2; dy += 1) {
@@ -244,7 +253,9 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
       const max = 2 ** zoom;
       if (y < 0 || y >= max) continue;
       const wrappedX = ((x % max) + max) % max;
-      tiles.push(<img key={`${zoom}-${x}-${y}`} src={`${OSM}/${zoom}/${wrappedX}/${y}.png`} alt="" draggable="false" style={{ position: "absolute", width: TILE_SIZE, height: TILE_SIZE, left: offsetX + dx * TILE_SIZE, top: offsetY + dy * TILE_SIZE, userSelect: "none" }} />);
+      tiles.push(
+        <img key={`${zoom}-${x}-${y}`} src={`${OSM}/${zoom}/${wrappedX}/${y}.png`} alt="" draggable="false" style={{ position: "absolute", width: TILE_SIZE, height: TILE_SIZE, left: offsetX + dx * TILE_SIZE, top: offsetY + dy * TILE_SIZE, userSelect: "none", maxWidth: "none" }} />
+      );
     }
   }
 
@@ -252,49 +263,89 @@ export default function LiveTripMap({ pickup, destination, driverLocation, targe
     if (!route?.coordinates?.length) return "";
     return route.coordinates.map(([lon, lat]) => {
       const p = project(lat, lon, zoom);
-      return `${width / 2 + (p.x - centerPx.x)},${MAP_HEIGHT / 2 + (p.y - centerPx.y)}`;
+      return `${width / 2 + (p.x - centerPx.x)},${mapHeight / 2 + (p.y - centerPx.y)}`;
     }).join(" ");
-  }, [route, zoom, width, centerPx.x, centerPx.y]);
+  }, [route, zoom, width, mapHeight, centerPx.x, centerPx.y]);
+
+  const navigation = useMemo(() => {
+    if (!driverPoint || !route?.coordinates?.length) return null;
+    const currentIndex = nearestRouteIndex(route.coordinates, driverPoint);
+    const steps = Array.isArray(route.steps) ? route.steps : [];
+    if (currentIndex < 0 || !steps.length) return null;
+
+    const stepInfo = steps.map((step) => ({
+      step,
+      index: nearestRouteIndex(route.coordinates, Array.isArray(step.location) ? { lat: step.location[1], lon: step.location[0] } : null),
+    })).filter((item) => item.index >= 0);
+
+    let next = stepInfo.find((item) => item.index > currentIndex + 2 && String(item.step.maneuver || "").toLowerCase() !== "depart");
+    if (!next) next = stepInfo.find((item) => item.index > currentIndex + 1);
+    if (!next) next = stepInfo[stepInfo.length - 1] || null;
+
+    const nextIndex = next?.index ?? route.coordinates.length - 1;
+    const distanceToNext = routeDistanceBetween(route.coordinates, currentIndex, nextIndex);
+    const remainingDistance = routeDistanceBetween(route.coordinates, currentIndex, route.coordinates.length - 1);
+    const instruction = instructionForStep(next?.step, targetType === "destination" ? "Destination" : "Pickup");
+    const nextType = String(next?.step?.maneuver || "").toLowerCase();
+    const arrived = nextType === "arrive" || remainingDistance < 35;
+
+    return { instruction, distanceToNext, remainingDistance, arrived, currentIndex };
+  }, [driverPoint, route, targetType]);
 
   const targetLabel = targetType === "destination" ? "Destination" : "Pickup";
-  const navigation = useMemo(() => {
-    if (!driverPoint || !route?.coordinates?.length || !Array.isArray(route.steps) || !route.steps.length) return null;
-    const driverIndex = nearestRouteIndex(route.coordinates, driverPoint);
-    if (driverIndex < 0) return null;
-    const enriched = route.steps.map((step, index) => {
-      const location = Array.isArray(step.location) ? { lat: step.location[1], lon: step.location[0] } : null;
-      const indexOnRoute = location ? nearestRouteIndex(route.coordinates, location) : -1;
-      return { ...step, index, indexOnRoute };
-    });
-    const future = enriched.filter((step) => step.indexOnRoute >= driverIndex + 2 && step.maneuver !== "depart");
-    const current = future[0] || enriched.find((step) => step.maneuver === "arrive") || enriched[enriched.length - 1];
-    const maneuverIndex = current?.indexOnRoute >= 0 ? current.indexOnRoute : route.coordinates.length - 1;
-    const distanceToManeuver = routeDistanceBetween(route.coordinates, driverIndex, maneuverIndex);
-    return { ...instructionForStep(current, targetLabel), distanceToManeuver, stepIndex: current?.index || 0, totalSteps: enriched.length };
-  }, [driverPoint, route, targetLabel]);
+  const remainingText = navigation ? formatDistance(navigation.remainingDistance) : "";
+  const nextDistanceText = navigation ? formatDistance(navigation.distanceToNext) : "";
 
-  return <div style={{ position: "relative", overflow: "hidden", height: compact ? 270 : MAP_HEIGHT, borderRadius: 16, border: "1px solid #dce6df", background: "#e7efe9", boxShadow: "0 8px 20px rgba(10,40,25,.06)" }}>
-    <div style={{ position: "absolute", inset: 0 }}>{tiles}</div>
-    <svg viewBox={`0 0 ${width} ${MAP_HEIGHT}`} preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2 }}>{routePoints && <polyline points={routePoints} fill="none" stroke="#0b8750" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.82" />}</svg>
-    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.02))", pointerEvents: "none", zIndex: 2 }} />
-    <Marker point={pickup} center={center} zoom={zoom} type="pickup" transition={false} />
-    <Marker point={destination} center={center} zoom={zoom} type="destination" transition={false} />
-    <Marker point={driverPoint} center={center} zoom={zoom} type="driver" />
-
-    <div style={{ position: "absolute", left: 12, top: 12, padding: "7px 10px", borderRadius: 20, background: "rgba(255,255,255,.94)", color: "#173c2a", fontSize: 11, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,.12)", zIndex: 7 }}>{driverPoint ? `Driver → ${targetLabel}` : "Waiting for driver's live location"}</div>
-    {etaText && driverPoint && <div style={{ position: "absolute", right: 12, top: 12, padding: "7px 10px", borderRadius: 20, background: "rgba(255,255,255,.95)", color: "#0b8750", fontSize: 11, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,.12)", zIndex: 7 }}>ETA ~{etaText}</div>}
-
-    {navigation && driverPoint && <div style={{ position: "absolute", left: 10, right: 10, bottom: 32, minHeight: 62, display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", borderRadius: 14, background: "rgba(255,255,255,.96)", color: "#173c2a", boxShadow: "0 5px 16px rgba(0,0,0,.16)", zIndex: 8 }}>
-      <div style={{ width: 40, height: 40, flex: "0 0 40px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 12, background: "#0b8750", color: "#fff", fontSize: 25, fontWeight: 900 }}>{navigation.arrow}</div>
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 2 }}><span style={{ color: "#0b8750", fontSize: 10, fontWeight: 900, textTransform: "uppercase" }}>Next instruction</span>{navigation.distanceToManeuver > 0 && <span style={{ color: "#66736c", fontSize: 10, fontWeight: 800 }}>· {formatDistance(navigation.distanceToManeuver)}</span>}</div>
-        <div style={{ fontSize: 12.5, fontWeight: 900, lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{navigation.title}</div>
-        <div style={{ marginTop: 2, color: "#68756e", fontSize: 9.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{navigation.detail}</div>
+  return (
+    <div style={{ position: "relative", width: "100%", height: mapHeight, overflow: "hidden", borderRadius: 24, background: "#e9eee9", border: "1px solid #dfe7e1" }}>
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        {tiles}
+        {routePoints ? (
+          <svg width={width} height={mapHeight} style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}>
+            <polyline points={routePoints} fill="none" stroke="rgba(255,255,255,.9)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points={routePoints} fill="none" stroke="#18a46a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : null}
+        <Marker point={pickup} center={center} zoom={zoom} type="pickup" />
+        <Marker point={destination} center={center} zoom={zoom} type="destination" />
+        <Marker point={driverPoint} center={center} zoom={zoom} type="driver" />
       </div>
-    </div>}
 
-    {driverPoint && routeStatus === "loading" && <div style={{ position: "absolute", left: 12, bottom: navigation ? 101 : 34, padding: "5px 8px", borderRadius: 8, background: "rgba(255,255,255,.9)", color: "#59665f", fontSize: 9.5, zIndex: 7 }}>Updating route…</div>}
-    <div style={{ position: "absolute", left: 8, bottom: 8, padding: "3px 6px", borderRadius: 5, background: "rgba(255,255,255,.88)", color: "#59665f", fontSize: 8.5, zIndex: 7 }}>© OpenStreetMap contributors</div>
-    <div style={{ position: "absolute", right: 10, bottom: 10, padding: "6px 9px", borderRadius: 10, background: "rgba(255,255,255,.94)", color: "#43544c", fontSize: 10, fontWeight: 700, zIndex: 7 }}>{targetLabel}</div>
-  </div>;
+      <div style={{ position: "absolute", top: 14, left: 14, right: 14, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, pointerEvents: "none" }}>
+        <div style={{ background: "rgba(255,255,255,.94)", borderRadius: 18, padding: "10px 14px", boxShadow: "0 3px 14px rgba(0,0,0,.13)", fontWeight: 800, color: "#205d42", fontSize: 14 }}>
+          Driver → {targetLabel}
+        </div>
+        <div style={{ background: "rgba(255,255,255,.94)", borderRadius: 18, padding: "10px 14px", boxShadow: "0 3px 14px rgba(0,0,0,.13)", fontWeight: 800, color: "#205d42", fontSize: 14 }}>
+          {etaText ? `ETA ~${etaText}` : routeStatus === "loading" ? "Updating route…" : "Live navigation"}
+        </div>
+      </div>
+
+      {navigation ? (
+        <div style={{ position: "absolute", left: 14, right: 14, bottom: 14, background: "rgba(255,255,255,.97)", borderRadius: 20, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 5px 20px rgba(0,0,0,.18)" }}>
+          <div style={{ width: 48, height: 48, flex: "0 0 48px", borderRadius: 14, background: "#0b8750", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800 }}>{navigation.instruction.arrow}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ textTransform: "uppercase", letterSpacing: ".06em", fontSize: 11, fontWeight: 800, color: "#87938c" }}>NEXT INSTRUCTION {nextDistanceText ? `· ${nextDistanceText}` : ""}</div>
+            <div style={{ fontSize: 18, lineHeight: 1.15, fontWeight: 850, color: "#173126", marginTop: 2 }}>{navigation.instruction.title}</div>
+            <div style={{ fontSize: 13, color: "#6b756f", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{navigation.instruction.detail}</div>
+          </div>
+          <div style={{ textAlign: "right", minWidth: 66 }}>
+            <div style={{ fontSize: 11, color: "#87938c", fontWeight: 700 }}>REMAINING</div>
+            <div style={{ fontSize: 14, fontWeight: 850, color: "#205d42", marginTop: 3 }}>{remainingText || "—"}</div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ position: "absolute", left: 14, right: 14, bottom: 14, background: "rgba(255,255,255,.94)", borderRadius: 18, padding: "12px 14px", boxShadow: "0 4px 16px rgba(0,0,0,.14)", color: "#56625b", fontSize: 14, fontWeight: 650 }}>
+          {routeStatus === "loading" ? "Calculating navigation route…" : `Live navigation to ${targetLabel}`}
+        </div>
+      )}
+
+      <div style={{ position: "absolute", left: 14, top: 68, background: "rgba(255,255,255,.92)", borderRadius: 16, padding: "7px 10px", color: "#5e6963", fontSize: 11, fontWeight: 700, boxShadow: "0 2px 10px rgba(0,0,0,.1)" }}>
+        Zoom {zoom} · GPS navigation
+      </div>
+
+      <div style={{ position: "absolute", left: 18, bottom: navigation ? 92 : 18, background: "rgba(255,255,255,.9)", borderRadius: 8, padding: "3px 6px", fontSize: 10, color: "#555" }}>
+        © OpenStreetMap contributors
+      </div>
+    </div>
+  );
 }
