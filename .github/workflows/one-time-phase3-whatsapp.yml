@@ -1,0 +1,80 @@
+name: VOYNU Phase 3 WhatsApp migration
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: ${{ !contains(github.event.head_commit.message, 'VOYNU Phase 3 WhatsApp migration') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Apply Phase 3 email disable and WhatsApp confirmation
+        shell: python
+        run: |
+          from pathlib import Path
+
+          route = Path('app/api/bookings/create/route.js')
+          text = route.read_text()
+          old_import = 'import { sendBookingNotifications } from "../../_lib/sendBookingEmail";\n'
+          assert old_import in text, 'booking notification import not found'
+          text = text.replace(old_import, '')
+          old_block = '''    // The booking is the source of truth. Email is a post-save notification and\n    // is deliberately best-effort so an email-provider problem cannot undo a booking.\n    const notificationResult = await sendBookingNotifications({\n      userEmail: user.email,\n      booking,\n      category,\n      savedBooking: data,\n    });\n\n    console.info("VOYNU booking email notification result", {\n      bookingId: data.id,\n      admin: notificationResult.admin,\n      customer: notificationResult.customer,\n    });\n\n'''
+          assert old_block in text, 'booking email notification block not found'
+          replacement = '''    // Booking confirmation email is intentionally disabled until VOYNU has a verified\n    // transactional sending domain. WhatsApp confirmation is an explicit admin action\n    // from the Admin booking panel instead; booking creation must remain independent.\n\n'''
+          text = text.replace(old_block, replacement)
+          route.write_text(text)
+
+          admin = Path('app/admin/page.js')
+          text = admin.read_text()
+          old_helper = '''function shortBookingId(id) {\n  if (!id) return "";\n  return id.slice(0, 8).toUpperCase();\n}\n'''
+          assert old_helper in text, 'shortBookingId helper not found'
+          new_helper = old_helper + '''\nfunction normalizeWhatsAppNumber(value) {\n  const digits = String(value || "").replace(/\\D/g, "");\n  if (!digits) return "";\n  if (digits.length === 10) return `91${digits}`;\n  return digits;\n}\n\nfunction bookingWhatsAppMessage(booking, assignedDriver) {\n  const reference = `VOY-${shortBookingId(booking.id)}`;\n  const tripType = booking.trip_type === "roundtrip" ? "Round Trip" : "One Way";\n  const lines = [\n    `Hello ${booking.passenger_name || ""},`,\n    "",\n    `Your VOYNU booking ${reference} is confirmed.`,\n    `Trip: ${tripType}`,\n    `Pickup: ${booking.pickup_name || "—"}`,\n    `Destination: ${booking.drop_name || "—"}`,\n    `Travel: ${booking.travel_date || "—"} ${booking.pickup_time || ""}`.trim(),\n    `Vehicle: ${booking.vehicle_type || "—"}`,\n    `Passengers: ${booking.passenger_count || "—"}`,\n    `Fare: ₹${Number(booking.fare || 0).toLocaleString("en-IN")}`,\n    `Payment: ${booking.payment_method === "upi" ? "UPI" : "Pay on Pickup"}`,\n  ];\n\n  if (assignedDriver) {\n    lines.push(`Driver: ${assignedDriver.full_name}${assignedDriver.phone ? ` (${assignedDriver.phone})` : ""}`);\n  }\n\n  lines.push("", "Thank you for choosing VOYNU.");\n  return lines.join("\\n");\n}\n'''
+          text = text.replace(old_helper, new_helper, 1)
+
+          marker = '''  /*\n   * ------------------------------------------------------------\n   * ADD VEHICLE / DRIVER\n   * ------------------------------------------------------------\n   */\n'''
+          assert marker in text, 'admin handler insertion marker not found'
+          handler = '''  const handleWhatsAppConfirmation = (booking) => {\n    setNotice("");\n    setError("");\n\n    const phone = normalizeWhatsAppNumber(booking.phone);\n    if (!phone) {\n      setError("This booking does not have a valid WhatsApp phone number.");\n      return;\n    }\n\n    const assignedDriver = drivers.find((d) => d.id === booking.driver_id);\n    const message = bookingWhatsAppMessage(booking, assignedDriver);\n    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;\n\n    window.open(url, "_blank", "noopener,noreferrer");\n    setNotice(`WhatsApp confirmation prepared for booking #${shortBookingId(booking.id)}. Review it and tap Send in WhatsApp.`);\n  };\n\n'''
+          text = text.replace(marker, handler + marker, 1)
+
+          old_button_anchor = '''                        {canCancel && (\n                          <button\n                            onClick={() => handleCancelBooking(b)}\n'''
+          assert old_button_anchor in text, 'cancel button anchor not found'
+          whatsapp_button = '''                        {b.phone && b.booking_status !== "cancelled" && (\n                          <button\n                            onClick={() => handleWhatsAppConfirmation(b)}\n                            style={{\n                              padding: "6px 10px",\n                              borderRadius: 6,\n                              border: "1px solid #25D366",\n                              background: "#eafaf0",\n                              color: "#128C4A",\n                              fontFamily: "ui-monospace, monospace",\n                              fontWeight: 700,\n                              fontSize: 10.5,\n                              cursor: "pointer",\n                            }}\n                          >\n                            Send WhatsApp confirmation\n                          </button>\n                        )}\n\n'''
+          text = text.replace(old_button_anchor, whatsapp_button + old_button_anchor, 1)
+          admin.write_text(text)
+
+          docs = Path('docs/booking-notifications.md')
+          if docs.exists():
+            d = docs.read_text()
+            d = d.replace('VOYNU uses Resend for transactional booking email.', 'Booking confirmation email is currently disabled. VOYNU uses an explicit admin WhatsApp confirmation action from the Admin booking panel until a verified VOYNU sending domain is configured for Resend.')
+            d = d.replace('### Important Resend setup note', '### Resend setup note for later re-enablement')
+            docs.write_text(d)
+
+      - name: Validate modified files
+        run: |
+          test -f app/api/bookings/create/route.js
+          test -f app/admin/page.js
+          grep -q 'WhatsApp confirmation' app/admin/page.js
+          ! grep -q 'sendBookingNotifications' app/api/bookings/create/route.js
+
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/api/bookings/create/route.js app/admin/page.js docs/booking-notifications.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: replace booking email with admin WhatsApp confirmation'
+          git push
+
+      - name: Remove temporary workflow
+        if: success()
+        run: |
+          git rm .github/workflows/one-time-phase3-whatsapp.yml
+          git commit -m 'chore: remove temporary Phase 3 WhatsApp migration workflow'
+          git push
