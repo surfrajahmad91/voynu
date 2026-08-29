@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     if (originLat === destinationLat && originLon === destinationLon) {
-      return NextResponse.json({ coordinates: [[originLon, originLat]], distanceMeters: 0, durationSeconds: 0 });
+      return NextResponse.json({ coordinates: [[originLon, originLat]], distanceMeters: 0, durationSeconds: 0, steps: [] });
     }
 
     const controller = new AbortController();
@@ -61,6 +61,9 @@ export async function POST(request: Request) {
             name: typeof step.name === "string" ? step.name : "",
             maneuver: step.maneuver?.type || "",
             modifier: step.maneuver?.modifier || "",
+            location: Array.isArray(step.maneuver?.location) ? step.maneuver.location : null,
+            exit: Number.isFinite(Number(step.maneuver?.exit)) ? Number(step.maneuver.exit) : null,
+            mode: typeof step.mode === "string" ? step.mode : "driving",
           }))
         : [],
     });
