@@ -87,6 +87,12 @@ export default function BookingConfirmedPage() {
   const passengerCount = Number(booking.passengerCount) || 1;
   const luggageCount = Number(booking.luggageCount) || 0;
   const copy = statusCopy(booking);
+  const fare = booking.selectedFare || {};
+  const billedDistanceKm = Number(fare.billedDistanceKm);
+  const baseFare = Number(fare.baseFare) || 0;
+  const distanceFare = Number(fare.distanceFare) || 0;
+  const driverAllowance = Number(fare.driverAllowance) || 0;
+  const totalFare = Number(fare.totalFare) || 0;
 
   return (
     <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}>
@@ -124,7 +130,7 @@ export default function BookingConfirmedPage() {
             <DetailCell label="Travel date" value={booking.travelDate} />
             <DetailCell label="Pickup time" value={booking.pickupTime} />
             <DetailCell label="Cab type" value={booking.selectedFare?.vehicleName} />
-            <DetailCell label="Fare" value={`₹${booking.selectedFare?.totalFare}`} />
+            <DetailCell label="Fare" value={`₹${totalFare}`} />
             <DetailCell label="Payment" value={paymentLabel(booking)} />
             <DetailCell label="Passengers" value={String(passengerCount)} />
             <DetailCell label="Luggage" value={String(luggageCount)} />
@@ -137,6 +143,30 @@ export default function BookingConfirmedPage() {
             </div>
           )}
         </div>
+
+        <section style={{ marginTop: 14, padding: 18, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+            <div style={{ fontSize: 14, fontWeight: 800 }}>Fare breakup</div>
+            <div style={{ color: theme.colors.textFaint, fontSize: 10.5, fontWeight: 700 }}>Transparent pricing</div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.textMuted, fontSize: 12.5 }}>
+            <span>Base fare</span><span>₹{baseFare}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.textMuted, fontSize: 12.5 }}>
+            <span>Distance{Number.isFinite(billedDistanceKm) ? ` (${billedDistanceKm.toFixed(1)} km)` : ""}</span><span>₹{distanceFare}</span>
+          </div>
+          {driverAllowance > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.textMuted, fontSize: 12.5 }}>
+              <span>Driver allowance</span><span>₹{driverAllowance}</span>
+            </div>
+          )}
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 7, paddingTop: 13, borderTop: `1px solid ${theme.colors.border}`, color: theme.colors.text, fontSize: 16, fontWeight: 800 }}>
+            <span>Total fare</span><span>₹{totalFare}</span>
+          </div>
+          <div style={{ marginTop: 9, color: theme.colors.textFaint, fontSize: 10.5, lineHeight: 1.45 }}>
+            No hidden charges. The displayed fare is based on the active VOYNU pricing rules for this journey.
+          </div>
+        </section>
 
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginTop: 22, padding: "16px 18px", borderRadius: theme.radius.lg, background: theme.colors.warningBg, border: "1px solid #f0dfa8" }}>
           <div style={{ width: 36, height: 36, flex: "0 0 36px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: "#f7e3ac", color: theme.colors.warning }}>
