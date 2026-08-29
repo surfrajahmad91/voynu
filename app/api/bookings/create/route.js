@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 import { validateCapacity } from "../../../../lib/capacityValidation";
-import { notifyAdminOfBooking } from "../../../_lib/adminNotification";
+import { notifyAdminOfBooking } from "../../_lib/adminNotification";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
