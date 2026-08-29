@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const CACHE_KEY = "voynu_vehicle_categories_v1";
-const READY_EVENT = "voynu-vehicle-categories-ready";
+const PRICING_CACHE_KEY = "voynu_pricing_v1";
+const RELOAD_KEY = "voynu_bootstrap_reload_v1";
 
 export default function VehicleCategoryBootstrap() {
   useEffect(() => {
@@ -12,15 +13,20 @@ export default function VehicleCategoryBootstrap() {
 
     let cancelled = false;
 
+    const maybeReloadWhenReady = () => {
+      if (cancelled || window.sessionStorage.getItem(RELOAD_KEY) === "1") return;
+      if (!window.localStorage.getItem(CACHE_KEY) || !window.localStorage.getItem(PRICING_CACHE_KEY)) return;
+      window.sessionStorage.setItem(RELOAD_KEY, "1");
+      window.location.reload();
+    };
+
     const syncCategories = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       if (cancelled || !sessionData?.session?.user) return;
 
       const { data, error } = await supabase
         .from("vehicle_categories")
-        .select(
-          "id,name,slug,description,passenger_capacity,luggage_capacity,active,bookable,sort_order,image_url"
-        )
+        .select("id,name,slug,description,passenger_capacity,luggage_capacity,active,bookable,sort_order,image_url")
         .eq("active", true)
         .eq("bookable", true)
         .order("sort_order", { ascending: true })
@@ -41,16 +47,15 @@ export default function VehicleCategoryBootstrap() {
         bookable: true,
       }));
 
-      const next = JSON.stringify(normalized);
-      window.localStorage.setItem(CACHE_KEY, next);
-      window.dispatchEvent(new CustomEvent(READY_EVENT));
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify(normalized));
+      maybeReloadWhenReady();
     };
 
     syncCategories();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user && (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-        window.setTimeout(() => { syncCategories(); }, 0);
+        window.setTimeout(syncCategories, 0);
       }
     });
 
