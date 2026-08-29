@@ -1,23 +1,34 @@
 # Booking notifications
 
-Successful bookings are saved first. The customer is then sent to the confirmation page, while the server makes a best-effort attempt to email the VOYNU admin team.
+Successful bookings are saved first. Email is a post-save notification and is deliberately best-effort: an email-provider problem must never make a real booking look unsuccessful to the customer.
+
+## Email provider
+
+VOYNU uses Resend for transactional booking email. The current Resend free plan is suitable for the present low-traffic stage: 3,000 emails/month with a 100-email daily limit. Resend currently allows up to 3 verified domains on the free plan.
 
 ## Vercel environment variables
 
-Add these variables to the VOYNU Vercel project:
+Add these variables to the VOYNU Vercel project for the **Production** environment:
 
-- `RESEND_API_KEY` — Resend API key used only by the server-side booking endpoint.
-- `RESEND_FROM_EMAIL` — verified sender, for example `VOYNU <bookings@your-verified-domain.com>`.
-- `ADMIN_NOTIFICATION_EMAIL` — email address that should receive new booking alerts. If omitted, the configured VOYNU admin email is used as the fallback.
+- `RESEND_API_KEY` — server-side Resend API key. Never expose this through `NEXT_PUBLIC_*` variables.
+- `RESEND_FROM_EMAIL` — a sender address on a domain verified in Resend, for example `VOYNU <bookings@your-verified-domain.com>`.
+- `ADMIN_NOTIFICATION_EMAIL` — the email address that should receive new booking alerts.
 
-If `RESEND_API_KEY` is not configured, booking creation still succeeds and the booking remains available in the Admin Panel. Email delivery is deliberately non-blocking so an email-provider problem can never make a real booking look unsuccessful to the customer.
+All three are required for the corresponding email delivery. The customer recipient comes from the authenticated Supabase user's email address.
+
+### Important Resend setup note
+
+For production customer emails, use a verified VOYNU sending domain. Resend's documented examples use `onboarding@resend.dev` for API testing; a verified domain should be used for real customer-facing sending.
 
 ## Booking flow
 
 1. Customer submits the booking.
 2. Server authenticates the customer and validates the vehicle, capacity, locations and current pricing.
 3. Server saves the booking in Supabase.
-4. Server attempts the admin notification email.
-5. Customer is redirected to `/booking-confirmed` using the saved booking details.
+4. Server sends the customer booking email and admin booking email as best-effort notifications.
+5. The customer is redirected to `/booking-confirmed` using the saved booking details.
+6. In-app notifications continue independently of email delivery.
+
+Email failures are logged server-side with a clear reason/status and never roll back a saved booking.
 
 The confirmation page does not ask the customer to send the booking through WhatsApp. WhatsApp remains a separate support/contact channel elsewhere in the application.
