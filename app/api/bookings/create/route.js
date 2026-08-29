@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 import { validateCapacity } from "../../../../lib/capacityValidation";
-import { sendBookingNotifications } from "../../_lib/sendBookingEmail";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -196,20 +195,9 @@ export async function POST(request) {
       return NextResponse.json({ error: "Booking could not be saved. Please try again.", code: "BOOKING_INSERT_FAILED", stage: "bookings.insert" }, { status: 400 });
     }
 
-    // The booking is the source of truth. Email is a post-save notification and
-    // is deliberately best-effort so an email-provider problem cannot undo a booking.
-    const notificationResult = await sendBookingNotifications({
-      userEmail: user.email,
-      booking,
-      category,
-      savedBooking: data,
-    });
-
-    console.info("VOYNU booking email notification result", {
-      bookingId: data.id,
-      admin: notificationResult.admin,
-      customer: notificationResult.customer,
-    });
+    // Booking confirmation email is intentionally disabled until VOYNU has a verified
+    // transactional sending domain. WhatsApp confirmation is an explicit admin action
+    // from the Admin booking panel instead; booking creation remains independent.
 
     return NextResponse.json({ booking: data, duplicate: false });
   } catch (error) {

@@ -4,7 +4,7 @@ Successful bookings are saved first. Email is a post-save notification and is de
 
 ## Email provider
 
-VOYNU uses Resend for transactional booking email. The current Resend free plan is suitable for the present low-traffic stage: 3,000 emails/month with a 100-email daily limit. Resend currently allows up to 3 verified domains on the free plan.
+Booking confirmation email is currently disabled. VOYNU uses an explicit admin WhatsApp confirmation action from the Admin booking panel until a verified VOYNU sending domain is configured for Resend. The current Resend free plan is suitable for the present low-traffic stage: 3,000 emails/month with a 100-email daily limit. Resend currently allows up to 3 verified domains on the free plan.
 
 ## Vercel environment variables
 
@@ -16,7 +16,7 @@ Add these variables to the VOYNU Vercel project for the **Production** environme
 
 All three are required for the corresponding email delivery. The customer recipient comes from the authenticated Supabase user's email address.
 
-### Important Resend setup note
+### Resend setup note for later re-enablement
 
 For production customer emails, use a verified VOYNU sending domain. Resend's documented examples use `onboarding@resend.dev` for API testing; a verified domain should be used for real customer-facing sending.
 

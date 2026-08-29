@@ -48,6 +48,38 @@ function shortBookingId(id) {
   return id.slice(0, 8).toUpperCase();
 }
 
+function normalizeWhatsAppNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}
+
+function bookingWhatsAppMessage(booking, assignedDriver) {
+  const reference = `VOY-${shortBookingId(booking.id)}`;
+  const tripType = booking.trip_type === "roundtrip" ? "Round Trip" : "One Way";
+  const lines = [
+    `Hello ${booking.passenger_name || ""},`,
+    "",
+    `Your VOYNU booking ${reference} is confirmed.`,
+    `Trip: ${tripType}`,
+    `Pickup: ${booking.pickup_name || "—"}`,
+    `Destination: ${booking.drop_name || "—"}`,
+    `Travel: ${booking.travel_date || "—"} ${booking.pickup_time || ""}`.trim(),
+    `Vehicle: ${booking.vehicle_type || "—"}`,
+    `Passengers: ${booking.passenger_count || "—"}`,
+    `Fare: ₹${Number(booking.fare || 0).toLocaleString("en-IN")}`,
+    `Payment: ${booking.payment_method === "upi" ? "UPI" : "Pay on Pickup"}`,
+  ];
+
+  if (assignedDriver) {
+    lines.push(`Driver: ${assignedDriver.full_name}${assignedDriver.phone ? ` (${assignedDriver.phone})` : ""}`);
+  }
+
+  lines.push("", "Thank you for choosing VOYNU.");
+  return lines.join("\n");
+}
+
 const bookingStatusColors = {
   pending_payment: { bg: theme.colors.warningBg, text: theme.colors.warning },
   confirmed: { bg: theme.colors.primaryTint, text: theme.colors.primary },
@@ -386,6 +418,24 @@ export default function AdminPage() {
     );
 
     setNotice(`Booking #${shortBookingId(booking.id)} cancelled.`);
+  };
+
+  const handleWhatsAppConfirmation = (booking) => {
+    setNotice("");
+    setError("");
+
+    const phone = normalizeWhatsAppNumber(booking.phone);
+    if (!phone) {
+      setError("This booking does not have a valid WhatsApp phone number.");
+      return;
+    }
+
+    const assignedDriver = drivers.find((d) => d.id === booking.driver_id);
+    const message = bookingWhatsAppMessage(booking, assignedDriver);
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, "_blank", "noopener,noreferrer");
+    setNotice(`WhatsApp confirmation prepared for booking #${shortBookingId(booking.id)}. Review it and tap Send in WhatsApp.`);
   };
 
   /*
@@ -886,6 +936,25 @@ export default function AdminPage() {
                             }}
                           >
                             Assign driver
+                          </button>
+                        )}
+
+                        {b.phone && b.booking_status !== "cancelled" && (
+                          <button
+                            onClick={() => handleWhatsAppConfirmation(b)}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: 6,
+                              border: "1px solid #25D366",
+                              background: "#eafaf0",
+                              color: "#128C4A",
+                              fontFamily: "ui-monospace, monospace",
+                              fontWeight: 700,
+                              fontSize: 10.5,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Send WhatsApp confirmation
                           </button>
                         )}
 
