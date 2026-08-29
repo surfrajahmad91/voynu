@@ -14,10 +14,7 @@ function getBearerToken(request) {
 }
 
 function dbForUser(accessToken) {
-  if (!supabaseUrl || !anonKey) {
-    throw new Error("Server database configuration is missing.");
-  }
-
+  if (!supabaseUrl || !anonKey) throw new Error("Server database configuration is missing.");
   return createClient(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
@@ -27,12 +24,8 @@ function dbForUser(accessToken) {
 async function authenticatedUser(request) {
   const accessToken = getBearerToken(request);
   if (!accessToken || !anonKey || !supabaseUrl) return null;
-
-  const userClient = createClient(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const userClient = createClient(supabaseUrl, anonKey, { auth: { autoRefreshToken: false, persistSession: false } });
   const { data, error } = await userClient.auth.getUser(accessToken);
-
   if (error || !data?.user) return null;
   return { user: data.user, accessToken };
 }
@@ -51,7 +44,6 @@ export async function POST(request) {
     if (!booking || !vehicleCategoryId || !idempotencyKey) {
       return NextResponse.json({ error: "Invalid booking request: booking, vehicle category and idempotency key are required.", code: "INVALID_BOOKING_REQUEST", stage: "request.validation" }, { status: 400 });
     }
-
     if (paymentMethod !== "cash" && paymentMethod !== "upi") {
       return NextResponse.json({ error: "Invalid payment method. Choose Pay on Pickup or UPI.", code: "INVALID_PAYMENT_METHOD", stage: "request.validation" }, { status: 400 });
     }
@@ -70,12 +62,10 @@ export async function POST(request) {
       .eq("idempotency_key", idempotencyKey)
       .eq("user_id", user.id)
       .maybeSingle();
-
     if (existingError) {
       console.error("VOYNU booking idempotency lookup failed:", existingError);
       return NextResponse.json({ error: "We could not verify whether this booking was already submitted. Please try again.", code: "BOOKING_LOOKUP_FAILED", stage: "bookings.existing.lookup" }, { status: 503 });
     }
-
     if (existing) return NextResponse.json({ booking: existing, duplicate: true });
 
     const { data: category, error: categoryError } = await client
@@ -83,12 +73,10 @@ export async function POST(request) {
       .select("id, name, slug, active, bookable, passenger_capacity, luggage_capacity")
       .eq("id", vehicleCategoryId)
       .maybeSingle();
-
     if (categoryError) {
       console.error("VOYNU vehicle category lookup failed:", categoryError);
       return NextResponse.json({ error: "The selected vehicle could not be verified. Please return to cab selection and choose another vehicle.", code: "VEHICLE_CATEGORY_LOOKUP_FAILED", stage: "vehicle_categories.lookup" }, { status: 503 });
     }
-
     if (!category || !category.active || !category.bookable) {
       return NextResponse.json({ error: "Selected vehicle category is unavailable. Please return to cab selection and choose another vehicle.", code: "VEHICLE_CATEGORY_UNAVAILABLE", stage: "vehicle_categories.validation" }, { status: 409 });
     }
@@ -97,7 +85,6 @@ export async function POST(request) {
     if (!capacity.valid) {
       return NextResponse.json({ error: capacity.reason, code: capacity.code || "CAPACITY_INVALID", stage: "vehicle_capacity.validation", details: capacity }, { status: 409 });
     }
-
     if (!validCoordinates(booking.pickup) || !validCoordinates(booking.drop)) {
       return NextResponse.json({ error: "Valid pickup and destination locations are required before a booking can be confirmed.", code: "INVALID_LOCATION_COORDINATES", stage: "booking.location.validation" }, { status: 400 });
     }
@@ -108,21 +95,24 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid journey distance. Please return to the trip details and select the locations again.", code: "INVALID_JOURNEY_DISTANCE", stage: "booking.journey.validation" }, { status: 400 });
     }
 
+    // BUSINESS RULE: pricing is selected by effective date, not simply by the newest row.
+    // This allows Admin to schedule a future version without changing today's bookings.
+    const nowIso = new Date().toISOString();
     const { data: pricing, error: pricingError } = await client
       .from("pricing_versions")
-      .select("id, version, status")
+      .select("id, version, status, effective_from")
       .eq("status", "active")
+      .lte("effective_from", nowIso)
+      .order("effective_from", { ascending: false, nullsFirst: false })
       .order("version", { ascending: false })
       .limit(1)
       .maybeSingle();
-
     if (pricingError) {
       console.error("VOYNU active pricing lookup failed:", pricingError);
       return NextResponse.json({ error: "Current pricing could not be loaded. Please try again shortly.", code: "PRICING_VERSION_LOOKUP_FAILED", stage: "pricing_versions.lookup" }, { status: 503 });
     }
-
     if (!pricing) {
-      return NextResponse.json({ error: "No active pricing version is configured. Please contact VOYNU before trying again.", code: "NO_ACTIVE_PRICING", stage: "pricing_versions.validation" }, { status: 503 });
+      return NextResponse.json({ error: "No effective pricing version is configured. Please contact VOYNU before trying again.", code: "NO_EFFECTIVE_PRICING", stage: "pricing_versions.validation" }, { status: 503 });
     }
 
     const { data: rule, error: ruleError } = await client
@@ -132,14 +122,12 @@ export async function POST(request) {
       .eq("vehicle_category_id", vehicleCategoryId)
       .eq("trip_type", tripType)
       .maybeSingle();
-
     if (ruleError) {
       console.error("VOYNU pricing rule lookup failed:", ruleError);
       return NextResponse.json({ error: "Pricing for the selected vehicle could not be loaded. Please try again shortly.", code: "PRICING_RULE_LOOKUP_FAILED", stage: "pricing_rules.lookup" }, { status: 503 });
     }
-
     if (!rule) {
-      return NextResponse.json({ error: `No ${tripType} pricing rule exists for ${category.name} in active pricing version ${pricing.version}.`, code: "NO_PRICING_RULE", stage: "pricing_rules.validation" }, { status: 503 });
+      return NextResponse.json({ error: `No ${tripType} pricing rule exists for ${category.name} in effective pricing version ${pricing.version}.`, code: "NO_PRICING_RULE", stage: "pricing_rules.validation" }, { status: 503 });
     }
 
     const billedKm = tripType === "roundtrip" ? oneWayKm * 2 : oneWayKm;
@@ -189,15 +177,10 @@ export async function POST(request) {
       .insert(row)
       .select("id, booking_status, payment_status, fare, quoted_fare, pricing_version_id, user_id")
       .single();
-
     if (error) {
       console.error("VOYNU booking insert failed:", error);
       return NextResponse.json({ error: "Booking could not be saved. Please try again.", code: "BOOKING_INSERT_FAILED", stage: "bookings.insert" }, { status: 400 });
     }
-
-    // Booking confirmation email is intentionally disabled until VOYNU has a verified
-    // transactional sending domain. WhatsApp confirmation is an explicit admin action
-    // from the Admin booking panel instead; booking creation remains independent.
 
     return NextResponse.json({ booking: data, duplicate: false });
   } catch (error) {
