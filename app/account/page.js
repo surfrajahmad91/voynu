@@ -2,210 +2,39 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { supabase } from "../lib/supabaseClient";
 import { buildWhatsAppLink } from "../lib/contact";
 import { theme } from "../lib/theme";
 import PageHeader from "../components/PageHeader";
+import LiveTripMap from "../components/LiveTripMap";
 
-function IconLogout({ size = 13 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5M21 12H9" /></svg>;
-}
-
-function shortLocationName(fullAddress) {
-  if (!fullAddress) return "";
-  return fullAddress.split(",")[0].trim() || fullAddress;
-}
-
-function shortBookingId(id) {
-  return id ? id.slice(0, 8).toUpperCase() : "";
-}
-
-function statusColor(status) {
-  if (status === "cancelled") return { bg: theme.colors.errorBg, text: theme.colors.error };
-  if (status === "trip_completed") return { bg: "#e5ede8", text: "#45564c" };
-  if (["on_the_way", "arrived"].includes(status)) return { bg: theme.colors.warningBg, text: theme.colors.warning };
-  return { bg: theme.colors.primaryTint, text: theme.colors.primary };
-}
-
-function statusLabel(status) {
-  return ({
-    pending_payment: "Payment pending",
-    confirmed: "Booking confirmed",
-    driver_assigned: "Driver assigned",
-    on_the_way: "Driver on the way",
-    arrived: "Driver arrived",
-    trip_started: "Trip started",
-    trip_completed: "Trip completed",
-    cancelled: "Cancelled",
-  })[status] || "Booking update";
-}
-
-function haversineKm(lat1, lon1, lat2, lon2) {
-  const a = [lat1, lon1, lat2, lon2].map(Number);
-  if (!a.every(Number.isFinite)) return null;
-  const [p1, l1, p2, l2] = a;
-  const rad = Math.PI / 180;
-  const dLat = (p2 - p1) * rad;
-  const dLon = (l2 - l1) * rad;
-  const x = Math.sin(dLat / 2) ** 2 + Math.cos(p1 * rad) * Math.cos(p2 * rad) * Math.sin(dLon / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-}
-
-function estimatedMinutes(distanceKm) {
-  if (!Number.isFinite(distanceKm)) return null;
-  return Math.max(1, Math.ceil((distanceKm / 30) * 60));
-}
-
-// A booking is active only once operations have actually started.
-// Driver assignment by itself does not make a future booking an active journey.
 const ACTIVE_STATUSES = ["on_the_way", "arrived", "trip_started"];
 const PAST_STATUSES = ["trip_completed", "cancelled"];
+const labels = { pending_payment: "Payment pending", confirmed: "Booking confirmed", driver_assigned: "Driver assigned", on_the_way: "Driver on the way", arrived: "Driver arrived", trip_started: "Trip started", trip_completed: "Trip completed", cancelled: "Cancelled" };
+function short(v) { return v ? v.split(",")[0].trim() || v : ""; }
+function bookingId(v) { return v ? v.slice(0, 8).toUpperCase() : ""; }
+function statusColor(s) { if (s === "cancelled") return { bg: theme.colors.errorBg, text: theme.colors.error }; if (s === "trip_completed") return { bg: "#e5ede8", text: "#45564c" }; if (["on_the_way", "arrived"].includes(s)) return { bg: theme.colors.warningBg, text: theme.colors.warning }; return { bg: theme.colors.primaryTint, text: theme.colors.primary }; }
+function haversineKm(a,b,c,d) { const x=[a,b,c,d].map(Number); if(!x.every(Number.isFinite)) return null; const [p1,l1,p2,l2]=x, r=Math.PI/180, dl=(p2-p1)*r, dn=(l2-l1)*r; const q=Math.sin(dl/2)**2+Math.cos(p1*r)*Math.cos(p2*r)*Math.sin(dn/2)**2; return 6371*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q)); }
+function eta(km) { return Number.isFinite(km) ? Math.max(1, Math.ceil(km/30*60)) : null; }
+function Chip({label}) { return <span style={{padding:"6px 9px",borderRadius:18,background:"#f4f7f5",border:`1px solid ${theme.colors.border}`,color:theme.colors.textMuted,fontSize:10.5,fontWeight:700}}>{label}</span>; }
 
 export default function AccountPage() {
-  const router = useRouter();
-  const [checking, setChecking] = useState(true);
-  const [user, setUser] = useState(null);
-  const [bookings, setBookings] = useState([]);
-  const [loadingBookings, setLoadingBookings] = useState(false);
-  const [driverDetails, setDriverDetails] = useState({});
-
-  useEffect(() => {
-    let cancelled = false;
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data?.session) { router.replace("/login"); return; }
-      if (!cancelled) { setUser(data.session.user); setChecking(false); }
-    };
-    checkSession();
-    return () => { cancelled = true; };
-  }, [router]);
-
-  const fetchBookings = async () => {
-    if (!user) return;
-    setLoadingBookings(true);
-    const { data } = await supabase.from("bookings").select("*").eq("user_id", user.id).order("travel_date", { ascending: false });
-    setLoadingBookings(false);
-    setBookings(data || []);
-  };
-
-  useEffect(() => { fetchBookings(); }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase.channel(`voynu-customer-bookings-${user.id}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bookings", filter: `user_id=eq.${user.id}` }, (payload) => {
-        setBookings((current) => current.map((b) => b.id === payload.new.id ? payload.new : b));
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    const loadDrivers = async () => {
-      const assigned = bookings.filter((b) => b.driver_id && ACTIVE_STATUSES.includes(b.booking_status));
-      if (!assigned.length) { setDriverDetails({}); return; }
-      const entries = await Promise.all(assigned.map(async (booking) => {
-        const { data } = await supabase.rpc("get_my_booking_driver", { p_booking_id: booking.id });
-        return [booking.id, data || null];
-      }));
-      if (!cancelled) setDriverDetails(Object.fromEntries(entries));
-    };
-    loadDrivers();
-    return () => { cancelled = true; };
-  }, [user, bookings]);
-
-  useEffect(() => {
-    const driverIds = [...new Set(Object.values(driverDetails).map((d) => d?.driverId).filter(Boolean))];
-    if (!driverIds.length) return;
-    const channels = driverIds.map((driverId) => supabase.channel(`voynu-customer-location-${driverId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "driver_current_location", filter: `driver_id=eq.${driverId}` }, (payload) => {
-        setDriverDetails((current) => Object.fromEntries(Object.entries(current).map(([bookingId, detail]) => detail?.driverId === driverId ? [bookingId, { ...detail, location: { lat: payload.new.lat, lon: payload.new.lon, updatedAt: payload.new.updated_at } }] : [bookingId, detail])));
-      }).subscribe());
-    return () => channels.forEach((channel) => supabase.removeChannel(channel));
-  }, [driverDetails]);
-
-  const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
-
-  const today = new Date().toISOString().slice(0, 10);
-  const activeBookings = useMemo(() => bookings.filter((b) => ACTIVE_STATUSES.includes(b.booking_status)), [bookings]);
-  const pastBookings = useMemo(() => bookings.filter((b) => PAST_STATUSES.includes(b.booking_status)), [bookings]);
-  const upcomingBookings = useMemo(() => bookings.filter((b) => !ACTIVE_STATUSES.includes(b.booking_status) && !PAST_STATUSES.includes(b.booking_status) && b.travel_date >= today), [bookings, today]);
-
-  const renderDriverCard = (booking) => {
-    const driver = driverDetails[booking.id];
-    if (!driver) return null;
-    const distance = driver.location ? haversineKm(driver.location.lat, driver.location.lon, booking.pickup_lat, booking.pickup_lon) : null;
-    const eta = estimatedMinutes(distance);
-    return <div style={{ marginTop: 12, padding: "13px 14px", borderRadius: 12, background: "#f7faf8", border: `1px solid ${theme.colors.border}` }}>
-      <div style={{ fontSize: 11, color: theme.colors.textFaint, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.4 }}>Your driver</div>
-      <div style={{ marginTop: 5, fontSize: 14, fontWeight: 800 }}>{driver.driverName || "Driver assigned"}</div>
-      <div style={{ marginTop: 3, fontSize: 12, color: theme.colors.textMuted }}>{driver.make || ""} {driver.model || ""} · {driver.registrationNumber || "Vehicle details unavailable"}</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
-        {driver.driverPhone && <a href={`tel:${driver.driverPhone}`} style={{ padding: "6px 10px", borderRadius: 20, background: "#ffffff", border: `1px solid ${theme.colors.border}`, color: theme.colors.primary, fontSize: 11, fontWeight: 800, textDecoration: "none" }}>Call driver</a>}
-        {driver.location && <span style={{ padding: "6px 10px", borderRadius: 20, background: theme.colors.primaryTint, color: theme.colors.primary, fontSize: 11, fontWeight: 800 }}>{distance != null ? `${distance.toFixed(1)} km from pickup` : "Live location active"}</span>}
-        {eta != null && <span style={{ padding: "6px 10px", borderRadius: 20, background: "#ffffff", border: `1px solid ${theme.colors.border}`, color: theme.colors.textMuted, fontSize: 11, fontWeight: 800 }}>ETA ~{eta} min</span>}
-      </div>
-      {driver.location?.updatedAt && <div style={{ marginTop: 7, fontSize: 10.5, color: theme.colors.textFaint }}>Last location update: {new Date(driver.location.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</div>}
-    </div>;
-  };
-
-  const renderFareBreakdown = (booking) => {
-    const breakdown = booking.fare_breakdown;
-    if (!breakdown) return null;
-    const baseFare = Number(breakdown.baseFare) || 0;
-    const distanceFare = Number(breakdown.distanceFare) || 0;
-    const driverAllowance = Number(breakdown.driverAllowance) || 0;
-    const billedDistanceKm = Number(breakdown.billedDistanceKm);
-    return <div style={{ marginTop: 12, padding: "13px 14px", borderRadius: 12, background: "#f7faf8", border: `1px solid ${theme.colors.border}` }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
-        <div style={{ fontSize: 11, color: theme.colors.text, fontWeight: 800 }}>Fare breakup</div>
-        <div style={{ fontSize: 10, color: theme.colors.textFaint, fontWeight: 700 }}>Transparent pricing</div>
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", color: theme.colors.textMuted, fontSize: 11.5 }}><span>Base fare</span><span>₹{baseFare}</span></div>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", color: theme.colors.textMuted, fontSize: 11.5 }}><span>Distance{Number.isFinite(billedDistanceKm) ? ` (${billedDistanceKm.toFixed(1)} km)` : ""}</span><span>₹{distanceFare}</span></div>
-      {driverAllowance > 0 && <div style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", color: theme.colors.textMuted, fontSize: 11.5 }}><span>Driver allowance</span><span>₹{driverAllowance}</span></div>}
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 5, paddingTop: 9, borderTop: `1px solid ${theme.colors.border}`, color: theme.colors.text, fontSize: 13, fontWeight: 800 }}><span>Total fare</span><span>₹{booking.fare}</span></div>
-    </div>;
-  };
-
-  const renderBookingCard = (b) => {
-    const status = statusColor(b.booking_status);
-    const active = ACTIVE_STATUSES.includes(b.booking_status);
-    return <div key={b.id} style={{ padding: "16px 18px", borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: "0 8px 20px rgba(10,40,25,0.05)", marginBottom: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: theme.colors.textFaint, letterSpacing: 0.3 }}>BOOKING #{shortBookingId(b.id)}</span>
-        <span style={{ padding: "4px 10px", borderRadius: 20, fontSize: 10.5, fontWeight: 700, background: status.bg, color: status.text }}>{statusLabel(b.booking_status)}</span>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: theme.colors.primary }} /><span style={{ fontSize: 14.5, fontWeight: 700 }}>{shortLocationName(b.pickup_name)}</span><span style={{ color: "#a3b0aa" }}>→</span><div style={{ width: 8, height: 8, borderRadius: "50%", background: theme.colors.accent }} /><span style={{ fontSize: 14.5, fontWeight: 700 }}>{shortLocationName(b.drop_name)}</span></div>
-      <div style={{ fontSize: 11, color: theme.colors.textFaint, marginBottom: 10, lineHeight: 1.5 }}>{b.pickup_name} → {b.drop_name}</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}><InfoChip label={b.trip_type === "roundtrip" ? "Round Trip" : "One Way"} /><InfoChip label={`${b.travel_date} • ${b.pickup_time}`} /><InfoChip label={b.vehicle_type} />{b.one_way_distance_km && <InfoChip label={`${Number(b.one_way_distance_km).toFixed(1)} km`} />}</div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px dashed ${theme.colors.border}` }}><div><div style={{ fontSize: 10.5, color: theme.colors.textFaint, fontWeight: 700 }}>{b.payment_method === "upi" ? "UPI Payment" : "Pay on Pickup"}</div><div style={{ fontSize: 10, color: "#a3b0aa", marginTop: 1 }}>{b.payment_status === "paid" ? "Paid" : b.payment_method === "upi" ? "Verification pending" : "To pay"}</div></div><div style={{ fontSize: 18, fontWeight: 800, color: theme.colors.primary }}>₹{b.fare}</div></div>
-      {renderFareBreakdown(b)}
-      {active && renderDriverCard(b)}
-    </div>;
-  };
-
-  if (checking) return <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: theme.colors.bg }}><div style={{ width: 34, height: 34, border: "3px solid rgba(8,120,63,0.18)", borderTopColor: theme.colors.primary, borderRadius: "50%" }} /></main>;
-
-  return <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}>
-    <PageHeader maxWidth={theme.maxWidth.content} showAccountLink={false} whatsappHref={buildWhatsAppLink("Hi VOYNU, I need help with my account/booking.")} />
-    <div style={{ background: theme.colors.surface, borderBottom: `1px solid ${theme.colors.border}` }}><div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", minHeight: 46, display: "flex", alignItems: "center", justifyContent: "flex-end" }}><button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", margin: "8px 0", borderRadius: 20, border: `1.5px solid ${theme.colors.border}`, background: "#ffffff", color: "#45564c", fontFamily: theme.fontFamily, fontWeight: 700, fontSize: 11.5, cursor: "pointer" }}><IconLogout size={12} />Log out</button></div></div>
-    <div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", padding: "24px 0 60px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: 18, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}><div style={{ width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: theme.gradients.primary, color: "#ffffff", fontWeight: 800, fontSize: 18, flexShrink: 0 }}>{(user?.user_metadata?.full_name || user?.email || "?").charAt(0).toUpperCase()}</div><div><div style={{ fontSize: 15, fontWeight: 800 }}>{user?.user_metadata?.full_name || "VOYNU Customer"}</div><div style={{ fontSize: 12, color: theme.colors.textFaint, marginTop: 2 }}>{user?.email}</div></div></div>
-      <h2 style={{ margin: "24px 0 12px", fontSize: 15, fontWeight: 800 }}>Active journeys</h2>
-      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : activeBookings.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No active journeys.</p> : activeBookings.map(renderBookingCard)}
-      <h2 style={{ margin: "24px 0 12px", fontSize: 15, fontWeight: 800 }}>Upcoming journeys</h2>
-      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : upcomingBookings.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No upcoming bookings.</p> : upcomingBookings.map(renderBookingCard)}
-      <h2 style={{ margin: "24px 0 12px", fontSize: 15, fontWeight: 800 }}>Past journeys</h2>
-      {loadingBookings ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>Loading...</p> : pastBookings.length === 0 ? <p style={{ color: theme.colors.textFaint, fontSize: 13 }}>No past bookings yet.</p> : pastBookings.map(renderBookingCard)}
-      <a href={buildWhatsAppLink("Hi VOYNU, I need help with my account/booking.")} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 26, textAlign: "center", color: theme.colors.primary, fontWeight: 700, fontSize: 13 }}>Need help? Chat with us on WhatsApp</a>
-    </div>
-  </main>;
-}
-
-function InfoChip({ label }) {
-  return <span style={{ padding: "5px 10px", borderRadius: 20, background: "#f4f6f4", border: `1px solid ${theme.colors.border}`, color: "#45564c", fontSize: 11, fontWeight: 700 }}>{label}</span>;
+  const router=useRouter();
+  const [checking,setChecking]=useState(true), [user,setUser]=useState(null), [bookings,setBookings]=useState([]), [loading,setLoading]=useState(false), [drivers,setDrivers]=useState({});
+  useEffect(()=>{let dead=false;(async()=>{const {data}=await supabase.auth.getSession();if(!data?.session){router.replace("/login");return;}if(!dead){setUser(data.session.user);setChecking(false);}})();return()=>{dead=true;};},[router]);
+  const load=async()=>{if(!user)return;setLoading(true);const {data}=await supabase.from("bookings").select("*").eq("user_id",user.id).order("travel_date",{ascending:false});setBookings(data||[]);setLoading(false);};
+  useEffect(()=>{load();},[user]);
+  useEffect(()=>{if(!user)return;const ch=supabase.channel(`voynu-customer-bookings-${user.id}`).on("postgres_changes",{event:"UPDATE",schema:"public",table:"bookings",filter:`user_id=eq.${user.id}`},p=>setBookings(v=>v.map(b=>b.id===p.new.id?p.new:b))).subscribe();return()=>supabase.removeChannel(ch);},[user]);
+  const active=useMemo(()=>bookings.filter(b=>ACTIVE_STATUSES.includes(b.booking_status)),[bookings]);
+  const upcoming=useMemo(()=>bookings.filter(b=>!ACTIVE_STATUSES.includes(b.booking_status)&&!PAST_STATUSES.includes(b.booking_status)),[bookings]);
+  const past=useMemo(()=>bookings.filter(b=>PAST_STATUSES.includes(b.booking_status)),[bookings]);
+  useEffect(()=>{if(!user)return;let dead=false;(async()=>{if(!active.length){setDrivers({});return;}const rows=await Promise.all(active.filter(b=>b.driver_id).map(async b=>{const {data}=await supabase.rpc("get_my_booking_driver",{p_booking_id:b.id});return [b.id,data||null];}));if(!dead)setDrivers(Object.fromEntries(rows));})();return()=>{dead=true;};},[user,active]);
+  const driverIds=useMemo(()=>[...new Set(Object.values(drivers).map(d=>d?.driverId).filter(Boolean))],[drivers]);
+  useEffect(()=>{if(!driverIds.length)return;const channels=driverIds.map(id=>supabase.channel(`voynu-location-${id}`).on("postgres_changes",{event:"UPDATE",schema:"public",table:"driver_current_location",filter:`driver_id=eq.${id}`},p=>setDrivers(v=>Object.fromEntries(Object.entries(v).map(([k,d])=>d?.driverId===id?[k,{...d,location:{lat:p.new.lat,lon:p.new.lon,updatedAt:p.new.updated_at}}]:[k,d])))).subscribe());return()=>channels.forEach(c=>supabase.removeChannel(c));},[driverIds]);
+  const logout=async()=>{await supabase.auth.signOut();router.push("/");};
+  const fare=b=>{const x=b.fare_breakdown;if(!x)return null;return <div style={{marginTop:12,padding:"13px 14px",borderRadius:12,background:"#f7faf8",border:`1px solid ${theme.colors.border}`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}><strong style={{fontSize:11}}>Fare breakup</strong><span style={{fontSize:10,color:theme.colors.textFaint,fontWeight:700}}>Transparent pricing</span></div><div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:11.5,color:theme.colors.textMuted}}><span>Base fare</span><span>₹{Number(x.baseFare)||0}</span></div><div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:11.5,color:theme.colors.textMuted}}><span>Distance{Number.isFinite(Number(x.billedDistanceKm))?` (${Number(x.billedDistanceKm).toFixed(1)} km)`:""}</span><span>₹{(Number(x.distanceFare)||0).toFixed(2).replace(/\.00$/,"")}</span></div>{Number(x.driverAllowance)>0&&<div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:11.5,color:theme.colors.textMuted}}><span>Driver allowance</span><span>₹{Number(x.driverAllowance)}</span></div>}<div style={{display:"flex",justifyContent:"space-between",borderTop:`1px solid ${theme.colors.border}`,paddingTop:9,marginTop:5,fontSize:13,fontWeight:800}}><span>Total fare</span><span>₹{b.fare}</span></div></div>;};
+  const driverCard=b=>{const d=drivers[b.id];if(!d)return null;const loc=d.location;const dist=loc?haversineKm(loc.lat,loc.lon,b.pickup_lat,b.pickup_lon):null;const target=b.booking_status==="trip_started"?"destination":"pickup";return <div style={{marginTop:12}}><LiveTripMap pickup={{lat:b.pickup_lat,lon:b.pickup_lon}} destination={{lat:b.drop_lat,lon:b.drop_lon}} driverLocation={loc} targetType={target}/><div style={{marginTop:10,padding:"12px 14px",borderRadius:12,background:"#f7faf8",border:`1px solid ${theme.colors.border}`}}><div style={{fontSize:10.5,color:theme.colors.textFaint,fontWeight:800,textTransform:"uppercase"}}>Your driver</div><div style={{marginTop:5,fontSize:14,fontWeight:800}}>{d.driverName||"Driver"}</div><div style={{marginTop:3,fontSize:12,color:theme.colors.textMuted}}>{d.make||""} {d.model||""} · {d.registrationNumber||"Vehicle details unavailable"}</div><div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:9}}>{d.driverPhone&&<a href={`tel:${d.driverPhone}`} style={{padding:"6px 10px",borderRadius:20,background:"#fff",border:`1px solid ${theme.colors.border}`,color:theme.colors.primary,fontSize:11,fontWeight:800}}>Call driver</a>}{loc&&<span style={{padding:"6px 10px",borderRadius:20,background:theme.colors.primaryTint,color:theme.colors.primary,fontSize:11,fontWeight:800}}>{dist!=null?`${dist.toFixed(1)} km from pickup`:"Live location active"}</span>}{dist!=null&&<span style={{padding:"6px 10px",borderRadius:20,background:"#fff",border:`1px solid ${theme.colors.border}`,color:theme.colors.textMuted,fontSize:11,fontWeight:800}}>ETA ~{eta(dist)} min</span>}</div><div style={{marginTop:8,fontSize:10.5,color:theme.colors.textFaint}}>{target==="destination"?"Driver is heading to your destination":b.booking_status==="arrived"?"Driver has reached the pickup area":"Driver is heading to pickup"}{loc?.updatedAt?` · Updated ${new Date(loc.updatedAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}`:""}</div></div></div>;};
+  const card=b=>{const c=statusColor(b.booking_status), isActive=ACTIVE_STATUSES.includes(b.booking_status);return <div key={b.id} style={{padding:"16px 18px",borderRadius:theme.radius.lg,background:theme.colors.surface,border:`1px solid ${theme.colors.border}`,boxShadow:"0 8px 20px rgba(10,40,25,.05)",marginBottom:12}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}><span style={{fontSize:10.5,fontWeight:700,color:theme.colors.textFaint}}>BOOKING #{bookingId(b.id)}</span><span style={{padding:"4px 10px",borderRadius:20,fontSize:10.5,fontWeight:700,background:c.bg,color:c.text}}>{labels[b.booking_status]||"Booking update"}</span></div><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}><i style={{width:8,height:8,borderRadius:"50%",background:theme.colors.primary}}/><span style={{fontSize:14.5,fontWeight:700}}>{short(b.pickup_name)}</span><span style={{color:"#a3b0aa"}}>→</span><i style={{width:8,height:8,borderRadius:"50%",background:theme.colors.accent}}/><span style={{fontSize:14.5,fontWeight:700}}>{short(b.drop_name)}</span></div><div style={{fontSize:11,color:theme.colors.textFaint,marginBottom:10,lineHeight:1.5}}>{b.pickup_name} → {b.drop_name}</div><div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}><Chip label={b.trip_type==="roundtrip"?"Round Trip":"One Way"}/><Chip label={`${b.travel_date} • ${b.pickup_time}`}/><Chip label={b.vehicle_type}/>{b.one_way_distance_km&&<Chip label={`${Number(b.one_way_distance_km).toFixed(1)} km`}/>}</div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:10,borderTop:`1px dashed ${theme.colors.border}`}}><div><div style={{fontSize:10.5,color:theme.colors.textFaint,fontWeight:700}}>{b.payment_method==="upi"?"UPI Payment":"Pay on Pickup"}</div><div style={{fontSize:10,color:theme.colors.textFaint}}>{b.payment_status==="paid"?"Paid":b.payment_method==="upi"?"Verification pending":"To pay"}</div></div><div style={{fontSize:18,fontWeight:800,color:theme.colors.primary}}>₹{b.fare}</div></div>{fare(b)}{isActive&&driverCard(b)}</div>;};
+  if(checking)return <main style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:theme.colors.bg}}><div style={{width:34,height:34,border:"3px solid rgba(8,120,63,.18)",borderTopColor:theme.colors.primary,borderRadius:"50%"}}/></main>;
+  return <main style={{minHeight:"100vh",background:theme.colors.bg,fontFamily:theme.fontFamily,color:theme.colors.text}}><PageHeader maxWidth={theme.maxWidth.content} showAccountLink={false} whatsappHref={buildWhatsAppLink("Hi VOYNU, I need help with my account/booking.")}/><div style={{background:theme.colors.surface,borderBottom:`1px solid ${theme.colors.border}`}}><div style={{width:`min(${theme.maxWidth.content}px,calc(100% - 32px))`,margin:"0 auto",minHeight:46,display:"flex",justifyContent:"flex-end",alignItems:"center"}}><button onClick={logout} style={{padding:"7px 14px",margin:"8px 0",borderRadius:20,border:`1px solid ${theme.colors.border}`,background:"#fff",color:"#45564c",fontWeight:700}}>↪ Log out</button></div></div><div style={{width:`min(${theme.maxWidth.content}px,calc(100% - 32px))`,margin:"0 auto",padding:"24px 0 60px"}}><div style={{display:"flex",alignItems:"center",gap:14,padding:18,borderRadius:theme.radius.lg,background:theme.colors.surface,border:`1px solid ${theme.colors.border}`,boxShadow:theme.shadow.card}}><div style={{width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:"50%",background:theme.gradients.primary,color:"#fff",fontWeight:800,fontSize:18}}>{(user?.user_metadata?.full_name||user?.email||"?").charAt(0).toUpperCase()}</div><div><div style={{fontSize:15,fontWeight:800}}>{user?.user_metadata?.full_name||"VOYNU Customer"}</div><div style={{fontSize:12,color:theme.colors.textFaint,marginTop:2}}>{user?.email}</div></div></div><h2 style={{margin:"24px 0 12px",fontSize:15,fontWeight:800}}>Active journeys</h2>{loading?<p style={{color:theme.colors.textFaint,fontSize:13}}>Loading...</p>:active.length?active.map(card):<p style={{color:theme.colors.textFaint,fontSize:13}}>No active journeys.</p>}<h2 style={{margin:"24px 0 12px",fontSize:15,fontWeight:800}}>Upcoming journeys</h2>{upcoming.length?upcoming.map(card):<p style={{color:theme.colors.textFaint,fontSize:13}}>No upcoming bookings.</p>}<h2 style={{margin:"24px 0 12px",fontSize:15,fontWeight:800}}>Past journeys</h2>{past.length?past.map(card):<p style={{color:theme.colors.textFaint,fontSize:13}}>No past bookings yet.</p>}<div style={{textAlign:"center",marginTop:34,color:theme.colors.primary,fontWeight:800,fontSize:13}}>Need help? Chat with us on WhatsApp</div></div></main>;
 }
