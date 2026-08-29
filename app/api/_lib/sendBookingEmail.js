@@ -64,15 +64,10 @@ function bookingDetails({ booking, category, savedBooking }) {
   return details;
 }
 
-/**
- * Send a transactional email through Resend.
- * This function intentionally throws only for provider/request failures;
- * callers decide whether email failure should block their business operation.
- */
 export async function sendBookingEmail({ to, subject, title, intro, details }) {
   const apiKey = env("RESEND_API_KEY");
   const from = env("RESEND_FROM_EMAIL");
-  const recipient = envValue(to);
+  const recipient = String(to || "").trim();
 
   if (!apiKey || !from || !recipient) {
     return {
@@ -116,61 +111,48 @@ export async function sendBookingEmail({ to, subject, title, intro, details }) {
         recipient,
         error: result?.message || body.slice(0, 300),
       });
-      return {
-        sent: false,
-        skipped: false,
-        reason: "RESEND_REQUEST_FAILED",
-        status: response.status,
-      };
+      return { sent: false, skipped: false, reason: "RESEND_REQUEST_FAILED", status: response.status };
     }
 
     return { sent: true, skipped: false, id: result?.id || null };
   } catch (error) {
     console.error("VOYNU: Resend booking email error", error);
-    return {
-      sent: false,
-      skipped: false,
-      reason: error?.name === "AbortError" ? "RESEND_TIMEOUT" : "RESEND_NETWORK_ERROR",
-    };
+    return { sent: false, skipped: false, reason: error?.name === "AbortError" ? "RESEND_TIMEOUT" : "RESEND_NETWORK_ERROR" };
   } finally {
     clearTimeout(timeout);
   }
 }
 
-function envValue(value) {
-  return String(value || "").trim();
-}
-
 export async function sendBookingNotifications({ userEmail, booking, category, savedBooking }) {
   const reference = bookingReference(savedBooking?.id);
   const details = bookingDetails({ booking, category, savedBooking });
-  const adminEmail = env("ADMIN_NOTIFICATION_EMAIL") || "surfrajahmad@gmail.com";
+  const adminEmail = env("ADMIN_NOTIFICATION_EMAIL");
   const results = { admin: null, customer: null };
 
-  results.admin = await sendBookingEmail({
-    to: adminEmail,
-    subject: `New VOYNU booking — ${reference}`,
-    title: "New booking received",
-    intro: `A new booking ${reference} has been saved in VOYNU and is ready for review.`,
-    details: [
-      ...details,
-      ["Passenger name", booking?.passengerName],
-      ["Phone", booking?.phone],
-      ["WhatsApp", booking?.whatsapp],
-    ],
-  });
+  results.admin = adminEmail
+    ? await sendBookingEmail({
+        to: adminEmail,
+        subject: `New VOYNU booking — ${reference}`,
+        title: "New booking received",
+        intro: `A new booking ${reference} has been saved in VOYNU and is ready for review.`,
+        details: [
+          ...details,
+          ["Passenger name", booking?.passengerName],
+          ["Phone", booking?.phone],
+          ["WhatsApp", booking?.whatsapp],
+        ],
+      })
+    : { sent: false, skipped: true, reason: "ADMIN_NOTIFICATION_EMAIL_MISSING" };
 
-  if (userEmail) {
-    results.customer = await sendBookingEmail({
-      to: userEmail,
-      subject: `VOYNU booking received — ${reference}`,
-      title: "Booking received",
-      intro: `Thank you for booking with VOYNU. Your booking ${reference} has been received successfully.`,
-      details,
-    });
-  } else {
-    results.customer = { sent: false, skipped: true, reason: "CUSTOMER_EMAIL_MISSING" };
-  }
+  results.customer = userEmail
+    ? await sendBookingEmail({
+        to: userEmail,
+        subject: `VOYNU booking received — ${reference}`,
+        title: "Booking received",
+        intro: `Thank you for booking with VOYNU. Your booking ${reference} has been received successfully.`,
+        details,
+      })
+    : { sent: false, skipped: true, reason: "CUSTOMER_EMAIL_MISSING" };
 
   return results;
 }
