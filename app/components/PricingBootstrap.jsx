@@ -4,18 +4,15 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const CACHE_KEY = "voynu_pricing_v1";
+const READY_EVENT = "voynu-pricing-ready";
 
 export default function PricingBootstrap() {
   useEffect(() => {
     if (window.location.pathname !== "/cab-selection") return;
 
     let cancelled = false;
-    let reloaded = false;
 
     const syncPricing = async () => {
-      // Supabase may still be restoring the browser session when layout
-      // effects first run. Pricing is restricted to authenticated users, so
-      // wait for a real session before querying the pricing tables.
       const { data: sessionData } = await supabase.auth.getSession();
       if (cancelled || !sessionData?.session?.user) return;
 
@@ -37,22 +34,12 @@ export default function PricingBootstrap() {
       if (cancelled || error || !Array.isArray(rules) || rules.length === 0) return;
 
       const payload = { version: version.version, effective_from: version.effective_from, rules };
-      const next = JSON.stringify(payload);
-      const previous = window.localStorage.getItem(CACHE_KEY);
-      window.localStorage.setItem(CACHE_KEY, next);
-
-      // Reload once only when the cache actually changed. The reload makes
-      // the synchronous fare calculator consume the freshly synced rules.
-      if (previous !== next && !reloaded) {
-        reloaded = true;
-        window.location.reload();
-      }
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+      window.dispatchEvent(new CustomEvent(READY_EVENT));
     };
 
-    // Try immediately if the session is already restored.
     syncPricing();
 
-    // Also retry as soon as Supabase finishes restoring/signing in the user.
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user && (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
         window.setTimeout(() => { syncPricing(); }, 0);
