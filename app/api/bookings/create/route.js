@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 import { validateCapacity } from "../../../../lib/capacityValidation";
-import { notifyAdminOfBooking } from "../../_lib/adminNotification";
-import { sendBookingCreatedEmails } from "../../_lib/sendBookingEmails";
+import { sendBookingNotifications } from "../../_lib/sendBookingEmail";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -197,34 +196,20 @@ export async function POST(request) {
       return NextResponse.json({ error: "Booking could not be saved. Please try again.", code: "BOOKING_INSERT_FAILED", stage: "bookings.insert" }, { status: 400 });
     }
 
-    const emailBooking = {
-      reference: `VOY-${String(data.id).slice(0, 8).toUpperCase()}`,
-      customerName: booking.passengerName,
-      customerPhone: booking.phone,
-      pickupName: booking.pickup?.name,
-      dropName: booking.drop?.name,
-      tripType: tripType === "roundtrip" ? "Round Trip" : "One Way",
-      travelDate: booking.travelDate,
-      pickupTime: booking.pickupTime,
-      vehicleName: category.name,
-      passengerCount: Number(passengerCount),
-      luggageCount: Number(luggageCount),
-      fare,
-      paymentLabel: isUpi ? "UPI — Verification pending" : "Pay on Pickup",
-    };
+    // The booking is the source of truth. Email is a post-save notification and
+    // is deliberately best-effort so an email-provider problem cannot undo a booking.
+    const notificationResult = await sendBookingNotifications({
+      userEmail: user.email,
+      booking,
+      category,
+      savedBooking: data,
+    });
 
-    await Promise.allSettled([
-      notifyAdminOfBooking({
-        booking: { ...booking, passengerCount: Number(passengerCount), luggageCount: Number(luggageCount), paymentMethod },
-        category,
-        savedBooking: data,
-      }),
-      sendBookingCreatedEmails({
-        booking: emailBooking,
-        customerEmail: user.email,
-        adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL?.trim() || "",
-      }),
-    ]);
+    console.info("VOYNU booking email notification result", {
+      bookingId: data.id,
+      admin: notificationResult.admin,
+      customer: notificationResult.customer,
+    });
 
     return NextResponse.json({ booking: data, duplicate: false });
   } catch (error) {
