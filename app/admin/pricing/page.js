@@ -32,49 +32,26 @@ export default function PricingAdminPage() {
 
   const load = async () => {
     setError("");
-    const { data: cats, error: catError } = await supabase
-      .from("vehicle_categories")
-      .select("id,name,slug,active,sort_order")
-      .order("sort_order");
+    const { data: cats, error: catError } = await supabase.from("vehicle_categories").select("id,name,slug,active,sort_order").order("sort_order");
     if (catError) return setError(catError.message);
-
-    const { data: versionRows, error: versionError } = await supabase
-      .from("pricing_versions")
-      .select("id,version,name,status,effective_from,created_at")
-      .eq("status", "active")
-      .order("version", { ascending: false });
+    const { data: versionRows, error: versionError } = await supabase.from("pricing_versions").select("id,version,name,status,effective_from,created_at").eq("status", "active").order("version", { ascending: false });
     if (versionError) return setError(versionError.message);
-
     setCategories((cats || []).filter((c) => c.active));
     setVersions(versionRows || []);
 
-    const now = Date.now();
-    const current = (versionRows || [])
-      .filter((v) => !v.effective_from || new Date(v.effective_from).getTime() <= now)
-      .sort((a, b) => {
-        const timeDiff = new Date(b.effective_from || b.created_at || 0).getTime() - new Date(a.effective_from || a.created_at || 0).getTime();
-        return timeDiff || b.version - a.version;
-      })[0];
-
+    const current = (versionRows || [])[0];
     if (!current) {
-      setName("Launch Pricing");
+      setName("Current Pricing");
       setRules({});
       setReady(true);
       return;
     }
 
     setName(current.name || `Pricing v${current.version}`);
-
-    const { data: existing, error: ruleError } = await supabase
-      .from("pricing_rules")
-      .select("*")
-      .eq("pricing_version_id", current.id);
+    const { data: existing, error: ruleError } = await supabase.from("pricing_rules").select("*").eq("pricing_version_id", current.id);
     if (ruleError) return setError(ruleError.message);
-
     const map = {};
-    (existing || []).forEach((r) => {
-      map[`${r.vehicle_category_id}:${r.trip_type}`] = { ...emptyRule(), ...r };
-    });
+    (existing || []).forEach((r) => { map[`${r.vehicle_category_id}:${r.trip_type}`] = { ...emptyRule(), ...r }; });
     setRules(map);
     setReady(true);
   };
@@ -106,24 +83,18 @@ export default function PricingAdminPage() {
     setMessage("");
     try {
       const { data: user } = await supabase.auth.getUser();
-      const { data: latest } = await supabase
-        .from("pricing_versions")
-        .select("version")
-        .order("version", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
+      const { data: latest } = await supabase.from("pricing_versions").select("version").order("version", { ascending: false }).limit(1).maybeSingle();
       const nextVersion = (latest?.version || 0) + 1;
-      // Pricing changes are intentionally immediate. The exact publication time
-      // is generated here at save time; Admin does not schedule future pricing.
       const effectiveIso = new Date().toISOString();
 
+      // Create the new version as archived first. This prevents a failed rule insert
+      // from leaving production without a usable pricing version.
       const { data: version, error: versionError } = await supabase
         .from("pricing_versions")
         .insert({
           version: nextVersion,
           name: name.trim() || `Pricing v${nextVersion}`,
-          status: "active",
+          status: "archived",
           effective_from: effectiveIso,
           created_by: user?.user?.id || null,
         })
@@ -151,7 +122,13 @@ export default function PricingAdminPage() {
       const { error: ruleError } = await supabase.from("pricing_rules").insert(rows);
       if (ruleError) throw ruleError;
 
-      setMessage(`Pricing version ${nextVersion} is live now (${formatDate(effectiveIso)}). New bookings will use this pricing; existing bookings keep their original fare.`);
+      const { error: activateError } = await supabase.from("pricing_versions").update({ status: "active" }).eq("id", version.id);
+      if (activateError) throw activateError;
+
+      const { error: archiveError } = await supabase.from("pricing_versions").update({ status: "archived" }).eq("status", "active").neq("id", version.id);
+      if (archiveError) throw archiveError;
+
+      setMessage(`Pricing updated. New bookings now use V${nextVersion}. Existing bookings keep their original fare.`);
       await load();
     } catch (e) {
       setError(e.message || "Unable to save pricing.");
@@ -160,16 +137,7 @@ export default function PricingAdminPage() {
     }
   };
 
-  const currentVersion = useMemo(() => {
-    const now = Date.now();
-    return versions
-      .filter((v) => !v.effective_from || new Date(v.effective_from).getTime() <= now)
-      .sort((a, b) => {
-        const timeDiff = new Date(b.effective_from || b.created_at || 0).getTime() - new Date(a.effective_from || a.created_at || 0).getTime();
-        return timeDiff || b.version - a.version;
-      })[0];
-  }, [versions]);
-
+  const currentVersion = useMemo(() => versions[0], [versions]);
   if (!ready) return <main style={{ padding: 32 }}>Checking access…</main>;
 
   return (
@@ -184,19 +152,19 @@ export default function PricingAdminPage() {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 20 }}>Pricing control</h1>
-              <p style={{ margin: "6px 0 0", color: "#68766f", fontSize: 12 }}>Publish a new price and it becomes effective immediately. Existing bookings keep the price captured when they were booked.</p>
+              <p style={{ margin: "6px 0 0", color: "#68766f", fontSize: 12 }}>Change the price whenever you need. The new price applies immediately to new bookings.</p>
             </div>
             <div style={{ fontSize: 12 }}>
               <strong>Current:</strong> {currentVersion ? `V${currentVersion.version} · ${currentVersion.name}` : "Not configured"}
-              {currentVersion?.effective_from && <div style={{ color: "#68766f", marginTop: 4 }}>{formatDate(currentVersion.effective_from)}</div>}
+              {currentVersion?.created_at && <div style={{ color: "#68766f", marginTop: 4 }}>Updated {formatDate(currentVersion.created_at)}</div>}
             </div>
           </div>
         </section>
 
         <section style={cardStyle}>
-          <h2 style={{ fontSize: 15, marginTop: 0 }}>Create new pricing version</h2>
-          <p style={{ margin: "0 0 10px", color: "#68766f", fontSize: 12 }}>The publication date and time are taken automatically from the moment you press “Publish pricing version”.</p>
+          <h2 style={{ fontSize: 15, marginTop: 0 }}>Update pricing</h2>
           <label>Pricing name<input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} /></label>
+          <p style={{ margin: "8px 0 0", color: "#68766f", fontSize: 12 }}>When you publish, the new rates are used immediately for new bookings. Bookings already created keep their stored fare.</p>
         </section>
 
         {categories.map((category) => (
@@ -217,7 +185,7 @@ export default function PricingAdminPage() {
 
         {error && <div style={{ ...noticeStyle, color: "#a33", background: "#fff0f0" }}>{error}</div>}
         {message && <div style={noticeStyle}>{message}</div>}
-        <button disabled={saving} onClick={save} style={buttonStyle}>{saving ? "Publishing…" : "Publish pricing version"}</button>
+        <button disabled={saving} onClick={save} style={buttonStyle}>{saving ? "Saving…" : "Update pricing now"}</button>
       </div>
     </main>
   );

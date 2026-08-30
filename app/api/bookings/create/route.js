@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 import { validateCapacity } from "../../../../lib/capacityValidation";
+import { sendBookingNotifications } from "../../_lib/sendBookingEmail";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -95,15 +96,12 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid journey distance. Please return to the trip details and select the locations again.", code: "INVALID_JOURNEY_DISTANCE", stage: "booking.journey.validation" }, { status: 400 });
     }
 
-    // BUSINESS RULE: pricing is selected by effective date, not simply by the newest row.
-    // This allows Admin to schedule a future version without changing today's bookings.
-    const nowIso = new Date().toISOString();
+    // Launch pricing rule: the newest active pricing version applies immediately
+    // to new bookings. Existing bookings keep their stored fare and pricing snapshot.
     const { data: pricing, error: pricingError } = await client
       .from("pricing_versions")
-      .select("id, version, status, effective_from")
+      .select("id, version, status")
       .eq("status", "active")
-      .lte("effective_from", nowIso)
-      .order("effective_from", { ascending: false, nullsFirst: false })
       .order("version", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -112,7 +110,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Current pricing could not be loaded. Please try again shortly.", code: "PRICING_VERSION_LOOKUP_FAILED", stage: "pricing_versions.lookup" }, { status: 503 });
     }
     if (!pricing) {
-      return NextResponse.json({ error: "No effective pricing version is configured. Please contact VOYNU before trying again.", code: "NO_EFFECTIVE_PRICING", stage: "pricing_versions.validation" }, { status: 503 });
+      return NextResponse.json({ error: "No pricing is configured. Please contact VOYNU before trying again.", code: "NO_ACTIVE_PRICING", stage: "pricing_versions.validation" }, { status: 503 });
     }
 
     const { data: rule, error: ruleError } = await client
@@ -127,7 +125,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Pricing for the selected vehicle could not be loaded. Please try again shortly.", code: "PRICING_RULE_LOOKUP_FAILED", stage: "pricing_rules.lookup" }, { status: 503 });
     }
     if (!rule) {
-      return NextResponse.json({ error: `No ${tripType} pricing rule exists for ${category.name} in effective pricing version ${pricing.version}.`, code: "NO_PRICING_RULE", stage: "pricing_rules.validation" }, { status: 503 });
+      return NextResponse.json({ error: `No ${tripType} pricing rule exists for ${category.name} in current pricing version ${pricing.version}.`, code: "NO_PRICING_RULE", stage: "pricing_rules.validation" }, { status: 503 });
     }
 
     const billedKm = tripType === "roundtrip" ? oneWayKm * 2 : oneWayKm;
@@ -180,6 +178,13 @@ export async function POST(request) {
     if (error) {
       console.error("VOYNU booking insert failed:", error);
       return NextResponse.json({ error: "Booking could not be saved. Please try again.", code: "BOOKING_INSERT_FAILED", stage: "bookings.insert" }, { status: 400 });
+    }
+
+    try {
+      const emailResults = await sendBookingNotifications({ userEmail: user.email, booking, category, savedBooking: data });
+      console.log("VOYNU booking email notifications", { bookingId: data.id, admin: emailResults.admin?.sent ? "sent" : emailResults.admin?.reason || "skipped", customer: emailResults.customer?.sent ? "sent" : emailResults.customer?.reason || "skipped" });
+    } catch (emailError) {
+      console.error("VOYNU booking email notification error", emailError);
     }
 
     return NextResponse.json({ booking: data, duplicate: false });
