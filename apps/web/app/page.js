@@ -1,3 +1,1 @@
-export default function WebAppScaffold() {
-  return <main><h1>VOYNU</h1><p>Customer experience extraction workspace.</p></main>;
-}
+export { default } from "../../../app/page";
