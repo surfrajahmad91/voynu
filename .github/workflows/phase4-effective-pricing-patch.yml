@@ -21,10 +21,8 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-
           path = Path("app/cab-selection/page.js")
           text = path.read_text()
-
           old = '''      const { data: version, error: versionError } = await supabase
         .from("pricing_versions")
         .select("id,version,status,effective_from")
@@ -32,7 +30,6 @@ jobs:
         .order("version", { ascending: false })
         .limit(1)
         .maybeSingle();'''
-
           new = '''      // BUSINESS RULE: customer quotes must use the same effective pricing version
       // that the booking API will use at confirmation time. Future scheduled versions
       // must never affect today's quote.
@@ -46,10 +43,8 @@ jobs:
         .order("version", { ascending: false })
         .limit(1)
         .maybeSingle();'''
-
           if old not in text:
               raise SystemExit("Expected pricing version query was not found; refusing to modify the file.")
-
           path.write_text(text.replace(old, new, 1))
 
       - name: Commit patch and remove temporary workflow
@@ -58,7 +53,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           rm -f .github/workflows/phase4-effective-pricing-patch.yml
-          git add app/cab-selection/page.js .github/workflows/phase4-effective-pricing-patch.yml
+          git add -A
           git diff --cached --quiet && exit 0
           git commit -m "fix: align customer quotes with effective pricing"
           git push
