@@ -224,6 +224,30 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     return route.coordinates.map(([lon, lat]) => { const p = project(lat, lon, zoom); return `${width / 2 + (p.x - centerPx.x)},${mapHeight / 2 + (p.y - centerPx.y)}`; }).join(" ");
   }, [route, zoom, width, mapHeight, centerPx.x, centerPx.y]);
 
+  const speakInstruction = (instruction, distance) => {
+    if (typeof window === "undefined" || !window.speechSynthesis || !instruction) return false;
+    const synth = window.speechSynthesis;
+    const value = Number(distance);
+    const bucket = value > 1000 ? "far" : value > 300 ? "near" : "now";
+    const title = instruction.title.replace(/ — .*/, "");
+    let text = title;
+    if (bucket === "far" && value < 5000) text = `${title} in ${formatDistance(value)}.`;
+    if (bucket === "near") text = `${title} in ${formatDistance(value)}.`;
+    if (bucket === "now") text = `${title} now.`;
+    try {
+      synth.cancel();
+      synth.resume?.();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.volume = 1;
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      synth.speak(utterance);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (!voiceEnabled || !navigation?.instruction || typeof window === "undefined" || !window.speechSynthesis) return;
     const distance = navigation.distanceToNext;
@@ -231,14 +255,26 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     const key = `${navigation.instruction.key}:${bucket}`;
     if (key === lastSpokenRef.current) return;
     lastSpokenRef.current = key;
-    const title = navigation.instruction.title.replace(/ — .*/, "");
-    let text = title;
-    if (bucket === "far" && distance < 5000) text = `${title} in ${formatDistance(distance)}.`;
-    if (bucket === "near") text = `${title} in ${formatDistance(distance)}.`;
-    if (bucket === "now") text = `${title} now.`;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    speakInstruction(navigation.instruction, distance);
   }, [voiceEnabled, navigation?.instruction?.key, navigation?.distanceToNext]);
+
+  const handleVoiceToggle = () => {
+    if (voiceEnabled) {
+      window.speechSynthesis?.cancel?.();
+      setVoiceEnabled(false);
+      return;
+    }
+    setVoiceEnabled(true);
+    lastSpokenRef.current = "";
+    if (navigation?.instruction) {
+      const spoken = speakInstruction(navigation.instruction, navigation.distanceToNext);
+      if (spoken) {
+        const distance = navigation.distanceToNext;
+        const bucket = distance > 1000 ? "far" : distance > 300 ? "near" : "now";
+        lastSpokenRef.current = `${navigation.instruction.key}:${bucket}`;
+      }
+    }
+  };
 
   const enterFullscreen = async () => { try { await document.documentElement.requestFullscreen?.(); setIsFullscreen(Boolean(document.fullscreenElement)); } catch {} };
   const exitFullscreen = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); } catch {} };
@@ -279,7 +315,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     </div> : <div style={{ position: "absolute", left: 12, right: 12, bottom: "calc(126px + env(safe-area-inset-bottom))", zIndex: 12, background: "rgba(255,255,255,.96)", borderRadius: 20, padding: 16, boxShadow: "0 6px 24px rgba(0,0,0,.18)", fontWeight: 800, color: "#46534c" }}>{routeStatus === "loading" ? "Calculating navigation route…" : routeStatus === "error" ? "Route temporarily unavailable. Continuing with GPS location." : `Waiting for GPS location to navigate to ${targetLabel}.`}</div>}
 
     <div style={{ position: "absolute", left: 12, right: 12, bottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 14, display: "flex", gap: 8 }}>
-      <button onClick={() => setVoiceEnabled((value) => !value)} style={{ flex: 1, minHeight: 48, borderRadius: 15, border: "1px solid #dce6df", background: "rgba(255,255,255,.97)", color: "#205d42", fontWeight: 850, fontSize: 13, cursor: "pointer" }}>{voiceEnabled ? "🔊 Voice on" : "🔇 Voice off"}</button>
+      <button onClick={handleVoiceToggle} style={{ flex: 1, minHeight: 48, borderRadius: 15, border: "1px solid #dce6df", background: "rgba(255,255,255,.97)", color: "#205d42", fontWeight: 850, fontSize: 13, cursor: "pointer" }}>{voiceEnabled ? "🔊 Voice on" : "🔇 Voice off"}</button>
       {!isFullscreen && <button onClick={enterFullscreen} style={{ flex: 1, minHeight: 48, borderRadius: 15, border: "1px solid #dce6df", background: "rgba(255,255,255,.97)", color: "#205d42", fontWeight: 850, fontSize: 13, cursor: "pointer" }}>⛶ Full screen</button>}
       <button onClick={complete} style={{ flex: 1.5, minHeight: 48, border: 0, borderRadius: 15, background: "#08783f", color: "#fff", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>Complete Trip</button>
     </div>
