@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 import { validateCapacity } from "../../../../lib/capacityValidation";
+import { sendBookingNotifications } from "../../_lib/sendBookingEmail";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -177,6 +178,13 @@ export async function POST(request) {
     if (error) {
       console.error("VOYNU booking insert failed:", error);
       return NextResponse.json({ error: "Booking could not be saved. Please try again.", code: "BOOKING_INSERT_FAILED", stage: "bookings.insert" }, { status: 400 });
+    }
+
+    try {
+      const emailResults = await sendBookingNotifications({ userEmail: user.email, booking, category, savedBooking: data });
+      console.log("VOYNU booking email notifications", { bookingId: data.id, admin: emailResults.admin?.sent ? "sent" : emailResults.admin?.reason || "skipped", customer: emailResults.customer?.sent ? "sent" : emailResults.customer?.reason || "skipped" });
+    } catch (emailError) {
+      console.error("VOYNU booking email notification error", emailError);
     }
 
     return NextResponse.json({ booking: data, duplicate: false });
