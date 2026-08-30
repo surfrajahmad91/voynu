@@ -9,7 +9,14 @@ export default function RoleNotificationBell() {
 
   if (pathname?.startsWith("/admin")) {
     return (
-      <div style={{ position: "fixed", top: 72, right: 14, zIndex: 90 }}>
+      <div
+        style={{
+          position: "fixed",
+          top: 7,
+          right: 105,
+          zIndex: 90,
+        }}
+      >
         <NotificationBell targetPath="/admin" />
       </div>
     );
