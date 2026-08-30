@@ -26,7 +26,6 @@ export default function PricingAdminPage() {
   const [versions, setVersions] = useState([]);
   const [rules, setRules] = useState({});
   const [name, setName] = useState("");
-  const [effectiveFrom, setEffectiveFrom] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -52,18 +51,19 @@ export default function PricingAdminPage() {
     const now = Date.now();
     const current = (versionRows || [])
       .filter((v) => !v.effective_from || new Date(v.effective_from).getTime() <= now)
-      .sort((a, b) => b.version - a.version)[0];
+      .sort((a, b) => {
+        const timeDiff = new Date(b.effective_from || b.created_at || 0).getTime() - new Date(a.effective_from || a.created_at || 0).getTime();
+        return timeDiff || b.version - a.version;
+      })[0];
 
     if (!current) {
       setName("Launch Pricing");
-      setEffectiveFrom("");
       setRules({});
       setReady(true);
       return;
     }
 
     setName(current.name || `Pricing v${current.version}`);
-    setEffectiveFrom(current.effective_from ? new Date(current.effective_from).toISOString().slice(0, 16) : "");
 
     const { data: existing, error: ruleError } = await supabase
       .from("pricing_rules")
@@ -114,9 +114,9 @@ export default function PricingAdminPage() {
         .maybeSingle();
 
       const nextVersion = (latest?.version || 0) + 1;
-      const effectiveIso = effectiveFrom ? new Date(effectiveFrom).toISOString() : new Date().toISOString();
-      const effectiveDate = new Date(effectiveIso);
-      if (Number.isNaN(effectiveDate.getTime())) throw new Error("Please enter a valid effective date and time.");
+      // Pricing changes are intentionally immediate. The exact publication time
+      // is generated here at save time; Admin does not schedule future pricing.
+      const effectiveIso = new Date().toISOString();
 
       const { data: version, error: versionError } = await supabase
         .from("pricing_versions")
@@ -151,11 +151,7 @@ export default function PricingAdminPage() {
       const { error: ruleError } = await supabase.from("pricing_rules").insert(rows);
       if (ruleError) throw ruleError;
 
-      setMessage(
-        effectiveDate.getTime() <= Date.now()
-          ? `Pricing version ${nextVersion} is live now.`
-          : `Pricing version ${nextVersion} is scheduled for ${formatDate(effectiveIso)}.`
-      );
+      setMessage(`Pricing version ${nextVersion} is live now (${formatDate(effectiveIso)}). New bookings will use this pricing; existing bookings keep their original fare.`);
       await load();
     } catch (e) {
       setError(e.message || "Unable to save pricing.");
@@ -168,14 +164,10 @@ export default function PricingAdminPage() {
     const now = Date.now();
     return versions
       .filter((v) => !v.effective_from || new Date(v.effective_from).getTime() <= now)
-      .sort((a, b) => b.version - a.version)[0];
-  }, [versions]);
-
-  const scheduledVersions = useMemo(() => {
-    const now = Date.now();
-    return versions
-      .filter((v) => v.effective_from && new Date(v.effective_from).getTime() > now)
-      .sort((a, b) => new Date(a.effective_from) - new Date(b.effective_from));
+      .sort((a, b) => {
+        const timeDiff = new Date(b.effective_from || b.created_at || 0).getTime() - new Date(a.effective_from || a.created_at || 0).getTime();
+        return timeDiff || b.version - a.version;
+      })[0];
   }, [versions]);
 
   if (!ready) return <main style={{ padding: 32 }}>Checking access…</main>;
@@ -192,7 +184,7 @@ export default function PricingAdminPage() {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 20 }}>Pricing control</h1>
-              <p style={{ margin: "6px 0 0", color: "#68766f", fontSize: 12 }}>The server selects the pricing version whose effective time has arrived.</p>
+              <p style={{ margin: "6px 0 0", color: "#68766f", fontSize: 12 }}>Publish a new price and it becomes effective immediately. Existing bookings keep the price captured when they were booked.</p>
             </div>
             <div style={{ fontSize: 12 }}>
               <strong>Current:</strong> {currentVersion ? `V${currentVersion.version} · ${currentVersion.name}` : "Not configured"}
@@ -201,23 +193,10 @@ export default function PricingAdminPage() {
           </div>
         </section>
 
-        {scheduledVersions.length > 0 && (
-          <section style={cardStyle}>
-            <h2 style={{ fontSize: 15, marginTop: 0 }}>Scheduled pricing</h2>
-            {scheduledVersions.map((v) => (
-              <div key={v.id} style={{ padding: "9px 0", borderTop: "1px solid #e3e8e5", fontSize: 12 }}>
-                <strong>V{v.version}</strong> · {v.name} · effective {formatDate(v.effective_from)}
-              </div>
-            ))}
-          </section>
-        )}
-
         <section style={cardStyle}>
           <h2 style={{ fontSize: 15, marginTop: 0 }}>Create new pricing version</h2>
-          <div style={{ display: "grid", gap: 10 }}>
-            <label>Pricing name<input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} /></label>
-            <label>Effective from<input type="datetime-local" value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} style={inputStyle} /></label>
-          </div>
+          <p style={{ margin: "0 0 10px", color: "#68766f", fontSize: 12 }}>The publication date and time are taken automatically from the moment you press “Publish pricing version”.</p>
+          <label>Pricing name<input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} /></label>
         </section>
 
         {categories.map((category) => (
@@ -238,7 +217,7 @@ export default function PricingAdminPage() {
 
         {error && <div style={{ ...noticeStyle, color: "#a33", background: "#fff0f0" }}>{error}</div>}
         {message && <div style={noticeStyle}>{message}</div>}
-        <button disabled={saving} onClick={save} style={buttonStyle}>{saving ? "Saving…" : "Publish pricing version"}</button>
+        <button disabled={saving} onClick={save} style={buttonStyle}>{saving ? "Publishing…" : "Publish pricing version"}</button>
       </div>
     </main>
   );
