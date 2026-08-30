@@ -146,13 +146,19 @@ export default function CabSelectionPage() {
         return;
       }
 
-      const { data: version, error: versionError } = await supabase
-        .from("pricing_versions")
-        .select("id,version,status,effective_from")
-        .eq("status", "active")
-        .order("version", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // BUSINESS RULE: customer quotes must use the same effective pricing version
+// that the booking API will use at confirmation time. Future scheduled versions
+// must never affect today's quote.
+const pricingNowIso = new Date().toISOString();
+const { data: version, error: versionError } = await supabase
+  .from("pricing_versions")
+  .select("id,version,status,effective_from")
+  .eq("status", "active")
+  .lte("effective_from", pricingNowIso)
+  .order("effective_from", { ascending: false, nullsFirst: false })
+  .order("version", { ascending: false })
+  .limit(1)
+  .maybeSingle();
       if (cancelled) return;
       if (versionError) {
         setDataStatus("error");
