@@ -22,19 +22,22 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("app/cab-selection/page.js")
           text = path.read_text()
 
-          old = '''      const { data: version, error: versionError } = await supabase
-            .from("pricing_versions")
-            .select("id,version,status,effective_from")
-            .eq("status", "active")
-            .order("version", { ascending: false })
-            .limit(1)
-            .maybeSingle();'''
+          pattern = re.compile(
+              r'(?m)^[ \t]*const \{ data: version, error: versionError \} = await supabase\n'
+              r'[ \t]*\.from\("pricing_versions"\)\n'
+              r'[ \t]*\.select\("id,version,status,effective_from"\)\n'
+              r'[ \t]*\.eq\("status", "active"\)\n'
+              r'[ \t]*\.order\("version", \{ ascending: false \}\)\n'
+              r'[ \t]*\.limit\(1\)\n'
+              r'[ \t]*\.maybeSingle\(\);'
+          )
 
-          new = '''      // BUSINESS RULE: customer quotes must use the same effective pricing version
+          replacement = '''      // BUSINESS RULE: customer quotes must use the same effective pricing version
           // that the booking API will use at confirmation time. Future scheduled versions
           // must never affect today's quote.
           const pricingNowIso = new Date().toISOString();
@@ -48,10 +51,11 @@ jobs:
             .limit(1)
             .maybeSingle();'''
 
-          if old not in text:
-              raise SystemExit("Expected pricing version query was not found; refusing to modify the file.")
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f"Expected pricing version query was not found (matches={count}); refusing to modify the file.")
 
-          path.write_text(text.replace(old, new, 1))
+          path.write_text(text)
           PY
 
       - name: Commit patch and remove temporary workflow
