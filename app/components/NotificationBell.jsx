@@ -203,17 +203,17 @@ export default function NotificationBell({ targetPath = "/account" }) {
       {open && (
         <div
           style={{
-            position: "absolute",
-            top: 50,
-            right: 0,
-            width: "min(360px, calc(100vw - 32px))",
-            maxHeight: 430,
+            position: "fixed",
+            top: 76,
+            right: 12,
+            width: "min(380px, calc(100vw - 24px))",
+            maxHeight: "calc(100vh - 92px)",
             overflow: "hidden",
             borderRadius: 16,
             border: `1px solid ${theme.colors.border}`,
             background: "#ffffff",
             boxShadow: "0 18px 45px rgba(10,40,25,0.16)",
-            zIndex: 100,
+            zIndex: 1000,
           }}
         >
           <div
@@ -252,7 +252,7 @@ export default function NotificationBell({ targetPath = "/account" }) {
             )}
           </div>
 
-          <div style={{ maxHeight: 360, overflowY: "auto" }}>
+          <div style={{ maxHeight: "calc(100vh - 170px)", overflowY: "auto" }}>
             {loading ? (
               <div style={{ padding: 24, textAlign: "center", color: theme.colors.textFaint, fontSize: 12 }}>
                 Loading notifications…
@@ -289,16 +289,16 @@ export default function NotificationBell({ targetPath = "/account" }) {
                         flexShrink: 0,
                       }}
                     />
-                    <span style={{ minWidth: 0 }}>
+                    <span style={{ minWidth: 0, flex: 1 }}>
                       <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: theme.colors.text }}>
+                        <span style={{ minWidth: 0, fontSize: 12, fontWeight: 800, color: theme.colors.text }}>
                           {notification.title}
                         </span>
                         <span style={{ flexShrink: 0, fontSize: 9.5, color: theme.colors.textFaint }}>
                           {formatNotificationTime(notification.created_at)}
                         </span>
                       </span>
-                      <span style={{ display: "block", marginTop: 4, fontSize: 11, lineHeight: 1.45, color: theme.colors.textMuted }}>
+                      <span style={{ display: "block", marginTop: 4, fontSize: 11, lineHeight: 1.45, color: theme.colors.textMuted, overflowWrap: "anywhere" }}>
                         {notification.message}
                       </span>
                     </span>
