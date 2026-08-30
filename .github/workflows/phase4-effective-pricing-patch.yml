@@ -1,0 +1,68 @@
+name: Phase 4 effective pricing patch
+
+on:
+  push:
+    branches:
+      - phase4-pricing-effective
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Apply effective pricing selection fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("app/cab-selection/page.js")
+          text = path.read_text()
+
+          pattern = re.compile(
+              r'(?m)^[ \t]*const \{ data: version, error: versionError \} = await supabase\n'
+              r'[ \t]*\.from\("pricing_versions"\)\n'
+              r'[ \t]*\.select\("id,version,status,effective_from"\)\n'
+              r'[ \t]*\.eq\("status", "active"\)\n'
+              r'[ \t]*\.order\("version", \{ ascending: false \}\)\n'
+              r'[ \t]*\.limit\(1\)\n'
+              r'[ \t]*\.maybeSingle\(\);'
+          )
+
+          replacement = '''      // BUSINESS RULE: customer quotes must use the same effective pricing version
+          // that the booking API will use at confirmation time. Future scheduled versions
+          // must never affect today's quote.
+          const pricingNowIso = new Date().toISOString();
+          const { data: version, error: versionError } = await supabase
+            .from("pricing_versions")
+            .select("id,version,status,effective_from")
+            .eq("status", "active")
+            .lte("effective_from", pricingNowIso)
+            .order("effective_from", { ascending: false, nullsFirst: false })
+            .order("version", { ascending: false })
+            .limit(1)
+            .maybeSingle();'''
+
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f"Expected pricing version query was not found (matches={count}); refusing to modify the file.")
+
+          path.write_text(text)
+          PY
+
+      - name: Commit patch and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/phase4-effective-pricing-patch.yml
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: align customer quotes with effective pricing"
+          git push
