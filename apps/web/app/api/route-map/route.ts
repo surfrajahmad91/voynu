@@ -1,1 +1,1 @@
-export { GET } from "../../../../../app/api/route-map/route";
+export { POST } from "../../../../../app/api/route-map/route";
