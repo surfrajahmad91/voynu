@@ -41,6 +41,8 @@ export default function AdminPage() {
   const [pricingVersions, setPricingVersions] = useState([]);
   const [pricingRules, setPricingRules] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [dispatchMode, setDispatchModeState] = useState("manual");
+  const [dispatchBusy, setDispatchBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -87,10 +89,15 @@ export default function AdminPage() {
     if (ce) return setError(ce.message);
     setPricingVersions(versions || []); setPricingRules(rules || []); setCategories(cats || []);
   };
+  const fetchDispatchMode = async () => {
+    const { data, error: e } = await supabase.from("dispatch_settings").select("mode").eq("id", true).maybeSingle();
+    if (e) return setError(e.message);
+    setDispatchModeState(data?.mode === "automatic" ? "automatic" : "manual");
+  };
 
   useEffect(() => {
     if (!authorized) return;
-    (async () => { setLoading(true); setError(""); await Promise.all([fetchBookings(), fetchDrivers(), fetchVehicles(), fetchPricing()]); setLoading(false); })();
+    (async () => { setLoading(true); setError(""); await Promise.all([fetchBookings(), fetchDrivers(), fetchVehicles(), fetchPricing(), fetchDispatchMode()]); setLoading(false); })();
   }, [authorized]);
 
   const currentPricing = useMemo(() => {
@@ -119,12 +126,35 @@ export default function AdminPage() {
 
   const assignableDrivers = drivers.filter(d => d.active !== false && d.availability_status === "available");
 
-  const confirmPayment = async (booking) => {
-    setError("");
-    const { error: e } = await supabase.from("bookings").update({ payment_status: "paid", booking_status: "confirmed" }).eq("id", booking.id);
+  const handleDispatchToggle = async () => {
+    const next = dispatchMode === "automatic" ? "manual" : "automatic";
+    setDispatchBusy(true); setError(""); setNotice("");
+    const { data: assignedCount, error: e } = await supabase.rpc("set_dispatch_mode", { p_mode: next });
+    setDispatchBusy(false);
     if (e) return setError(e.message);
-    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, payment_status: "paid", booking_status: "confirmed" } : b));
-    setNotice(`Payment confirmed for #${shortId(booking.id)}.`);
+    setDispatchModeState(next);
+    if (next === "automatic") {
+      setNotice(`Automatic driver assignment is ON. ${Number(assignedCount || 0)} existing payment-ready booking(s) were assigned.`);
+    } else {
+      setNotice("Automatic driver assignment is OFF. Eligible bookings will remain awaiting assignment until you assign a driver manually.");
+    }
+    await Promise.all([fetchBookings(), fetchDrivers()]);
+  };
+
+  const confirmPayment = async (booking) => {
+    setError(""); setNotice("");
+    const { data, error: e } = await supabase.rpc("admin_confirm_payment_and_dispatch", { p_booking_id: booking.id });
+    if (e) return setError(e.message);
+    const updated = Array.isArray(data) ? data[0] : data;
+    if (updated?.id) {
+      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...updated } : b));
+      if (updated.driver_id) {
+        await fetchDrivers();
+      }
+    } else {
+      await fetchBookings();
+    }
+    setNotice(updated?.driver_id ? `Payment confirmed and driver assigned to #${shortId(booking.id)}.` : `Payment confirmed for #${shortId(booking.id)}.`);
   };
 
   const assignDriver = async (booking) => {
@@ -151,7 +181,7 @@ export default function AdminPage() {
     const phone = normalizeWhatsApp(booking.phone);
     if (!phone) return setError("This booking does not have a valid WhatsApp phone number.");
     const driver = drivers.find(d => d.id === booking.driver_id);
-    const lines = [`Hello ${booking.passenger_name || ""},`, "", `Your VOYNU booking VOY-${shortId(booking.id)} is confirmed.`, `Trip: ${booking.trip_type === "roundtrip" ? "Round Trip" : "One Way"}`, `Pickup: ${booking.pickup_name || "—"}`, `Destination: ${booking.drop_name || "—"}`, `Travel: ${booking.travel_date || "—"} ${booking.pickup_time || ""}`.trim(), `Vehicle: ${booking.vehicle_type || "—"}`, `Passengers: ${booking.passenger_count || "—"}`, `Fare: ₹${Number(booking.fare || 0).toLocaleString("en-IN")}`, `Payment: ${booking.payment_method === "upi" ? "UPI" : "Pay on Pickup"}`];
+    const lines = [`Hello ${booking.passenger_name || ""}`, "", `Your VOYNU booking VOY-${shortId(booking.id)} is confirmed.`, `Trip: ${booking.trip_type === "roundtrip" ? "Round Trip" : "One Way"}`, `Pickup: ${booking.pickup_name || "—"}`, `Destination: ${booking.drop_name || "—"}`, `Travel: ${booking.travel_date || "—"} ${booking.pickup_time || ""}`.trim(), `Vehicle: ${booking.vehicle_type || "—"}`, `Passengers: ${booking.passenger_count || "—"}`, `Fare: ₹${Number(booking.fare || 0).toLocaleString("en-IN")}`, `Payment: ${booking.payment_method === "upi" ? "UPI" : "Pay on Pickup"}`];
     if (driver) lines.push(`Driver: ${driver.full_name}${driver.phone ? ` (${driver.phone})` : ""}`);
     lines.push("", "Thank you for choosing VOYNU.");
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank", "noopener,noreferrer");
@@ -202,6 +232,20 @@ export default function AdminPage() {
           <StatBox label="COMPLETED" value={stats.completed} accent="#45564c" />
           <StatBox label="REVENUE" value={`₹${stats.revenue}`} accent={theme.colors.primary} />
         </div>
+
+        <section style={{ ...cardStyle, marginBottom: 14, padding: 14, border: `1px solid ${dispatchMode === "automatic" ? theme.colors.primary : "#d9e0dc"}`, background: dispatchMode === "automatic" ? "#f5fbf7" : "#fff" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <strong style={{ fontSize: 13 }}>Automatic driver assignment</strong>
+                <span style={{ padding: "3px 7px", borderRadius: 10, fontSize: 9.5, fontWeight: 800, background: dispatchMode === "automatic" ? theme.colors.primary : "#e9eeeb", color: dispatchMode === "automatic" ? "#fff" : "#526159" }}>{dispatchMode === "automatic" ? "ON" : "OFF"}</span>
+              </div>
+              <div style={{ color: "#68766f", fontSize: 10.5, lineHeight: 1.45, marginTop: 5 }}>{dispatchMode === "automatic" ? "Cash/pay-on-pickup bookings assign automatically after confirmation; UPI bookings assign immediately after admin payment verification." : "Manual mode: bookings will wait for an admin to assign a driver."}</div>
+            </div>
+            <button type="button" disabled={dispatchBusy} onClick={handleDispatchToggle} aria-pressed={dispatchMode === "automatic"} style={{ minWidth: 118, padding: "9px 13px", borderRadius: 20, border: `1px solid ${dispatchMode === "automatic" ? theme.colors.primary : "#cbd5cf"}`, background: dispatchMode === "automatic" ? theme.colors.primary : "#fff", color: dispatchMode === "automatic" ? "#fff" : "#45564c", fontFamily: "ui-monospace, monospace", fontWeight: 800, fontSize: 10.5, cursor: dispatchBusy ? "wait" : "pointer", opacity: dispatchBusy ? 0.65 : 1 }}>{dispatchBusy ? "UPDATING…" : dispatchMode === "automatic" ? "AUTO ASSIGN: ON" : "AUTO ASSIGN: OFF"}</button>
+          </div>
+          <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/admin/dispatch" style={{ ...buttonStyle, textDecoration: "none", background: "#fff", color: "#45564c", border: "1px solid #d9e0dc" }}>OPEN DISPATCH QUEUE</Link></div>
+        </section>
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
           {["bookings", "drivers", "vehicles", "pricing"].map(t => <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>{t}</button>)}
