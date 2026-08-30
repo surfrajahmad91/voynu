@@ -546,8 +546,22 @@ button {
     padding-top: 16px;
   }
 
+  /* Keep the passenger/luggage controls side-by-side on mobile, matching the VOYNU standard layout. */
   .requirementsCard {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .requirementsCard label {
+    gap: 7px;
+  }
+
+  .requirementsCard select {
+    min-width: 70px;
+    width: 70px;
+    height: 44px;
+    padding: 0 9px;
+    flex: 0 0 70px;
   }
 
   .sectionHeading {
