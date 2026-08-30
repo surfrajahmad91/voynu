@@ -1,0 +1,11 @@
+{
+  "name": "VOYNU",
+  "short_name": "VOYNU",
+  "description": "Book your perfect trip with VOYNU",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5faf6",
+  "theme_color": "#0a7d42",
+  "orientation": "portrait-primary",
+  "scope": "/"
+}
