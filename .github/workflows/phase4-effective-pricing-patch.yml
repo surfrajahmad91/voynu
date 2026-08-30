@@ -18,34 +18,41 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply effective pricing selection fix
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           from pathlib import Path
+
           path = Path("app/cab-selection/page.js")
           text = path.read_text()
+
           old = '''      const { data: version, error: versionError } = await supabase
-        .from("pricing_versions")
-        .select("id,version,status,effective_from")
-        .eq("status", "active")
-        .order("version", { ascending: false })
-        .limit(1)
-        .maybeSingle();'''
+            .from("pricing_versions")
+            .select("id,version,status,effective_from")
+            .eq("status", "active")
+            .order("version", { ascending: false })
+            .limit(1)
+            .maybeSingle();'''
+
           new = '''      // BUSINESS RULE: customer quotes must use the same effective pricing version
-      // that the booking API will use at confirmation time. Future scheduled versions
-      // must never affect today's quote.
-      const pricingNowIso = new Date().toISOString();
-      const { data: version, error: versionError } = await supabase
-        .from("pricing_versions")
-        .select("id,version,status,effective_from")
-        .eq("status", "active")
-        .lte("effective_from", pricingNowIso)
-        .order("effective_from", { ascending: false, nullsFirst: false })
-        .order("version", { ascending: false })
-        .limit(1)
-        .maybeSingle();'''
+          // that the booking API will use at confirmation time. Future scheduled versions
+          // must never affect today's quote.
+          const pricingNowIso = new Date().toISOString();
+          const { data: version, error: versionError } = await supabase
+            .from("pricing_versions")
+            .select("id,version,status,effective_from")
+            .eq("status", "active")
+            .lte("effective_from", pricingNowIso)
+            .order("effective_from", { ascending: false, nullsFirst: false })
+            .order("version", { ascending: false })
+            .limit(1)
+            .maybeSingle();'''
+
           if old not in text:
               raise SystemExit("Expected pricing version query was not found; refusing to modify the file.")
+
           path.write_text(text.replace(old, new, 1))
+          PY
 
       - name: Commit patch and remove temporary workflow
         shell: bash
