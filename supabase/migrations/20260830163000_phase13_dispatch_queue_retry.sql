@@ -1,5 +1,4 @@
--- Phase 13: automatically retry confirmed unassigned bookings when an admin enables
--- automatic dispatch or a driver becomes available.
+-- Phase 13: automatically retry confirmed unassigned bookings when a driver becomes available.
 
 create or replace function public.auto_dispatch_pending_confirmed()
 returns integer
@@ -26,8 +25,6 @@ end;
 $function$;
 
 revoke all on function public.auto_dispatch_pending_confirmed() from public,anon,authenticated;
-
-after_driver_available:='';
 
 create or replace function public.retry_auto_dispatch_after_driver_available()
 returns trigger
