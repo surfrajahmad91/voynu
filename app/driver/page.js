@@ -25,7 +25,33 @@ export default function DriverPage() {
   useEffect(() => { let cancelled = false; (async () => { const { data: sessionData } = await supabase.auth.getSession(); if (!sessionData?.session) { router.push("/login"); return; } const email = sessionData.session.user.email; const { data: driverRow, error: driverError } = await supabase.from("drivers").select("*, vehicles(*)").eq("email", email).maybeSingle(); if (cancelled) return; if (driverError || !driverRow || driverRow.active === false) { setNotADriver(true); setChecking(false); return; } setDriver(driverRow); setChecking(false); })(); return () => { cancelled = true; }; }, [router]);
   const fetchBookings = async () => { if (!driver) return; setLoadingBookings(true); const { data, error: fetchError } = await supabase.from("bookings").select("*").eq("driver_id", driver.id).order("travel_date", { ascending: true }); setLoadingBookings(false); if (fetchError) { setError(fetchError.message); return; } setBookings(data || []); };
   useEffect(() => { fetchBookings(); }, [driver]);
-  useEffect(() => { if (!driver) return; const channel = supabase.channel(`voynu-driver-bookings-${driver.id}`).on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `driver_id=eq.${driver.id}` }, () => fetchBookings()).subscribe(); return () => { supabase.removeChannel(channel); }; }, [driver]);
+
+  // Realtime is the primary path. Focus/visibility refresh plus a light polling
+  // fallback make assignment/status changes appear even if a mobile websocket
+  // is temporarily suspended or missed by the browser/PWA runtime.
+  useEffect(() => {
+    if (!driver) return;
+    let disposed = false;
+    const refresh = () => {
+      if (!disposed && typeof document !== "undefined" && document.visibilityState === "visible") fetchBookings();
+    };
+    const channel = supabase.channel(`voynu-driver-bookings-${driver.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `driver_id=eq.${driver.id}` }, () => fetchBookings())
+      .subscribe();
+    const intervalId = setInterval(refresh, 10000);
+    const onFocus = () => refresh();
+    const onVisibility = () => { if (document.visibilityState === "visible") refresh(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      disposed = true;
+      clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+      supabase.removeChannel(channel);
+    };
+  }, [driver]);
+
   useEffect(() => { if (!driver || typeof navigator === "undefined" || !navigator.geolocation) { if (driver) setLocationStatus("Location is not available on this device"); return; } const activeTrip = bookings.find((b) => ACTIVE_STATUSES.includes(b.booking_status)); if (!activeTrip) { setDriverLocation(null); setLocationStatus("Location tracking will start when a trip is active"); return; } setLocationStatus("Requesting location permission…"); const watchId = navigator.geolocation.watchPosition(async (position) => { const point = { lat: position.coords.latitude, lon: position.coords.longitude, updatedAt: new Date().toISOString() }; setDriverLocation(point); const now = Date.now(); if (now - lastLocationSent.current < 5000) return; lastLocationSent.current = now; const { error: locationError } = await supabase.rpc("update_driver_location", { p_booking_id: activeTrip.id, p_lat: point.lat, p_lon: point.lon }); if (locationError) { setLocationStatus(locationError.message); return; } setLocationStatus(`Live location updated ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`); }, (geoError) => { setLocationStatus(geoError.code === 1 ? "Location permission is required for live tracking" : "Unable to read device location"); }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }); return () => navigator.geolocation.clearWatch(watchId); }, [driver, bookings]);
 
   const handleAdvanceStatus = async (booking) => { const step = NEXT_STATUS[booking.booking_status]; if (!step) return; setError(""); const { data, error: updateError } = await supabase.rpc("advance_driver_booking_status", { p_booking_id: booking.id, p_next_status: step.next }); if (updateError) { setError(updateError.message); return; } if (data) { setBookings((prev) => prev.map((b) => b.id === booking.id ? data : b)); if (step.next === "on_the_way") { navigationDismissedRef.current = false; setNavigationBookingId(booking.id); } if (step.next === "trip_started") { navigationDismissedRef.current = false; setNavigationBookingId(booking.id); } } };
