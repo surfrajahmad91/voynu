@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import RealtimeSync from "../components/RealtimeSync";
 
 export const metadata = {
   title: "VOYNU Admin",
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <RealtimeSync />
         {children}
         <script
           dangerouslySetInnerHTML={{
