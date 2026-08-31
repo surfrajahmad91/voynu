@@ -60,6 +60,7 @@ export default function NotificationBell({ targetPath = "/account" }) {
       const { data: rows } = await supabase
         .from("notifications")
         .select("id, booking_id, type, title, message, data, read_at, created_at")
+        .eq("user_id", id)
         .order("created_at", { ascending: false })
         .limit(20);
 
