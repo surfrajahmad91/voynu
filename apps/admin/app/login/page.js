@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../app/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../app/lib/admin";
-import { theme } from "../../../app/lib/theme";
+import { supabase } from "../../../../app/lib/supabaseClient";
+import { ADMIN_EMAILS } from "../../../../app/lib/admin";
+import { theme } from "../../../../app/lib/theme";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -29,14 +29,12 @@ export default function AdminLoginPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
-
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (signInError) {
       setLoading(false);
       setError(signInError.message);
       return;
     }
-
     const loggedInEmail = data?.user?.email || "";
     if (!ADMIN_EMAILS.includes(loggedInEmail)) {
       await supabase.auth.signOut();
@@ -44,7 +42,6 @@ export default function AdminLoginPage() {
       setError("This account is not authorized for VOYNU Admin.");
       return;
     }
-
     router.replace("/admin");
   };
 
@@ -56,7 +53,6 @@ export default function AdminLoginPage() {
         <div style={{ width: 52, height: 52, display: "grid", placeItems: "center", borderRadius: 14, background: theme.gradients.primary, color: "#fff", fontWeight: 900, fontSize: 22 }}>V</div>
         <h1 style={{ margin: "18px 0 5px", fontSize: 25, fontWeight: 850 }}>VOYNU Admin</h1>
         <p style={{ margin: 0, fontSize: 13, color: theme.colors.textFaint }}>Authorized operations access</p>
-
         <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Admin email" autoComplete="email" required style={{ width: "100%", height: 48, boxSizing: "border-box", padding: "0 13px", borderRadius: 11, border: `1px solid ${theme.colors.border}`, background: "#f8faf9", fontFamily: theme.fontFamily }} />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" autoComplete="current-password" required style={{ width: "100%", height: 48, boxSizing: "border-box", padding: "0 13px", borderRadius: 11, border: `1px solid ${theme.colors.border}`, background: "#f8faf9", fontFamily: theme.fontFamily }} />
