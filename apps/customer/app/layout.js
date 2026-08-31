@@ -4,6 +4,10 @@ export const metadata = {
   title: "VOYNU",
   description: "Book your perfect trip with VOYNU",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: { capable: true, title: "VOYNU", statusBarStyle: "default" },
 };
 
