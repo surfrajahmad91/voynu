@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import RealtimeSync from "../components/RealtimeSync";
+import NotificationBell from "../../../app/components/NotificationBell";
 
 export const metadata = {
   title: "VOYNU Admin",
@@ -20,6 +21,16 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <RealtimeSync />
+        <div
+          style={{
+            position: "fixed",
+            top: 7,
+            right: 105,
+            zIndex: 100,
+          }}
+        >
+          <NotificationBell targetPath="/admin" />
+        </div>
         {children}
         <script
           dangerouslySetInnerHTML={{
