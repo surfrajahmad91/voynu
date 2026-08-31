@@ -21,7 +21,10 @@ function calculateFareFromData({ vehicle, pricing, oneWayDistanceKm, tripType })
   const distanceFare = billedDistanceKm * pricing.perKmRate;
   const driverAllowance = normalizedTripType === "roundtrip" ? pricing.driverAllowancePerDay : 0;
   const rawFare = pricing.baseFare + distanceFare + driverAllowance;
-  const totalFare = Math.round(Math.max(rawFare, pricing.minimumFare) / pricing.roundingUnit) * pricing.roundingUnit;
+  const fareBeforeRounding = Math.max(rawFare, pricing.minimumFare);
+  const totalFare = Math.round(fareBeforeRounding / pricing.roundingUnit) * pricing.roundingUnit;
+  const minimumFareApplies = rawFare < pricing.minimumFare;
+  const minimumFareAdjustment = minimumFareApplies ? Math.max(0, totalFare - rawFare) : 0;
 
   return {
     vehicleTypeId: vehicle.id,
@@ -34,8 +37,13 @@ function calculateFareFromData({ vehicle, pricing, oneWayDistanceKm, tripType })
     imageUrl: vehicle.image_url || null,
     billedDistanceKm,
     baseFare: pricing.baseFare,
-    distanceFare: Math.round(distanceFare),
+    distanceFare: Math.round(distanceFare * 100) / 100,
     driverAllowance,
+    rawFare: Math.round(rawFare * 100) / 100,
+    minimumFare: pricing.minimumFare,
+    minimumFareApplies,
+    minimumFareAdjustment: Math.round(minimumFareAdjustment * 100) / 100,
+    itemizedSubtotal: Math.round((pricing.baseFare + distanceFare + driverAllowance) * 100) / 100,
     totalFare,
   };
 }
