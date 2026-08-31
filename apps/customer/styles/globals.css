@@ -10,3 +10,10 @@ main > div > div:first-child > div:first-child { background-color:var(--voynu-de
 main > header > div > strong { font-size:0!important; display:flex!important; align-items:center!important; gap:9px!important; color:#fff!important; }
 main > header > div > strong::before { content:""; width:30px; height:30px; flex:0 0 30px; display:block; background:url("/icon.svg") center/contain no-repeat; }
 main > header > div > strong::after { content:"VOYNU ADMIN"; font-size:14px; font-weight:800; letter-spacing:.4px; color:#fff; }
+
+/* Auth landing receives the same Open Road palette while keeping the existing layout. */
+main:has(> header + section) { background:linear-gradient(160deg,#ffffff 0%,#f2f7f3 55%,#e8f3eb 100%) !important; color:#111111 !important; }
+main:has(> header + section) h1 span { color:var(--voynu-green) !important; }
+main:has(> header + section) a[href="/signup"] { background:linear-gradient(135deg,#27A745,#0B2E1E) !important; }
+main:has(> header + section) a[href="/login"] { color:var(--voynu-deep) !important; }
+main:has(> header + section) footer { background:#0B2E1E !important; }
