@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./fare-transparency.css";
 
 import RoleNotificationBell from "./components/RoleNotificationBell";
 
