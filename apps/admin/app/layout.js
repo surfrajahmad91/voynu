@@ -5,9 +5,13 @@ export const metadata = {
   title: "VOYNU Admin",
   description: "VOYNU administration app",
   manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "VOYNU Admin", statusBarStyle: "default" },
 };
 
 export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
   themeColor: "#0b7a3e",
 };
 
