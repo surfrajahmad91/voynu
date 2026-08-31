@@ -1,6 +1,18 @@
 import "../styles/globals.css";
 
-export const metadata = { title: "VOYNU", description: "Book your perfect trip with VOYNU" };
+export const metadata = {
+  title: "VOYNU",
+  description: "Book your perfect trip with VOYNU",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "VOYNU", statusBarStyle: "default" },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0b7a3e",
+};
 
 export default function RootLayout({ children }) {
   return (
