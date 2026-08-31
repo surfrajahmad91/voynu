@@ -6,10 +6,21 @@ export const metadata = {
   manifest: "/manifest.webmanifest",
 };
 
+export const viewport = {
+  themeColor: "#0b7a3e",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}`,
+          }}
+        />
+      </body>
     </html>
   );
 }
