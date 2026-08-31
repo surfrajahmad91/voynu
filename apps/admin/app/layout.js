@@ -1,5 +1,4 @@
 import "../styles/globals.css";
-import RealtimeSync from "../components/RealtimeSync";
 import NotificationBell from "../../../app/components/NotificationBell";
 
 export const metadata = {
@@ -20,7 +19,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <RealtimeSync />
         <div
           style={{
             position: "fixed",
