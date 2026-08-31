@@ -5,6 +5,10 @@ export const metadata = {
   title: "VOYNU Admin",
   description: "VOYNU administration app",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: { capable: true, title: "VOYNU Admin", statusBarStyle: "default" },
 };
 
