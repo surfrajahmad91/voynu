@@ -1,1 +1,12 @@
 @import "../../../app/globals.css";
+
+/* VOYNU Open Road brand layer */
+:root { --voynu-deep:#0B2E1E; --voynu-green:#27A745; --voynu-lime:#8ED444; --voynu-bg:#F2F4F6; --voynu-black:#111111; }
+body { background:var(--voynu-bg); }
+header > div > a > div:first-child,
+header > div > div:first-child > div:first-child,
+form > div:first-child,
+main > div > div:first-child > div:first-child { background-color:var(--voynu-deep)!important; background-image:url("/icon.svg")!important; background-position:center!important; background-repeat:no-repeat!important; background-size:cover!important; color:transparent!important; font-size:0!important; }
+main > header > div > strong { font-size:0!important; display:flex!important; align-items:center!important; gap:9px!important; color:#fff!important; }
+main > header > div > strong::before { content:""; width:30px; height:30px; flex:0 0 30px; display:block; background:url("/icon.svg") center/contain no-repeat; }
+main > header > div > strong::after { content:"VOYNU ADMIN"; font-size:14px; font-weight:800; letter-spacing:.4px; color:#fff; }
