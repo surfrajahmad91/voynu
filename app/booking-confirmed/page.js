@@ -93,6 +93,8 @@ export default function BookingConfirmedPage() {
   const distanceFare = Number(fare.distanceFare) || 0;
   const driverAllowance = Number(fare.driverAllowance) || 0;
   const totalFare = Number(fare.totalFare) || 0;
+  const itemizedSubtotal = baseFare + distanceFare + driverAllowance;
+  const minimumFareAdjustment = Math.max(0, totalFare - itemizedSubtotal);
 
   return (
     <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}>
@@ -150,21 +152,29 @@ export default function BookingConfirmedPage() {
             <div style={{ color: theme.colors.textFaint, fontSize: 10.5, fontWeight: 700 }}>Transparent pricing</div>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.textMuted, fontSize: 12.5 }}>
-            <span>Base fare</span><span>₹{baseFare}</span>
+            <span>Base fare</span><span>₹{baseFare.toFixed(2)}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.textMuted, fontSize: 12.5 }}>
-            <span>Distance{Number.isFinite(billedDistanceKm) ? ` (${billedDistanceKm.toFixed(1)} km)` : ""}</span><span>₹{distanceFare}</span>
+            <span>Distance{Number.isFinite(billedDistanceKm) ? ` (${billedDistanceKm.toFixed(1)} km)` : ""}</span><span>₹{distanceFare.toFixed(2)}</span>
           </div>
           {driverAllowance > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.textMuted, fontSize: 12.5 }}>
-              <span>Driver allowance</span><span>₹{driverAllowance}</span>
+              <span>Driver allowance</span><span>₹{driverAllowance.toFixed(2)}</span>
+            </div>
+          )}
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 7, paddingTop: 13, borderTop: `1px solid ${theme.colors.border}`, color: theme.colors.textMuted, fontSize: 13, fontWeight: 700 }}>
+            <span>Itemized subtotal</span><span>₹{itemizedSubtotal.toFixed(2)}</span>
+          </div>
+          {minimumFareAdjustment > 0.009 && (
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "8px 0", color: theme.colors.warning, fontSize: 12.5, fontWeight: 700 }}>
+              <span>Minimum fare adjustment</span><span>₹{minimumFareAdjustment.toFixed(2)}</span>
             </div>
           )}
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 7, paddingTop: 13, borderTop: `1px solid ${theme.colors.border}`, color: theme.colors.text, fontSize: 16, fontWeight: 800 }}>
-            <span>Total fare</span><span>₹{totalFare}</span>
+            <span>Total fare</span><span>₹{totalFare.toFixed(2)}</span>
           </div>
           <div style={{ marginTop: 9, color: theme.colors.textFaint, fontSize: 10.5, lineHeight: 1.45 }}>
-            No hidden charges. The displayed fare is based on the active VOYNU pricing rules for this journey.
+            No hidden charges. When the minimum fare applies, the adjustment shown above brings the itemized subtotal up to the applicable minimum fare.
           </div>
         </section>
 
