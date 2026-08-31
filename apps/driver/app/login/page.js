@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "../../../../lib/supabaseClient";
+import { supabase } from "../../../../app/lib/supabaseClient";
 
 export default function SaarthiLoginPage() {
   const router = useRouter();
@@ -51,17 +51,14 @@ export default function SaarthiLoginPage() {
             <div style={{ color: "#718078", fontSize: 12, marginTop: 2 }}>Driver app</div>
           </div>
         </div>
-
         <h1 style={{ margin: "0 0 6px", fontSize: 22 }}>Saarthi login</h1>
         <p style={{ margin: "0 0 22px", color: "#718078", fontSize: 13 }}>Sign in with your registered driver account.</p>
-
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ height: 50, border: "1.5px solid #e3e9e5", borderRadius: 12, padding: "0 14px", fontSize: 14, boxSizing: "border-box" }} />
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ height: 50, border: "1.5px solid #e3e9e5", borderRadius: 12, padding: "0 14px", fontSize: 14, boxSizing: "border-box" }} />
           {error && <div style={{ color: "#b42318", fontSize: 12.5, fontWeight: 600, lineHeight: 1.5 }}>{error}</div>}
           <button type="submit" disabled={loading} style={{ height: 52, border: 0, borderRadius: 13, background: "#0b7a3e", color: "#fff", fontWeight: 800, fontSize: 14, cursor: loading ? "wait" : "pointer", opacity: loading ? .7 : 1 }}>{loading ? "Signing in..." : "Sign in to Saarthi"}</button>
         </form>
-
         <Link href="/forgot-password" style={{ display: "block", marginTop: 18, textAlign: "center", color: "#0b7a3e", fontSize: 12.5, fontWeight: 700 }}>Forgot password?</Link>
       </div>
     </main>
