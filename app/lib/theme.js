@@ -2,34 +2,34 @@ export const theme = {
   fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
 
   colors: {
-    bg: "#f5faf6",
+    bg: "#f2f4f6",
     surface: "#ffffff",
-    border: "#e5ede8",
-    borderStrong: "#dcebe1",
+    border: "#dfe7e2",
+    borderStrong: "#cfdcd4",
 
-    text: "#16241d",
-    textMuted: "#5c6d64",
-    textFaint: "#8a9790",
+    text: "#111111",
+    textMuted: "#52625a",
+    textFaint: "#7a8780",
 
-    primary: "#0a7d42",
-    primaryDark: "#075c31",
-    primaryTint: "#eaf6ee",
+    primary: "#27a745",
+    primaryDark: "#0b2e1e",
+    primaryTint: "#eaf7e8",
 
-    accent: "#c8622a",
+    accent: "#8ed444",
 
-    success: "#0a7d42",
-    successBg: "#eef9f1",
+    success: "#27a745",
+    successBg: "#edf8ea",
     error: "#c64a3f",
     errorBg: "#fff5f3",
     warning: "#7a5a10",
     warningBg: "#fdf3dc",
 
-    footerBg: "#12211a",
+    footerBg: "#0b2e1e",
   },
 
   gradients: {
-    primary: "linear-gradient(135deg, #0a7d42, #075c31)",
-    hero: "linear-gradient(160deg, #ffffff 0%, #f1faf4 55%, #e6f5ec 100%)",
+    primary: "linear-gradient(135deg, #27a745, #0b2e1e)",
+    hero: "linear-gradient(160deg, #ffffff 0%, #f2f7f3 55%, #e8f3eb 100%)",
   },
 
   radius: {
@@ -41,9 +41,9 @@ export const theme = {
   },
 
   shadow: {
-    card: "0 12px 30px rgba(10,40,25,0.06)",
-    raised: "0 30px 80px -20px rgba(10,40,25,0.20)",
-    button: "0 10px 24px rgba(8,120,63,.24)",
+    card: "0 12px 30px rgba(11,46,30,0.07)",
+    raised: "0 30px 80px -20px rgba(11,46,30,0.20)",
+    button: "0 10px 24px rgba(39,167,69,.24)",
   },
 
   maxWidth: {
