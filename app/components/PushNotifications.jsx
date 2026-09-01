@@ -12,7 +12,7 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
-export default function PushNotifications({ targetPath = "/account" }) {
+export default function PushNotifications({ targetPath = "/account", audience = "customer" }) {
   const [userId, setUserId] = useState(null);
   const [supported, setSupported] = useState(true);
   const [permission, setPermission] = useState("default");
@@ -39,9 +39,6 @@ export default function PushNotifications({ targetPath = "/account" }) {
       if (!registration) return;
       const subscription = await registration.pushManager.getSubscription();
 
-      // Do not mark an existing browser subscription as enabled unless it is
-      // known to be saved successfully. This prevents a stale subscription
-      // from permanently hiding the Enable prompt after the server removes it.
       if (subscription) {
         const saved = await saveSubscription(id, subscription);
         if (saved && !cancelled) setEnabled(true);
@@ -56,7 +53,7 @@ export default function PushNotifications({ targetPath = "/account" }) {
       cancelled = true;
       listener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [audience]);
 
   async function saveSubscription(id, subscription) {
     const json = subscription.toJSON();
@@ -67,6 +64,7 @@ export default function PushNotifications({ targetPath = "/account" }) {
     const { error } = await supabase.from("push_subscriptions").upsert(
       {
         user_id: id,
+        audience,
         endpoint,
         p256dh,
         auth,
@@ -90,13 +88,7 @@ export default function PushNotifications({ targetPath = "/account" }) {
 
       const registration = await navigator.serviceWorker.register("/sw.js");
       const existing = await registration.pushManager.getSubscription();
-
-      // A subscription that was previously rejected by the push provider can
-      // remain in the browser. Explicitly replace it when the user enables
-      // notifications so the server receives a genuinely fresh endpoint.
-      if (existing) {
-        await existing.unsubscribe().catch(() => {});
-      }
+      if (existing) await existing.unsubscribe().catch(() => {});
 
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -117,57 +109,13 @@ export default function PushNotifications({ targetPath = "/account" }) {
   if (!userId || !supported || enabled || dismissed || permission === "denied") return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        left: 14,
-        right: 14,
-        bottom: "max(14px, env(safe-area-inset-bottom))",
-        zIndex: 1200,
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "11px 12px 11px 14px",
-        borderRadius: 16,
-        background: "#ffffff",
-        border: "1px solid #dce7e1",
-        boxShadow: "0 12px 35px rgba(10,40,25,0.16)",
-        fontFamily: "Arial, Helvetica, sans-serif",
-      }}
-    >
+    <div style={{ position: "fixed", left: 14, right: 14, bottom: "max(14px, env(safe-area-inset-bottom))", zIndex: 1200, display: "flex", alignItems: "center", gap: 10, padding: "11px 12px 11px 14px", borderRadius: 16, background: "#ffffff", border: "1px solid #dce7e1", boxShadow: "0 12px 35px rgba(10,40,25,0.16)", fontFamily: "Arial, Helvetica, sans-serif" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 800, color: "#12251a" }}>Stay updated with VOYNU</div>
-        <div style={{ marginTop: 2, fontSize: 10.5, lineHeight: 1.35, color: "#617168" }}>
-          Get booking and trip updates on your phone.
-        </div>
+        <div style={{ marginTop: 2, fontSize: 10.5, lineHeight: 1.35, color: "#617168" }}>Get booking and trip updates on your phone.</div>
       </div>
-      <button
-        type="button"
-        onClick={enable}
-        disabled={busy}
-        style={{
-          flexShrink: 0,
-          border: 0,
-          borderRadius: 20,
-          padding: "9px 13px",
-          background: "#0b7a3e",
-          color: "#ffffff",
-          fontSize: 10.5,
-          fontWeight: 800,
-          cursor: busy ? "wait" : "pointer",
-          opacity: busy ? 0.7 : 1,
-        }}
-      >
-        {busy ? "Enabling…" : "Enable"}
-      </button>
-      <button
-        type="button"
-        aria-label="Dismiss notification prompt"
-        onClick={() => setDismissed(true)}
-        style={{ border: 0, background: "transparent", color: "#7a8880", fontSize: 18, lineHeight: 1, padding: 4, cursor: "pointer" }}
-      >
-        ×
-      </button>
+      <button type="button" onClick={enable} disabled={busy} style={{ flexShrink: 0, border: 0, borderRadius: 20, padding: "9px 13px", background: "#0b7a3e", color: "#ffffff", fontSize: 10.5, fontWeight: 800, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.7 : 1 }}>{busy ? "Enabling…" : "Enable"}</button>
+      <button type="button" aria-label="Dismiss notification prompt" onClick={() => setDismissed(true)} style={{ border: 0, background: "transparent", color: "#7a8880", fontSize: 18, lineHeight: 1, padding: 4, cursor: "pointer" }}>×</button>
     </div>
   );
 }
