@@ -38,14 +38,19 @@ export default function PushNotifications({ targetPath = "/account" }) {
       const registration = await navigator.serviceWorker.register("/sw.js").catch(() => null);
       if (!registration) return;
       const subscription = await registration.pushManager.getSubscription();
+
+      // Do not mark an existing browser subscription as enabled unless it is
+      // known to be saved successfully. This prevents a stale subscription
+      // from permanently hiding the Enable prompt after the server removes it.
       if (subscription) {
-        await saveSubscription(id, subscription);
-        if (!cancelled) setEnabled(true);
+        const saved = await saveSubscription(id, subscription);
+        if (saved && !cancelled) setEnabled(true);
       }
     };
     setup();
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id || null);
+      setEnabled(false);
     });
     return () => {
       cancelled = true;
@@ -77,22 +82,33 @@ export default function PushNotifications({ targetPath = "/account" }) {
     if (!userId || busy || !supported) return;
     setBusy(true);
     try {
-      const nextPermission = await Notification.requestPermission();
+      const nextPermission = Notification.permission === "granted"
+        ? "granted"
+        : await Notification.requestPermission();
       setPermission(nextPermission);
       if (nextPermission !== "granted") return;
+
       const registration = await navigator.serviceWorker.register("/sw.js");
-      let subscription = await registration.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        });
+      const existing = await registration.pushManager.getSubscription();
+
+      // A subscription that was previously rejected by the push provider can
+      // remain in the browser. Explicitly replace it when the user enables
+      // notifications so the server receives a genuinely fresh endpoint.
+      if (existing) {
+        await existing.unsubscribe().catch(() => {});
       }
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+
       const saved = await saveSubscription(userId, subscription);
       if (!saved) throw new Error("Could not save notification subscription.");
       setEnabled(true);
     } catch (error) {
       console.error("VOYNU push notification setup failed", error);
+      setEnabled(false);
     } finally {
       setBusy(false);
     }
