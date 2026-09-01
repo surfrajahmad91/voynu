@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import NotificationBell from "../../../app/components/NotificationBell";
+import PushNotifications from "../../../app/components/PushNotifications";
 
 export const metadata = {
   title: "VOYNU Saarthi",
@@ -23,17 +24,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <div
-          style={{
-            position: "fixed",
-            top: 78,
-            right: 14,
-            zIndex: 100,
-          }}
-        >
+        <div style={{ position: "fixed", top: 78, right: 14, zIndex: 100 }}>
           <NotificationBell targetPath="/driver" />
         </div>
         {children}
+        <PushNotifications targetPath="/driver" />
         <script dangerouslySetInnerHTML={{__html:`if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}`}} />
       </body>
     </html>
