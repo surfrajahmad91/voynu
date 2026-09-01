@@ -26,6 +26,9 @@ export default function PricingAdminPage() {
   const [versions, setVersions] = useState([]);
   const [rules, setRules] = useState({});
   const [name, setName] = useState("");
+  const [waitingFee, setWaitingFee] = useState(50);
+  const [waitingInterval, setWaitingInterval] = useState(15);
+  const [maxWaiting, setMaxWaiting] = useState(180);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -34,7 +37,7 @@ export default function PricingAdminPage() {
     setError("");
     const { data: cats, error: catError } = await supabase.from("vehicle_categories").select("id,name,slug,active,sort_order").order("sort_order");
     if (catError) return setError(catError.message);
-    const { data: versionRows, error: versionError } = await supabase.from("pricing_versions").select("id,version,name,status,effective_from,created_at").eq("status", "active").order("version", { ascending: false });
+    const { data: versionRows, error: versionError } = await supabase.from("pricing_versions").select("id,version,name,status,effective_from,created_at,waiting_fee_per_interval,waiting_interval_minutes,max_roundtrip_wait_minutes").eq("status", "active").order("version", { ascending: false });
     if (versionError) return setError(versionError.message);
     setCategories((cats || []).filter((c) => c.active));
     setVersions(versionRows || []);
@@ -42,12 +45,16 @@ export default function PricingAdminPage() {
     const current = (versionRows || [])[0];
     if (!current) {
       setName("Current Pricing");
+      setWaitingFee(50); setWaitingInterval(15); setMaxWaiting(180);
       setRules({});
       setReady(true);
       return;
     }
 
     setName(current.name || `Pricing v${current.version}`);
+    setWaitingFee(Number(current.waiting_fee_per_interval ?? 50));
+    setWaitingInterval(Number(current.waiting_interval_minutes ?? 15));
+    setMaxWaiting(Number(current.max_roundtrip_wait_minutes ?? 180));
     const { data: existing, error: ruleError } = await supabase.from("pricing_rules").select("*").eq("pricing_version_id", current.id);
     if (ruleError) return setError(ruleError.message);
     const map = {};
@@ -78,28 +85,31 @@ export default function PricingAdminPage() {
   };
 
   const save = async () => {
-    setSaving(true);
-    setError("");
-    setMessage("");
+    setSaving(true); setError(""); setMessage("");
     try {
+      const fee = Number(waitingFee);
+      const interval = Number(waitingInterval);
+      const maximum = Number(maxWaiting);
+      if (!Number.isFinite(fee) || fee < 0) throw new Error("Waiting fee must be zero or more.");
+      if (!Number.isInteger(interval) || interval <= 0) throw new Error("Waiting interval must be a positive whole number of minutes.");
+      if (!Number.isInteger(maximum) || maximum < 0) throw new Error("Maximum round-trip waiting must be zero or more minutes.");
+      if (maximum % interval !== 0) throw new Error("Maximum waiting time should be a multiple of the waiting interval.");
+
       const { data: user } = await supabase.auth.getUser();
       const { data: latest } = await supabase.from("pricing_versions").select("version").order("version", { ascending: false }).limit(1).maybeSingle();
       const nextVersion = (latest?.version || 0) + 1;
       const effectiveIso = new Date().toISOString();
 
-      // Create the new version as archived first. This prevents a failed rule insert
-      // from leaving production without a usable pricing version.
-      const { data: version, error: versionError } = await supabase
-        .from("pricing_versions")
-        .insert({
-          version: nextVersion,
-          name: name.trim() || `Pricing v${nextVersion}`,
-          status: "archived",
-          effective_from: effectiveIso,
-          created_by: user?.user?.id || null,
-        })
-        .select("id,version,effective_from")
-        .single();
+      const { data: version, error: versionError } = await supabase.from("pricing_versions").insert({
+        version: nextVersion,
+        name: name.trim() || `Pricing v${nextVersion}`,
+        status: "archived",
+        effective_from: effectiveIso,
+        created_by: user?.user?.id || null,
+        waiting_fee_per_interval: fee,
+        waiting_interval_minutes: interval,
+        max_roundtrip_wait_minutes: maximum,
+      }).select("id,version,effective_from").single();
       if (versionError) throw versionError;
 
       const rows = [];
@@ -118,13 +128,10 @@ export default function PricingAdminPage() {
           });
         }
       }
-
       const { error: ruleError } = await supabase.from("pricing_rules").insert(rows);
       if (ruleError) throw ruleError;
-
       const { error: activateError } = await supabase.from("pricing_versions").update({ status: "active" }).eq("id", version.id);
       if (activateError) throw activateError;
-
       const { error: archiveError } = await supabase.from("pricing_versions").update({ status: "archived" }).eq("status", "active").neq("id", version.id);
       if (archiveError) throw archiveError;
 
@@ -132,9 +139,7 @@ export default function PricingAdminPage() {
       await load();
     } catch (e) {
       setError(e.message || "Unable to save pricing.");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const currentVersion = useMemo(() => versions[0], [versions]);
@@ -146,46 +151,32 @@ export default function PricingAdminPage() {
         <strong>VOYNU ADMIN · PRICING</strong>
         <Link href="/admin" style={{ color: "#fff", textDecoration: "none", fontSize: 12 }}>← Dashboard</Link>
       </header>
-
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: 18 }}>
         <section style={cardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 20 }}>Pricing control</h1>
-              <p style={{ margin: "6px 0 0", color: "#68766f", fontSize: 12 }}>Change the price whenever you need. The new price applies immediately to new bookings.</p>
-            </div>
-            <div style={{ fontSize: 12 }}>
-              <strong>Current:</strong> {currentVersion ? `V${currentVersion.version} · ${currentVersion.name}` : "Not configured"}
-              {currentVersion?.created_at && <div style={{ color: "#68766f", marginTop: 4 }}>Updated {formatDate(currentVersion.created_at)}</div>}
-            </div>
+            <div><h1 style={{ margin: 0, fontSize: 20 }}>Pricing control</h1><p style={{ margin: "6px 0 0", color: "#68766f", fontSize: 12 }}>Change prices and round-trip waiting rules. New settings apply immediately to new bookings.</p></div>
+            <div style={{ fontSize: 12 }}><strong>Current:</strong> {currentVersion ? `V${currentVersion.version} · ${currentVersion.name}` : "Not configured"}{currentVersion?.created_at && <div style={{ color: "#68766f", marginTop: 4 }}>Updated {formatDate(currentVersion.created_at)}</div>}</div>
           </div>
         </section>
 
         <section style={cardStyle}>
-          <h2 style={{ fontSize: 15, marginTop: 0 }}>Update pricing</h2>
-          <label>Pricing name<input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} /></label>
-          <p style={{ margin: "8px 0 0", color: "#68766f", fontSize: 12 }}>When you publish, the new rates are used immediately for new bookings. Bookings already created keep their stored fare.</p>
+          <h2 style={{ fontSize: 15, marginTop: 0 }}>Round-trip waiting policy</h2>
+          <p style={{ margin: "6px 0 14px", color: "#68766f", fontSize: 12 }}>Drivers remain reserved while passengers wait at the destination. Waiting is calculated from estimated arrival until the requested return time, rounded up to the configured interval.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 10 }}>
+            <label>Waiting fee / interval (₹)<input type="number" min="0" step="1" value={waitingFee} onChange={(e) => setWaitingFee(e.target.value)} style={inputStyle} /></label>
+            <label>Interval (minutes)<input type="number" min="1" step="1" value={waitingInterval} onChange={(e) => setWaitingInterval(e.target.value)} style={inputStyle} /></label>
+            <label>Maximum waiting (minutes)<input type="number" min="0" step="1" value={maxWaiting} onChange={(e) => setMaxWaiting(e.target.value)} style={inputStyle} /></label>
+          </div>
+          <div style={{ marginTop: 10, padding: 10, borderRadius: 7, background: "#eef8f1", color: "#08783f", fontSize: 12 }}><strong>Current default:</strong> ₹50 every 15 minutes, maximum 180 minutes (3 hours).</div>
         </section>
 
-        {categories.map((category) => (
-          <section key={category.id} style={cardStyle}>
-            <h2 style={{ fontSize: 15, marginTop: 0 }}>{category.name}</h2>
-            {["oneway", "roundtrip"].map((tripType) => (
-              <div key={tripType} style={{ marginTop: 14 }}>
-                <h3 style={{ fontSize: 12 }}>{tripType === "oneway" ? "One Way" : "Round Trip"}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 8 }}>
-                  {[["base_fare", "Base"], ["per_km_rate", "Per km"], ["driver_allowance_per_day", "Driver/day"], ["minimum_fare", "Minimum"], ["rounding_unit", "Round"]].map(([field, label]) => (
-                    <label key={field}>{label}<input type="number" min="0" step="0.01" value={rules[`${category.id}:${tripType}`]?.[field] ?? ""} onChange={(e) => updateRule(category.id, tripType, field, e.target.value)} style={inputStyle} /></label>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
-        ))}
+        <section style={cardStyle}><h2 style={{ fontSize: 15, marginTop: 0 }}>Update pricing</h2><label>Pricing name<input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} /></label><p style={{ margin: "8px 0 0", color: "#68766f", fontSize: 12 }}>Publishing creates a new pricing version. Existing bookings retain their stored fare and waiting policy.</p></section>
+
+        {categories.map((category) => <section key={category.id} style={cardStyle}><h2 style={{ fontSize: 15, marginTop: 0 }}>{category.name}</h2>{["oneway", "roundtrip"].map((tripType) => <div key={tripType} style={{ marginTop: 14 }}><h3 style={{ fontSize: 12 }}>{tripType === "oneway" ? "One Way" : "Round Trip"}</h3><div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 8 }}>{[["base_fare", "Base"], ["per_km_rate", "Per km"], ["driver_allowance_per_day", "Driver/day"], ["minimum_fare", "Minimum"], ["rounding_unit", "Round"]].map(([field, label]) => <label key={field}>{label}<input type="number" min="0" step="0.01" value={rules[`${category.id}:${tripType}`]?.[field] ?? ""} onChange={(e) => updateRule(category.id, tripType, field, e.target.value)} style={inputStyle} /></label>)}</div></div>)}</section>)}
 
         {error && <div style={{ ...noticeStyle, color: "#a33", background: "#fff0f0" }}>{error}</div>}
         {message && <div style={noticeStyle}>{message}</div>}
-        <button disabled={saving} onClick={save} style={buttonStyle}>{saving ? "Saving…" : "Update pricing now"}</button>
+        <button disabled={saving} onClick={save} style={buttonStyle}>{saving ? "Saving…" : "Publish pricing & waiting rules"}</button>
       </div>
     </main>
   );
