@@ -25,22 +25,21 @@ export default function DateTimeBookingGuard() {
     const get = (id) => document.getElementById(id);
 
     const ensureStyles = () => {
-      if (document.getElementById("voynu-datetime-polish-v2")) return;
+      if (document.getElementById("voynu-datetime-polish-v3")) return;
       const style = document.createElement("style");
-      style.id = "voynu-datetime-polish-v2";
+      style.id = "voynu-datetime-polish-v3";
       style.textContent = `
         .voynu-datetime-wrap{position:relative!important}
-        input[data-voynu-datetime-v2="true"]{box-sizing:border-box!important;width:100%!important;min-height:58px!important;padding:0 48px 0 50px!important;border:1.5px solid #dbe8e0!important;border-radius:16px!important;background:#f9fcfa!important;color:#183128!important;font-size:17px!important;font-weight:750!important;box-shadow:0 2px 8px rgba(18,70,43,.05)!important;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease!important}
-        input[data-voynu-datetime-v2="true"]:focus{border-color:#08783f!important;background:#fff!important;box-shadow:0 0 0 4px rgba(8,120,63,.10),0 4px 12px rgba(18,70,43,.07)!important;outline:none!important}
-        input[data-voynu-datetime-v2="true"][data-voynu-datetime-invalid="true"]{border-color:#d34f43!important;background:#fff8f7!important;box-shadow:0 0 0 4px rgba(211,79,67,.09)!important}
-        input[data-voynu-datetime-v2="true"]::-webkit-calendar-picker-indicator{opacity:.7;cursor:pointer;width:22px;height:22px}
+        input[data-voynu-datetime-v3="true"]{box-sizing:border-box!important;width:100%!important;min-height:58px!important;padding:0 48px 0 50px!important;border:1.5px solid #dbe8e0!important;border-radius:16px!important;background:#f9fcfa!important;color:#183128!important;font-size:17px!important;font-weight:750!important;box-shadow:0 2px 8px rgba(18,70,43,.05)!important;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease!important}
+        input[data-voynu-datetime-v3="true"]:focus{border-color:#08783f!important;background:#fff!important;box-shadow:0 0 0 4px rgba(8,120,63,.10),0 4px 12px rgba(18,70,43,.07)!important;outline:none!important}
+        input[data-voynu-datetime-v3="true"][data-voynu-datetime-invalid="true"]{border-color:#d34f43!important;background:#fff8f7!important;box-shadow:0 0 0 4px rgba(211,79,67,.09)!important}
+        input[data-voynu-datetime-v3="true"]::-webkit-calendar-picker-indicator{opacity:.7;cursor:pointer;width:22px;height:22px}
         .voynu-datetime-icon{position:absolute!important;left:16px!important;top:50%!important;transform:translateY(-50%)!important;width:22px!important;height:22px!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#08783f!important;pointer-events:none!important;z-index:2!important}
         .voynu-datetime-local-error{display:flex!important;align-items:flex-start!important;gap:9px!important;margin:7px 2px 0!important;padding:10px 12px!important;border:1px solid #efc7c2!important;border-radius:12px!important;background:#fff1ef!important;color:#9f3027!important;font-size:12.5px!important;line-height:1.4!important;font-weight:650!important}
         .voynu-datetime-local-error::before{content:"!";width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:#d34f43;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
         .voynu-datetime-hint{margin:7px 2px 0!important;color:#64746c!important;font-size:11.5px!important;line-height:1.35!important;font-weight:550!important}
         .voynu-datetime-meta{display:flex!important;flex-wrap:wrap!important;gap:7px!important;margin:8px 2px 0!important}
         .voynu-datetime-chip{padding:6px 9px!important;border-radius:999px!important;background:#eef8f2!important;color:#2e7650!important;font-size:11px!important;font-weight:750!important}
-        .voynu-global-datetime-error{display:none!important}
       `;
       document.head.appendChild(style);
     };
@@ -69,13 +68,18 @@ export default function DateTimeBookingGuard() {
       f.querySelectorAll(".voynu-datetime-meta").forEach((n) => n.remove());
       const node = document.createElement("div");
       node.className = "voynu-datetime-meta";
-      chips.forEach((chip) => { const el = document.createElement("span"); el.className = "voynu-datetime-chip"; el.textContent = chip; node.appendChild(el); });
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "voynu-datetime-chip";
+        el.textContent = chip;
+        node.appendChild(el);
+      });
       input.insertAdjacentElement("afterend", node);
     };
     const wrapInput = (input, kind) => {
-      if (!input || input.dataset.voynuDatetimeV2 === "true") return;
+      if (!input || input.dataset.voynuDatetimeV3 === "true") return;
       ensureStyles();
-      input.dataset.voynuDatetimeV2 = "true";
+      input.dataset.voynuDatetimeV3 = "true";
       input.dataset.voynuDatetimeKind = kind;
       const parent = input.parentElement;
       if (!parent) return;
@@ -95,12 +99,17 @@ export default function DateTimeBookingGuard() {
         if (!text) return;
         let target = null;
         if (/pickup time/i.test(text)) target = get("pickupTime");
+        else if (/travel date/i.test(text)) target = get("travelDate");
         else if (/return date/i.test(text)) target = get("returnDate");
         else if (/return time/i.test(text)) target = get("returnTime");
-        if (target && /past|before|later|select|choose|arrival|same day/i.test(text)) {
-          node.classList.add("voynu-global-datetime-error");
-          addLocal(target, text.replace(/^!\s*/, ""), "error");
-        }
+        if (!target || !/past|before|later|select|choose|arrival|same day/i.test(text)) return;
+
+        // The booking page owns the global React message. Do not fight React by
+        // moving/removing that node; hide it at the DOM level and render the
+        // authoritative field-level message beside the actual input.
+        node.style.setProperty("display", "none", "important");
+        node.setAttribute("aria-hidden", "true");
+        addLocal(target, text.replace(/^!\s*/, ""), "error");
       });
     };
 
@@ -115,42 +124,57 @@ export default function DateTimeBookingGuard() {
       wrapInput(pickupTime, "time");
       wrapInput(returnDate, "date");
       wrapInput(returnTime, "time");
-      if (!travelDate || !pickupTime) return;
 
-      const today = localDate();
-      const now = localTime();
-      travelDate.min = today;
-      if (travelDate.value === today) pickupTime.min = now;
-      else pickupTime.removeAttribute("min");
+      if (travelDate && pickupTime) {
+        const today = localDate();
+        const now = localTime();
+        travelDate.min = today;
+        if (travelDate.value === today) pickupTime.min = now;
+        else pickupTime.removeAttribute("min");
 
-      if (returnDate) {
-        returnDate.min = travelDate.value && travelDate.value > today ? travelDate.value : today;
-        if (travelDate.value) returnDate.max = travelDate.value;
-        else returnDate.removeAttribute("max");
-      }
+        if (returnDate) {
+          returnDate.min = travelDate.value && travelDate.value > today ? travelDate.value : today;
+          if (travelDate.value) returnDate.max = travelDate.value;
+          else returnDate.removeAttribute("max");
+        }
 
-      if (travelDate.value === today && pickupTime.value && pickupTime.value < now) pickupTime.dataset.voynuDatetimeInvalid = "true";
+        if (travelDate.value === today && pickupTime.value && pickupTime.value < now) {
+          addLocal(pickupTime, "This pickup time has already passed. Please choose a later time today.", "error");
+        }
 
-      if (returnDate && returnTime && travelDate.value && returnDate.value === travelDate.value && pickupTime.value && durationSeconds != null) {
-        const start = parseLocal(travelDate.value, pickupTime.value);
-        if (start) {
-          const arrival = new Date(start.getTime() + Number(durationSeconds) * 1000);
-          const latest = new Date(arrival.getTime() + 180 * 60000);
-          returnTime.min = `${pad(arrival.getHours())}:${pad(arrival.getMinutes())}`;
-          returnTime.max = `${pad(latest.getHours())}:${pad(latest.getMinutes())}`;
-          const ret = parseLocal(returnDate.value, returnTime.value);
-          if (returnTime.value && ret) {
-            if (ret < arrival) addLocal(returnTime, `Return time must be after your estimated arrival at ${timeLabel(arrival)}.`, "error");
-            else if (ret > latest) addLocal(returnTime, `Return time must be by ${timeLabel(latest)}. Maximum waiting time is 3 hours after arrival.`, "error");
-            else { clearLocal(returnTime); addMeta(returnTime, [`Arrival ${timeLabel(arrival)}`, `Latest ${timeLabel(latest)}`, "Waiting fee set in Admin"]); }
+        if (returnDate && returnTime && travelDate.value && returnDate.value === travelDate.value && pickupTime.value && durationSeconds != null) {
+          const start = parseLocal(travelDate.value, pickupTime.value);
+          if (start) {
+            const arrival = new Date(start.getTime() + Number(durationSeconds) * 1000);
+            const latest = new Date(arrival.getTime() + 180 * 60000);
+            returnTime.min = `${pad(arrival.getHours())}:${pad(arrival.getMinutes())}`;
+            returnTime.max = `${pad(latest.getHours())}:${pad(latest.getMinutes())}`;
+            const ret = parseLocal(returnDate.value, returnTime.value);
+            if (returnTime.value && ret) {
+              if (ret < arrival) addLocal(returnTime, `Return time must be after your estimated arrival at ${timeLabel(arrival)}.`, "error");
+              else if (ret > latest) addLocal(returnTime, `Return time must be by ${timeLabel(latest)}. Maximum waiting time is 3 hours after arrival.`, "error");
+              else {
+                clearLocal(returnTime);
+                addMeta(returnTime, [`Arrival ${timeLabel(arrival)}`, `Latest ${timeLabel(latest)}`, "Waiting fee set in Admin"]);
+              }
+            }
           }
         }
       }
+
       suppressGlobalMessage();
     };
 
-    const onInput = (event) => { if (ids.includes(event.target?.id)) clearLocal(event.target); window.setTimeout(refresh, 0); };
-    const onChange = (event) => { if (ids.includes(event.target?.id)) clearLocal(event.target); window.setTimeout(refresh, 0); };
+    const onInput = (event) => {
+      if (!ids.includes(event.target?.id)) return;
+      clearLocal(event.target);
+      window.setTimeout(refresh, 0);
+    };
+    const onChange = (event) => {
+      if (!ids.includes(event.target?.id)) return;
+      clearLocal(event.target);
+      window.setTimeout(refresh, 0);
+    };
     document.addEventListener("input", onInput, true);
     document.addEventListener("change", onChange, true);
 
@@ -160,7 +184,12 @@ export default function DateTimeBookingGuard() {
         const url = typeof args[0] === "string" ? args[0] : args[0]?.url || "";
         if (url.includes("/api/route-distance")) {
           const clone = response.clone();
-          clone.json().then((data) => { if (Number.isFinite(Number(data?.durationSeconds))) { durationSeconds = Number(data.durationSeconds); refresh(); } }).catch(() => {});
+          clone.json().then((data) => {
+            if (Number.isFinite(Number(data?.durationSeconds))) {
+              durationSeconds = Number(data.durationSeconds);
+              refresh();
+            }
+          }).catch(() => {});
         }
       } catch {}
       return response;
@@ -171,8 +200,8 @@ export default function DateTimeBookingGuard() {
       raf = requestAnimationFrame(refresh);
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    const timer = window.setTimeout(refresh, 250);
 
+    const timer = window.setTimeout(refresh, 250);
     return () => {
       destroyed = true;
       clearTimeout(timer);
@@ -181,7 +210,7 @@ export default function DateTimeBookingGuard() {
       document.removeEventListener("input", onInput, true);
       document.removeEventListener("change", onChange, true);
       window.fetch = originalFetch;
-      document.getElementById("voynu-datetime-polish-v2")?.remove();
+      document.getElementById("voynu-datetime-polish-v3")?.remove();
     };
   }, []);
 
