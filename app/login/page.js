@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "../lib/supabaseClient";
-import { ADMIN_EMAILS } from "../lib/admin";
 import { theme } from "../lib/theme";
 import AuthShell from "../components/AuthShell";
 
@@ -22,9 +21,9 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { data, error: signInError } =
+    const { error: signInError } =
       await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -34,27 +33,12 @@ export default function LoginPage() {
       return;
     }
 
-    const loggedInEmail = data?.user?.email || "";
-
-    if (ADMIN_EMAILS.includes(loggedInEmail)) {
-      router.push("/admin");
-      return;
-    }
-
-    const { data: driverRow } = await supabase
-      .from("drivers")
-      .select("id")
-      .eq("email", loggedInEmail)
-      .maybeSingle();
-
+    // The customer app is role-neutral. Admins and drivers can use the
+    // same account here and are treated exactly like normal customers.
+    // Elevated Admin/Saarthi access remains enforced by those apps and
+    // their backend authorization rules.
     setLoading(false);
-
-    if (driverRow) {
-      router.push("/driver");
-      return;
-    }
-
-    router.push("/");
+    router.replace("/");
   };
 
   const inputStyle = {
@@ -93,7 +77,7 @@ export default function LoginPage() {
           style={inputStyle}
         />
 
-          <input
+        <input
           type="password"
           placeholder="Password"
           value={password}
