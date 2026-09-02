@@ -1,4 +1,4 @@
-const CACHE_NAME = "voynu-admin-static-v3";
+const CACHE_NAME = "voynu-admin-static-v4";
 const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -16,7 +16,8 @@ self.addEventListener("push", (event) => {
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
   event.waitUntil(self.registration.showNotification(data.title || "VOYNU Admin", {
     body: data.body || "You have a new VOYNU update.",
-    icon: data.icon || "/icon.svg",
+    // Deliberately omit `icon` so Android/Chrome uses the installed Admin PWA
+    // icon on the left and does not render a second large icon on the right.
     badge: data.badge || "/icon.svg",
     tag: data.tag || "voynu-admin-notification",
     renotify: true,
