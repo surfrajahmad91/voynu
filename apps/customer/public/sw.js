@@ -1,5 +1,5 @@
-const CACHE_NAME = "voynu-customer-static-v4";
-const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest"];
+const CACHE_NAME = "voynu-customer-static-v5";
+const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest", "/notification-badge.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_URLS)).catch(() => {}));
@@ -15,17 +15,15 @@ self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
   const title = data.title || "VOYNU";
-  const options = {
+  event.waitUntil(self.registration.showNotification(title, {
     body: data.body || "You have a new VOYNU update.",
-    // Do not set `icon`: Android/Chrome then uses the installed PWA's app icon
-    // in the notification's left-side app-icon position instead of rendering a
-    // second large VOYNU icon on the right.
-    badge: data.badge || "/icon.svg",
+    // `icon` is intentionally omitted so Android does not render a large icon on the right.
+    // `badge` is a dedicated monochrome mark for Android's compact left-side notification icon.
+    badge: "/notification-badge.svg",
     tag: data.tag || "voynu-notification",
     renotify: true,
     data: { ...(data.data || {}), url: data.data?.url || "/account" },
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
+  }));
 });
 
 self.addEventListener("notificationclick", (event) => {
