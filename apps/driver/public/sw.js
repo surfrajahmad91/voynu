@@ -1,4 +1,4 @@
-const CACHE_NAME = "voynu-saarthi-static-v5";
+const CACHE_NAME = "voynu-saarthi-static-v6";
 const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest", "/notification-badge.svg"];
 
 self.addEventListener("install", (event) => {
@@ -16,9 +16,10 @@ self.addEventListener("push", (event) => {
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
   event.waitUntil(self.registration.showNotification(data.title || "VOYNU Saarthi", {
     body: data.body || "You have a new trip update.",
-    // `icon` is intentionally omitted so Android does not render a large icon on the right.
-    // `badge` is a dedicated monochrome mark for Android's compact left-side notification icon.
-    badge: "/notification-badge.svg",
+    // Android/Samsung uses the notification `icon` as the small app mark on the left.
+    // Use the dedicated monochrome VOYNU V; do not use `badge` here because Samsung renders
+    // the Web Notification badge separately on the right side of the notification.
+    icon: "/notification-badge.svg",
     tag: data.tag || "voynu-saarthi-notification",
     renotify: true,
     data: { ...(data.data || {}), url: data.data?.url || "/driver" },
