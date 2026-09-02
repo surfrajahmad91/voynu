@@ -1,5 +1,5 @@
-const CACHE_NAME = "voynu-admin-static-v4";
-const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest"];
+const CACHE_NAME = "voynu-admin-static-v5";
+const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest", "/notification-badge.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_URLS)).catch(() => {}));
@@ -16,9 +16,9 @@ self.addEventListener("push", (event) => {
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
   event.waitUntil(self.registration.showNotification(data.title || "VOYNU Admin", {
     body: data.body || "You have a new VOYNU update.",
-    // Deliberately omit `icon` so Android/Chrome uses the installed Admin PWA
-    // icon on the left and does not render a second large icon on the right.
-    badge: data.badge || "/icon.svg",
+    // `icon` is intentionally omitted so Android does not render a large icon on the right.
+    // `badge` is a dedicated monochrome mark for Android's compact left-side notification icon.
+    badge: "/notification-badge.svg",
     tag: data.tag || "voynu-admin-notification",
     renotify: true,
     data: { ...(data.data || {}), url: data.data?.url || "/admin" },
