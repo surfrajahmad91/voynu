@@ -1,4 +1,4 @@
-const CACHE_NAME = "voynu-customer-static-v3";
+const CACHE_NAME = "voynu-customer-static-v4";
 const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -17,7 +17,9 @@ self.addEventListener("push", (event) => {
   const title = data.title || "VOYNU";
   const options = {
     body: data.body || "You have a new VOYNU update.",
-    icon: data.icon || "/icon.svg",
+    // Do not set `icon`: Android/Chrome then uses the installed PWA's app icon
+    // in the notification's left-side app-icon position instead of rendering a
+    // second large VOYNU icon on the right.
     badge: data.badge || "/icon.svg",
     tag: data.tag || "voynu-notification",
     renotify: true,
