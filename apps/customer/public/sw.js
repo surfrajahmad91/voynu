@@ -1,5 +1,33 @@
-const CACHE_NAME = "voynu-customer-static-v6";
+const CACHE_NAME = "voynu-customer-static-v7";
 const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest", "/notification-badge.svg"];
+
+function notificationCopy(data) {
+  const type = data?.data?.type || String(data?.tag || "").replace(/^voynu-/, "").split("-")[0];
+  const reference = typeof data?.data?.reference === "string" ? data.data.reference : "booking";
+
+  switch (type) {
+    case "booking_created":
+      return (data.title === "Booking received" || data.title === "Booking Received")
+        ? { title: "Booking Received", body: `Your booking ${reference} has been saved. UPI payment is awaiting verification.` }
+        : { title: "Booking Confirmed", body: `Your booking ${reference} is confirmed. We will contact you before your journey.` };
+    case "booking_confirmed":
+      return { title: "Booking Confirmed", body: `Payment has been verified and booking ${reference} is confirmed.` };
+    case "driver_assigned":
+      return { title: "Driver Assigned", body: `A driver has been assigned to booking ${reference}.` };
+    case "driver_on_the_way":
+      return { title: "Driver Is On The Way", body: `Your driver is on the way for booking ${reference}.` };
+    case "driver_arrived":
+      return { title: "Driver Has Arrived", body: `Your driver has arrived for booking ${reference}.` };
+    case "trip_started":
+      return { title: "Trip Started", body: `Your journey for booking ${reference} has started.` };
+    case "trip_completed":
+      return { title: "Trip Completed", body: `Your journey for booking ${reference} has been completed. Thank you for riding with VOYNU.` };
+    case "booking_cancelled":
+      return { title: "Booking Cancelled", body: `Booking ${reference} has been cancelled.` };
+    default:
+      return { title: data.title || "VOYNU", body: data.body || "You have a new VOYNU update." };
+  }
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_URLS)).catch(() => {}));
@@ -14,12 +42,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
-  const title = data.title || "VOYNU";
-  event.waitUntil(self.registration.showNotification(title, {
-    body: data.body || "You have a new VOYNU update.",
-    // Android/Samsung uses the notification `icon` as the small app mark on the left.
-    // Use the dedicated monochrome VOYNU V; do not use `badge` here because Samsung renders
-    // the Web Notification badge separately on the right side of the notification.
+  const copy = notificationCopy(data);
+  event.waitUntil(self.registration.showNotification(copy.title, {
+    body: copy.body,
+    // Android/Samsung uses `icon` as the small notification mark on the left.
+    // This is a dedicated monochrome VOYNU V. Do not set `badge`: Samsung renders it separately on the right.
     icon: "/notification-badge.svg",
     tag: data.tag || "voynu-notification",
     renotify: true,
