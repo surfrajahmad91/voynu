@@ -1,5 +1,17 @@
-const CACHE_NAME = "voynu-admin-static-v6";
+const CACHE_NAME = "voynu-admin-static-v7";
 const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest", "/notification-badge.svg"];
+
+function notificationCopy(data) {
+  const type = data?.data?.type || String(data?.tag || "").replace(/^voynu-/, "").split("-")[0];
+  const reference = typeof data?.data?.reference === "string" ? data.data.reference : "booking";
+
+  switch (type) {
+    case "admin_booking_created":
+      return { title: "New Booking Received", body: `Booking ${reference} has been created and is ready for review.` };
+    default:
+      return { title: data.title || "VOYNU Admin", body: data.body || "You have a new VOYNU update." };
+  }
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_URLS)).catch(() => {}));
@@ -14,11 +26,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
-  event.waitUntil(self.registration.showNotification(data.title || "VOYNU Admin", {
-    body: data.body || "You have a new VOYNU update.",
-    // Android/Samsung uses the notification `icon` as the small app mark on the left.
-    // Use the dedicated monochrome VOYNU V; do not use `badge` here because Samsung renders
-    // the Web Notification badge separately on the right side of the notification.
+  const copy = notificationCopy(data);
+  event.waitUntil(self.registration.showNotification(copy.title, {
+    body: copy.body,
+    // Android/Samsung uses `icon` as the small notification mark on the left.
+    // This is a dedicated monochrome VOYNU V. Do not set `badge`: Samsung renders it separately on the right.
     icon: "/notification-badge.svg",
     tag: data.tag || "voynu-admin-notification",
     renotify: true,
