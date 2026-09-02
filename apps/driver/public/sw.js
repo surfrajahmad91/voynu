@@ -1,4 +1,4 @@
-const CACHE_NAME = "voynu-saarthi-static-v3";
+const CACHE_NAME = "voynu-saarthi-static-v4";
 const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -16,7 +16,8 @@ self.addEventListener("push", (event) => {
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
   event.waitUntil(self.registration.showNotification(data.title || "VOYNU Saarthi", {
     body: data.body || "You have a new trip update.",
-    icon: data.icon || "/icon.svg",
+    // Deliberately omit `icon` so Android/Chrome uses the installed Saarthi PWA
+    // icon on the left and does not render a second large icon on the right.
     badge: data.badge || "/icon.svg",
     tag: data.tag || "voynu-saarthi-notification",
     renotify: true,
