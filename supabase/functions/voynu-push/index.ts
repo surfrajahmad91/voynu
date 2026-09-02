@@ -32,15 +32,9 @@ function pushCopy(notification: { type?: string; title?: string; message?: strin
 
   switch (type) {
     case "booking_created":
-      return notification.title === "Booking received" || notification.title === "Booking Received"
-        ? {
-            title: "Booking Received",
-            body: `Your booking ${reference} has been saved. UPI payment is awaiting verification.`,
-          }
-        : {
-            title: "Booking Confirmed",
-            body: `Your booking ${reference} is confirmed. We will contact you before your journey.`,
-          };
+      return notification.title === "booking received" || notification.title === "Booking received" || notification.title === "Booking Received"
+        ? { title: "Booking Received", body: `Your booking ${reference} has been saved. UPI payment is awaiting verification.` }
+        : { title: "Booking Confirmed", body: `Your booking ${reference} is confirmed. We will contact you before your journey.` };
     case "booking_confirmed":
       return { title: "Booking Confirmed", body: `Payment has been verified and booking ${reference} is confirmed.` };
     case "driver_assigned":
@@ -97,11 +91,9 @@ Deno.serve(async (req) => {
     const pushPayload = JSON.stringify({
       title: copy.title,
       body: copy.body,
-      // The service worker uses the same monochrome mark as the small Android notification icon.
-      // Do not send a Web Notification `badge`: Samsung renders that separately on the right.
       icon: "/notification-badge.svg",
       tag: `voynu-${notification.type}-${notification.id}`,
-      data: { ...(notification.data || {}), notificationId: notification.id, bookingId: notification.booking_id },
+      data: { ...(notification.data || {}), type: notification.type, notificationId: notification.id, bookingId: notification.booking_id },
     });
 
     let sent = 0;
