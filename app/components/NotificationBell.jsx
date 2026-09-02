@@ -36,6 +36,39 @@ function formatNotificationTime(value) {
   return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
+function notificationCopy(notification) {
+  const type = notification?.type || "";
+  const reference = typeof notification?.data?.reference === "string" ? notification.data.reference : "booking";
+
+  switch (type) {
+    case "booking_created":
+      if (notification.title === "Booking received" || notification.title === "Booking Received") {
+        return { title: "Booking Received", message: `Your booking ${reference} has been saved. UPI payment is awaiting verification.` };
+      }
+      return { title: "Booking Confirmed", message: `Your booking ${reference} is confirmed. We will contact you before your journey.` };
+    case "booking_confirmed":
+      return { title: "Booking Confirmed", message: `Payment has been verified and booking ${reference} is confirmed.` };
+    case "driver_assigned":
+      return { title: "Driver Assigned", message: `A driver has been assigned to booking ${reference}.` };
+    case "driver_on_the_way":
+      return { title: "Driver Is On The Way", message: `Your driver is on the way for booking ${reference}.` };
+    case "driver_arrived":
+      return { title: "Driver Has Arrived", message: `Your driver has arrived for booking ${reference}.` };
+    case "trip_started":
+      return { title: "Trip Started", message: `Your journey for booking ${reference} has started.` };
+    case "trip_completed":
+      return { title: "Trip Completed", message: `Your journey for booking ${reference} has been completed. Thank you for riding with VOYNU.` };
+    case "booking_cancelled":
+      return { title: "Booking Cancelled", message: `Booking ${reference} has been cancelled.` };
+    case "driver_trip_assigned":
+      return { title: "New Trip Assigned", message: `Booking ${reference} has been assigned to you. Open Saarthi to view the trip details.` };
+    case "admin_booking_created":
+      return { title: "New Booking Received", message: `Booking ${reference} has been created and is ready for review.` };
+    default:
+      return { title: notification?.title || "VOYNU", message: notification?.message || "You have a new VOYNU update." };
+  }
+}
+
 export default function NotificationBell({ targetPath = "/account", audience = "customer" }) {
   const router = useRouter();
   const containerRef = useRef(null);
@@ -155,20 +188,23 @@ export default function NotificationBell({ targetPath = "/account", audience = "
             ) : notifications.length === 0 ? (
               <div style={{ padding: 28, textAlign: "center", color: theme.colors.textFaint, fontSize: 12, lineHeight: 1.5 }}>No notifications yet. We'll keep you updated here when something important happens.</div>
             ) : (
-              notifications.map((notification) => (
-                <button type="button" key={notification.id} onClick={() => markRead(notification)} style={{ width: "100%", display: "block", padding: "13px 16px", textAlign: "left", border: 0, borderBottom: `1px solid ${theme.colors.border}`, background: notification.read_at ? "#ffffff" : theme.colors.primaryTint, cursor: "pointer" }}>
-                  <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-                    <span style={{ width: 8, height: 8, marginTop: 5, borderRadius: "50%", background: notification.read_at ? "#c5d1ca" : theme.colors.primary, flexShrink: 0 }} />
-                    <span style={{ minWidth: 0, flex: 1 }}>
-                      <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-                        <span style={{ minWidth: 0, fontSize: 12, fontWeight: 800, color: theme.colors.text }}>{notification.title}</span>
-                        <span style={{ flexShrink: 0, fontSize: 9.5, color: theme.colors.textFaint }}>{formatNotificationTime(notification.created_at)}</span>
+              notifications.map((notification) => {
+                const copy = notificationCopy(notification);
+                return (
+                  <button type="button" key={notification.id} onClick={() => markRead(notification)} style={{ width: "100%", display: "block", padding: "13px 16px", textAlign: "left", border: 0, borderBottom: `1px solid ${theme.colors.border}`, background: notification.read_at ? "#ffffff" : theme.colors.primaryTint, cursor: "pointer" }}>
+                    <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                      <span style={{ width: 8, height: 8, marginTop: 5, borderRadius: "50%", background: notification.read_at ? "#c5d1ca" : theme.colors.primary, flexShrink: 0 }} />
+                      <span style={{ minWidth: 0, flex: 1 }}>
+                        <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+                          <span style={{ minWidth: 0, fontSize: 12, fontWeight: 800, color: theme.colors.text }}>{copy.title}</span>
+                          <span style={{ flexShrink: 0, fontSize: 9.5, color: theme.colors.textFaint }}>{formatNotificationTime(notification.created_at)}</span>
+                        </span>
+                        <span style={{ display: "block", marginTop: 4, fontSize: 11, lineHeight: 1.45, color: theme.colors.textMuted, overflowWrap: "anywhere" }}>{copy.message}</span>
                       </span>
-                      <span style={{ display: "block", marginTop: 4, fontSize: 11, lineHeight: 1.45, color: theme.colors.textMuted, overflowWrap: "anywhere" }}>{notification.message}</span>
-                    </span>
-                  </div>
-                </button>
-              ))
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
