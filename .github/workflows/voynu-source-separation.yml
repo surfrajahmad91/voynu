@@ -21,7 +21,7 @@ jobs:
           test -f app/driver/page.js
           test -f lib/capacityValidation.js
 
-          mkdir -p apps/customer/app/components apps/customer/app/api/_lib apps/customer/lib
+          mkdir -p apps/customer/app/components apps/customer/app/api/_lib apps/customer/app/lib
           mkdir -p apps/admin/app/lib apps/driver/app/components
           mkdir -p shared/components shared/lib shared/styles shared/api shared/auth
 
@@ -32,52 +32,85 @@ jobs:
             mv -- "$src" "$dst"
           }
 
+          # Customer implementation routes replace the thin deployment wrappers.
           for p in account booking-confirmed cab-selection signup; do
             move_replace "app/$p/page.js" "apps/customer/app/$p/page.js"
           done
           move_replace app/page.js apps/customer/app/page.js
 
-          # Authentication is used by both Customer and Saarthi, so keep one implementation in shared/auth.
+          # Authentication is shared by Customer and Saarthi.
           for p in login forgot-password reset-password; do
             move_replace "app/$p/page.js" "shared/auth/$p.js"
           done
 
-          for f in AccountLink.jsx AuthLanding.jsx AuthShell.jsx DateTimeBookingGuard.jsx LocationPicker.jsx MapLocationPicker.jsx PageHeader.jsx; do
+          # Shared UI/runtime modules.
+          for f in AccountLink.jsx AuthLanding.jsx AuthShell.jsx DateTimeBookingGuard.jsx LiveTripMap.js LocationPicker.jsx MapLocationPicker.jsx NotificationBell.jsx PageHeader.jsx PushNotifications.jsx; do
             move_replace "app/components/$f" "shared/components/$f"
           done
+          for f in supabaseClient.js theme.js; do
+            move_replace "app/lib/$f" "shared/lib/$f"
+          done
+
+          # Customer-only UI/business modules stay physically under Customer's app tree.
           for f in contact.js fareRules.js geofence.js googleMaps.js serviceAreas.js tripRules.js; do
-            move_replace "app/lib/$f" "apps/customer/lib/$f"
+            move_replace "app/lib/$f" "apps/customer/app/lib/$f"
           done
           move_replace lib/capacityValidation.js apps/customer/lib/capacityValidation.js
 
+          # Admin route implementations and admin-only library.
           while IFS= read -r src; do
             rel="${src#app/admin/}"
             move_replace "$src" "apps/admin/app/admin/$rel"
           done < <(find app/admin -type f | sort)
           move_replace app/lib/admin.js apps/admin/app/lib/admin.js
 
+          # Saarthi route implementation and driver-only component.
           move_replace app/driver/page.js apps/driver/app/driver/page.js
           move_replace app/components/DriverNavigationMode.js apps/driver/app/components/DriverNavigationMode.js
 
-          for f in NotificationBell.jsx PushNotifications.jsx LiveTripMap.js; do
-            move_replace "app/components/$f" "shared/components/$f"
-          done
-          for f in supabaseClient.js theme.js; do
-            move_replace "app/lib/$f" "shared/lib/$f"
-          done
-          move_replace app/globals.css shared/styles/globals.css
-          move_replace app/brand-theme.css shared/styles/brand-theme.css
-
-          move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
+          # Customer booking API implementation and its mail helper are app-owned.
           move_replace app/api/_lib/sendBookingEmail.js apps/customer/app/api/_lib/sendBookingEmail.js
           move_replace app/api/bookings/create/route.js apps/customer/app/api/bookings/create/route.js
+
+          # Road-distance implementation is genuinely shared; route wrappers remain inside each app.
+          move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
           rm -rf -- app/api/route-distance app/api/route-map
 
-          # Replace old shared-root imports with the shared alias. This is intentionally broad because the moved auth/header files are shared.
+          # Shared module aliases are explicit in all three Next configs.
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          for (const app of ['customer', 'driver', 'admin']) {
+            const file = `apps/${app}/next.config.js`;
+            let text = fs.readFileSync(file, 'utf8');
+            const marker = 'config.resolve.alias =';
+            if (!text.includes(marker)) {
+              text = text.replace(
+                'config.resolve.modules = [',
+                'config.resolve.alias = { ...(config.resolve.alias || {}), "@voynu/shared": path.join(__dirname, "../../shared") };\n    config.resolve.modules = ['
+              );
+              fs.writeFileSync(file, text);
+            }
+          }
+          NODE
+
+          # Keep editor/module-resolution metadata aligned with the same alias contract.
+          for app in customer driver admin; do
+            cat > "apps/$app/jsconfig.json" <<'EOF'
+          {
+            "compilerOptions": {
+              "baseUrl": ".",
+              "paths": { "@voynu/shared/*": ["../../shared/*"] }
+            }
+          }
+          EOF
+          done
+
+          # Shared imports from the former root source are rewritten to the stable alias.
           find apps shared -type f \( -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' \) -print0 |
             xargs -0 perl -0pi -e 's#from\s+["\x27](?:\.\./)+app/lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+app/components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27](?:\.\./)+lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27]\./(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader)["\x27]#from "@voynu/shared/components/$1"#g'
 
-          # App route wrappers for shared auth pages. They are intentionally tiny and contain no business logic.
+          # Shared auth routes are tiny app-local adapters; auth implementation stays in shared/auth.
           for app in customer driver; do
             for p in login forgot-password reset-password; do
               cat > "apps/$app/app/$p/page.js" <<EOF
@@ -86,10 +119,10 @@ jobs:
             done
           done
 
-          # Admin login keeps its admin-specific gate but now references the local admin library and shared runtime.
+          # Admin login references the app-local admin library.
           perl -0pi -e 's#from ["\x27](?:\.\./)+app/lib/admin["\x27]#from "../lib/admin"#g' apps/admin/app/login/page.js
 
-          # Customer layout owns its customer-only date/time guard.
+          # Customer layout owns the customer-only date/time guard.
           perl -0pi -e 's#from ["\x27]\.\./\.\./\.\./app/components/DateTimeBookingGuard["\x27]#from "./components/DateTimeBookingGuard"#g' apps/customer/app/layout.js
 
           # Shared CSS is imported directly by each app entrypoint.
@@ -97,7 +130,7 @@ jobs:
             perl -0pi -e 's#@import "\.\./\.\./\.\./app/globals\.css";#@import "../../../shared/styles/globals.css";#g; s#@import "\.\./\.\./\.\./app/brand-theme\.css";#@import "../../../shared/styles/brand-theme.css";#g' "apps/$app/styles/globals.css"
           done
 
-          # Existing route wrappers now consume the shared road-distance implementation.
+          # App-level road-distance wrappers point at the shared implementation.
           cat > apps/customer/app/api/_lib/roadDistance.ts <<'EOF'
           export { getRoadDistance } from "../../../../../shared/api/roadDistance";
           export type { RoadDistanceResult } from "../../../../../shared/api/roadDistance";
@@ -110,12 +143,11 @@ jobs:
           rm -rf app lib
           git add -A
 
-          # Only source files are checked here; documentation can mention the historical structure.
           if git grep -nE 'from ["\x27].*app/(lib|components)/' -- apps shared; then
             echo 'ERROR: stale root-app imports remain.'
             exit 1
           fi
-          if git grep -n 'from ["\x27].*app/(login|forgot-password|reset-password)' -- apps shared; then
+          if git grep -nE 'from ["\x27].*app/(login|forgot-password|reset-password)' -- apps shared; then
             echo 'ERROR: stale root-auth imports remain.'
             exit 1
           fi
