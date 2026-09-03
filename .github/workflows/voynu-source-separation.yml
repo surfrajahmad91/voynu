@@ -138,3 +138,5 @@ jobs:
           git add -A
           git commit -m 'refactor: complete three-app source separation'
           git push origin HEAD:main
+
+# One-time controlled migration; self-removes after a successful validated commit.
