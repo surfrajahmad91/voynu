@@ -48,10 +48,7 @@ jobs:
           }
           NODE
 
-          # Customer-only guard was intentionally kept in Customer after the shared/common split.
           perl -0pi -e 's#from ["\x27]\.\./\.\./\.\./app/components/DateTimeBookingGuard["\x27]#from "./components/DateTimeBookingGuard"#g' apps/customer/app/layout.js
-          # Customer-only components are already local; keep any direct local imports intact.
-
           for app in customer driver; do
             printf 'export { default } from "../../../shared/auth/login";\n' > "apps/$app/app/login/page.js"
             printf 'export { default } from "../../../shared/auth/forgot-password";\n' > "apps/$app/app/forgot-password/page.js"
