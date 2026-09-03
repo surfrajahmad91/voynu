@@ -22,31 +22,27 @@ VOYNU/
 │   ├── customer/          # Customer PWA and its deployment boundary
 │   ├── driver/            # Saarthi/Driver PWA and its deployment boundary
 │   └── admin/             # Admin PWA and its deployment boundary
-├── lib/                   # Repository code still being migrated; currently active
+├── shared/                # Genuinely shared UI, auth, styles and utilities
 ├── supabase/              # Database migrations, functions and backend source
 ├── docs/                  # Current architecture, operational and historical decisions
 ├── .gitignore
 └── README.md
 ```
 
-### Why `lib/` is still at the root
+The verified source-separation target intentionally has **no root `app/`, no root `lib/`, and no `apps/web/`**. Production source belongs to its owning application; only code proven to be genuinely shared belongs under `shared/`.
 
-The root `lib/capacityValidation.js` is an active booking dependency used by the customer booking flow and booking API. It must not be deleted simply because it is outside an app directory. It is a known structural migration candidate and should be moved only together with its imports and validated builds.
-
-This is intentional caution: **dependency evidence takes precedence over folder appearance.**
-
-The same principle applies to any remaining root source. A root file is not obsolete merely because it looks old; it must be proven unused before removal.
+Dependency evidence takes precedence over folder appearance: source is moved with its consumers, imports are rewritten path-safely, and all three applications must build before the structural migration is accepted.
 
 ## Current application boundaries
 
-Each application has its own Next.js `app/`, `public/`, styles, package manifest and deployment configuration. The current repository still contains some shared/legacy source under the root `app/` tree because that source is actively consumed by the three application shells. The repository is being migrated toward explicit application ownership without duplicating production implementations.
+Each application has its own Next.js `app/`, `public/`, styles, package manifest and deployment configuration. Customer and Saarthi may consume shared authentication, UI, styling and utilities from `shared/`; app-specific business logic remains inside the owning application.
 
-Until that migration is complete:
+The three deployment boundaries are intentionally independent:
 
-- do not create another copy of the root source;
-- do not delete root source without reference and build checks;
-- prefer moving an implementation once and updating every consumer rather than copying it;
-- keep genuinely shared infrastructure separate from app-specific business logic.
+- Customer owns booking, account, cab selection and customer-facing booking APIs.
+- Saarthi owns driver/trip-facing routes and driver-specific components.
+- Admin owns operations, dispatch, pricing and fleet administration.
+- Shared code is limited to components, authentication, styles and utilities that are intentionally cross-application.
 
 ## Backend
 
