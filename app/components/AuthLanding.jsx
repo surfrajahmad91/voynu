@@ -35,276 +35,149 @@ function IconArrowRight({ size = 17 }) {
   );
 }
 
-function IconCarGraphic() {
+function RoutePreview() {
   return (
-    <svg viewBox="0 0 220 130" width="100%" height="100%">
-      <ellipse cx="110" cy="115" rx="90" ry="8" fill="rgba(8,120,63,0.10)" />
-      <path
-        d="M20 90 C20 74 30 66 46 64 L54 46 C58 36 68 30 80 30 H150 C162 30 172 36 176 46 L184 64 C198 66 208 74 208 90 V96 C208 100 205 103 201 103 H27 C23 103 20 100 20 96 Z"
-        fill="#0a7d42"
-      />
-      <rect x="70" y="26" width="70" height="6" rx="3" fill="#075c31" />
-      <path
-        d="M60 62 L66 48 C68 44 72 41 77 41 H147 C152 41 156 44 158 48 L164 62 Z"
-        fill="#eaf6ee"
-      />
-      <rect x="110" y="41" width="5" height="21" fill="#0a7d42" />
-      <line x1="115" y1="64" x2="115" y2="96" stroke="#075c31" strokeWidth="2" />
-      <circle cx="66" cy="98" r="20" fill="#0a3d22" />
-      <circle cx="162" cy="98" r="20" fill="#0a3d22" />
-      <circle cx="66" cy="98" r="13" fill="#16241d" />
-      <circle cx="66" cy="98" r="5.5" fill="#eaf6ee" />
-      <circle cx="162" cy="98" r="13" fill="#16241d" />
-      <circle cx="162" cy="98" r="5.5" fill="#eaf6ee" />
-      <rect x="196" y="70" width="8" height="10" rx="3" fill="#f4c542" />
-      <rect x="130" y="70" width="14" height="3" rx="1.5" fill="#075c31" />
-    </svg>
+    <div className="landingRoute" aria-hidden="true">
+      <div className="landingRouteGrid" />
+      <div className="landingRouteGlow landingRouteGlowOne" />
+      <div className="landingRouteGlow landingRouteGlowTwo" />
+      <div className="landingRouteLine" />
+      <div className="landingRoutePoint landingRoutePointOne" />
+      <div className="landingRoutePoint landingRoutePointTwo" />
+      <div className="landingRouteCard landingRouteCardOne"><strong>Pickup</strong><span>Choose your location</span></div>
+      <div className="landingRouteCard landingRouteCardTwo"><strong>Destination</strong><span>We'll plan the route</span></div>
+      <div className="landingRouteFooter"><span className="landingPulse" /> Simple booking • clear pricing • verified drivers</div>
+    </div>
   );
 }
 
-const fontFamily = "'Plus Jakarta Sans', -apple-system, sans-serif";
-
 export default function AuthLanding() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(160deg, #ffffff 0%, #f1faf4 55%, #e6f5ec 100%)",
-        fontFamily,
-        color: "#16241d",
-      }}
-    >
+    <main className="landingPage">
+      <header className="landingHeader">
+        <div className="landingHeaderInner">
+          <Link href="/" className="landingBrand">
+            <img src="/icon.svg" alt="VOYNU" width="40" height="40" />
+            <span>VOYNU</span>
+          </Link>
 
-      <header
-        style={{
-          background: "rgba(255,255,255,0.92)",
-          borderBottom: "1px solid #e8eee9",
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
-        }}
-      >
-        <div
-          style={{
-            width: "min(1180px, calc(100% - 32px))",
-            margin: "0 auto",
-            minHeight: 68,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 11,
-                background: "linear-gradient(135deg, #0a7d42, #075c31)",
-                color: "#ffffff",
-                fontWeight: 800,
-                fontSize: 19,
-              }}
-            >
-              V
-            </div>
-            <div style={{ color: "#0a7d42", fontWeight: 800, fontSize: 18 }}>
-              VOYNU
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Link
-              href="/login"
-              style={{
-                padding: "9px 16px",
-                borderRadius: 30,
-                color: "#0a5c32",
-                fontSize: 13,
-                fontWeight: 700,
-              }}
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              style={{
-                padding: "9px 18px",
-                borderRadius: 30,
-                background: "linear-gradient(135deg, #0a7d42, #075c31)",
-                color: "#ffffff",
-                fontSize: 13,
-                fontWeight: 700,
-                boxShadow: "0 6px 16px rgba(8,120,63,0.24)",
-              }}
-            >
-              Sign up
-            </Link>
+          <div className="landingNav">
+            <Link href="/login" className="landingLogin">Log in</Link>
+            <Link href="/signup" className="landingSignup">Sign up</Link>
           </div>
         </div>
       </header>
 
-      <section
-        style={{
-          width: "min(1180px, calc(100% - 32px))",
-          margin: "0 auto",
-          padding: "40px 0 60px",
-        }}
-      >
+      <section className="landingHero">
+        <div className="landingCopy">
+          <div className="landingEyebrow"><span /> INTERCITY TRAVEL, SIMPLIFIED</div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-          }}
-        >
+          <h1>Your ride,<br /><span>your way.</span></h1>
 
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "clamp(40px,10vw,64px)",
-              lineHeight: 1,
-              letterSpacing: "-2px",
-              fontWeight: 800,
-              color: "#10201a",
-            }}
-          >
-            Your ride,<br />
-            <span style={{ color: "#0a7d42" }}>your way.</span>
-          </h1>
-
-          <p
-            style={{
-              margin: "18px 0 0",
-              color: "#5c6d64",
-              fontSize: 15,
-              lineHeight: 1.6,
-              maxWidth: 420,
-            }}
-          >
-            Book a reliable cab for your journey. Travel safe. Travel smart.
+          <p className="landingLead">
+            Book a reliable cab for your journey with clear pricing, verified drivers and a smoother travel experience.
           </p>
 
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              gap: 10,
-              marginTop: 24,
-            }}
-          >
-
-            <div style={pillStyle}>
-              <span style={pillIconStyle}><IconCheckCircle size={13} /></span>
-              Verified Drivers
-            </div>
-
-            <div style={pillStyle}>
-              <span style={pillIconStyle}><IconShield size={13} /></span>
-              Safe &amp; Secure
-            </div>
-
-            <div style={pillStyle}>
-              <span style={{ ...pillIconStyle, background: "#fdf1d8", color: "#b8790e" }}>
-                <IconBolt size={13} />
-              </span>
-              EV Rides
-            </div>
-
+          <div className="landingPills">
+            <div style={pillStyle}><span style={pillIconStyle}><IconCheckCircle size={13} /></span> Verified Drivers</div>
+            <div style={pillStyle}><span style={pillIconStyle}><IconShield size={13} /></span> Safe &amp; Secure</div>
+            <div style={pillStyle}><span style={{ ...pillIconStyle, background: "#EEF4FF", color: "#2563EB" }}><IconBolt size={13} /></span> EV Rides</div>
           </div>
 
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 340,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              marginTop: 32,
-            }}
-          >
-
-            <Link
-              href="/signup"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 9,
-                minHeight: 54,
-                borderRadius: 14,
-                background: "linear-gradient(135deg, #0a7d42, #075c31)",
-                color: "#ffffff",
-                fontWeight: 800,
-                fontSize: 14.5,
-                boxShadow: "0 10px 24px rgba(8,120,63,.24)",
-              }}
-            >
-              Get started
-              <IconArrowRight size={17} />
-            </Link>
-
-            <Link
-              href="/login"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 50,
-                borderRadius: 14,
-                border: "1.5px solid #dcebe1",
-                color: "#0a7d42",
-                fontWeight: 700,
-                fontSize: 13.5,
-              }}
-            >
-              I already have an account
-            </Link>
-
+          <div className="landingActions">
+            <Link href="/signup" className="landingPrimaryButton">Get started <IconArrowRight size={17} /></Link>
+            <Link href="/login" className="landingSecondaryButton">I already have an account</Link>
           </div>
-
-          <div style={{ width: "min(320px, 82%)", marginTop: 40 }}>
-            <IconCarGraphic />
-          </div>
-
         </div>
 
+        <div className="landingVisual">
+          <div className="landingVisualTop">
+            <span>VOYNU TRIP</span>
+            <span className="landingLive"><i /> READY TO BOOK</span>
+          </div>
+          <RoutePreview />
+          <div className="landingTrustRow">
+            <div><strong>Transparent</strong><span>Upfront fare</span></div>
+            <div><strong>Verified</strong><span>Driver network</span></div>
+            <div><strong>Connected</strong><span>Trip updates</span></div>
+          </div>
+        </div>
       </section>
 
-      <footer
-        style={{
-          background: "#12211a",
-          color: "rgba(255,255,255,.72)",
-        }}
-      >
-        <div
-          style={{
-            width: "min(1180px, calc(100% - 32px))",
-            margin: "0 auto",
-            minHeight: 60,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-            fontSize: 11,
-            textAlign: "center",
-          }}
-        >
-          <div>
-            <strong style={{ color: "#ffffff" }}>VOYNU</strong>
-            {" "}© {new Date().getFullYear()}
-          </div>
-          <div>Travel safe. Travel smart.</div>
-        </div>
+      <footer className="landingFooter">
+        <div><strong>VOYNU</strong> © {new Date().getFullYear()}</div>
+        <div>Travel safe. Travel smart.</div>
       </footer>
 
+      <style jsx>{`
+        .landingPage { min-height: 100vh; background: linear-gradient(160deg, #FFFFFF 0%, #F7F9FC 55%, #EAFBF8 100%); color: #1F2937; font-family: "Poppins", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .landingHeader { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.90); border-bottom: 1px solid #E5E9EF; backdrop-filter: blur(14px); }
+        .landingHeaderInner { width: min(1180px, calc(100% - 32px)); min-height: 70px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .landingBrand { display: flex; align-items: center; gap: 10px; color: #0D1B2A; font-size: 19px; font-weight: 800; letter-spacing: -.5px; }
+        .landingBrand img { border-radius: 12px; display: block; box-shadow: 0 7px 18px rgba(13,27,42,.14); }
+        .landingNav { display: flex; align-items: center; gap: 8px; }
+        .landingLogin { padding: 10px 14px; color: #445163; font-size: 13px; font-weight: 700; }
+        .landingSignup { padding: 10px 18px; border-radius: 999px; background: linear-gradient(135deg,#00B4A6,#2563EB); color: #fff; font-size: 13px; font-weight: 800; box-shadow: 0 9px 22px rgba(37,99,235,.18); }
+
+        .landingHero { width: min(1180px, calc(100% - 32px)); min-height: calc(100vh - 70px); margin: 0 auto; padding: 58px 0 70px; display: grid; grid-template-columns: minmax(0,.9fr) minmax(430px,1fr); align-items: center; gap: 68px; }
+        .landingEyebrow { display: flex; align-items: center; gap: 9px; color: #008F84; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }
+        .landingEyebrow span { width: 22px; height: 3px; border-radius: 99px; background: linear-gradient(90deg,#00B4A6,#2563EB); }
+        h1 { margin: 16px 0 0; font-size: clamp(48px,6vw,76px); line-height: .98; letter-spacing: -3px; font-weight: 800; color: #0D1B2A; }
+        h1 span { background: linear-gradient(135deg,#00B4A6,#2563EB 62%,#7C3AED); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .landingLead { max-width: 500px; margin: 22px 0 0; color: #687280; font-size: 15px; line-height: 1.7; }
+        .landingPills { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 25px; }
+        .landingActions { width: min(350px,100%); display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
+        .landingPrimaryButton, .landingSecondaryButton { min-height: 54px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 14px; font-weight: 800; }
+        .landingPrimaryButton { background: linear-gradient(135deg,#00B4A6,#2563EB); color: #fff; box-shadow: 0 14px 30px rgba(37,99,235,.18); }
+        .landingSecondaryButton { border: 1px solid #D8DEE8; background: #fff; color: #1F2937; }
+
+        .landingVisual { padding: 20px; border: 1px solid rgba(255,255,255,.9); border-radius: 30px; background: rgba(255,255,255,.72); box-shadow: 0 30px 80px rgba(13,27,42,.12); backdrop-filter: blur(12px); }
+        .landingVisualTop { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 14px; color: #0D1B2A; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+        .landingLive { display: flex; align-items: center; gap: 6px; color: #008F84; font-size: 9px; letter-spacing: .8px; }
+        .landingLive i { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgba(34,197,94,.10); }
+        .landingRoute { position: relative; height: 380px; overflow: hidden; border-radius: 22px; background: linear-gradient(145deg,#0D1B2A,#10283D 60%,#123B4A); }
+        .landingRouteGrid { position: absolute; inset: -30px; opacity: .30; background-image: linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px); background-size: 42px 42px; transform: rotate(-8deg) scale(1.1); }
+        .landingRouteGlow { position: absolute; border-radius: 50%; filter: blur(18px); }
+        .landingRouteGlowOne { width: 230px; height: 230px; left: -90px; top: -70px; background: rgba(0,180,166,.18); }
+        .landingRouteGlowTwo { width: 260px; height: 260px; right: -100px; bottom: -120px; background: rgba(37,99,235,.18); }
+        .landingRouteLine { position: absolute; left: 17%; top: 25%; width: 66%; height: 55%; border-left: 3px solid rgba(111,225,215,.86); border-bottom: 3px solid rgba(111,225,215,.86); border-radius: 0 0 0 55%; transform: rotate(-12deg); box-shadow: 0 0 22px rgba(0,180,166,.20); }
+        .landingRoutePoint { position: absolute; width: 16px; height: 16px; border-radius: 50%; z-index: 2; }
+        .landingRoutePointOne { left: 16%; top: 23%; background: #6FE1D7; box-shadow: 0 0 0 7px rgba(111,225,215,.14); }
+        .landingRoutePointTwo { right: 16%; bottom: 22%; background: #fff; box-shadow: 0 0 0 7px rgba(255,255,255,.10); }
+        .landingRouteCard { position: absolute; display: flex; flex-direction: column; gap: 3px; padding: 11px 13px; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; background: rgba(13,27,42,.72); color: #fff; backdrop-filter: blur(10px); }
+        .landingRouteCard strong { font-size: 11px; }
+        .landingRouteCard span { color: rgba(255,255,255,.54); font-size: 9px; }
+        .landingRouteCardOne { left: 10%; top: 30%; }
+        .landingRouteCardTwo { right: 9%; bottom: 29%; }
+        .landingRouteFooter { position: absolute; left: 16px; right: 16px; bottom: 15px; display: flex; align-items: center; gap: 7px; color: rgba(255,255,255,.52); font-size: 9.5px; }
+        .landingPulse { width: 6px; height: 6px; border-radius: 50%; background: #00B4A6; box-shadow: 0 0 0 4px rgba(0,180,166,.10); }
+        .landingTrustRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; margin-top: 14px; border: 1px solid #E5E9EF; border-radius: 16px; overflow: hidden; background: #E5E9EF; }
+        .landingTrustRow div { min-height: 66px; display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; background: #fff; }
+        .landingTrustRow strong { color: #0D1B2A; font-size: 11px; }
+        .landingTrustRow span { margin-top: 3px; color: #87919E; font-size: 9px; }
+        .landingFooter { min-height: 64px; display: flex; align-items: center; justify-content: space-between; width: min(1180px,calc(100% - 32px)); margin: 0 auto; color: #7A8491; font-size: 10px; }
+        .landingFooter strong { color: #0D1B2A; }
+
+        @media (max-width: 920px) {
+          .landingHero { grid-template-columns: 1fr; gap: 42px; padding-top: 42px; }
+          .landingCopy { text-align: center; display: flex; flex-direction: column; align-items: center; }
+          .landingLead { max-width: 560px; }
+          .landingVisual { width: min(620px,100%); margin: 0 auto; }
+        }
+
+        @media (max-width: 560px) {
+          .landingHeaderInner, .landingHero, .landingFooter { width: min(100% - 24px,1180px); }
+          .landingHero { min-height: auto; padding: 38px 0 44px; }
+          h1 { font-size: clamp(46px,14vw,64px); letter-spacing: -2.3px; }
+          .landingPills { justify-content: center; }
+          .landingVisual { padding: 12px; border-radius: 24px; }
+          .landingRoute { height: 290px; border-radius: 18px; }
+          .landingTrustRow div { min-height: 58px; padding: 8px; }
+          .landingTrustRow strong { font-size: 10px; }
+          .landingTrustRow span { font-size: 8px; }
+          .landingFooter { min-height: 72px; flex-direction: column; justify-content: center; gap: 4px; }
+        }
+      `}</style>
     </main>
   );
 }
@@ -315,9 +188,9 @@ const pillStyle = {
   gap: 8,
   padding: "8px 14px 8px 8px",
   borderRadius: 30,
-  background: "#ffffff",
-  border: "1px solid #e5ede8",
-  color: "#2c3d34",
+  background: "#FFFFFF",
+  border: "1px solid #E5E9EF",
+  color: "#344052",
   fontSize: 12,
   fontWeight: 700,
 };
@@ -329,6 +202,6 @@ const pillIconStyle = {
   alignItems: "center",
   justifyContent: "center",
   borderRadius: "50%",
-  background: "#e1f3e7",
-  color: "#0a7d42",
+  background: "#E9FBF8",
+  color: "#008F84",
 };
