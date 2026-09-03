@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Vercel production boundary: VOYNU Customer PWA.
 const path = require('path');
 
 const securityHeaders = [
