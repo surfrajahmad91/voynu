@@ -14,14 +14,6 @@ function IconWhatsApp({ size = 15 }) {
   );
 }
 
-/*
- * whatsappMessage: pass a page-specific pre-filled message.
- * maxWidth: matches the content width of the page using it
- * (theme.maxWidth.content for narrow pages, theme.maxWidth.wide
- * for the home page).
- * showAccountLink / showWhatsapp: hide either action where it
- * doesn't apply (e.g. login/signup pages hide both).
- */
 export default function PageHeader({
   maxWidth = theme.maxWidth.content,
   showAccountLink = true,
@@ -31,8 +23,8 @@ export default function PageHeader({
   return (
     <header
       style={{
-        background: "rgba(255,255,255,0.92)",
-        backdropFilter: "blur(10px)",
+        background: "rgba(255,255,255,0.94)",
+        backdropFilter: "blur(12px)",
         borderBottom: `1px solid ${theme.colors.border}`,
         position: "sticky",
         top: 0,
@@ -49,34 +41,15 @@ export default function PageHeader({
           justifyContent: "space-between",
         }}
       >
-        <Link
-          href="/"
-          style={{ display: "flex", alignItems: "center", gap: 10 }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 11,
-              background: theme.gradients.primary,
-              color: "#ffffff",
-              fontWeight: 800,
-              fontSize: 19,
-              boxShadow: "0 6px 14px rgba(8,120,63,0.24)",
-            }}
-          >
-            V
-          </div>
-          <span
-            style={{
-              color: theme.colors.primary,
-              fontWeight: 800,
-              fontSize: 18,
-            }}
-          >
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img
+            src="/icon.svg"
+            alt="VOYNU"
+            width="40"
+            height="40"
+            style={{ borderRadius: 11, display: "block", boxShadow: "0 6px 14px rgba(13,27,42,.16)" }}
+          />
+          <span style={{ color: theme.colors.navy, fontWeight: 800, fontSize: 19, letterSpacing: "-0.4px" }}>
             VOYNU
           </span>
         </Link>
@@ -84,16 +57,9 @@ export default function PageHeader({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <NotificationBell />
           {showAccountLink && <AccountLink />}
-
           {showWhatsapp && (
             <a
-              href={
-                whatsappHref ||
-                "https://wa.me/919123456789?text=" +
-                  encodeURIComponent(
-                    "Hi VOYNU, I have a question."
-                  )
-              }
+              href={whatsappHref || "https://wa.me/919123456789?text=" + encodeURIComponent("Hi VOYNU, I have a question.")}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -102,11 +68,11 @@ export default function PageHeader({
                 gap: 7,
                 padding: "9px 15px",
                 borderRadius: theme.radius.pill,
-                background: "#1fa855",
+                background: "#22C55E",
                 color: "#ffffff",
                 fontSize: 12.5,
                 fontWeight: 700,
-                boxShadow: "0 6px 16px rgba(31,168,85,0.25)",
+                boxShadow: "0 6px 16px rgba(34,197,94,.22)",
               }}
             >
               <IconWhatsApp size={14} />
@@ -116,13 +82,7 @@ export default function PageHeader({
         </div>
       </div>
 
-      <style jsx>{`
-        @media (max-width: 420px) {
-          .whatsappLabel {
-            display: none;
-          }
-        }
-      `}</style>
+      <style jsx>{`@media (max-width: 420px) {.whatsappLabel { display: none; }}`}</style>
     </header>
   );
 }
