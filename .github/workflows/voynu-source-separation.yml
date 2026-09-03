@@ -33,6 +33,7 @@ jobs:
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
           rm -rf -- app/api/route-distance app/api/route-map
 
+          # Convert former root-app imports and old relative shared imports to portable relative paths.
           node <<'NODE'
           const fs = require('fs'); const path = require('path'); const root = process.cwd();
           const comps = ['AccountLink','AuthLanding','AuthShell','DateTimeBookingGuard','LiveTripMap','LocationPicker','MapLocationPicker','NotificationBell','PageHeader','PushNotifications'];
@@ -54,6 +55,7 @@ jobs:
             text=text.replace(/from\s+["'](?:\.\.\/)+app\/lib\/admin["']/g,'from "../lib/admin"');
             fs.writeFileSync(file,text);
           }
+          NODE
 
           printf 'export { default } from "../../../shared/auth/login";\n' > apps/customer/app/login/page.js
           printf 'export { default } from "../../../shared/auth/forgot-password";\n' > apps/customer/app/forgot-password/page.js
@@ -70,6 +72,7 @@ jobs:
           export { getRoadDistance } from "../../../../../shared/api/roadDistance";
           export type { RoadDistanceResult } from "../../../../../shared/api/roadDistance";
           EOF
+
           rm -rf app lib
           git add -A
           if git grep -nE 'from ["\x27].*app/(lib|components)/' -- apps shared; then echo 'ERROR: stale root-app imports remain.'; exit 1; fi
