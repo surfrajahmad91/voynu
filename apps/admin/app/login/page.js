@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../../app/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../../app/lib/admin";
-import { theme } from "../../../../app/lib/theme";
+import { supabase } from "../../../../shared/lib/supabaseClient";
+import { ADMIN_EMAILS } from "../../../lib/admin";
+import { theme } from "../../../../shared/lib/theme";
 
 export default function AdminLoginPage() {
   const router = useRouter();
