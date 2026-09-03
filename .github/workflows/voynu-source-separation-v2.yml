@@ -116,7 +116,13 @@ jobs:
           test ! -f .github/workflows/voynu-source-separation.yml
           test -f apps/customer/package.json; test -f apps/driver/package.json; test -f apps/admin/package.json
           node <<'NODE'
-          const fs=require('fs'),path=require('path'); const root=process.cwd(); const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{const p=path.join(d,e.name);return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[])}); const files=[...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))]; const exts=['','.js','.jsx','.ts','.tsx']; const resolve=(f,s)=>{const b=path.resolve(path.dirname(f),s);for(const x of exts){const p=b+x;if(fs.existsSync(p)&&fs.statSync(p).isFile())return p}for(const x of exts){const p=path.join(b,'index'+x);if(fs.existsSync(p)&&fs.statSync(p).isFile())return p}return null}; let bad=0; const re=/\b(?:from\s*|import\s*\()(["'])(\.\.?\/[^"']+)\1/g; for(const f of files){const t=fs.readFileSync(f,'utf8');let m;while((m=re.exec(t))){if(!resolve(f,m[2])){console.error(`MISSING ${path.relative(root,f)} -> ${m[2]}`);bad++}}} if(bad)process.exit(1);
+          const fs=require('fs'),path=require('path'); const root=process.cwd();
+          const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{if(e.name==='node_modules'||e.name==='.next')return [];const p=path.join(d,e.name);return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[])});
+          const files=[...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))]; const exts=['','.js','.jsx','.ts','.tsx'];
+          const resolve=(f,s)=>{const b=path.resolve(path.dirname(f),s);for(const x of exts){const p=b+x;if(fs.existsSync(p)&&fs.statSync(p).isFile())return p}for(const x of exts){const p=path.join(b,'index'+x);if(fs.existsSync(p)&&fs.statSync(p).isFile())return p}return null}; let bad=0;
+          const re=/\b(?:from\s*|import\s*\()(["'])(\.\.?\/[^"']+)\1/g;
+          for(const f of files){const t=fs.readFileSync(f,'utf8');let m;while((m=re.exec(t))){if(!resolve(f,m[2])){console.error(`MISSING ${path.relative(root,f)} -> ${m[2]}`);bad++}}}
+          if(bad)process.exit(1);
           NODE
 
       - name: Commit only after all verification gates pass
