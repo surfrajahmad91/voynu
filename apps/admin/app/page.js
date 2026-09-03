@@ -1,1 +1,5 @@
-export { default } from "../../../app/admin/page";
+import { redirect } from "next/navigation";
+
+export default function AdminRootPage() {
+  redirect("/admin");
+}
