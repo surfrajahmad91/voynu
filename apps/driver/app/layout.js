@@ -1,6 +1,6 @@
 import "../styles/globals.css";
-import NotificationBell from "../../../app/components/NotificationBell";
-import PushNotifications from "../../../app/components/PushNotifications";
+import NotificationBell from "../../../shared/components/NotificationBell";
+import PushNotifications from "../../../shared/components/PushNotifications";
 
 export const metadata = {
   title: "VOYNU Saarthi",

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { ADMIN_EMAILS } from "../../lib/admin";
 import { theme } from "../../../../shared/lib/theme";
 
 export default function AdminLoginPage() {

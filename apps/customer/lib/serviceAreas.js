@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "./supabaseClient";
+import { supabase } from "../../../shared/lib/supabaseClient";
 
 /*
  * Fetches all currently active, pickup-allowed service areas.

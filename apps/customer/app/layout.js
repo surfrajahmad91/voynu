@@ -1,6 +1,6 @@
 import "../styles/globals.css";
-import PushNotifications from "../../../app/components/PushNotifications";
-import DateTimeBookingGuard from "../../../app/components/DateTimeBookingGuard";
+import PushNotifications from "../../../shared/components/PushNotifications";
+import DateTimeBookingGuard from "../components/DateTimeBookingGuard";
 
 export const metadata = {
   title: "VOYNU",

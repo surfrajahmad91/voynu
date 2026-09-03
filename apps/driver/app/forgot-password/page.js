@@ -1,1 +1,1 @@
-export { default } from "../../../../app/forgot-password/page";
+export { default } from "../../../../shared/auth/forgot-password";
