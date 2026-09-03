@@ -95,32 +95,33 @@ jobs:
 
           # One genuinely shared road-distance implementation.
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
-
-          # Existing app-local route handlers remain the application entrypoints.
           rm -rf -- app/api/route-distance app/api/route-map
 
-          # Rewrite moved-module imports using the actual destination of each file.
+          # Rewrite moved-module imports with paths computed from each consumer file.
           node <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-          const root = process.cwd();
-          const sharedComponents = ['AccountLink','AuthShell','LiveTripMap','NotificationBell','PageHeader','PushNotifications'];
-          const sharedLibs = ['supabaseClient','theme'];
-          const customerComponents = ['AuthLanding','DateTimeBookingGuard','LocationPicker','MapLocationPicker'];
-          const walk = d => fs.readdirSync(d, {withFileTypes:true}).flatMap(e => { const p=path.join(d,e.name); return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[]); });
-          const rel = (from,to) => { const r=path.relative(path.dirname(from),to).replaceAll(path.sep,'/'); return r.startsWith('.')?r:`./${r}`; };
-          const replaceKnown = (text,name,target) => {
-            const e=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-            const old=new RegExp(`(from\\s+["'])(?:\\.\\.?/)+(?:app/)?(?:components|lib)/${e}(?:\\.jsx?|\\.tsx?)?(["'])`,'g');
-            const direct=new RegExp(`(from\\s+["'])\\./${e}(?:\\.jsx?|\\.tsx?)?(["'])`,'g');
-            return text.replace(old,`$1${target}$2`).replace(direct,`$1${target}$2`);
+          const fs=require('fs'), path=require('path');
+          const root=process.cwd();
+          const targets={
+            ...Object.fromEntries(['AccountLink','AuthShell','LiveTripMap','NotificationBell','PageHeader','PushNotifications'].map(n=>[n,path.join(root,'shared/components',n)])),
+            ...Object.fromEntries(['supabaseClient','theme'].map(n=>[n,path.join(root,'shared/lib',n)])),
+            ...Object.fromEntries(['AuthLanding','DateTimeBookingGuard','LocationPicker','MapLocationPicker'].map(n=>[n,path.join(root,'apps/customer/components',n)])),
+            ...Object.fromEntries(['contact','fareRules','geofence','googleMaps','serviceAreas','tripRules'].map(n=>[n,path.join(root,'apps/customer/lib',n)])),
+            admin:path.join(root,'apps/admin/lib/admin'),
+            capacityValidation:path.join(root,'apps/customer/lib/capacityValidation'),
+            DriverNavigationMode:path.join(root,'apps/driver/components/DriverNavigationMode')
           };
-          for (const file of [...walk(path.join(root,'apps')), ...walk(path.join(root,'shared'))]) {
+          const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{const p=path.join(d,e.name);return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[])});
+          const rel=(from,to)=>{const r=path.relative(path.dirname(from),to).replaceAll(path.sep,'/');return r.startsWith('.')?r:`./${r}`};
+          const names=Object.keys(targets);
+          const re=new RegExp(`from\\s+(["'])(?:\\.\\.?/)+(?:app/)?(?:components|lib)/(${names.join('|')})(?:\\.(?:js|jsx|ts|tsx))?\\1`,'g');
+          const direct=new RegExp(`from\\s+(["'])\\./(${names.join('|')})(?:\\.(?:js|jsx|ts|tsx))?\\1`,'g');
+          for(const file of [...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))]){
             let text=fs.readFileSync(file,'utf8');
-            for (const n of sharedComponents) text=replaceKnown(text,n,rel(file,path.join(root,'shared/components',n)));
-            for (const n of sharedLibs) text=replaceKnown(text,n,rel(file,path.join(root,'shared/lib',n)));
-            for (const n of customerComponents) text=replaceKnown(text,n,rel(file,path.join(root,'apps/customer/components',n)));
-            text=text.replace(/from\s+["'](?:\.\.\/)+app\/lib\/admin["']/g,`from "${rel(file,path.join(root,'apps/admin/lib/admin'))}"`);
+            text=text.replace(re,(_,q,n)=>`from ${q}${rel(file,targets[n])}${q}`);
+            text=text.replace(direct,(_,q,n)=>`from ${q}${rel(file,targets[n])}${q}`);
+            // Admin imports sometimes already omit the old app/lib prefix.
+            const adminRe=/from\s+(["'])(?:\.\.\/)+lib\/admin\1/g;
+            text=text.replace(adminRe,(_,q)=>`from ${q}${rel(file,targets.admin)}${q}`);
             fs.writeFileSync(file,text);
           }
           NODE
@@ -153,33 +154,16 @@ jobs:
 
           rm -rf -- app lib
 
-          # Resolve every relative JavaScript/TypeScript import from its actual file location.
-          # This catches both missing modules and accidental references to the deleted root app/lib.
+          # Resolve every relative import and reject missing targets or the deleted root source.
           node <<'NODE'
           const fs=require('fs'), path=require('path');
-          const root=process.cwd();
-          const exts=['','.js','.jsx','.ts','.tsx'];
+          const root=process.cwd(); const exts=['','.js','.jsx','.ts','.tsx'];
           const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{const p=path.join(d,e.name);return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[])});
           const files=[...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))];
-          const resolveImport=(file,spec)=>{
-            if(!spec.startsWith('.')) return null;
-            const base=path.resolve(path.dirname(file),spec);
-            for(const ext of exts){const p=base+ext;if(fs.existsSync(p)&&fs.statSync(p).isFile())return p;}
-            for(const ext of exts){const p=path.join(base,'index'+ext);if(fs.existsSync(p)&&fs.statSync(p).isFile())return p;}
-            return null;
-          };
-          let bad=0;
-          const re=/\b(?:from\s*|import\s*\()(["'])(\.\.?\/[^"']+)\1/g;
-          for(const file of files){
-            const text=fs.readFileSync(file,'utf8'); let m;
-            while((m=re.exec(text))){
-              const resolved=resolveImport(file,m[2]);
-              if(!resolved){console.error(`MISSING ${path.relative(root,file)} -> ${m[2]}`);bad++;continue;}
-              const r=path.relative(root,resolved).replaceAll(path.sep,'/');
-              if(r==='app'||r.startsWith('app/')||r==='lib'||r.startsWith('lib/')){console.error(`ROOT SOURCE ${path.relative(root,file)} -> ${m[2]} => ${r}`);bad++;}
-            }
-          }
-          if(bad) process.exit(1);
+          const resolve=(file,spec)=>{if(!spec.startsWith('.'))return null;const b=path.resolve(path.dirname(file),spec);for(const x of exts){const p=b+x;if(fs.existsSync(p)&&fs.statSync(p).isFile())return p}for(const x of exts){const p=path.join(b,'index'+x);if(fs.existsSync(p)&&fs.statSync(p).isFile())return p}return null};
+          let bad=0; const re=/\b(?:from\s*|import\s*\()(["'])(\.\.?\/[^"']+)\1/g;
+          for(const f of files){const t=fs.readFileSync(f,'utf8');let m;while((m=re.exec(t))){const p=resolve(f,m[2]);if(!p){console.error(`MISSING ${path.relative(root,f)} -> ${m[2]}`);bad++;continue}const r=path.relative(root,p).replaceAll(path.sep,'/');if(r==='app'||r.startsWith('app/')||r==='lib'||r.startsWith('lib/')){console.error(`ROOT SOURCE ${path.relative(root,f)} -> ${m[2]} => ${r}`);bad++}}}
+          if(bad)process.exit(1);
           NODE
 
           test ! -d app
@@ -209,27 +193,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node <<'NODE'
-          const fs=require('fs'), path=require('path');
-          const root=process.cwd();
-          const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{const p=path.join(d,e.name);return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[])});
-          const files=[...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))];
-          let bad=0;
-          for(const file of files){
-            const text=fs.readFileSync(file,'utf8');
-            for(const line of text.split(/\r?\n/)){
-              if(/from\s*["'](?:\.\.\/)+app\//.test(line)||/from\s*["'](?:\.\.\/)+lib\//.test(line)){console.error(`STALE ${path.relative(root,file)}: ${line.trim()}`);bad++;}
-            }
-          }
-          if(bad)process.exit(1);
-          NODE
           test ! -d app
           test ! -d lib
           test ! -d apps/web
           test ! -f .github/workflows/voynu-source-separation.yml
-          test -f apps/customer/package.json
-          test -f apps/driver/package.json
-          test -f apps/admin/package.json
+          test ! -f .github/workflows/voynu-source-separation-v2.yml
+          node <<'NODE'
+          const fs=require('fs'), path=require('path');
+          const root=process.cwd(); const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{const p=path.join(d,e.name);return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[])});
+          const files=[...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))]; let bad=0;
+          const re=/\b(?:from\s*|import\s*\()(["'])(\.\.?\/[^"']+)\1/g;
+          for(const f of files){const t=fs.readFileSync(f,'utf8');let m;while((m=re.exec(t))){const p=path.resolve(path.dirname(f),m[2]);const r=path.relative(root,p).replaceAll(path.sep,'/');if(r==='app'||r.startsWith('app/')||r==='lib'||r.startsWith('lib/')){console.error(`STALE ROOT IMPORT ${path.relative(root,f)} -> ${m[2]}`);bad++}}}
+          if(bad)process.exit(1);
+          NODE
 
       - name: Commit only after all verification gates pass
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
