@@ -16,7 +16,6 @@ jobs:
           test -d app/admin; test -f app/driver/page.js; test -f lib/capacityValidation.js
           mkdir -p apps/customer/app/components apps/customer/app/api/_lib apps/customer/app/lib apps/admin/app/lib apps/driver/app/components shared/components shared/lib shared/styles shared/api shared/auth
           move_replace() { src="$1"; dst="$2"; mkdir -p "$(dirname "$dst")"; rm -rf -- "$dst"; mv -- "$src" "$dst"; }
-
           for p in account booking-confirmed cab-selection signup; do move_replace "app/$p/page.js" "apps/customer/app/$p/page.js"; done
           move_replace app/page.js apps/customer/app/page.js
           for p in login forgot-password reset-password; do move_replace "app/$p/page.js" "shared/auth/$p.js"; done
@@ -42,12 +41,16 @@ jobs:
           const rel=(from,to)=>{let r=path.relative(path.dirname(from),to).replaceAll(path.sep,'/');return r.startsWith('.')?r:`./${r}`};
           for(const file of [...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))]){
             let s=fs.readFileSync(file,'utf8');
-            for(const n of sharedComps){const r=rel(file,path.join(root,'shared/components',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const q=new RegExp(`from\\s+["'](?:\\.\\.?/)+app/components/${e}["']`,'g');const q2=new RegExp(`from\\s+["'](?:\\.\\.?/)+components/${e}["']`,'g');s=s.replace(q,`from "${r}"`).replace(q2,`from "${r}"`);}
-            for(const n of sharedLibs){const r=rel(file,path.join(root,'shared/lib',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const q=new RegExp(`from\\s+["'](?:\\.\\.?/)+app/lib/${e}["']`,'g');const q2=new RegExp(`from\\s+["'](?:\\.\\.?/)+lib/${e}["']`,'g');s=s.replace(q,`from "${r}"`).replace(q2,`from "${r}"`);}
+            for(const n of sharedComps){const r=rel(file,path.join(root,'shared/components',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');s=s.replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+app/components/${e}["']`,'g'),`from "${r}"`).replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+components/${e}["']`,'g'),`from "${r}"`);}
+            for(const n of sharedLibs){const r=rel(file,path.join(root,'shared/lib',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');s=s.replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+app/lib/${e}["']`,'g'),`from "${r}"`).replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+lib/${e}["']`,'g'),`from "${r}"`);}
             s=s.replace(/from\s+["'](?:\.\.\/)+app\/lib\/admin["']/g,'from "../lib/admin"');
             fs.writeFileSync(file,s);
           }
           NODE
+
+          # Customer-only guard was intentionally kept in Customer after the shared/common split.
+          perl -0pi -e 's#from ["\x27]\.\./\.\./\.\./app/components/DateTimeBookingGuard["\x27]#from "./components/DateTimeBookingGuard"#g' apps/customer/app/layout.js
+          # Customer-only components are already local; keep any direct local imports intact.
 
           for app in customer driver; do
             printf 'export { default } from "../../../shared/auth/login";\n' > "apps/$app/app/login/page.js"
