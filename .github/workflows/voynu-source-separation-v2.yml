@@ -32,7 +32,6 @@ jobs:
           move_replace app/api/bookings/create/route.js apps/customer/app/api/bookings/create/route.js
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
           rm -rf -- app/api/route-distance app/api/route-map
-
           node <<'NODE'
           const fs=require('fs'),path=require('path'),root=process.cwd();
           const sharedComps=['AccountLink','AuthShell','LiveTripMap','NotificationBell','PageHeader','PushNotifications'];
@@ -47,7 +46,6 @@ jobs:
             fs.writeFileSync(file,s);
           }
           NODE
-
           perl -0pi -e 's#from ["\x27]\.\./\.\./\.\./app/components/DateTimeBookingGuard["\x27]#from "./components/DateTimeBookingGuard"#g' apps/customer/app/layout.js
           for app in customer driver; do
             printf 'export { default } from "../../../shared/auth/login";\n' > "apps/$app/app/login/page.js"
@@ -85,3 +83,5 @@ jobs:
           git add -A
           git commit -m 'refactor: complete three-app source separation'
           git push origin HEAD:main
+
+# One-time migration; this file is removed by the successful migration commit.
