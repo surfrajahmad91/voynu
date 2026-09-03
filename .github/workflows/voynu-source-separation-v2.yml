@@ -40,8 +40,8 @@ jobs:
           const rel=(from,to)=>{let r=path.relative(path.dirname(from),to).replaceAll(path.sep,'/');return r.startsWith('.')?r:`./${r}`};
           for(const file of [...walk(path.join(root,'apps')),...walk(path.join(root,'shared'))]){
             let s=fs.readFileSync(file,'utf8');
-            for(const n of sharedComps){const r=rel(file,path.join(root,'shared/components',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');s=s.replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+app/components/${e}["']`,'g'),`from "${r}"`).replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+components/${e}["']`,'g'),`from "${r}"`);}
-            for(const n of sharedLibs){const r=rel(file,path.join(root,'shared/lib',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');s=s.replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+app/lib/${e}["']`,'g'),`from "${r}"`).replace(new RegExp(`from\\s+["'](?:\\.\\.?/)+lib/${e}["']`,'g'),`from "${r}"`);}
+            for(const n of sharedComps){const r=rel(file,path.join(root,'shared/components',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const q=new RegExp(`from\\s+["'](?:\\.\\.?/)+app/components/${e}["']`,'g');const q2=new RegExp(`from\\s+["'](?:\\.\\.?/)+components/${e}["']`,'g');const q3=new RegExp(`from\\s+["']\\./${e}["']`,'g');s=s.replace(q,`from "${r}"`).replace(q2,`from "${r}"`).replace(q3,`from "${r}"`);}
+            for(const n of sharedLibs){const r=rel(file,path.join(root,'shared/lib',n));const e=n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const q=new RegExp(`from\\s+["'](?:\\.\\.?/)+app/lib/${e}["']`,'g');const q2=new RegExp(`from\\s+["'](?:\\.\\.?/)+lib/${e}["']`,'g');const q3=new RegExp(`from\\s+["']\\./${e}["']`,'g');s=s.replace(q,`from "${r}"`).replace(q2,`from "${r}"`).replace(q3,`from "${r}"`);}
             s=s.replace(/from\s+["'](?:\.\.\/)+app\/lib\/admin["']/g,'from "../lib/admin"');
             fs.writeFileSync(file,s);
           }
@@ -83,5 +83,3 @@ jobs:
           git add -A
           git commit -m 'refactor: complete three-app source separation'
           git push origin HEAD:main
-
-# One-time migration; this file is removed by the successful migration commit.
