@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VOYNU Saarthi">
-  <defs><linearGradient id="brand" x1="90" y1="420" x2="420" y2="90" gradientUnits="userSpaceOnUse"><stop stop-color="#00B4A6"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs>
-  <rect width="512" height="512" rx="112" fill="#00AFA3"/>
-  <path d="M102 105h76l78 218 82-218h72L278 420h-48z" fill="#fff"/>
-  <path d="M119 110c30-48 75-72 133-72 63 0 111 24 142 73" fill="none" stroke="#0D1B2A" stroke-opacity=".75" stroke-width="18" stroke-linecap="round"/>
-  <path d="M206 350 246 245 278 350" fill="none" stroke="#0D1B2A" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M214 350 250 258 286 350" fill="none" stroke="#0D1B2A" stroke-opacity=".8" stroke-width="8" stroke-linecap="round"/>
-</svg>
