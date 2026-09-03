@@ -10,6 +10,7 @@ name: VOYNU source separation v2
 #
 # Safety rule: this workflow never pushes unless every migration validation and
 # all three production builds succeed.
+# Revision: final preflight version; the next main push executes this exact file.
 on:
   push:
     branches: [main]
@@ -147,13 +148,13 @@ jobs:
             return value.startsWith('.') ? value : `./${value}`;
           }
 
-          function replaceImport(source, name, targetDirectory) {
+          function replaceImport(source, name) {
             const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const importPattern = new RegExp(
               `(from\\s+["'])(?:\\.\\.?/)+(?:app/)?(?:components|lib)/${escaped}(?:\\.jsx?|\\.tsx?)?(["'])`,
               'g'
             );
-            return source.replace(importPattern, (match, prefix, quote) => `${prefix}__TARGET__${quote}`);
+            return source.replace(importPattern, (match, prefix, quote) => `${prefix}__${name}_TARGET__${quote}`);
           }
 
           const files = [
@@ -165,17 +166,15 @@ jobs:
             let source = fs.readFileSync(file, 'utf8');
 
             for (const name of sharedComponents) {
-              const marker = '__TARGET__';
               const target = relativeImport(file, path.join(root, 'shared/components', name));
-              source = replaceImport(source, name, 'components');
-              source = source.replaceAll(marker, target);
+              source = replaceImport(source, name);
+              source = source.replaceAll(`__${name}_TARGET__`, target);
             }
 
             for (const name of sharedLibraries) {
-              const marker = '__TARGET__';
               const target = relativeImport(file, path.join(root, 'shared/lib', name));
-              source = replaceImport(source, name, 'lib');
-              source = source.replaceAll(marker, target);
+              source = replaceImport(source, name);
+              source = source.replaceAll(`__${name}_TARGET__`, target);
             }
 
             // Admin helper is intentionally app-local after separation.
