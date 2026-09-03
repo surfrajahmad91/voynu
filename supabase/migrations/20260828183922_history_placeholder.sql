@@ -1,0 +1,1 @@
+-- Historical migration version retained for production migration-history compatibility. The production schema is represented by 20260828171837_remote_schema_baseline.sql.
