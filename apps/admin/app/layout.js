@@ -7,10 +7,10 @@ export const metadata = {
   description: "VOYNU administration app",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
-  appleWebApp: { capable: true, title: "VOYNU Admin", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "VOYNU Admin", statusBarStyle: "black-translucent" },
 };
 
-export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#0b7a3e" };
+export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#7C3AED" };
 
 export default function RootLayout({ children }) {
   return (
