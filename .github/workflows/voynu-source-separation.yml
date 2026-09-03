@@ -20,48 +20,24 @@ jobs:
           test -d app/admin
           test -f app/driver/page.js
           test -f lib/capacityValidation.js
-
           mkdir -p apps/customer/app/components apps/customer/app/api/_lib apps/customer/app/lib
           mkdir -p apps/admin/app/lib apps/driver/app/components
           mkdir -p shared/components shared/lib shared/styles shared/api shared/auth
+          move_replace() { src="$1"; dst="$2"; mkdir -p "$(dirname "$dst")"; rm -rf -- "$dst"; mv -- "$src" "$dst"; }
 
-          move_replace() {
-            src="$1"; dst="$2"
-            mkdir -p "$(dirname "$dst")"
-            rm -rf -- "$dst"
-            mv -- "$src" "$dst"
-          }
-
-          for p in account booking-confirmed cab-selection signup; do
-            move_replace "app/$p/page.js" "apps/customer/app/$p/page.js"
-          done
+          for p in account booking-confirmed cab-selection signup; do move_replace "app/$p/page.js" "apps/customer/app/$p/page.js"; done
           move_replace app/page.js apps/customer/app/page.js
+          for p in login forgot-password reset-password; do move_replace "app/$p/page.js" "shared/auth/$p.js"; done
 
-          for p in login forgot-password reset-password; do
-            move_replace "app/$p/page.js" "shared/auth/$p.js"
-          done
-
-          for f in AccountLink.jsx AuthLanding.jsx AuthShell.jsx DateTimeBookingGuard.jsx LiveTripMap.js LocationPicker.jsx MapLocationPicker.jsx NotificationBell.jsx PageHeader.jsx PushNotifications.jsx; do
-            move_replace "app/components/$f" "shared/components/$f"
-          done
-          for f in supabaseClient.js theme.js; do
-            move_replace "app/lib/$f" "shared/lib/$f"
-          done
-
-          for f in contact.js fareRules.js geofence.js googleMaps.js serviceAreas.js tripRules.js; do
-            move_replace "app/lib/$f" "apps/customer/app/lib/$f"
-          done
+          for f in AccountLink.jsx AuthLanding.jsx AuthShell.jsx DateTimeBookingGuard.jsx LiveTripMap.js LocationPicker.jsx MapLocationPicker.jsx NotificationBell.jsx PageHeader.jsx PushNotifications.jsx; do move_replace "app/components/$f" "shared/components/$f"; done
+          for f in supabaseClient.js theme.js; do move_replace "app/lib/$f" "shared/lib/$f"; done
+          for f in contact.js fareRules.js geofence.js googleMaps.js serviceAreas.js tripRules.js; do move_replace "app/lib/$f" "apps/customer/app/lib/$f"; done
           move_replace lib/capacityValidation.js apps/customer/lib/capacityValidation.js
 
-          while IFS= read -r src; do
-            rel="${src#app/admin/}"
-            move_replace "$src" "apps/admin/app/admin/$rel"
-          done < <(find app/admin -type f | sort)
+          while IFS= read -r src; do rel="${src#app/admin/}"; move_replace "$src" "apps/admin/app/admin/$rel"; done < <(find app/admin -type f | sort)
           move_replace app/lib/admin.js apps/admin/app/lib/admin.js
-
           move_replace app/driver/page.js apps/driver/app/driver/page.js
           move_replace app/components/DriverNavigationMode.js apps/driver/app/components/DriverNavigationMode.js
-
           move_replace app/api/_lib/sendBookingEmail.js apps/customer/app/api/_lib/sendBookingEmail.js
           move_replace app/api/bookings/create/route.js apps/customer/app/api/bookings/create/route.js
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
@@ -75,15 +51,9 @@ jobs:
             const alias = "path.join(__dirname, '../../shared')";
             if (!text.includes('@voynu/shared')) {
               if (text.includes('config.resolve.alias = {')) {
-                text = text.replace(
-                  'config.resolve.alias = {',
-                  `config.resolve.alias = {\n      '@voynu/shared': ${alias},`
-                );
+                text = text.replace('config.resolve.alias = {', `config.resolve.alias = {\n      '@voynu/shared': ${alias},`);
               } else if (text.includes('config.resolve.modules = [')) {
-                text = text.replace(
-                  'config.resolve.modules = [',
-                  `config.resolve.alias = { '@voynu/shared': ${alias} };\n    config.resolve.modules = [`
-                );
+                text = text.replace('config.resolve.modules = [', `config.resolve.alias = { '@voynu/shared': ${alias} };\n    config.resolve.modules = [`);
               } else {
                 throw new Error(`Cannot extend webpack resolver in ${file}`);
               }
@@ -92,24 +62,12 @@ jobs:
           }
           NODE
 
-          find apps shared -type f \( -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' \) -print0 |
-            xargs -0 perl -0pi -e 's#from\s+["\x27](?:\.\./)+app/lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+app/components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27](?:\.\./)+lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27]\./(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader)["\x27]#from "@voynu/shared/components/$1"#g'
+          find apps shared -type f \( -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' \) -print0 | xargs -0 perl -0pi -e 's#from\s+["\x27](?:\.\./)+app/lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+app/components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27](?:\.\./)+lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27]\./(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader)["\x27]#from "@voynu/shared/components/$1"#g'
 
-          for app in customer driver; do
-            for p in login forgot-password reset-password; do
-              cat > "apps/$app/app/$p/page.js" <<EOF
-          export { default } from "@voynu/shared/auth/$p";
-          EOF
-            done
-          done
-
+          for app in customer driver; do for p in login forgot-password reset-password; do printf 'export { default } from "@voynu/shared/auth/%s";\n' "$p" > "apps/$app/app/$p/page.js"; done; done
           perl -0pi -e 's#from ["\x27](?:\.\./)+app/lib/admin["\x27]#from "../lib/admin"#g' apps/admin/app/login/page.js
           perl -0pi -e 's#from ["\x27]\.\./\.\./\.\./app/components/DateTimeBookingGuard["\x27]#from "./components/DateTimeBookingGuard"#g' apps/customer/app/layout.js
-
-          for app in customer driver admin; do
-            perl -0pi -e 's#@import "\.\./\.\./\.\./app/globals\.css";#@import "../../../shared/styles/globals.css";#g; s#@import "\.\./\.\./\.\./app/brand-theme\.css";#@import "../../../shared/styles/brand-theme.css";#g' "apps/$app/styles/globals.css"
-          done
-
+          for app in customer driver admin; do perl -0pi -e 's#@import "\.\./\.\./\.\./app/globals\.css";#@import "../../../shared/styles/globals.css";#g; s#@import "\.\./\.\./\.\./app/brand-theme\.css";#@import "../../../shared/styles/brand-theme.css";#g' "apps/$app/styles/globals.css"; done
           cat > apps/customer/app/api/_lib/roadDistance.ts <<'EOF'
           export { getRoadDistance } from "../../../../../shared/api/roadDistance";
           export type { RoadDistanceResult } from "../../../../../shared/api/roadDistance";
@@ -121,23 +79,10 @@ jobs:
 
           rm -rf app lib
           git add -A
-
-          if git grep -nE 'from ["\x27].*app/(lib|components)/' -- apps shared; then
-            echo 'ERROR: stale root-app imports remain.'
-            exit 1
-          fi
-          if git grep -nE 'from ["\x27].*app/(login|forgot-password|reset-password)' -- apps shared; then
-            echo 'ERROR: stale root-auth imports remain.'
-            exit 1
-          fi
-          if [ -d app ] && find app -type f -print -quit | grep -q .; then
-            echo 'ERROR: root app still contains files.'
-            exit 1
-          fi
-          if [ -d lib ] && find lib -type f -print -quit | grep -q .; then
-            echo 'ERROR: root lib still contains files.'
-            exit 1
-          fi
+          if git grep -nE 'from ["\x27].*app/(lib|components)/' -- apps shared; then echo 'ERROR: stale root-app imports remain.'; exit 1; fi
+          if git grep -nE 'from ["\x27].*app/(login|forgot-password|reset-password)' -- apps shared; then echo 'ERROR: stale root-auth imports remain.'; exit 1; fi
+          if [ -d app ] && find app -type f -print -quit | grep -q .; then echo 'ERROR: root app still contains files.'; exit 1; fi
+          if [ -d lib ] && find lib -type f -print -quit | grep -q .; then echo 'ERROR: root lib still contains files.'; exit 1; fi
           git status --short
 
       - name: Build all three applications
