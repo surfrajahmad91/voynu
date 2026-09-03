@@ -5,6 +5,7 @@ import Link from "next/link";
 import { theme } from "../lib/theme";
 import AccountLink from "./AccountLink";
 import NotificationBell from "./NotificationBell";
+import ThemeToggle from "./ThemeToggle";
 
 function IconWhatsApp({ size = 15 }) {
   return (
@@ -21,40 +22,15 @@ export default function PageHeader({
   whatsappHref = null,
 }) {
   return (
-    <header
-      style={{
-        background: "rgba(255,255,255,0.94)",
-        backdropFilter: "blur(12px)",
-        borderBottom: `1px solid ${theme.colors.border}`,
-        position: "sticky",
-        top: 0,
-        zIndex: 20,
-      }}
-    >
-      <div
-        style={{
-          width: `min(${maxWidth}px, calc(100% - 32px))`,
-          margin: "0 auto",
-          minHeight: 68,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img
-            src="/icon.svg"
-            alt="VOYNU"
-            width="40"
-            height="40"
-            style={{ borderRadius: 11, display: "block", boxShadow: "0 6px 14px rgba(13,27,42,.16)" }}
-          />
-          <span style={{ color: theme.colors.navy, fontWeight: 800, fontSize: 19, letterSpacing: "-0.4px" }}>
-            VOYNU
-          </span>
+    <header className="voynu-page-header">
+      <div className="voynu-page-header-inner" style={{ width: `min(${maxWidth}px, calc(100% - 32px))` }}>
+        <Link href="/" className="voynu-header-brand" aria-label="VOYNU home">
+          <img src="/icon.svg" alt="VOYNU" width="40" height="40" />
+          <span>VOYNU</span>
         </Link>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="voynu-header-actions">
+          <ThemeToggle />
           <NotificationBell />
           {showAccountLink && <AccountLink />}
           {showWhatsapp && (
@@ -62,18 +38,7 @@ export default function PageHeader({
               href={whatsappHref || "https://wa.me/919123456789?text=" + encodeURIComponent("Hi VOYNU, I have a question.")}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                padding: "9px 15px",
-                borderRadius: theme.radius.pill,
-                background: "#22C55E",
-                color: "#ffffff",
-                fontSize: 12.5,
-                fontWeight: 700,
-                boxShadow: "0 6px 16px rgba(34,197,94,.22)",
-              }}
+              className="voynu-whatsapp"
             >
               <IconWhatsApp size={14} />
               <span className="whatsappLabel">Chat with us</span>
@@ -81,8 +46,15 @@ export default function PageHeader({
           )}
         </div>
       </div>
-
-      <style jsx>{`@media (max-width: 420px) {.whatsappLabel { display: none; }}`}</style>
+      <style jsx>{`
+        .voynu-page-header { background: color-mix(in srgb, var(--voynu-surface,#fff) 94%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--voynu-border,#E5E9EF); position: sticky; top: 0; z-index: 20; }
+        .voynu-page-header-inner { margin:0 auto; min-height:68px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+        .voynu-header-brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--voynu-navy,#0D1B2A); font-weight:800; font-size:19px; letter-spacing:-.4px; }
+        .voynu-header-brand img { display:block; width:40px; height:40px; border-radius:11px; box-shadow:0 6px 14px rgba(13,27,42,.16); }
+        .voynu-header-actions { display:flex; align-items:center; gap:8px; }
+        .voynu-whatsapp { display:flex; align-items:center; gap:7px; padding:9px 15px; border-radius:999px; background:#22C55E; color:#fff; text-decoration:none; font-size:12.5px; font-weight:700; box-shadow:0 6px 16px rgba(34,197,94,.22); }
+        @media (max-width:420px) { .voynu-page-header-inner { width:calc(100% - 24px) !important; } .whatsappLabel { display:none; } }
+      `}</style>
     </header>
   );
 }
