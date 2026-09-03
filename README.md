@@ -125,3 +125,7 @@ Historical documents are retained only when they explain a meaningful production
 **Inspect first. Prove dependencies. Change the underlying structure cleanly. Document the reason. Validate the result. Then commit.**
 
 This repository is maintained as production software, not as a collection of recovery experiments. Git history is the recovery mechanism; `main` should contain one clear, understandable implementation of each production capability.
+
+## Verified source separation
+
+The three-app source separation was verified with production builds for Customer, Saarthi, and Admin plus a dependency-resolution and legacy-root audit before the migration was integrated into `main`. Temporary migration workflows were removed after those verification gates passed.
