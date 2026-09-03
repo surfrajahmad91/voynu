@@ -1,8 +1,8 @@
 name: VOYNU source separation v2
 
-# Temporary one-shot migration.
-# It runs on a same-repository PR so the migration can be built and audited
-# before main is changed. The verified migration commit removes this workflow.
+# Temporary one-shot migration. It runs on a same-repository PR so the
+# migration can be built and audited before main is changed. The verified
+# migration commit removes this workflow.
 on:
   pull_request:
     branches: [main]
@@ -30,22 +30,13 @@ jobs:
             exit 0
           fi
 
-          # Preconditions: the legacy implementation must still be present.
           test -d app/admin
           test -f app/driver/page.js
           test -f lib/capacityValidation.js
           test -f app/lib/serviceAreas.js
           test -f app/lib/supabaseClient.js
 
-          mkdir -p \
-            apps/customer/app/api/_lib \
-            apps/customer/app/{account,booking-confirmed,cab-selection,signup} \
-            apps/customer/{components,lib} \
-            apps/admin/app/admin \
-            apps/admin/lib \
-            apps/driver/app/{driver,api/_lib} \
-            apps/driver/{components,lib} \
-            shared/{components,lib,styles,api,auth}
+          mkdir -p apps/customer/app/api/_lib apps/customer/app/{account,booking-confirmed,cab-selection,signup} apps/customer/{components,lib} apps/admin/app/admin apps/admin/lib apps/driver/app/{driver,api/_lib} apps/driver/{components,lib} shared/{components,lib,styles,api,auth}
 
           move_replace() {
             local src="$1" dst="$2"
@@ -55,36 +46,22 @@ jobs:
           }
 
           # Customer-owned routes, UI, and business logic.
-          for p in account booking-confirmed cab-selection signup; do
-            move_replace "app/$p/page.js" "apps/customer/app/$p/page.js"
-          done
+          for p in account booking-confirmed cab-selection signup; do move_replace "app/$p/page.js" "apps/customer/app/$p/page.js"; done
           move_replace app/page.js apps/customer/app/page.js
-          for f in AuthLanding.jsx DateTimeBookingGuard.jsx LocationPicker.jsx MapLocationPicker.jsx; do
-            move_replace "app/components/$f" "apps/customer/components/$f"
-          done
-          for f in contact.js fareRules.js geofence.js googleMaps.js serviceAreas.js tripRules.js; do
-            move_replace "app/lib/$f" "apps/customer/lib/$f"
-          done
+          for f in AuthLanding.jsx DateTimeBookingGuard.jsx LocationPicker.jsx MapLocationPicker.jsx; do move_replace "app/components/$f" "apps/customer/components/$f"; done
+          for f in contact.js fareRules.js geofence.js googleMaps.js serviceAreas.js tripRules.js; do move_replace "app/lib/$f" "apps/customer/lib/$f"; done
           move_replace lib/capacityValidation.js apps/customer/lib/capacityValidation.js
 
           # Shared authentication, UI, libraries, and styling.
-          for p in login forgot-password reset-password; do
-            move_replace "app/$p/page.js" "shared/auth/$p.js"
-          done
-          for f in AccountLink.jsx AuthShell.jsx LiveTripMap.js NotificationBell.jsx PageHeader.jsx PushNotifications.jsx; do
-            move_replace "app/components/$f" "shared/components/$f"
-          done
-          for f in supabaseClient.js theme.js; do
-            move_replace "app/lib/$f" "shared/lib/$f"
-          done
+          for p in login forgot-password reset-password; do move_replace "app/$p/page.js" "shared/auth/$p.js"; done
+          for f in AccountLink.jsx AuthShell.jsx LiveTripMap.js NotificationBell.jsx PageHeader.jsx PushNotifications.jsx; do move_replace "app/components/$f" "shared/components/$f"; done
+          for f in supabaseClient.js theme.js; do move_replace "app/lib/$f" "shared/lib/$f"; done
           move_replace app/globals.css shared/styles/globals.css
           move_replace app/brand-theme.css shared/styles/brand-theme.css
 
           # Admin-owned routes and helpers.
           mapfile -t admin_files < <(find app/admin -type f -print | sort)
-          for src in "${admin_files[@]}"; do
-            move_replace "$src" "apps/admin/app/admin/${src#app/admin/}"
-          done
+          for src in "${admin_files[@]}"; do move_replace "$src" "apps/admin/app/admin/${src#app/admin/}"; done
           move_replace app/lib/admin.js apps/admin/lib/admin.js
 
           # Saarthi-owned routes and UI.
@@ -97,55 +74,62 @@ jobs:
 
           # Road-distance implementation is genuinely shared by Customer and Saarthi.
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
-
-          # Existing app-local route handlers are authoritative application entrypoints.
-          # Delete only the old root copies so there is one implementation per route.
           rm -rf -- app/api/route-distance app/api/route-map
 
-          # Rewrite imports after movement. This is path-aware rather than filename-only.
+          # Rewrite every known moved-module import by resolving from the actual
+          # importing file to the actual destination. This handles imports such
+          # as ./components/X, ./lib/X, ../../app/components/X, and ../lib/X.
           node <<'NODE'
           const fs = require('fs');
           const path = require('path');
           const root = process.cwd();
+          const targets = new Map([
+            ['AccountLink', path.join(root,'shared/components/AccountLink.jsx')],
+            ['AuthShell', path.join(root,'shared/components/AuthShell.jsx')],
+            ['LiveTripMap', path.join(root,'shared/components/LiveTripMap.js')],
+            ['NotificationBell', path.join(root,'shared/components/NotificationBell.jsx')],
+            ['PageHeader', path.join(root,'shared/components/PageHeader.jsx')],
+            ['PushNotifications', path.join(root,'shared/components/PushNotifications.jsx')],
+            ['AuthLanding', path.join(root,'apps/customer/components/AuthLanding.jsx')],
+            ['DateTimeBookingGuard', path.join(root,'apps/customer/components/DateTimeBookingGuard.jsx')],
+            ['LocationPicker', path.join(root,'apps/customer/components/LocationPicker.jsx')],
+            ['MapLocationPicker', path.join(root,'apps/customer/components/MapLocationPicker.jsx')],
+            ['supabaseClient', path.join(root,'shared/lib/supabaseClient.js')],
+            ['theme', path.join(root,'shared/lib/theme.js')],
+            ['contact', path.join(root,'apps/customer/lib/contact.js')],
+            ['fareRules', path.join(root,'apps/customer/lib/fareRules.js')],
+            ['geofence', path.join(root,'apps/customer/lib/geofence.js')],
+            ['googleMaps', path.join(root,'apps/customer/lib/googleMaps.js')],
+            ['serviceAreas', path.join(root,'apps/customer/lib/serviceAreas.js')],
+            ['tripRules', path.join(root,'apps/customer/lib/tripRules.js')],
+          ]);
+          const walk = d => fs.readdirSync(d,{withFileTypes:true}).flatMap(e => { const p=path.join(d,e.name); return e.isDirectory()?walk(p):(/\.(js|jsx|ts|tsx)$/.test(e.name)?[p]:[]); });
+          const rel = (from,to) => { const r=path.relative(path.dirname(from),to).replaceAll(path.sep,'/'); return r.startsWith('.')?r:`./${r}`; };
+          const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
-          const sharedComponents = ['AccountLink','AuthShell','LiveTripMap','NotificationBell','PageHeader','PushNotifications'];
-          const sharedLibs = ['supabaseClient','theme'];
-          const customerComponents = ['AuthLanding','DateTimeBookingGuard','LocationPicker','MapLocationPicker'];
-
-          const walk = d => fs.readdirSync(d, {withFileTypes:true}).flatMap(e => {
-            const p = path.join(d, e.name);
-            return e.isDirectory() ? walk(p) : (/\.(js|jsx|ts|tsx)$/.test(e.name) ? [p] : []);
-          });
-          const rel = (from, to) => {
-            const r = path.relative(path.dirname(from), to).replaceAll(path.sep, '/');
-            return r.startsWith('.') ? r : `./${r}`;
-          };
-          const replaceKnown = (text, name, target) => {
-            const e = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const old = new RegExp(`(from\\s+["'])(?:\\.\\.?/)+(?:app/)?(?:components|lib)/${e}(?:\\.jsx?|\\.tsx?)?(["'])`, 'g');
-            const direct = new RegExp(`(from\\s+["'])\\./${e}(?:\\.jsx?|\\.tsx?)?(["'])`, 'g');
-            return text.replace(old, `$1${target}$2`).replace(direct, `$1${target}$2`);
-          };
-
-          for (const file of [...walk(path.join(root, 'apps')), ...walk(path.join(root, 'shared'))]) {
-            let text = fs.readFileSync(file, 'utf8');
-            for (const n of sharedComponents) text = replaceKnown(text, n, rel(file, path.join(root, 'shared/components', n)));
-            for (const n of sharedLibs) text = replaceKnown(text, n, rel(file, path.join(root, 'shared/lib', n)));
-            for (const n of customerComponents) text = replaceKnown(text, n, rel(file, path.join(root, 'apps/customer/components', n)));
-            text = text.replace(/from\s+["'](?:\.\.\/)+app\/lib\/admin["']/g, `from "${rel(file, path.join(root, 'apps/admin/lib/admin'))}"`);
-            fs.writeFileSync(file, text);
+          for (const file of [...walk(path.join(root,'apps')), ...walk(path.join(root,'shared'))]) {
+            let text=fs.readFileSync(file,'utf8');
+            for (const [name,target] of targets) {
+              const e=escape(name);
+              const pattern = new RegExp(`(from\\s+["'])(?:\\.{1,2}\\/)+(?:app\\/)?(?:components|lib)\\/${e}(?:\\.[A-Za-z]+)?(["'])`,'g');
+              const direct = new RegExp(`(from\\s+["'])\\./${e}(?:\\.[A-Za-z]+)?(["'])`,'g');
+              text=text.replace(pattern,(_,p,q)=>`${p}${rel(file,target)}${q}`);
+              text=text.replace(direct,(_,p,q)=>`${p}${rel(file,target)}${q}`);
+            }
+            // Moved files can also have sibling imports such as ./supabaseClient
+            // or ./LocationPicker; the basename pass above covers those too.
+            fs.writeFileSync(file,text);
           }
           NODE
 
-          # Customer and Saarthi expose the shared auth pages through local route adapters.
-          # From apps/*/app/<route>, the repository root is four levels up.
+          # App-owned auth route adapters.
           for app in customer driver; do
             printf 'export { default } from "../../../../shared/auth/login";\n' > "apps/$app/app/login/page.js"
             printf 'export { default } from "../../../../shared/auth/forgot-password";\n' > "apps/$app/app/forgot-password/page.js"
             printf 'export { default } from "../../../../shared/auth/reset-password";\n' > "apps/$app/app/reset-password/page.js"
           done
 
-          # The driver and admin source pages live under named route segments.
+          # Each deployable app owns its root route.
           printf 'export { default } from "./driver/page";\n' > apps/driver/app/page.js
           printf 'export { default } from "./admin/page";\n' > apps/admin/app/page.js
 
@@ -154,7 +138,6 @@ jobs:
             perl -0pi -e 's#@import "\.\./\.\./\.\./app/globals\.css";#@import "../../../shared/styles/globals.css";#g; s#@import "\.\./\.\./\.\./app/brand-theme\.css";#@import "../../../shared/styles/brand-theme.css";#g' "apps/$app/styles/globals.css"
           done
 
-          # App-local route-distance helpers point at the one shared implementation.
           cat > apps/customer/app/api/_lib/roadDistance.ts <<'EOF'
           export { getRoadDistance } from "../../../../../shared/api/roadDistance";
           export type { RoadDistanceResult } from "../../../../../shared/api/roadDistance";
@@ -166,26 +149,12 @@ jobs:
 
           rm -rf -- app lib
 
-          # Strong stale-boundary checks.
-          if grep -RInE 'from ["'"'"'](\.{0,2}/)*app/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
-            echo 'ERROR: stale root app source imports remain.'
-            exit 1
-          fi
-          if grep -RInE 'from ["'"'"'](\.{0,2}/)*lib/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
-            echo 'ERROR: stale root lib imports remain.'
-            exit 1
-          fi
-
+          # Boundary checks.
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*app/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then echo 'ERROR: stale root app imports remain.'; exit 1; fi
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*lib/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then echo 'ERROR: stale root lib imports remain.'; exit 1; fi
           test ! -d app
           test ! -d lib
           test ! -d apps/web
-
-          for d in apps/customer/app apps/customer/components apps/customer/lib apps/customer/public apps/customer/styles \
-                   apps/driver/app apps/driver/components apps/driver/lib apps/driver/public apps/driver/styles \
-                   apps/admin/app apps/admin/lib apps/admin/public apps/admin/styles \
-                   shared/components shared/lib shared/styles shared/api shared/auth; do
-            test -d "$d"
-          done
 
       - name: Build all three production applications
         shell: bash
@@ -203,16 +172,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          if grep -RInE 'from ["'"'"'](\.{0,2}/)*app/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
-            echo 'ERROR: stale root app source imports remain after builds.'
-            exit 1
-          fi
-          if grep -RInE 'from ["'"'"'](\.{0,2}/)*lib/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
-            echo 'ERROR: stale root lib imports remain after builds.'
-            exit 1
-          fi
-
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*app/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then echo 'ERROR: stale root app imports remain after builds.'; exit 1; fi
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*lib/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then echo 'ERROR: stale root lib imports remain after builds.'; exit 1; fi
           test ! -d app
           test ! -d lib
           test ! -d apps/web
@@ -231,8 +192,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm -f .github/workflows/voynu-source-separation.yml .github/workflows/voynu-source-separation-v2.yml
           git add -A
-          git commit -m 'refactor: complete three-app source separation' \
-            -m 'Move Customer, Saarthi, and Admin source into explicit application boundaries.' \
-            -m 'Centralize only genuinely shared UI, authentication, styling, and utilities.' \
-            -m 'Require structural, dependency, duplication, and production-build validation before publishing the migration.'
+          git commit -m 'refactor: complete three-app source separation' -m 'Move Customer, Saarthi, and Admin source into explicit application boundaries.' -m 'Centralize only genuinely shared UI, authentication, styling, and utilities.' -m 'Require structural, dependency, duplication, and production-build validation before publishing the migration.'
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
