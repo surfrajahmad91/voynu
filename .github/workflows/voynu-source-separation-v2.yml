@@ -3,6 +3,7 @@ name: VOYNU source separation v2
 # Temporary one-shot migration.
 # It runs on a same-repository PR so the migration can be built and audited
 # before main is changed. The verified migration commit removes this workflow.
+# Execution branch: refactor/verified-source-separation
 on:
   pull_request:
     branches: [main]
