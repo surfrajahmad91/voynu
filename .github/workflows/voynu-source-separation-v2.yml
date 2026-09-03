@@ -1,12 +1,12 @@
 name: VOYNU source separation v2
 
 # Temporary one-shot migration.
-# Purpose: move the legacy shared root source into the final three-PWA layout,
-# validate dependency boundaries, build all PWAs, then remove this workflow.
-# Nothing is pushed as the migration result unless all gates pass.
+# It runs on a same-repository PR so the migration can be built and audited
+# before main is changed. The verified migration commit removes this workflow.
 on:
-  push:
+  pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -15,9 +15,10 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout complete repository history
+      - name: Checkout PR head
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Migrate source tree and validate structure
@@ -136,15 +137,15 @@ jobs:
           }
           NODE
 
-          # App-owned auth route adapters. From apps/*/app/<route>, the repository root
-          # is three levels up, not four.
+          # Customer and Saarthi expose the shared auth pages through local route adapters.
+          # From apps/*/app/<route>, the repository root is four levels up.
           for app in customer driver; do
-            printf 'export { default } from "../../../shared/auth/login";\n' > "apps/$app/app/login/page.js"
-            printf 'export { default } from "../../../shared/auth/forgot-password";\n' > "apps/$app/app/forgot-password/page.js"
-            printf 'export { default } from "../../../shared/auth/reset-password";\n' > "apps/$app/app/reset-password/page.js"
+            printf 'export { default } from "../../../../shared/auth/login";\n' > "apps/$app/app/login/page.js"
+            printf 'export { default } from "../../../../shared/auth/forgot-password";\n' > "apps/$app/app/forgot-password/page.js"
+            printf 'export { default } from "../../../../shared/auth/reset-password";\n' > "apps/$app/app/reset-password/page.js"
           done
 
-          # These apps have an application-specific home route under their named segment.
+          # The driver and admin source pages live under named route segments.
           printf 'export { default } from "./driver/page";\n' > apps/driver/app/page.js
           printf 'export { default } from "./admin/page";\n' > apps/admin/app/page.js
 
@@ -153,7 +154,7 @@ jobs:
             perl -0pi -e 's#@import "\.\./\.\./\.\./app/globals\.css";#@import "../../../shared/styles/globals.css";#g; s#@import "\.\./\.\./\.\./app/brand-theme\.css";#@import "../../../shared/styles/brand-theme.css";#g' "apps/$app/styles/globals.css"
           done
 
-          # App-local route-distance compatibility wrappers point at the shared implementation.
+          # App-local route-distance helpers point at the one shared implementation.
           cat > apps/customer/app/api/_lib/roadDistance.ts <<'EOF'
           export { getRoadDistance } from "../../../../../shared/api/roadDistance";
           export type { RoadDistanceResult } from "../../../../../shared/api/roadDistance";
@@ -163,21 +164,15 @@ jobs:
           export type { RoadDistanceResult } from "../../../../../shared/api/roadDistance";
           EOF
 
-          # The root application source is now gone by construction.
           rm -rf -- app lib
 
-          # Strong stale-boundary checks. We reject imports into the deleted root source
-          # tree, not valid app-local ../lib or ../components imports.
-          if git grep -nE 'from ["\x27](\.{0,2}/)*app/' -- apps shared; then
+          # Strong stale-boundary checks.
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*app/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
             echo 'ERROR: stale root app source imports remain.'
             exit 1
           fi
-          if git grep -nE 'from ["\x27](\.{0,2}/)*lib/' -- apps shared; then
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*lib/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
             echo 'ERROR: stale root lib imports remain.'
-            exit 1
-          fi
-          if git grep -nE 'from ["\x27](\.{0,2}/)+app/(login|forgot-password|reset-password)' -- apps shared; then
-            echo 'ERROR: stale root auth imports remain.'
             exit 1
           fi
 
@@ -209,11 +204,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git grep -nE 'from ["\x27](\.{0,2}/)*app/' -- apps shared; then
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*app/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
             echo 'ERROR: stale root app source imports remain after builds.'
             exit 1
           fi
-          if git grep -nE 'from ["\x27](\.{0,2}/)*lib/' -- apps shared; then
+          if grep -RInE 'from ["'"'"'](\.{0,2}/)*lib/' apps shared --include='*.js' --include='*.jsx' --include='*.ts' --include='*.tsx'; then
             echo 'ERROR: stale root lib imports remain after builds.'
             exit 1
           fi
@@ -228,6 +223,7 @@ jobs:
           test -f apps/admin/package.json
 
       - name: Commit verified migration and remove temporary workflows
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
         shell: bash
         run: |
           set -euo pipefail
@@ -239,4 +235,4 @@ jobs:
             -m 'Move Customer, Saarthi, and Admin source into explicit application boundaries.' \
             -m 'Centralize only genuinely shared UI, authentication, styling, and utilities.' \
             -m 'Require structural, dependency, duplication, and production-build validation before publishing the migration.'
-          git push origin HEAD:main
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
