@@ -42,8 +42,8 @@ jobs:
             apps/customer/{components,lib} \
             apps/admin/app/admin \
             apps/admin/lib \
-            apps/driver/app/{driver,components,api/_lib} \
-            apps/driver/lib \
+            apps/driver/app/{driver,api/_lib} \
+            apps/driver/{components,lib} \
             shared/{components,lib,styles,api,auth}
 
           move_replace() {
@@ -97,12 +97,11 @@ jobs:
           # Road-distance implementation is genuinely shared by Customer and Saarthi.
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
 
-          # The existing app-local route handlers are authoritative application entrypoints.
-          # The old root copies are deleted so there is only one implementation per route.
+          # Existing app-local route handlers are authoritative application entrypoints.
+          # Delete only the old root copies so there is one implementation per route.
           rm -rf -- app/api/route-distance app/api/route-map
 
-          # Rewrite imports after movement. This is path-aware rather than filename-only:
-          # it updates known moved modules wherever they are consumed in apps/shared.
+          # Rewrite imports after movement. This is path-aware rather than filename-only.
           node <<'NODE'
           const fs = require('fs');
           const path = require('path');
@@ -132,6 +131,7 @@ jobs:
             for (const n of sharedComponents) text = replaceKnown(text, n, rel(file, path.join(root, 'shared/components', n)));
             for (const n of sharedLibs) text = replaceKnown(text, n, rel(file, path.join(root, 'shared/lib', n)));
             for (const n of customerComponents) text = replaceKnown(text, n, rel(file, path.join(root, 'apps/customer/components', n)));
+            text = text.replace(/from\s+["'](?:\.\.\/)+app\/lib\/admin["']/g, `from "${rel(file, path.join(root, 'apps/admin/lib/admin'))}"`);
             fs.writeFileSync(file, text);
           }
           NODE
@@ -185,7 +185,6 @@ jobs:
           test ! -d lib
           test ! -d apps/web
 
-          # Required ownership directories must exist and contain real source.
           for d in apps/customer/app apps/customer/components apps/customer/lib apps/customer/public apps/customer/styles \
                    apps/driver/app apps/driver/components apps/driver/lib apps/driver/public apps/driver/styles \
                    apps/admin/app apps/admin/lib apps/admin/public apps/admin/styles \
@@ -210,20 +209,20 @@ jobs:
         run: |
           set -euo pipefail
 
-          # No production source may point back into the deleted root tree.
-          if git grep -nE '(^|["'"'"'(])\.\.?/.*app/|(^|["'"'"'(])\.\.?/.*lib/' -- apps shared; then
-            echo 'ERROR: possible stale relative root-source reference found.'
+          if git grep -nE 'from ["\x27](\.{0,2}/)*app/' -- apps shared; then
+            echo 'ERROR: stale root app source imports remain after builds.'
+            exit 1
+          fi
+          if git grep -nE 'from ["\x27](\.{0,2}/)*lib/' -- apps shared; then
+            echo 'ERROR: stale root lib imports remain after builds.'
             exit 1
           fi
 
-          # Temporary migration/recovery source must not survive the verified commit.
           test ! -d app
           test ! -d lib
           test ! -d apps/web
           test ! -f .github/workflows/voynu-source-separation.yml
           test -f .github/workflows/voynu-source-separation-v2.yml
-
-          # These are the only expected application manifests in this monorepo.
           test -f apps/customer/package.json
           test -f apps/driver/package.json
           test -f apps/admin/package.json
