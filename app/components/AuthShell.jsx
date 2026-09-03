@@ -28,30 +28,30 @@ function IconBolt({ size = 13 }) {
   );
 }
 
-function IconCarGraphic() {
+function RoutePreview() {
   return (
-    <svg viewBox="0 0 220 130" width="100%" height="100%">
-      <ellipse cx="110" cy="115" rx="90" ry="8" fill="rgba(255,255,255,0.15)" />
-      <path
-        d="M20 90 C20 74 30 66 46 64 L54 46 C58 36 68 30 80 30 H150 C162 30 172 36 176 46 L184 64 C198 66 208 74 208 90 V96 C208 100 205 103 201 103 H27 C23 103 20 100 20 96 Z"
-        fill="#ffffff"
-      />
-      <rect x="70" y="26" width="70" height="6" rx="3" fill="#e6f5ec" />
-      <path
-        d="M60 62 L66 48 C68 44 72 41 77 41 H147 C152 41 156 44 158 48 L164 62 Z"
-        fill="#0a7d42"
-      />
-      <rect x="110" y="41" width="5" height="21" fill="#ffffff" />
-      <line x1="115" y1="64" x2="115" y2="96" stroke="#e6f5ec" strokeWidth="2" />
-      <circle cx="66" cy="98" r="20" fill="rgba(0,0,0,0.18)" />
-      <circle cx="162" cy="98" r="20" fill="rgba(0,0,0,0.18)" />
-      <circle cx="66" cy="98" r="13" fill="#0a3d22" />
-      <circle cx="66" cy="98" r="5.5" fill="#ffffff" />
-      <circle cx="162" cy="98" r="13" fill="#0a3d22" />
-      <circle cx="162" cy="98" r="5.5" fill="#ffffff" />
-      <rect x="196" y="70" width="8" height="10" rx="3" fill="#f4c542" />
-      <rect x="130" y="70" width="14" height="3" rx="1.5" fill="#e6f5ec" />
-    </svg>
+    <div className="routePreview" aria-hidden="true">
+      <div className="routeGrid" />
+      <div className="routeGlow routeGlowOne" />
+      <div className="routeGlow routeGlowTwo" />
+      <div className="routePath">
+        <span className="routeStart" />
+        <span className="routeCurve" />
+        <span className="routeEnd" />
+      </div>
+      <div className="routeLabel routeLabelStart">
+        <strong>Pickup</strong>
+        <span>Your location</span>
+      </div>
+      <div className="routeLabel routeLabelEnd">
+        <strong>Destination</strong>
+        <span>Your journey</span>
+      </div>
+      <div className="routeEta">
+        <span className="routeEtaDot" />
+        <span>Trip planning made simple</span>
+      </div>
+    </div>
   );
 }
 
@@ -72,132 +72,155 @@ export default function AuthShell({ children }) {
       />
 
       <div className="authShellGrid">
-
         <div className="authShellPanel">
-
           <div className="authShellPanelInner">
+            <div className="authShellEyebrow">VOYNU • INTERCITY TRAVEL</div>
 
-            <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>
+            <h2 style={{ margin: "12px 0 0", fontSize: 30, lineHeight: 1.12, fontWeight: 800, letterSpacing: -0.8 }}>
               Your ride,<br />your way.
             </h2>
 
-            <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.6, color: "rgba(255,255,255,0.85)", maxWidth: 320 }}>
-              Book a reliable cab for your journey. Travel safe. Travel smart.
+            <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.65, color: "rgba(255,255,255,0.76)", maxWidth: 330 }}>
+              Book a reliable cab for your journey with clear pricing, verified drivers and a smoother travel experience.
             </p>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 22 }}>
-
-              <span className="authShellPill">
-                <IconCheckCircle size={12} /> Verified Drivers
-              </span>
-
-              <span className="authShellPill">
-                <IconShield size={12} /> Safe &amp; Secure
-              </span>
-
-              <span className="authShellPill">
-                <IconBolt size={12} /> EV Rides
-              </span>
-
+              <span className="authShellPill"><IconCheckCircle size={12} /> Verified Drivers</span>
+              <span className="authShellPill"><IconShield size={12} /> Safe &amp; Secure</span>
+              <span className="authShellPill"><IconBolt size={12} /> EV Rides</span>
             </div>
 
-            <div style={{ width: "min(260px, 70%)", margin: "34px auto 0" }}>
-              <IconCarGraphic />
-            </div>
-
+            <RoutePreview />
           </div>
-
         </div>
 
         <div className="authShellFormWrap">
-          <div className="authShellFormCard">
-            {children}
-          </div>
+          <div className="authShellFormCard">{children}</div>
         </div>
-
       </div>
 
       <style jsx>{`
-
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
         .authShellGrid {
           width: min(1180px, calc(100% - 32px));
           margin: 0 auto;
           min-height: calc(100vh - 68px);
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: minmax(0, 1.02fr) minmax(360px, .82fr);
           align-items: center;
-          gap: 40px;
+          gap: 52px;
         }
 
         .authShellPanel {
+          position: relative;
+          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 40px;
-          border-radius: 28px;
-          background: linear-gradient(160deg, #0a7d42 0%, #075c31 100%);
+          padding: 48px;
+          border-radius: 30px;
+          background: linear-gradient(145deg, #0D1B2A 0%, #10283D 58%, #123B4A 100%);
           color: #ffffff;
-          min-height: 480px;
+          min-height: 540px;
+          box-shadow: 0 30px 80px rgba(13,27,42,.16);
+          isolation: isolate;
         }
 
-        .authShellPanelInner {
-          text-align: center;
+        .authShellPanel::before {
+          content: "";
+          position: absolute;
+          width: 320px;
+          height: 320px;
+          right: -120px;
+          top: -150px;
+          border-radius: 50%;
+          background: rgba(0,180,166,.16);
+          filter: blur(8px);
+          z-index: -1;
         }
+
+        .authShellPanel::after {
+          content: "";
+          position: absolute;
+          width: 280px;
+          height: 280px;
+          left: -150px;
+          bottom: -170px;
+          border-radius: 50%;
+          background: rgba(37,99,235,.18);
+          filter: blur(10px);
+          z-index: -1;
+        }
+
+        .authShellPanelInner { width: 100%; max-width: 500px; }
+        .authShellEyebrow { font-size: 10px; font-weight: 800; letter-spacing: 1.6px; color: #6FE1D7; }
 
         .authShellPill {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 7px 13px;
+          padding: 7px 12px;
+          border: 1px solid rgba(255,255,255,.10);
           border-radius: 999px;
-          background: rgba(255,255,255,0.14);
+          background: rgba(255,255,255,.075);
+          color: rgba(255,255,255,.9);
           font-size: 11.5px;
           font-weight: 700;
+          backdrop-filter: blur(8px);
         }
 
-        .authShellFormWrap {
-          display: flex;
-          justify-content: center;
-          padding: 30px 0;
+        .routePreview {
+          position: relative;
+          height: 205px;
+          margin-top: 34px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.10);
+          border-radius: 22px;
+          background: rgba(255,255,255,.045);
         }
 
-        .authShellFormCard {
-          width: 100%;
-          max-width: 380px;
-          padding: 34px 30px;
-          border-radius: 24px;
-          background: #ffffff;
-          border: 1px solid #e5ede8;
-          box-shadow: 0 30px 80px -20px rgba(10,40,25,0.18);
+        .routeGrid {
+          position: absolute;
+          inset: 0;
+          opacity: .32;
+          background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+          background-size: 34px 34px;
+          transform: rotate(-7deg) scale(1.18);
         }
+
+        .routeGlow { position: absolute; border-radius: 50%; filter: blur(28px); }
+        .routeGlowOne { width: 110px; height: 110px; left: 18px; top: 30px; background: rgba(0,180,166,.12); }
+        .routeGlowTwo { width: 130px; height: 130px; right: 4px; bottom: 0; background: rgba(37,99,235,.14); }
+
+        .routePath { position: absolute; inset: 30px 34px 40px; }
+        .routeCurve { position: absolute; left: 34px; right: 38px; top: 56px; height: 72px; border-top: 3px solid rgba(111,225,215,.82); border-radius: 50%; transform: rotate(-8deg); box-shadow: 0 0 18px rgba(0,180,166,.18); }
+        .routeStart, .routeEnd { position: absolute; width: 13px; height: 13px; border-radius: 50%; z-index: 2; }
+        .routeStart { left: 28px; top: 49px; background: #6FE1D7; box-shadow: 0 0 0 6px rgba(111,225,215,.14); }
+        .routeEnd { right: 30px; top: 103px; background: #FFFFFF; box-shadow: 0 0 0 6px rgba(255,255,255,.10); }
+
+        .routeLabel { position: absolute; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(13,27,42,.72); backdrop-filter: blur(8px); }
+        .routeLabel strong { font-size: 10px; color: #fff; }
+        .routeLabel span { font-size: 9px; color: rgba(255,255,255,.55); }
+        .routeLabelStart { left: 22px; top: 16px; }
+        .routeLabelEnd { right: 20px; bottom: 42px; }
+
+        .routeEta { position: absolute; left: 18px; right: 18px; bottom: 14px; display: flex; align-items: center; gap: 7px; font-size: 9.5px; color: rgba(255,255,255,.56); }
+        .routeEtaDot { width: 6px; height: 6px; border-radius: 50%; background: #00B4A6; box-shadow: 0 0 0 4px rgba(0,180,166,.10); }
+
+        .authShellFormWrap { display: flex; justify-content: center; padding: 30px 0; }
+        .authShellFormCard { width: 100%; max-width: 410px; padding: 36px 32px; border-radius: 24px; background: #ffffff; border: 1px solid #E5E9EF; box-shadow: 0 30px 80px -20px rgba(13,27,42,.16); }
 
         @media (max-width: 900px) {
-
-          .authShellGrid {
-            grid-template-columns: 1fr;
-            min-height: auto;
-            padding: 24px 0 50px;
-          }
-
-          .authShellPanel {
-            display: none;
-          }
-
-          .authShellFormWrap {
-            padding: 0;
-          }
-
-          .authShellFormCard {
-            border-radius: 20px;
-            padding: 28px 22px;
-          }
-
+          .authShellGrid { grid-template-columns: 1fr; min-height: auto; padding: 24px 0 50px; }
+          .authShellPanel { min-height: 420px; padding: 34px 26px; }
+          .authShellFormWrap { padding: 0; }
+          .authShellFormCard { max-width: 520px; border-radius: 20px; padding: 30px 22px; }
         }
 
+        @media (max-width: 520px) {
+          .authShellPanel { min-height: 390px; border-radius: 24px; }
+          .routePreview { height: 175px; margin-top: 26px; }
+        }
       `}</style>
-
     </main>
   );
 }
