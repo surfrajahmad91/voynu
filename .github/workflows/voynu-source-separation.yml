@@ -32,7 +32,6 @@ jobs:
             mv -- "$src" "$dst"
           }
 
-          # Customer implementation routes replace the thin deployment wrappers.
           for p in account booking-confirmed cab-selection signup; do
             move_replace "app/$p/page.js" "apps/customer/app/$p/page.js"
           done
@@ -76,41 +75,29 @@ jobs:
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
           rm -rf -- app/api/route-distance app/api/route-map
 
-          # Shared module aliases are explicit in all three Next configs.
+          # Explicit webpack alias for shared source. The apps already use webpack in production builds.
           node <<'NODE'
           const fs = require('fs');
-          const path = require('path');
           for (const app of ['customer', 'driver', 'admin']) {
             const file = `apps/${app}/next.config.js`;
             let text = fs.readFileSync(file, 'utf8');
-            const marker = 'config.resolve.alias =';
-            if (!text.includes(marker)) {
+            if (!text.includes('"@voynu/shared"')) {
+              const target = "config.resolve.modules = [";
+              if (!text.includes(target)) throw new Error(`Cannot find webpack resolver in ${file}`);
               text = text.replace(
-                'config.resolve.modules = [',
-                'config.resolve.alias = { ...(config.resolve.alias || {}), "@voynu/shared": path.join(__dirname, "../../shared") };\n    config.resolve.modules = ['
+                target,
+                'config.resolve.alias = { ...(config.resolve.alias || {}), "@voynu/shared": path.join(__dirname, "../../shared") };\\n    config.resolve.modules = ['
               );
               fs.writeFileSync(file, text);
             }
           }
           NODE
 
-          # Keep editor/module-resolution metadata aligned with the same alias contract.
-          for app in customer driver admin; do
-            cat > "apps/$app/jsconfig.json" <<'EOF'
-          {
-            "compilerOptions": {
-              "baseUrl": ".",
-              "paths": { "@voynu/shared/*": ["../../shared/*"] }
-            }
-          }
-          EOF
-          done
-
-          # Shared imports from the former root source are rewritten to the stable alias.
+          # Rewrite imports from the former root source to the stable shared alias.
           find apps shared -type f \( -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' \) -print0 |
             xargs -0 perl -0pi -e 's#from\s+["\x27](?:\.\./)+app/lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+app/components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27](?:\.\./)+lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+components/(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader|DateTimeBookingGuard|LocationPicker|MapLocationPicker)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27]\./(AccountLink|AuthLanding|AuthShell|NotificationBell|PushNotifications|LiveTripMap|PageHeader)["\x27]#from "@voynu/shared/components/$1"#g'
 
-          # Shared auth routes are tiny app-local adapters; auth implementation stays in shared/auth.
+          # Shared auth routes are tiny app-local adapters.
           for app in customer driver; do
             for p in login forgot-password reset-password; do
               cat > "apps/$app/app/$p/page.js" <<EOF
