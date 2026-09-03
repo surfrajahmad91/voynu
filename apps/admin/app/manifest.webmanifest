@@ -6,8 +6,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#ffffff",
-  "theme_color": "#0b7a3e",
+  "background_color": "#F7F9FC",
+  "theme_color": "#7C3AED",
   "description": "VOYNU administration app",
   "icons": [
     { "src": "/icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
