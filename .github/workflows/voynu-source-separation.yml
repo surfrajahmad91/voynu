@@ -28,8 +28,8 @@ jobs:
           move_replace() {
             src="$1"; dst="$2"
             mkdir -p "$(dirname "$dst")"
-            if [ -e "$dst" ]; then git rm -rf -- "$dst"; fi
-            git mv -- "$src" "$dst"
+            rm -rf -- "$dst"
+            mv -- "$src" "$dst"
           }
 
           for p in account booking-confirmed cab-selection forgot-password login reset-password signup; do
@@ -66,7 +66,7 @@ jobs:
           move_replace app/api/_lib/roadDistance.ts shared/api/roadDistance.ts
           move_replace app/api/_lib/sendBookingEmail.js apps/customer/app/api/_lib/sendBookingEmail.js
           move_replace app/api/bookings/create/route.js apps/customer/app/api/bookings/create/route.js
-          git rm -rf -- app/api/route-distance app/api/route-map
+          rm -rf -- app/api/route-distance app/api/route-map
 
           find apps shared -type f \( -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' \) -print0 |
             xargs -0 perl -0pi -e 's#from\s+["\x27](?:\.\./)+lib/(theme|supabaseClient)["\x27]#from "@voynu/shared/lib/$1"#g; s#from\s+["\x27](?:\.\./)+components/(NotificationBell|PushNotifications|LiveTripMap)["\x27]#from "@voynu/shared/components/$1"#g; s#from\s+["\x27]\./(NotificationBell|PushNotifications|LiveTripMap)["\x27]#from "@voynu/shared/components/$1"#g'
@@ -115,6 +115,7 @@ jobs:
             echo 'ERROR: stale root-app imports remain.'
             exit 1
           fi
+          git add -A
           git status --short
 
       - name: Build all three applications
