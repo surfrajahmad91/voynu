@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VOYNU Saarthi">
-  <defs><linearGradient id="brand" x1="90" y1="420" x2="420" y2="90" gradientUnits="userSpaceOnUse"><stop stop-color="#00B4A6"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs>
-  <rect width="512" height="512" rx="112" fill="#00AFA3"/>
-  <path d="M102 105h76l78 218 82-218h72L278 420h-48z" fill="#fff"/>
-  <path d="M119 110c30-48 75-72 133-72 63 0 111 24 142 73" fill="none" stroke="#0D1B2A" stroke-opacity=".75" stroke-width="18" stroke-linecap="round"/>
-  <path d="M206 350 246 245 278 350" fill="none" stroke="#0D1B2A" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M214 350 250 258 286 350" fill="none" stroke="#0D1B2A" stroke-opacity=".8" stroke-width="8" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512.00" height="512.00" viewBox="0 0 512.00 512.00" role="img" aria-label="VOYNU Saarthi"><rect width="512.0" height="512.0" rx="114.53" fill="#0A7FA6"/><g transform="translate(63.352,37.331) scale(1.927447)"><g fill="#FFFFFF"><path d="M 170 47 C 173.5 50.5 174 55 171.5 62 C 156 106 131 148 100 180 C 96.2 175.6 95 169.8 96.6 163.4 C 106.6 123 118.5 86 129.5 52.5 C 130.5 48.8 132.5 47 135.5 47 Z"/><path d="M 30 47 C 26.5 50.5 26 55 28.5 62 C 44 106 69 148 100 180 C 103.8 175.6 105 169.8 103.4 163.4 C 93.4 123 81.5 86 70.5 52.5 C 69.5 48.8 67.5 47 64.5 47 Z"/></g></g></svg>

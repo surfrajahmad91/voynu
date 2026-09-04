@@ -7,7 +7,7 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#F7F9FC",
-  "theme_color": "#00B4A6",
+  "theme_color": "#0A7FA6",
   "description": "VOYNU Saarthi driver app",
   "icons": [
     { "src": "/icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
