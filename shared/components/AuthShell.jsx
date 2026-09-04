@@ -118,10 +118,10 @@ export default function AuthShell({ children }) {
           justify-content: center;
           padding: 48px;
           border-radius: 30px;
-          background: linear-gradient(145deg, #0D1B2A 0%, #10283D 58%, #123B4A 100%);
+          background: linear-gradient(145deg, #0A2337 0%, #0E2D46 58%, #12384F 100%);
           color: #ffffff;
           min-height: 540px;
-          box-shadow: 0 30px 80px rgba(13,27,42,.16);
+          box-shadow: 0 30px 80px rgba(10,35,55,.16);
           isolation: isolate;
         }
 
@@ -133,7 +133,7 @@ export default function AuthShell({ children }) {
           right: -120px;
           top: -150px;
           border-radius: 50%;
-          background: rgba(0,180,166,.16);
+          background: rgba(10,127,166,.16);
           filter: blur(8px);
           z-index: -1;
         }
@@ -146,13 +146,13 @@ export default function AuthShell({ children }) {
           left: -150px;
           bottom: -170px;
           border-radius: 50%;
-          background: rgba(37,99,235,.18);
+          background: rgba(245,129,63,.18);
           filter: blur(10px);
           z-index: -1;
         }
 
         .authShellPanelInner { width: 100%; max-width: 500px; }
-        .authShellEyebrow { font-size: 10px; font-weight: 800; letter-spacing: 1.6px; color: #6FE1D7; }
+        .authShellEyebrow { font-size: 10px; font-weight: 800; letter-spacing: 1.6px; color: #6FD6EC; }
 
         .authShellPill {
           display: inline-flex;
@@ -188,26 +188,26 @@ export default function AuthShell({ children }) {
         }
 
         .routeGlow { position: absolute; border-radius: 50%; filter: blur(28px); }
-        .routeGlowOne { width: 110px; height: 110px; left: 18px; top: 30px; background: rgba(0,180,166,.12); }
-        .routeGlowTwo { width: 130px; height: 130px; right: 4px; bottom: 0; background: rgba(37,99,235,.14); }
+        .routeGlowOne { width: 110px; height: 110px; left: 18px; top: 30px; background: rgba(10,127,166,.12); }
+        .routeGlowTwo { width: 130px; height: 130px; right: 4px; bottom: 0; background: rgba(245,129,63,.14); }
 
         .routePath { position: absolute; inset: 30px 34px 40px; }
-        .routeCurve { position: absolute; left: 34px; right: 38px; top: 56px; height: 72px; border-top: 3px solid rgba(111,225,215,.82); border-radius: 50%; transform: rotate(-8deg); box-shadow: 0 0 18px rgba(0,180,166,.18); }
+        .routeCurve { position: absolute; left: 34px; right: 38px; top: 56px; height: 72px; border-top: 3px solid rgba(111,214,236,.82); border-radius: 50%; transform: rotate(-8deg); box-shadow: 0 0 18px rgba(10,127,166,.18); }
         .routeStart, .routeEnd { position: absolute; width: 13px; height: 13px; border-radius: 50%; z-index: 2; }
-        .routeStart { left: 28px; top: 49px; background: #6FE1D7; box-shadow: 0 0 0 6px rgba(111,225,215,.14); }
+        .routeStart { left: 28px; top: 49px; background: #6FD6EC; box-shadow: 0 0 0 6px rgba(111,214,236,.14); }
         .routeEnd { right: 30px; top: 103px; background: #FFFFFF; box-shadow: 0 0 0 6px rgba(255,255,255,.10); }
 
-        .routeLabel { position: absolute; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(13,27,42,.72); backdrop-filter: blur(8px); }
+        .routeLabel { position: absolute; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(10,35,55,.72); backdrop-filter: blur(8px); }
         .routeLabel strong { font-size: 10px; color: #fff; }
         .routeLabel span { font-size: 9px; color: rgba(255,255,255,.55); }
         .routeLabelStart { left: 22px; top: 16px; }
         .routeLabelEnd { right: 20px; bottom: 42px; }
 
         .routeEta { position: absolute; left: 18px; right: 18px; bottom: 14px; display: flex; align-items: center; gap: 7px; font-size: 9.5px; color: rgba(255,255,255,.56); }
-        .routeEtaDot { width: 6px; height: 6px; border-radius: 50%; background: #00B4A6; box-shadow: 0 0 0 4px rgba(0,180,166,.10); }
+        .routeEtaDot { width: 6px; height: 6px; border-radius: 50%; background: #0A7FA6; box-shadow: 0 0 0 4px rgba(10,127,166,.10); }
 
         .authShellFormWrap { display: flex; justify-content: center; padding: 30px 0; }
-        .authShellFormCard { width: 100%; max-width: 410px; padding: 36px 32px; border-radius: 24px; background: #ffffff; border: 1px solid #E5E9EF; box-shadow: 0 30px 80px -20px rgba(13,27,42,.16); }
+        .authShellFormCard { width: 100%; max-width: 410px; padding: 36px 32px; border-radius: 24px; background: #ffffff; border: 1px solid #EEF3F7; box-shadow: 0 30px 80px -20px rgba(10,35,55,.16); }
 
         @media (max-width: 900px) {
           .authShellGrid { grid-template-columns: 1fr; min-height: auto; padding: 24px 0 50px; }
