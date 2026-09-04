@@ -47,13 +47,27 @@ export default function PageHeader({
         </div>
       </div>
       <style jsx>{`
-        .voynu-page-header { background: color-mix(in srgb, var(--voynu-surface,#fff) 94%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--voynu-border,#E5E9EF); position: sticky; top: 0; z-index: 20; }
+        .voynu-page-header {
+          background: color-mix(in srgb, var(--voynu-surface,#fff) 94%, transparent);
+          backdrop-filter: blur(14px);
+          border-bottom: 1px solid var(--voynu-border,#E5E9EF);
+          position: sticky;
+          top: 0;
+          z-index: 20;
+          padding-top: env(safe-area-inset-top, 0px);
+        }
         .voynu-page-header-inner { margin:0 auto; min-height:68px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
-        .voynu-header-brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--voynu-navy,#0D1B2A); font-weight:800; font-size:19px; letter-spacing:-.4px; }
-        .voynu-header-brand img { display:block; width:40px; height:40px; border-radius:11px; box-shadow:0 6px 14px rgba(13,27,42,.16); }
-        .voynu-header-actions { display:flex; align-items:center; gap:8px; }
-        .voynu-whatsapp { display:flex; align-items:center; gap:7px; padding:9px 15px; border-radius:999px; background:#22C55E; color:#fff; text-decoration:none; font-size:12.5px; font-weight:700; box-shadow:0 6px 16px rgba(34,197,94,.22); }
-        @media (max-width:420px) { .voynu-page-header-inner { width:calc(100% - 24px) !important; } .whatsappLabel { display:none; } }
+        .voynu-header-brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--voynu-navy,#0D1B2A); font-weight:800; font-size:19px; letter-spacing:-.4px; min-width:0; }
+        .voynu-header-brand img { display:block; flex:0 0 auto; width:40px; height:40px; border-radius:11px; box-shadow:0 6px 14px rgba(13,27,42,.16); }
+        .voynu-header-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; min-width:0; }
+        .voynu-whatsapp { display:flex; align-items:center; gap:7px; padding:9px 15px; border-radius:999px; background:#22C55E; color:#fff; text-decoration:none; font-size:12.5px; font-weight:700; box-shadow:0 6px 16px rgba(34,197,94,.22); white-space:nowrap; }
+        @media (max-width:420px) {
+          .voynu-page-header-inner { width:calc(100% - 24px) !important; gap:8px; }
+          .voynu-header-brand { gap:8px; font-size:17px; }
+          .voynu-header-brand img { width:38px; height:38px; border-radius:10px; }
+          .voynu-header-actions { gap:4px; }
+          .whatsappLabel { display:none; }
+        }
       `}</style>
     </header>
   );
