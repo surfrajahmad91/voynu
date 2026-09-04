@@ -1,24 +1,24 @@
 export const theme = {
-  fontFamily: '"Poppins", "Plus Jakarta Sans", -apple-system, sans-serif',
+  fontFamily: '"Poppins", -apple-system, sans-serif',
 
   colors: {
     bg: "#F7F9FC",
     surface: "#FFFFFF",
-    border: "#E5E9EF",
+    border: "#EEF3F7",
     borderStrong: "#D8DEE8",
 
-    text: "#1F2937",
-    textMuted: "#687280",
-    textFaint: "#98A1AD",
+    text: "#1E3348",
+    textMuted: "#5B6B7C",
+    textFaint: "#8695A4",
 
-    navy: "#0D1B2A",
-    primary: "#00B4A6",
-    primaryDark: "#008F84",
-    primaryTint: "#E9FBF8",
+    navy: "#0A2337",
+    primary: "#0A7FA6",
+    primaryDark: "#00456B",
+    primaryTint: "#E7F4F8",
 
-    blue: "#2563EB",
-    violet: "#7C3AED",
-    accent: "#2563EB",
+    accent: "#F5813F",
+    accentLight: "#FFB25C",
+    accentDark: "#D4552A",
 
     success: "#22C55E",
     successBg: "#EAFBF2",
@@ -27,13 +27,13 @@ export const theme = {
     warning: "#F59E0B",
     warningBg: "#FFF7E6",
 
-    footerBg: "#0D1B2A",
+    footerBg: "#0A2337",
   },
 
   gradients: {
-    primary: "linear-gradient(135deg, #00B4A6, #2563EB)",
-    hero: "linear-gradient(160deg, #FFFFFF 0%, #F5FAFF 55%, #EAFBF8 100%)",
-    brand: "linear-gradient(135deg, #00B4A6 0%, #2563EB 55%, #7C3AED 100%)",
+    primary: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%)",
+    hero: "linear-gradient(160deg, #FFFFFF 0%, #F5FAFF 55%, #EEF3F7 100%)",
+    brand: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%)",
   },
 
   radius: {
@@ -45,9 +45,9 @@ export const theme = {
   },
 
   shadow: {
-    card: "0 12px 30px rgba(13,27,42,0.07)",
-    raised: "0 30px 80px -20px rgba(13,27,42,0.16)",
-    button: "0 10px 24px rgba(37,99,235,.18)",
+    card: "0 12px 30px rgba(10,35,55,0.07)",
+    raised: "0 30px 80px -20px rgba(10,35,55,0.16)",
+    button: "0 10px 24px rgba(10,127,166,.18)",
   },
 
   maxWidth: {
