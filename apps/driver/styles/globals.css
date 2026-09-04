@@ -1,15 +1,3 @@
 @import "../../../shared/styles/globals.css";
 @import "../../../shared/styles/brand-theme.css";
-
-/* Saarthi presentation layer: preserves dispatch/location logic while applying the approved product identity. */
-main { background:var(--voynu-bg) !important; color:var(--voynu-text) !important; font-family:var(--voynu-font) !important; }
-main * { font-family:var(--voynu-font) !important; }
-main > header { background:var(--voynu-surface) !important; border-color:var(--voynu-border) !important; box-shadow:0 4px 18px rgba(13,27,42,.05); }
-main > header button { background:var(--voynu-surface) !important; color:var(--voynu-text) !important; border-color:var(--voynu-border-strong) !important; }
-main > header > div > div:first-child > div:first-child { width:40px !important; height:40px !important; border-radius:11px !important; background:#00B4A6 url('/icon.svg') center/cover no-repeat !important; font-size:0 !important; box-shadow:0 7px 18px rgba(0,180,166,.20); }
-main input, main select, main textarea { background:var(--voynu-surface) !important; color:var(--voynu-text) !important; border-color:var(--voynu-border-strong) !important; border-radius:10px !important; }
-main button { font-family:var(--voynu-font) !important; }
-html[data-voynu-theme="dark"] main [style*="background: #fff"],
-html[data-voynu-theme="dark"] main [style*="background:#fff"],
-html[data-voynu-theme="dark"] main [style*="background: #ffffff"],
-html[data-voynu-theme="dark"] main [style*="background:#ffffff"] { background:var(--voynu-surface) !important; color:var(--voynu-text) !important; }
+main{background:var(--voynu-bg)!important;color:var(--voynu-text)!important;font-family:var(--voynu-font)!important}main *{font-family:var(--voynu-font)!important}main>header{background:var(--voynu-surface)!important;border-color:var(--voynu-border)!important;box-shadow:0 4px 20px rgba(13,27,42,.06)}main>header>div>div:first-child>div:first-child{display:none!important}main>header>div>div:first-child>div:nth-child(2)>div:first-child{font-size:0!important;width:176px;height:42px;background:url('/voynu-lockup.svg') left center/contain no-repeat!important;color:transparent!important}main>header>div>div:first-child>div:nth-child(2)>div:last-child{font-size:10px!important;color:var(--voynu-muted)!important;margin-top:1px!important}main>header button{background:var(--voynu-surface)!important;color:var(--voynu-text)!important;border-color:var(--voynu-border-strong)!important;border-radius:12px!important}main input,main select,main textarea{background:var(--voynu-surface)!important;color:var(--voynu-text)!important;border-color:var(--voynu-border-strong)!important;border-radius:10px!important}main button{font-family:var(--voynu-font)!important;border-radius:12px!important}html[data-voynu-theme="dark"] main [style*="background: #fff"],html[data-voynu-theme="dark"] main [style*="background:#fff"],html[data-voynu-theme="dark"] main [style*="background: #ffffff"],html[data-voynu-theme="dark"] main [style*="background:#ffffff"]{background:var(--voynu-surface)!important;color:var(--voynu-text)!important}@media(max-width:520px){main>header>div{width:calc(100% - 24px)!important}main>header>div>div:first-child>div:nth-child(2)>div:first-child{width:150px;height:38px}}
