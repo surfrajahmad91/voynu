@@ -1,0 +1,128 @@
+/* Customer landing visual styles live in a normal stylesheet because RoutePreview
+   is a child component and cannot receive AuthLanding's scoped styled-jsx rules. */
+
+.landingHeader {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.landingRoute {
+  position: relative;
+  height: 380px;
+  overflow: hidden;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #0D1B2A, #10283D 60%, #123B4A);
+}
+
+.landingRouteGrid {
+  position: absolute;
+  inset: -30px;
+  opacity: .30;
+  background-image:
+    linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+  background-size: 42px 42px;
+  transform: rotate(-8deg) scale(1.1);
+}
+
+.landingRouteGlow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(18px);
+}
+
+.landingRouteGlowOne {
+  width: 230px;
+  height: 230px;
+  left: -90px;
+  top: -70px;
+  background: rgba(0,180,166,.18);
+}
+
+.landingRouteGlowTwo {
+  width: 260px;
+  height: 260px;
+  right: -100px;
+  bottom: -120px;
+  background: rgba(37,99,235,.18);
+}
+
+.landingRouteLine {
+  position: absolute;
+  left: 17%;
+  top: 25%;
+  width: 66%;
+  height: 55%;
+  border-left: 3px solid rgba(111,225,215,.86);
+  border-bottom: 3px solid rgba(111,225,215,.86);
+  border-radius: 0 0 0 55%;
+  transform: rotate(-12deg);
+  box-shadow: 0 0 22px rgba(0,180,166,.20);
+}
+
+.landingRoutePoint {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.landingRoutePointOne {
+  left: 16%;
+  top: 23%;
+  background: #6FE1D7;
+  box-shadow: 0 0 0 7px rgba(111,225,215,.14);
+}
+
+.landingRoutePointTwo {
+  right: 16%;
+  bottom: 22%;
+  background: #fff;
+  box-shadow: 0 0 0 7px rgba(255,255,255,.10);
+}
+
+.landingRouteCard {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 13px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  background: rgba(13,27,42,.72);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+.landingRouteCard strong { font-size: 11px; }
+.landingRouteCard span { color: rgba(255,255,255,.54); font-size: 9px; }
+.landingRouteCardOne { left: 10%; top: 30%; }
+.landingRouteCardTwo { right: 9%; bottom: 29%; }
+
+.landingRouteFooter {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255,255,255,.52);
+  font-size: 9.5px;
+}
+
+.landingPulse {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #00B4A6;
+  box-shadow: 0 0 0 4px rgba(0,180,166,.10);
+}
+
+@media (max-width: 560px) {
+  .landingRoute {
+    height: 290px;
+    border-radius: 18px;
+  }
+}
