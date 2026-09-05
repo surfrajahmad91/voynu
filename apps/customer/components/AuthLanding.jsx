@@ -168,13 +168,13 @@ export default function AuthLanding() {
       <header className="landingHeader">
         <div className="landingHeaderInner">
           <Link href="/" className="landingBrand">
-            <img src="/icon.svg" alt="VOYNU" width="40" height="40" />
+            <img src="/icon.svg" alt="VOYNU" width="42" height="42" />
             <span>VOYNU</span>
           </Link>
 
           <div className="landingNav">
             <Link href="/login" className="landingLogin">Log in</Link>
-            <Link href="/signup" className="landingSignup">Sign up</Link>
+            <Link href="/signup" className="landingSignup">Sign up<IconArrowRight size={14} /></Link>
           </div>
         </div>
       </header>
@@ -300,13 +300,13 @@ export default function AuthLanding() {
         .landingPage { min-height: 100vh; background: linear-gradient(160deg, #FFFFFF 0%, #F7F9FC 55%, #EEF3F7 100%); color: #1E3348; font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow-x: hidden; }
         .landingSectionInner { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
 
-        .landingHeader { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.90); border-bottom: 1px solid #EEF3F7; backdrop-filter: blur(14px); }
-        .landingHeaderInner { width: min(1180px, calc(100% - 32px)); min-height: 70px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-        .landingBrand { display: flex; align-items: center; gap: 10px; color: #0A2337; font-size: 19px; font-weight: 800; letter-spacing: -.5px; }
-        .landingBrand img { border-radius: 12px; display: block; box-shadow: 0 7px 18px rgba(10,35,55,.14); }
-        .landingNav { display: flex; align-items: center; gap: 8px; }
-        .landingLogin { padding: 10px 14px; color: #445163; font-size: 13px; font-weight: 700; }
-        .landingSignup { padding: 10px 18px; border-radius: 999px; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%); color: #fff; font-size: 13px; font-weight: 800; box-shadow: 0 9px 22px rgba(10,127,166,.18); }
+        .landingHeader { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.92); border-bottom: 1px solid #EEF3F7; backdrop-filter: blur(14px); }
+        .landingHeaderInner { width: min(1180px, calc(100% - 32px)); min-height: 76px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .landingBrand { display: flex; align-items: center; gap: 12px; color: #0A2337; font-size: 21px; font-weight: 800; letter-spacing: -.6px; flex-shrink: 0; }
+        .landingBrand img { border-radius: 13px; display: block; box-shadow: 0 8px 20px rgba(10,35,55,.18); }
+        .landingNav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .landingLogin { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #D8DEE8; background: #fff; color: #1E3348; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+        .landingSignup { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 42px; padding: 0 20px; border-radius: 999px; border: none; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%); color: #fff !important; font-size: 13.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 10px 22px rgba(10,127,166,.28); }
 
         .landingHero { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 58px 0 70px; display: grid; grid-template-columns: minmax(0,.9fr) minmax(430px,1fr); align-items: center; gap: 68px; }
         .landingEyebrow { display: flex; align-items: center; gap: 9px; color: #00456B; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }
@@ -397,6 +397,9 @@ export default function AuthLanding() {
 
         @media (max-width: 560px) {
           .landingHeaderInner, .landingHero, .landingFooter { width: min(100% - 24px,1180px); }
+          .landingBrand span { display: none; }
+          .landingLogin { height: 38px; padding: 0 14px; font-size: 12.5px; }
+          .landingSignup { height: 38px; padding: 0 15px; font-size: 12.5px; }
           .landingHero { min-height: auto; padding: 38px 0 44px; }
           h1 { font-size: clamp(46px,14vw,64px); letter-spacing: -2.3px; }
           .landingPills { justify-content: center; }
