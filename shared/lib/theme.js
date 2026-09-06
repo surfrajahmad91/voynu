@@ -31,9 +31,9 @@ export const theme = {
   },
 
   gradients: {
-    primary: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%)",
+    primary: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
     hero: "linear-gradient(160deg, #FFFFFF 0%, #F5FAFF 55%, #EEF3F7 100%)",
-    brand: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%)",
+    brand: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
   },
 
   radius: {
