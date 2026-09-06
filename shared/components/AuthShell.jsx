@@ -28,33 +28,6 @@ function IconBolt({ size = 13 }) {
   );
 }
 
-function RoutePreview() {
-  return (
-    <div className="routePreview" aria-hidden="true">
-      <div className="routeGrid" />
-      <div className="routeGlow routeGlowOne" />
-      <div className="routeGlow routeGlowTwo" />
-      <div className="routePath">
-        <span className="routeStart" />
-        <span className="routeCurve" />
-        <span className="routeEnd" />
-      </div>
-      <div className="routeLabel routeLabelStart">
-        <strong>Pickup</strong>
-        <span>Your location</span>
-      </div>
-      <div className="routeLabel routeLabelEnd">
-        <strong>Destination</strong>
-        <span>Your journey</span>
-      </div>
-      <div className="routeEta">
-        <span className="routeEtaDot" />
-        <span>Trip planning made simple</span>
-      </div>
-    </div>
-  );
-}
-
 export default function AuthShell({ children }) {
   return (
     <main
@@ -90,7 +63,28 @@ export default function AuthShell({ children }) {
               <span className="authShellPill"><IconBolt size={12} /> EV Rides</span>
             </div>
 
-            <RoutePreview />
+            <div className="routePreview" aria-hidden="true">
+              <div className="routeGrid" />
+              <div className="routeGlow routeGlowOne" />
+              <div className="routeGlow routeGlowTwo" />
+              <div className="routePath">
+                <span className="routeStart" />
+                <span className="routeCurve" />
+                <span className="routeEnd" />
+              </div>
+              <div className="routeLabel routeLabelStart">
+                <strong>Pickup</strong>
+                <span>Your location</span>
+              </div>
+              <div className="routeLabel routeLabelEnd">
+                <strong>Destination</strong>
+                <span>Your journey</span>
+              </div>
+              <div className="routeEta">
+                <span className="routeEtaDot" />
+                <span>Trip planning made simple</span>
+              </div>
+            </div>
           </div>
         </div>
 
