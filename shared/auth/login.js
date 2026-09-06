@@ -8,7 +8,7 @@ import { supabase } from "../lib/supabaseClient";
 import { theme } from "../lib/theme";
 import AuthShell from "../components/AuthShell";
 
-export default function LoginPage() {
+export default function LoginPage({ subtitle = "Log in to book your next ride.", panelDescription }) {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -55,14 +55,14 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthShell>
+    <AuthShell panelDescription={panelDescription}>
 
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
           Welcome back
         </h1>
         <p style={{ margin: "6px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
-          Log in to book your next ride.
+          {subtitle}
         </p>
       </div>
 
