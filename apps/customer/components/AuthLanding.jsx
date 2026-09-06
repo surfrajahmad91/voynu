@@ -167,9 +167,9 @@ export default function AuthLanding() {
     <main className="landingPage">
       <header className="landingHeader">
         <div className="landingHeaderInner">
-          <Link href="/" className="landingBrand">
-            <img src="/icon.svg" alt="VOYNU" width="42" height="42" />
-            <span>VOYNU</span>
+          <Link href="/" style={brandLinkStyle}>
+            <img src="/icon.svg" alt="VOYNU" width="42" height="42" style={brandIconStyle} />
+            <span style={brandTextStyle}>VOYNU</span>
           </Link>
 
           <div className="landingNav">
@@ -196,8 +196,8 @@ export default function AuthLanding() {
           </div>
 
           <div className="landingActions">
-            <Link href="/signup" className="landingPrimaryButton">Get started <IconArrowRight size={17} /></Link>
-            <Link href="/login" className="landingSecondaryButton">I already have an account</Link>
+            <Link href="/signup" style={primaryButtonStyle}>Get started <IconArrowRight size={17} /></Link>
+            <Link href="/login" style={secondaryButtonStyle}>I already have an account</Link>
           </div>
         </div>
 
@@ -287,7 +287,7 @@ export default function AuthLanding() {
             <h2>Ready for your next trip?</h2>
             <p>Create your account and get your first fare estimate in under a minute.</p>
           </div>
-          <Link href="/signup" className="landingPrimaryButton">Get started <IconArrowRight size={17} /></Link>
+          <Link href="/signup" style={finalCtaButtonStyle}>Get started <IconArrowRight size={17} /></Link>
         </div>
       </section>
 
@@ -302,8 +302,6 @@ export default function AuthLanding() {
 
         .landingHeader { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.92); border-bottom: 1px solid #EEF3F7; backdrop-filter: blur(14px); }
         .landingHeaderInner { width: min(1180px, calc(100% - 32px)); min-height: 76px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .landingBrand { display: flex; align-items: center; gap: 12px; color: #0A2337; font-size: 21px; font-weight: 800; letter-spacing: -.6px; flex-shrink: 0; }
-        .landingBrand img { border-radius: 13px; display: block; box-shadow: 0 8px 20px rgba(10,35,55,.18); }
         .landingNav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
         .landingHero { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 58px 0 70px; display: grid; grid-template-columns: minmax(0,.9fr) minmax(430px,1fr); align-items: center; gap: 68px; }
@@ -318,9 +316,6 @@ export default function AuthLanding() {
         .pillIcon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #E7F4F8; color: #00456B; flex-shrink: 0; }
         .pillIconAccent { background: #FFF1E7; color: #D4552A; }
         .landingActions { width: min(350px,100%); display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
-        .landingPrimaryButton, .landingSecondaryButton { min-height: 54px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 14px; font-weight: 800; }
-        .landingPrimaryButton { background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); color: #fff; box-shadow: 0 14px 30px rgba(10,127,166,.18); }
-        .landingSecondaryButton { border: 1px solid #D8DEE8; background: #fff; color: #1E3348; }
 
         .landingVisual { padding: 20px; border: 1px solid rgba(255,255,255,.9); border-radius: 30px; background: rgba(255,255,255,.72); box-shadow: 0 30px 80px rgba(10,35,55,.12); backdrop-filter: blur(12px); }
         .landingVisualTop { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 14px; color: #0A2337; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
@@ -377,7 +372,6 @@ export default function AuthLanding() {
         .landingFinalCtaInner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 40px 44px; border-radius: 26px; background: linear-gradient(145deg,#0A2337,#0E2D46 60%,#12384F); color: #fff; }
         .landingFinalCtaInner h2 { font-size: clamp(20px,2.6vw,28px); font-weight: 800; margin: 0 0 8px; }
         .landingFinalCtaInner p { font-size: 13.5px; color: rgba(255,255,255,.68); margin: 0; }
-        .landingFinalCtaInner .landingPrimaryButton { flex-shrink: 0; padding: 0 26px; }
 
         .landingFooter { min-height: 64px; display: flex; align-items: center; justify-content: space-between; width: min(1180px,calc(100% - 32px)); margin: 0 auto; color: #7A8491; font-size: 10px; }
         .landingFooter strong { color: #0A2337; }
@@ -395,7 +389,6 @@ export default function AuthLanding() {
 
         @media (max-width: 560px) {
           .landingHeaderInner, .landingHero, .landingFooter { width: min(100% - 24px,1180px); }
-          .landingBrand span { display: none; }
           .landingHero { min-height: auto; padding: 38px 0 44px; }
           h1 { font-size: clamp(46px,14vw,64px); letter-spacing: -2.3px; }
           .landingPills { justify-content: center; }
@@ -417,6 +410,61 @@ export default function AuthLanding() {
     </main>
   );
 }
+
+const primaryButtonStyle = {
+  minHeight: 54,
+  borderRadius: 15,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 9,
+  fontSize: 14,
+  fontWeight: 800,
+  background: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
+  color: "#FFFFFF",
+  boxShadow: "0 14px 30px rgba(10,127,166,.18)",
+};
+
+const secondaryButtonStyle = {
+  minHeight: 54,
+  borderRadius: 15,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 9,
+  fontSize: 14,
+  fontWeight: 800,
+  border: "1px solid #D8DEE8",
+  background: "#FFFFFF",
+  color: "#1E3348",
+};
+
+const finalCtaButtonStyle = {
+  ...primaryButtonStyle,
+  flexShrink: 0,
+  padding: "0 26px",
+};
+
+const brandLinkStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  color: "#0A2337",
+  fontSize: 21,
+  fontWeight: 800,
+  letterSpacing: "-0.6px",
+  flexShrink: 0,
+};
+
+const brandIconStyle = {
+  borderRadius: 13,
+  display: "block",
+  boxShadow: "0 8px 20px rgba(10,35,55,.18)",
+};
+
+const brandTextStyle = {
+  lineHeight: 1,
+};
 
 const loginButtonStyle = {
   display: "inline-flex",
