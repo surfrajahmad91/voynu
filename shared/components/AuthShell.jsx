@@ -28,7 +28,7 @@ function IconBolt({ size = 13 }) {
   );
 }
 
-export default function AuthShell({ children }) {
+export default function AuthShell({ children, panelDescription }) {
   return (
     <main
       style={{
@@ -54,7 +54,7 @@ export default function AuthShell({ children }) {
             </h2>
 
             <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.65, color: "rgba(255,255,255,0.76)", maxWidth: 330 }}>
-              Book a reliable cab for your journey with clear pricing, verified drivers and a smoother travel experience.
+              {panelDescription || "Book a reliable cab for your journey with clear pricing, verified drivers and a smoother travel experience."}
             </p>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 22 }}>
