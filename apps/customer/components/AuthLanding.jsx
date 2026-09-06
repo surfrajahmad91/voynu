@@ -308,10 +308,10 @@ export default function AuthLanding() {
 
         .landingHero { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 58px 0 70px; display: grid; grid-template-columns: minmax(0,.9fr) minmax(430px,1fr); align-items: center; gap: 68px; }
         .landingEyebrow { display: flex; align-items: center; gap: 9px; color: #00456B; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }
-        .landingEyebrow span { width: 22px; height: 3px; border-radius: 99px; background: linear-gradient(90deg,#0A7FA6,#F5813F); flex-shrink: 0; }
+        .landingEyebrow span { width: 22px; height: 3px; border-radius: 99px; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); flex-shrink: 0; }
         .landingEyebrowCenter { justify-content: center; }
         h1 { margin: 16px 0 0; font-size: clamp(48px,6vw,76px); line-height: .98; letter-spacing: -3px; font-weight: 800; color: #0A2337; }
-        h1 span { background: linear-gradient(135deg,#0A7FA6,#12A0C6 45%,#F5813F); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        h1 span { background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .landingLead { max-width: 500px; margin: 22px 0 0; color: #5B6B7C; font-size: 15px; line-height: 1.7; }
         .landingPills { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 25px; }
         .pill { display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 30px; background: #FFFFFF; border: 1px solid #EEF3F7; color: #344052; font-size: 12px; font-weight: 700; white-space: nowrap; }
@@ -319,7 +319,7 @@ export default function AuthLanding() {
         .pillIconAccent { background: #FFF1E7; color: #D4552A; }
         .landingActions { width: min(350px,100%); display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
         .landingPrimaryButton, .landingSecondaryButton { min-height: 54px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 14px; font-weight: 800; }
-        .landingPrimaryButton { background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%); color: #fff; box-shadow: 0 14px 30px rgba(10,127,166,.18); }
+        .landingPrimaryButton { background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); color: #fff; box-shadow: 0 14px 30px rgba(10,127,166,.18); }
         .landingSecondaryButton { border: 1px solid #D8DEE8; background: #fff; color: #1E3348; }
 
         .landingVisual { padding: 20px; border: 1px solid rgba(255,255,255,.9); border-radius: 30px; background: rgba(255,255,255,.72); box-shadow: 0 30px 80px rgba(10,35,55,.12); backdrop-filter: blur(12px); }
@@ -362,7 +362,7 @@ export default function AuthLanding() {
         .stepGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
         .stepCard { position: relative; padding: 26px 20px 22px; border-radius: 20px; background: #fff; border: 1px solid #EEF3F7; box-shadow: 0 12px 30px rgba(10,35,55,.05); }
         .stepNumber { position: absolute; top: 18px; right: 20px; font-size: 26px; font-weight: 800; color: #EEF3F7; }
-        .stepIcon { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%); color: #fff; margin-bottom: 16px; }
+        .stepIcon { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); color: #fff; margin-bottom: 16px; }
         .stepCard strong { display: block; font-size: 15px; color: #0A2337; margin-bottom: 8px; }
         .stepCard p { font-size: 12.5px; color: #5B6B7C; line-height: 1.6; }
 
@@ -442,7 +442,7 @@ const signupButtonStyle = {
   padding: "0 18px",
   borderRadius: 999,
   border: "none",
-  background: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 38%, #D4552A 100%)",
+  background: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
   color: "#FFFFFF",
   fontSize: 13,
   fontWeight: 800,
