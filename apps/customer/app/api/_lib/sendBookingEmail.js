@@ -14,11 +14,11 @@ function escapeHtml(value) {
 }
 
 function detail(label, value) {
-  return `<tr><td style="padding:7px 0;color:#68746d;font-size:12px;width:150px;vertical-align:top">${escapeHtml(label)}</td><td style="padding:7px 0;color:#18231d;font-size:13px;font-weight:600">${escapeHtml(value || "—")}</td></tr>`;
+  return `<tr><td style="padding:7px 0;color:#5b6b7c;font-size:12px;width:150px;vertical-align:top">${escapeHtml(label)}</td><td style="padding:7px 0;color:#1e3348;font-size:13px;font-weight:600">${escapeHtml(value || "—")}</td></tr>`;
 }
 
 function layout(title, intro, rows) {
-  return `<!doctype html><html><body style="margin:0;background:#f5f7f6;font-family:Arial,sans-serif;color:#18231d"><div style="max-width:620px;margin:0 auto;padding:28px 16px"><div style="background:#ffffff;border:1px solid #e0e7e2;border-radius:16px;overflow:hidden"><div style="padding:22px 24px;background:#08783f;color:#fff"><div style="font-size:22px;font-weight:800">VOYNU</div><div style="margin-top:4px;font-size:13px;opacity:.9">${escapeHtml(title)}</div></div><div style="padding:24px"><p style="margin:0 0 18px;font-size:14px;line-height:1.6">${escapeHtml(intro)}</p><table style="width:100%;border-collapse:collapse">${rows}</table></div><div style="padding:16px 24px;border-top:1px solid #edf1ee;color:#7a847e;font-size:11px">This is an automated VOYNU notification.</div></div></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;background:#f7f9fc;font-family:Arial,sans-serif;color:#1e3348"><div style="max-width:620px;margin:0 auto;padding:28px 16px"><div style="background:#ffffff;border:1px solid #eef3f7;border-radius:16px;overflow:hidden"><div style="padding:22px 24px;background:#0a2337;color:#fff"><div style="font-size:22px;font-weight:800">VOYNU</div><div style="margin-top:4px;font-size:13px;opacity:.9">${escapeHtml(title)}</div></div><div style="padding:24px"><p style="margin:0 0 18px;font-size:14px;line-height:1.6">${escapeHtml(intro)}</p><table style="width:100%;border-collapse:collapse">${rows}</table></div><div style="padding:16px 24px;border-top:1px solid #eef3f7;color:#8695a4;font-size:11px">This is an automated VOYNU notification.</div></div></div></body></html>`;
 }
 
 function bookingReference(id) {
@@ -121,6 +121,30 @@ export async function sendBookingEmail({ to, subject, title, intro, details }) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function sendTripCompletionReceipt({ userEmail, booking }) {
+  if (!userEmail) return { sent: false, skipped: true, reason: "CUSTOMER_EMAIL_MISSING" };
+  const reference = bookingReference(booking?.id);
+  const details = [
+    ["Booking reference", reference],
+    ["Trip type", booking?.trip_type === "roundtrip" ? "Round Trip" : "One Way"],
+    ["Pickup", booking?.pickup_name],
+    ["Destination", booking?.drop_name],
+    ["Travel date", booking?.travel_date],
+    ["Pickup time", booking?.pickup_time],
+    ["Vehicle", booking?.vehicle_type],
+    ["Distance", booking?.one_way_distance_km ? `${Number(booking.one_way_distance_km).toFixed(1)} km` : "—"],
+    ["Fare paid", formatMoney(booking?.fare)],
+    ["Payment method", booking?.payment_method === "upi" ? "UPI" : "Cash on pickup"],
+  ];
+  return sendBookingEmail({
+    to: userEmail,
+    subject: `Your VOYNU trip receipt — ${reference}`,
+    title: "Trip completed",
+    intro: `Thanks for riding with VOYNU! Here's the receipt for your completed trip ${reference}.`,
+    details,
+  });
 }
 
 export async function sendBookingNotifications({ userEmail, booking, category, savedBooking }) {
