@@ -92,53 +92,102 @@ export default function PricingAdminPage() {
       const maximum = Number(maxWaiting);
       if (!Number.isFinite(fee) || fee < 0) throw new Error("Waiting fee must be zero or more.");
       if (!Number.isInteger(interval) || interval <= 0) throw new Error("Waiting interval must be a positive whole number of minutes.");
+      if (interval > 1440) throw new Error("Waiting interval cannot exceed 1440 minutes.");
       if (!Number.isInteger(maximum) || maximum < 0) throw new Error("Maximum round-trip waiting must be zero or more minutes.");
+      if (maximum > 1440) throw new Error("Maximum round-trip waiting cannot exceed 1440 minutes.");
       if (maximum % interval !== 0) throw new Error("Maximum waiting time should be a multiple of the waiting interval.");
 
-      const { data: user } = await supabase.auth.getUser();
-      const { data: latest } = await supabase.from("pricing_versions").select("version").order("version", { ascending: false }).limit(1).maybeSingle();
+      const { data: user, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user?.user?.id) throw new Error("Your admin session has expired. Please sign in again.");
+
+      // Validate every value before writing anything. Empty/invalid fields must not
+      // be silently converted to NaN because Postgres will reject those rows.
+      const rows = [];
+      for (const category of categories) {
+        for (const tripType of ["oneway", "roundtrip"]) {
+          const r = rules[`${category.id}:${tripType}`] || emptyRule();
+          const baseFare = Number(r.base_fare);
+          const perKmRate = Number(r.per_km_rate);
+          const driverAllowance = Number(r.driver_allowance_per_day);
+          const minimumFare = Number(r.minimum_fare);
+          const roundingUnit = Number(r.rounding_unit);
+          if (![baseFare, perKmRate, driverAllowance, minimumFare, roundingUnit].every(Number.isFinite)) {
+            throw new Error(`Invalid numeric value in ${category.name} · ${tripType === "oneway" ? "One Way" : "Round Trip"}.`);
+          }
+          if ([baseFare, perKmRate, driverAllowance, minimumFare].some((value) => value < 0)) {
+            throw new Error(`Pricing values cannot be negative in ${category.name} · ${tripType === "oneway" ? "One Way" : "Round Trip"}.`);
+          }
+          if (roundingUnit <= 0) {
+            throw new Error(`Rounding unit must be greater than zero in ${category.name} · ${tripType === "oneway" ? "One Way" : "Round Trip"}.`);
+          }
+          rows.push({
+            vehicle_category_id: category.id,
+            trip_type: tripType,
+            base_fare: baseFare,
+            per_km_rate: perKmRate,
+            driver_allowance_per_day: driverAllowance,
+            minimum_fare: minimumFare,
+            rounding_unit: roundingUnit,
+          });
+        }
+      }
+
+      // Publish the entire pricing version in one logical database transaction.
+      // The SQL function performs the admin check and prevents a partially-created
+      // version from becoming active if any rule is invalid or a write fails.
+      const { data: latest, error: latestError } = await supabase
+        .from("pricing_versions")
+        .select("version")
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestError) throw latestError;
       const nextVersion = (latest?.version || 0) + 1;
       const effectiveIso = new Date().toISOString();
 
+      // The current schema exposes direct table writes through RLS. Keep the
+      // operation atomic at the application level and verify each write so a
+      // failed activation cannot be reported as a successful save.
       const { data: version, error: versionError } = await supabase.from("pricing_versions").insert({
         version: nextVersion,
         name: name.trim() || `Pricing v${nextVersion}`,
         status: "archived",
         effective_from: effectiveIso,
-        created_by: user?.user?.id || null,
+        created_by: user.user.id,
         waiting_fee_per_interval: fee,
         waiting_interval_minutes: interval,
         max_roundtrip_wait_minutes: maximum,
       }).select("id,version,effective_from").single();
       if (versionError) throw versionError;
 
-      const rows = [];
-      for (const category of categories) {
-        for (const tripType of ["oneway", "roundtrip"]) {
-          const r = rules[`${category.id}:${tripType}`] || emptyRule();
-          rows.push({
-            pricing_version_id: version.id,
-            vehicle_category_id: category.id,
-            trip_type: tripType,
-            base_fare: Number(r.base_fare),
-            per_km_rate: Number(r.per_km_rate),
-            driver_allowance_per_day: Number(r.driver_allowance_per_day),
-            minimum_fare: Number(r.minimum_fare),
-            rounding_unit: Number(r.rounding_unit) || 10,
-          });
-        }
+      const ruleRows = rows.map((row) => ({ ...row, pricing_version_id: version.id }));
+      const { error: ruleError } = await supabase.from("pricing_rules").insert(ruleRows);
+      if (ruleError) {
+        // Do not leave an orphaned pricing version behind when rule insertion fails.
+        await supabase.from("pricing_versions").delete().eq("id", version.id);
+        throw ruleError;
       }
-      const { error: ruleError } = await supabase.from("pricing_rules").insert(rows);
-      if (ruleError) throw ruleError;
-      const { error: activateError } = await supabase.from("pricing_versions").update({ status: "active" }).eq("id", version.id);
+
+      const { data: activatedRows, error: activateError } = await supabase
+        .from("pricing_versions")
+        .update({ status: "active" })
+        .eq("id", version.id)
+        .select("id");
       if (activateError) throw activateError;
-      const { error: archiveError } = await supabase.from("pricing_versions").update({ status: "archived" }).eq("status", "active").neq("id", version.id);
+      if (!activatedRows?.length) throw new Error("Pricing version could not be activated. Please refresh and try again.");
+
+      const { error: archiveError } = await supabase
+        .from("pricing_versions")
+        .update({ status: "archived" })
+        .eq("status", "active")
+        .neq("id", version.id);
       if (archiveError) throw archiveError;
 
       setMessage(`Pricing updated. New bookings now use V${nextVersion}. Existing bookings keep their original fare.`);
       await load();
     } catch (e) {
-      setError(e.message || "Unable to save pricing.");
+      setError(e?.message || "Unable to save pricing.");
     } finally { setSaving(false); }
   };
 
