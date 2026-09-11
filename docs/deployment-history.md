@@ -2,6 +2,39 @@
 
 This file records production-facing changes in chronological order. Every entry should identify the purpose, affected deployment boundaries, database changes, verification state and merge/deployment reference.
 
+## 2026-09-11 — Admin Configuration Centre Phase 2
+
+**Branch:** `admin-control-centre-phase2`
+
+**Status:** Verification branch; not merged to `main`.
+
+**Purpose:** Continue the Admin Control Centre restructuring without replacing or modifying existing operational workflows.
+
+**Functional changes:**
+
+- Added `/admin/configuration` as a dedicated configuration landing page.
+- Added verified configuration areas for Fleet & Customer Visibility, Fleet, Pricing and Dispatch.
+- Added read-only operational summary for categories, customer-visible categories, fleet inventory, usable fleet and dispatch mode.
+- Added a clearly separated roadmap for Service Area, Booking Rules, Notifications and Access/Audit controls.
+- Added Configuration as a dedicated tile in the Admin Control Centre.
+
+**Safety boundary:**
+
+- No existing booking, dispatch, pricing or fleet mutation logic was changed.
+- No new database writes or schema changes were introduced by this phase.
+- The new configuration page is informational/navigation-first until each future setting is audited against its existing database and application dependencies.
+
+**Verification performed:**
+
+- Branch created from merged PR #26 on `main`.
+- Existing configuration data sources were inspected before introducing new controls.
+- Configuration page uses the existing authenticated Admin access pattern.
+- Existing Admin routes remain intact.
+
+**Next verification gate:**
+
+Before exposing editable Service Area, Booking Rules, Notifications or Access/Audit controls, audit the corresponding customer, driver and booking code paths and database schema, then implement each setting independently with its own verification and deployment entry.
+
 ## 2026-09-11 — Admin Control Centre / fleet-backed vehicle visibility
 
 **Branch:** `admin-control-centre`
@@ -42,8 +75,7 @@ This file records production-facing changes in chronological order. Every entry 
 **Post-merge deployment:**
 
 - Vercel Admin project: `voynu-admin` (`prj_h4vytG4MmGIucsaX3IdSe53GWSEj`).
-- A production deployment for merge commit `bd2ef780b0d52bfb4126537f1af40b181969c81a` should be verified before considering the rollout fully deployed.
-- The deployment ledger intentionally distinguishes Git merge from Vercel production readiness; no deployment is marked READY here without direct verification.
+- Git merge and Vercel production readiness are tracked separately; deployment is not considered fully verified until Vercel reports READY for the merge commit.
 
 **Safety decision:**
 
