@@ -6,7 +6,9 @@ This file records production-facing changes in chronological order. Every entry 
 
 **Branch:** `admin-control-centre`
 
-**Status:** Verification branch; not merged to `main` at the time this entry was created.
+**Status:** Merged to `main` as PR #26.
+
+**Merge commit:** `bd2ef780b0d52bfb4126537f1af40b181969c81a`
 
 **Application boundaries affected:**
 
@@ -34,10 +36,18 @@ This file records production-facing changes in chronological order. Every entry 
 - Confirmed production vehicle categories include Hatchback, Sedan, SUV and EV.
 - Confirmed the final customer-visibility query resolves EV as the only fleet-backed active/bookable category under the current fleet state.
 - Confirmed the new Control Centre is additive and does not replace the existing `/admin` dashboard.
+- Confirmed the Control Centre preview returned HTTP 200 before merge.
+- Confirmed PR #26 was mergeable before merging.
+
+**Post-merge deployment:**
+
+- Vercel Admin project: `voynu-admin` (`prj_h4vytG4MmGIucsaX3IdSe53GWSEj`).
+- A production deployment for merge commit `bd2ef780b0d52bfb4126537f1af40b181969c81a` should be verified before considering the rollout fully deployed.
+- The deployment ledger intentionally distinguishes Git merge from Vercel production readiness; no deployment is marked READY here without direct verification.
 
 **Safety decision:**
 
-Do not replace the existing Admin dashboard entry point until the new Control Centre and the customer cab-selection behavior have been tested in the deployed environment.
+Do not remove or replace legacy Admin routes until the new Control Centre and customer cab-selection behavior have been tested in the deployed environment.
 
 ## 2026-09-06 — Admin pricing save fix
 
