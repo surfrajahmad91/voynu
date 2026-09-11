@@ -20,8 +20,8 @@ export default function RootLayout({ children }) {
         <div style={{ position: "fixed", top: 7, right: 105, zIndex: 100 }}>
           <AdminNotificationBell />
         </div>
-        {children}
         <AdminDashboardOperations />
+        {children}
         <PushNotifications targetPath="/admin" audience="admin" />
         <script dangerouslySetInnerHTML={{__html:`if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}`}} />
       </body>
