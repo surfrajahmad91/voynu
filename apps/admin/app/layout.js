@@ -1,5 +1,5 @@
 import "../styles/globals.css";
-import NotificationBell from "../../../shared/components/NotificationBell";
+import AdminNotificationBell from "../components/AdminNotificationBell";
 import PushNotifications from "../../../shared/components/PushNotifications";
 
 export const metadata = {
@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <div style={{ position: "fixed", top: 7, right: 105, zIndex: 100 }}>
-          <NotificationBell targetPath="/admin" audience="admin" />
+          <AdminNotificationBell />
         </div>
         {children}
         <PushNotifications targetPath="/admin" audience="admin" />

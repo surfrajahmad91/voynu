@@ -49,11 +49,7 @@ export default function DispatchPage() {
     setBusy(false);
     if (e) return setError(e.message);
     setMode(next);
-    if (next === "automatic") {
-      setMessage(`Automatic dispatch is ON. ${Number(assignedCount || 0)} existing payment-ready booking(s) were assigned.`);
-    } else {
-      setMessage("Automatic dispatch is OFF. New eligible bookings will remain awaiting assignment until you assign a driver manually.");
-    }
+    setMessage(next === "automatic" ? `Automatic dispatch is ON. ${Number(assignedCount || 0)} existing payment-ready booking(s) were assigned.` : "Automatic dispatch is OFF. New eligible bookings will remain awaiting assignment until you assign a driver manually.");
     await load();
   };
 
@@ -62,17 +58,21 @@ export default function DispatchPage() {
     const { data, error: e } = await supabase.rpc("auto_assign_booking_driver", { p_booking_id: booking.id });
     setBusy(false);
     if (e) return setError(e.message);
+    if (!data?.driver_id && !data?.id) return setError("No eligible driver with an assigned active vehicle was found.");
     setMessage(`Booking ${booking.id.slice(0, 8).toUpperCase()} assigned successfully.`);
     await load();
     return data;
   };
+
+  const assignableDrivers = drivers.filter((d) => d.availability_status === "available" && d.vehicle_id && d.vehicles?.active !== false && d.vehicles?.status === "active");
+  const unavailableWithoutVehicle = drivers.filter((d) => d.availability_status === "available" && (!d.vehicle_id || !d.vehicles || d.vehicles.active === false || d.vehicles.status !== "active"));
 
   if (checking) return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>Checking access…</main>;
   if (!authorized) return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}><div><h2>Not authorized</h2><Link href="/admin">Back to admin</Link></div></main>;
 
   return <main style={{ minHeight: "100vh", background: "#f4f6f5", color: "#1d2b24", fontFamily: "ui-monospace,monospace", padding: 18 }}>
     <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 18 }}><div><h1 style={{ margin: 0, fontSize: 22 }}>VOYNU DISPATCH</h1><p style={{ margin: "5px 0", color: "#66756d", fontSize: 12 }}>Manual or automatic driver assignment.</p></div><Link href="/admin" style={{ ...button, textDecoration: "none" }}>ADMIN DASHBOARD</Link></div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 18 }}><div><h1 style={{ margin: 0, fontSize: 22 }}>VOYNU DISPATCH</h1><p style={{ margin: "5px 0", color: "#66756d", fontSize: 12 }}>Manual or automatic driver assignment. A driver must have an assigned active vehicle.</p></div><Link href="/admin" style={{ ...button, textDecoration: "none" }}>ADMIN DASHBOARD</Link></div>
       {message && <div style={{ padding: 11, background: "#eaf5ed", border: "1px solid #cfe3d4", borderRadius: 7, marginBottom: 12, fontSize: 12 }}>{message}</div>}
       {error && <div style={{ padding: 11, background: "#fff0f0", border: "1px solid #e5caca", borderRadius: 7, marginBottom: 12, color: "#a22", fontSize: 12 }}>{error}</div>}
       <section style={{ background: "#fff", border: "1px solid #d9e0dc", borderRadius: 9, padding: 16, marginBottom: 12 }}>
@@ -82,7 +82,7 @@ export default function DispatchPage() {
         <h2 style={{ margin: "0 0 12px", fontSize: 15 }}>Confirmed bookings awaiting assignment</h2>
         {bookings.length === 0 ? <p style={{ color: "#66756d", fontSize: 12 }}>No confirmed bookings are currently awaiting assignment.</p> : bookings.map(b => <div key={b.id} style={{ borderTop: "1px solid #edf0ee", padding: "12px 0", display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}><div><strong>#{b.id.slice(0, 8).toUpperCase()}</strong> · {b.pickup_name} → {b.drop_name}<div style={{ color: "#66756d", fontSize: 11, marginTop: 4 }}>{b.travel_date} {b.pickup_time} · {b.vehicle_type} · {b.passenger_count} passenger(s) · {b.luggage_count} luggage · payment: {b.payment_method}/{b.payment_status}</div></div><button disabled={busy || mode !== "automatic"} onClick={() => autoAssign(b)} style={primary}>{mode === "automatic" ? "AUTO ASSIGN" : "AUTO OFF"}</button></div>)}
       </section>
-      <section style={{ marginTop: 12, background: "#fff", border: "1px solid #d9e0dc", borderRadius: 9, padding: 16 }}><h2 style={{ margin: "0 0 10px", fontSize: 15 }}>Available drivers</h2>{drivers.filter(d => d.availability_status === "available").map(d => <div key={d.id} style={{ padding: "7px 0", borderTop: "1px solid #edf0ee", fontSize: 12 }}>{d.full_name} · {d.vehicles?.registration_number || "no vehicle"} · {d.vehicles?.category || "—"}</div>)}{drivers.filter(d => d.availability_status === "available").length === 0 && <p style={{ color: "#66756d", fontSize: 12 }}>No drivers are currently available.</p>}</section>
+      <section style={{ marginTop: 12, background: "#fff", border: "1px solid #d9e0dc", borderRadius: 9, padding: 16 }}><h2 style={{ margin: "0 0 10px", fontSize: 15 }}>Available drivers with an active vehicle</h2>{assignableDrivers.map(d => <div key={d.id} style={{ padding: "7px 0", borderTop: "1px solid #edf0ee", fontSize: 12 }}>{d.full_name} · {d.vehicles?.registration_number} · {d.vehicles?.category || "—"}</div>)}{assignableDrivers.length === 0 && <p style={{ color: "#66756d", fontSize: 12 }}>No drivers are currently eligible for assignment.</p>}{unavailableWithoutVehicle.length > 0 && <div style={{ marginTop: 12, padding: 10, borderRadius: 7, background: "#fff7e8", color: "#8a5700", fontSize: 11 }}>{unavailableWithoutVehicle.length} available driver(s) are excluded because they do not have an active assigned vehicle.</div>}</section>
     </div>
   </main>;
 }
