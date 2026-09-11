@@ -5,7 +5,9 @@ const path = require('path');
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "X-Frame-Options", value: "DENY" },
+  // The Admin dashboard embeds its own Trip Monitor page. SAMEORIGIN keeps
+  // the protection against external framing while allowing this first-party UI.
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
   {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(self), payment=()",
