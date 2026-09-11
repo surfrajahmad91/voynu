@@ -13,6 +13,7 @@ const AREAS = [
   ["Vehicle Categories", "Customer visibility, capacity and ordering", "/admin/vehicle-categories", "▤"],
   ["Fleet", "Vehicles, status and assignments", "/admin/vehicles", "▱"],
   ["Pricing", "Fare versions and waiting policy", "/admin/pricing", "₹"],
+  ["Configuration", "System-wide configuration surfaces and future controls", "/admin/configuration", "⚙"],
 ];
 
 export default function ControlCentrePage() {
@@ -49,7 +50,7 @@ export default function ControlCentrePage() {
     })();
   }, [authorized]);
 
-  const activeVehicleCount = (categoryId) => vehicles.filter((v) => v.vehicle_category_id === categoryId && v.active && !["maintenance", "inactive", "unavailable"].includes(v.status || "active")).length;
+  const activeVehicleCount = (categoryId) => vehicles.filter((v) => v.vehicle_category_id === categoryId && v.active && !["maintenance", "inactive", "unavailable", "retired"].includes(v.status || "active")).length;
   const visibleCount = categories.filter((c) => c.active && c.bookable && activeVehicleCount(c.id) > 0).length;
 
   if (checking) return <main style={styles.center}>Checking admin access…</main>;
@@ -68,7 +69,7 @@ export default function ControlCentrePage() {
         <Metric label="Vehicle categories" value={categories.length} />
         <Metric label="Customer-visible" value={visibleCount} accent={theme.colors.success} />
         <Metric label="Fleet vehicles" value={vehicles.length} />
-        <Metric label="Active fleet" value={vehicles.filter((v) => v.active && !["maintenance", "inactive", "unavailable"].includes(v.status || "active")).length} accent={theme.colors.primary} />
+        <Metric label="Active fleet" value={vehicles.filter((v) => v.active && !["maintenance", "inactive", "unavailable", "retired"].includes(v.status || "active")).length} accent={theme.colors.primary} />
       </section>
       <section style={styles.card}>
         <h2 style={styles.sectionTitle}>Administration</h2>
@@ -76,7 +77,7 @@ export default function ControlCentrePage() {
         <div style={styles.grid}>{AREAS.map(([title, description, href, icon]) => <Link href={href} key={href} style={styles.tile}><span style={styles.icon}>{icon}</span><span><strong>{title}</strong><small>{description}</small></span><span style={styles.arrow}>→</span></Link>)}</div>
       </section>
       <section style={styles.card}>
-        <div style={styles.row}><div><h2 style={styles.sectionTitle}>Customer vehicle visibility</h2><p style={styles.sectionText}>The customer app now receives only categories that are active, bookable and backed by at least one active fleet vehicle.</p></div><Link href="/admin/vehicle-categories" style={styles.button}>Configure</Link></div>
+        <div style={styles.row}><div><h2 style={styles.sectionTitle}>Customer vehicle visibility</h2><p style={styles.sectionText}>The customer app now receives only categories that are active, bookable and backed by at least one usable active fleet vehicle.</p></div><Link href="/admin/vehicle-categories" style={styles.button}>Configure</Link></div>
         <div style={styles.categoryGrid}>{categories.map((category) => { const count = activeVehicleCount(category.id); const visible = category.active && category.bookable && count > 0; return <div key={category.id} style={styles.category}><div style={styles.row}><strong>{category.name}</strong><span style={visible ? styles.visible : styles.hidden}>{visible ? "VISIBLE" : "HIDDEN"}</span></div><div style={styles.meta}>{count} active fleet vehicle{count === 1 ? "" : "s"} · {category.passenger_capacity} passengers · {category.luggage_capacity} luggage</div></div>; })}</div>
       </section>
     </div>
