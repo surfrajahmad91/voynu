@@ -4,9 +4,33 @@
 /* Admin presentation layer: preserves existing data/actions while replacing the legacy console styling. */
 main { background:var(--voynu-bg) !important; color:var(--voynu-text) !important; font-family:var(--voynu-font) !important; }
 main * { font-family:var(--voynu-font) !important; }
-main > header { background:var(--voynu-surface) !important; border-color:var(--voynu-border) !important; box-shadow:0 4px 18px rgba(13,27,42,.05); }
+main > header {
+  background:var(--voynu-surface) !important;
+  color:var(--voynu-text) !important;
+  border-color:var(--voynu-border) !important;
+  box-shadow:0 4px 18px rgba(13,27,42,.05);
+}
+main > header strong {
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  color:var(--voynu-text) !important;
+  font-family:var(--voynu-font) !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+  letter-spacing:-.2px !important;
+}
+main > header strong::before {
+  content:"";
+  display:block;
+  flex:0 0 40px;
+  width:40px;
+  height:40px;
+  border-radius:11px;
+  background:var(--voynu-navy) url('/icon.svg') center/cover no-repeat;
+  box-shadow:0 7px 18px rgba(10,35,55,.16);
+}
 main > header button { border-radius:10px !important; background:var(--voynu-surface) !important; color:var(--voynu-text) !important; border-color:var(--voynu-border-strong) !important; }
-main > header > div > div:first-child > div:first-child { width:40px !important; height:40px !important; border-radius:11px !important; background:#6735C7 url('/icon.svg') center/cover no-repeat !important; font-size:0 !important; box-shadow:0 7px 18px rgba(103,53,199,.20); }
 main h1, main h2, main h3 { color:var(--voynu-text) !important; letter-spacing:-.25px; }
 main input, main select, main textarea { background:var(--voynu-surface) !important; color:var(--voynu-text) !important; border-color:var(--voynu-border-strong) !important; border-radius:10px !important; font-family:var(--voynu-font) !important; }
 main button { border-radius:10px !important; font-family:var(--voynu-font) !important; }
