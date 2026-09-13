@@ -1,5 +1,5 @@
 export const theme = {
-  fontFamily: '"Poppins", -apple-system, sans-serif',
+  fontFamily: '"Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 
   colors: {
     bg: "#F7F9FC",
@@ -13,6 +13,7 @@ export const theme = {
 
     navy: "#0A2337",
     primary: "#0A7FA6",
+    primaryLight: "#12A0C6",
     primaryDark: "#00456B",
     primaryTint: "#E7F4F8",
 
