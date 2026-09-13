@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { supabase } from "../lib/supabaseClient";
+import { theme } from "../lib/theme";
 
 function IconUser({ size = 13 }) {
   return (
@@ -53,14 +54,14 @@ export default function AccountLink() {
         alignItems: "center",
         gap: "6px",
         padding: "9px 14px",
-        borderRadius: "30px",
-        background: "#eaf6ee",
-        color: "#0a5c32",
+        borderRadius: theme.radius.pill,
+        background: theme.colors.primaryTint,
+        color: theme.colors.primaryDark,
         textDecoration: "none",
         fontSize: "12.5px",
         fontWeight: 700,
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        border: "1px solid #d5ecdd",
+        fontFamily: theme.fontFamily,
+        border: `1px solid ${theme.colors.border}`,
         whiteSpace: "nowrap",
       }}
     >
