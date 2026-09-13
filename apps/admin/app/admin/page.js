@@ -8,105 +8,30 @@ import { ADMIN_EMAILS } from "../../lib/admin";
 import { theme } from "../../../../shared/lib/theme";
 
 const modules = [
-  { href: "/admin/bookings", label: "Bookings", description: "View, confirm, assign, cancel and communicate on bookings.", accent: theme.colors.primary },
-  { href: "/admin/drivers", label: "Drivers", description: "Manage drivers, availability, login status and vehicle assignment.", accent: "#2563a8" },
-  { href: "/admin/vehicles", label: "Fleet", description: "Manage actual vehicles, status, category and capacity.", accent: "#45564c" },
-  { href: "/admin/dispatch", label: "Dispatch", description: "Control manual or automatic assignment and dispatch queue.", accent: "#7a5a00" },
-  { href: "/admin/trip-monitor", label: "Trip Monitor", description: "Track scheduled starts, active trips, completion and delays.", accent: "#a85b00" },
-  { href: "/admin/pricing", label: "Pricing", description: "Manage pricing versions and fare rules.", accent: "#1283a3" },
-  { href: "/admin/vehicle-categories", label: "Vehicle Categories", description: "Control customer-facing vehicle categories and capacity.", accent: "#6a4ca3" },
-  { href: "/admin/configuration", label: "Configuration", description: "Review operational configuration and system readiness.", accent: "#45564c" },
+  ["/admin/bookings", "Bookings", "Confirm, assign, cancel and communicate on bookings."],
+  ["/admin/trip-monitor", "Live Operations", "See live trips, driver GPS, timing and delay reasons."],
+  ["/admin/dispatch", "Dispatch", "Control automatic/manual assignment and the dispatch queue."],
+  ["/admin/drivers", "Drivers", "Manage drivers, availability, login status and vehicle pairing."],
+  ["/admin/vehicles", "Fleet", "Manage actual vehicles, status, category and capacity."],
+  ["/admin/vehicle-categories", "Vehicle Types", "Add or activate cars, auto-rickshaws, bikes and future categories."],
+  ["/admin/pricing", "Pricing", "Manage versioned fare rules and round-trip waiting charges."],
+  ["/admin/configuration", "Configuration", "Review service, dispatch and operational settings."],
 ];
-
-const status = (value) => String(value || "").replace(/_/g, " ");
+const ACTIVE = ["driver_assigned", "on_the_way", "arrived", "trip_started", "waiting_for_return", "return_trip_started"];
 
 export default function AdminDashboard() {
-  const router = useRouter();
-  const [checking, setChecking] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
-  const [bookings, setBookings] = useState([]);
-  const [drivers, setDrivers] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [dispatchMode, setDispatchMode] = useState("manual");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      const email = data?.session?.user?.email || "";
-      if (!data?.session) { router.replace("/login"); return; }
-      if (!ADMIN_EMAILS.includes(email)) { setChecking(false); return; }
-      if (!cancelled) { setAuthorized(true); setChecking(false); }
-    })();
-    return () => { cancelled = true; };
-  }, [router]);
-
-  useEffect(() => {
-    if (!authorized) return;
-    (async () => {
-      setError("");
-      const [{ data: bs, error: be }, { data: ds, error: de }, { data: vs, error: ve }, { data: dm, error: de2 }] = await Promise.all([
-        supabase.from("bookings").select("id,booking_status,payment_status,fare,driver_id").order("created_at", { ascending: false }),
-        supabase.from("drivers").select("id,active,availability_status,vehicle_id"),
-        supabase.from("vehicles").select("id,active,status"),
-        supabase.from("dispatch_settings").select("mode").eq("id", true).maybeSingle(),
-      ]);
-      const firstError = be || de || ve || de2;
-      if (firstError) setError(firstError.message);
-      setBookings(bs || []); setDrivers(ds || []); setVehicles(vs || []); setDispatchMode(dm?.mode === "automatic" ? "automatic" : "manual");
-    })();
-  }, [authorized]);
-
-  const stats = useMemo(() => ({
-    total: bookings.length,
-    pendingPayment: bookings.filter((b) => b.payment_status === "pending").length,
-    awaitingAssignment: bookings.filter((b) => b.booking_status === "confirmed" && !b.driver_id).length,
-    activeTrips: bookings.filter((b) => b.booking_status === "trip_started").length,
-    completed: bookings.filter((b) => b.booking_status === "trip_completed").length,
-    availableDrivers: drivers.filter((d) => d.active !== false && d.availability_status === "available" && d.vehicle_id).length,
-    usableVehicles: vehicles.filter((v) => v.active && v.status === "active").length,
-  }), [bookings, drivers, vehicles]);
-
-  if (checking) return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>Checking access…</main>;
-  if (!authorized) return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}><div><h1>Access denied</h1><Link href="/login">Login</Link></div></main>;
-
-  return (
-    <main style={{ minHeight: "100vh", background: theme.colors.bg, color: theme.colors.text, fontFamily: theme.fontFamily, padding: "28px 16px 60px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <header style={{ marginBottom: 20 }}>
-          <div style={{ color: theme.colors.primary, fontSize: 12, fontWeight: 900, letterSpacing: 1.2, textTransform: "uppercase" }}>VOYNU Admin</div>
-          <h1 style={{ margin: "5px 0 0", fontSize: 28 }}>Operations dashboard</h1>
-          <p style={{ margin: "7px 0 0", color: theme.colors.textFaint, fontSize: 13, lineHeight: 1.5 }}>One home for bookings, drivers, fleet, dispatch, trips, pricing and configuration.</p>
-        </header>
-
-        {error && <div style={{ marginBottom: 16, padding: 12, borderRadius: 10, background: theme.colors.errorBg, color: theme.colors.error, fontSize: 12 }}>{error}</div>}
-
-        <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(135px,1fr))", gap: 10, marginBottom: 20 }} aria-label="Operations summary">
-          {[
-            ["Bookings", stats.total], ["Payment pending", stats.pendingPayment], ["Awaiting assignment", stats.awaitingAssignment], ["Active trips", stats.activeTrips], ["Completed", stats.completed], ["Available drivers", stats.availableDrivers], ["Usable vehicles", stats.usableVehicles],
-          ].map(([label, value]) => <div key={label} style={{ background: "#fff", border: `1px solid ${theme.colors.border}`, borderRadius: 14, padding: 13 }}><div style={{ fontSize: 9.5, fontWeight: 900, color: theme.colors.textFaint, textTransform: "uppercase", lineHeight: 1.35 }}>{label}</div><div style={{ marginTop: 5, fontSize: 23, fontWeight: 900 }}>{value}</div></div>)}
-        </section>
-
-        <section style={{ marginBottom: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: 10, marginBottom: 10 }}>
-            <div><h2 style={{ margin: 0, fontSize: 18 }}>Admin modules</h2><p style={{ margin: "4px 0 0", color: theme.colors.textFaint, fontSize: 11 }}>Each operational area has its own page. No pages are embedded inside another page.</p></div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 11 }}>
-            {modules.map((item) => <Link key={item.href} href={item.href} style={{ textDecoration: "none", color: "inherit", background: "#fff", border: `1px solid ${theme.colors.border}`, borderRadius: 15, padding: 16, display: "block", boxShadow: "0 2px 8px rgba(22,36,29,.03)" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}><strong style={{ fontSize: 15 }}>{item.label}</strong><span style={{ color: item.accent, fontSize: 18 }}>→</span></div>
-              <div style={{ marginTop: 6, color: theme.colors.textFaint, fontSize: 11, lineHeight: 1.5 }}>{item.description}</div>
-            </Link>)}
-          </div>
-        </section>
-
-        <section style={{ background: "#fff", border: `1px solid ${theme.colors.border}`, borderRadius: 15, padding: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <div><div style={{ fontSize: 10, color: theme.colors.primary, fontWeight: 900, textTransform: "uppercase" }}>Dispatch status</div><div style={{ marginTop: 4, fontWeight: 800 }}>{dispatchMode === "automatic" ? "Automatic assignment is ON" : "Manual assignment is ON"}</div><div style={{ marginTop: 4, color: theme.colors.textFaint, fontSize: 11 }}>Drivers without an assigned active vehicle are not eligible for a booking.</div></div>
-            <Link href="/admin/dispatch" style={{ padding: "9px 12px", borderRadius: 9, background: theme.colors.primary, color: "#fff", textDecoration: "none", fontSize: 11, fontWeight: 900 }}>OPEN DISPATCH</Link>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+  const router = useRouter(); const [checking,setChecking]=useState(true),[authorized,setAuthorized]=useState(false); const [bookings,setBookings]=useState([]),[drivers,setDrivers]=useState([]),[vehicles,setVehicles]=useState([]),[alerts,setAlerts]=useState(0),[dispatchMode,setDispatchMode]=useState("manual"),[error,setError]=useState("");
+  useEffect(()=>{let cancelled=false;(async()=>{const {data}=await supabase.auth.getSession();const email=data?.session?.user?.email||"";if(!data?.session){router.replace("/login");return;}if(!ADMIN_EMAILS.includes(email)){setChecking(false);return;}if(!cancelled){setAuthorized(true);setChecking(false);}})();return()=>{cancelled=true;}},[router]);
+  const load=async()=>{const [{data:bs,error:be},{data:ds,error:de},{data:vs,error:ve},{data:as,error:ae},{data:dm,error:dme}]=await Promise.all([supabase.from("bookings").select("id,booking_status,payment_status,driver_id,trip_type,trip_start_on_time,return_trip_start_on_time,trip_completion_on_time").order("created_at",{ascending:false}),supabase.from("drivers").select("id,active,availability_status,vehicle_id"),supabase.from("vehicles").select("id,active,status"),supabase.rpc("get_trip_timing_alerts"),supabase.from("dispatch_settings").select("mode").eq("id",true).maybeSingle()]);const e=be||de||ve||ae||dme;if(e)setError(e.message);setBookings(bs||[]);setDrivers(ds||[]);setVehicles(vs||[]);setAlerts((as||[]).length);setDispatchMode(dm?.mode==="automatic"?"automatic":"manual");};
+  useEffect(()=>{if(!authorized)return;load();const id=setInterval(load,15000);return()=>clearInterval(id);},[authorized]);
+  const stats=useMemo(()=>({total:bookings.length,pending:bookings.filter(b=>b.payment_status==="pending").length,awaiting:bookings.filter(b=>b.booking_status==="confirmed"&&!b.driver_id).length,live:bookings.filter(b=>ACTIVE.includes(b.booking_status)).length,waiting:bookings.filter(b=>b.booking_status==="waiting_for_return").length,completed:bookings.filter(b=>b.booking_status==="trip_completed").length,available:drivers.filter(d=>d.active!==false&&d.availability_status==="available"&&d.vehicle_id).length,vehicles:vehicles.filter(v=>v.active&&v.status==="active").length,late:bookings.filter(b=>b.trip_start_on_time===false||b.return_trip_start_on_time===false||b.trip_completion_on_time===false).length}),[bookings,drivers,vehicles]);
+  if(checking)return <main style={{minHeight:"100vh",display:"grid",placeItems:"center"}}>Checking access…</main>;
+  if(!authorized)return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24}}><div><h1>Access denied</h1><Link href="/login">Login</Link></div></main>;
+  return <main style={{minHeight:"100vh",background:theme.colors.bg,color:theme.colors.text,fontFamily:theme.fontFamily,padding:"24px 16px 60px"}}><div style={{maxWidth:1180,margin:"0 auto"}}>
+    <section style={{padding:"18px 20px",borderRadius:18,background:"linear-gradient(135deg,#0D1B2A,#312E81)",color:"#fff",marginBottom:16,boxShadow:"0 12px 30px rgba(13,27,42,.14)"}}><div style={{fontSize:10,fontWeight:900,letterSpacing:1.2,textTransform:"uppercase",opacity:.78}}>Operations control centre</div><h1 style={{margin:"5px 0 0",fontSize:26}}>Good operations start with visibility.</h1><p style={{margin:"6px 0 0",fontSize:12,lineHeight:1.5,opacity:.82}}>Monitor every journey, keep the customer informed, and understand exactly why a trip misses its schedule.</p></section>
+    {error&&<div style={{marginBottom:14,padding:12,borderRadius:10,background:theme.colors.errorBg,color:theme.colors.error,fontSize:12}}>{error}</div>}
+    <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:9,marginBottom:18}}>{[["Bookings",stats.total],["Live trips",stats.live],["Waiting return",stats.waiting],["Late events",stats.late],["Awaiting dispatch",stats.awaiting],["Completed",stats.completed],["Available drivers",stats.available],["Usable vehicles",stats.vehicles]].map(([l,v])=><div key={l} style={{background:"#fff",border:`1px solid ${theme.colors.border}`,borderRadius:14,padding:12}}><div style={{fontSize:9,color:theme.colors.textFaint,fontWeight:900,textTransform:"uppercase"}}>{l}</div><div style={{marginTop:4,fontSize:23,fontWeight:900}}>{v}</div></div>)}</section>
+    <section style={{background:"#fff",border:`1px solid ${theme.colors.border}`,borderRadius:16,padding:14,marginBottom:18,display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><div style={{fontSize:9,color:"#6D28D9",fontWeight:900,textTransform:"uppercase"}}>Dispatch</div><strong style={{fontSize:14}}>{dispatchMode==="automatic"?"Automatic assignment is ON":"Manual assignment is ON"}</strong><div style={{fontSize:11,color:theme.colors.textFaint,marginTop:3}}>{alerts?`${alerts} unacknowledged timing alert${alerts===1?"":"s"}`:"No unacknowledged timing alerts"}</div></div><Link href="/admin/trip-monitor" style={{padding:"9px 13px",borderRadius:10,background:"#6D28D9",color:"#fff",textDecoration:"none",fontSize:11,fontWeight:900}}>OPEN LIVE OPERATIONS</Link></section>
+    <h2 style={{fontSize:18,margin:"0 0 10px"}}>Admin modules</h2><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:11}}>{modules.map(([href,label,description])=><Link key={href} href={href} style={{textDecoration:"none",color:"inherit",background:"#fff",border:`1px solid ${theme.colors.border}`,borderRadius:15,padding:16,boxShadow:"0 3px 12px rgba(13,27,42,.035)"}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{fontSize:14}}>{label}</strong><span style={{color:"#6D28D9",fontSize:17}}>→</span></div><div style={{marginTop:6,fontSize:11,color:theme.colors.textFaint,lineHeight:1.5}}>{description}</div></Link>)}</div>
+  </div></main>;
 }
