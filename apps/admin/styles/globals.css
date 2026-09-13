@@ -1,19 +1,16 @@
 @import "../../../shared/styles/globals.css";
 @import "../../../shared/styles/brand-theme.css";
 
-/* Admin identity: violet/blue emphasis, while retaining the shared VOYNU typography and surfaces. */
+/* Admin presentation layer: same VOYNU brand system as Customer and Saarthi. */
 :root {
   --voynu-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --voynu-admin-violet: #6D28D9;
-  --voynu-admin-blue: #2563EB;
-  --voynu-admin-violet-soft: #F3E8FF;
 }
 
 html, body { background: var(--voynu-bg); }
 main { background: var(--voynu-bg) !important; color: var(--voynu-text) !important; font-family: var(--voynu-font) !important; }
 main * { font-family: var(--voynu-font) !important; }
 main h1, main h2, main h3 { color: var(--voynu-text) !important; letter-spacing: -.25px; }
-main input, main select, main textarea { background: var(--voynu-surface) !important; color: var(--voynu-text) !important; border-color: #D8DEE8 !important; border-radius: 10px !important; }
+main input, main select, main textarea { background: var(--voynu-surface) !important; color: var(--voynu-text) !important; border-color: var(--voynu-border-strong) !important; border-radius: 10px !important; }
 main button { border-radius: 10px !important; font-family: var(--voynu-font) !important; }
 main table, main tr, main td, main th { border-color: var(--voynu-border) !important; }
 
@@ -24,7 +21,7 @@ main table, main tr, main td, main th { border-color: var(--voynu-border) !impor
   background: rgba(255,255,255,.96);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--voynu-border);
-  box-shadow: 0 5px 22px rgba(13,27,42,.06);
+  box-shadow: 0 5px 22px rgba(10,35,55,.06);
 }
 .adminShellInner {
   width: min(1180px, calc(100% - 28px));
@@ -52,19 +49,19 @@ main table, main tr, main td, main th { border-color: var(--voynu-border) !impor
 }
 .adminBrand span { display: grid; gap: 1px; min-width: 0; }
 .adminBrand strong { color: var(--voynu-navy); font-size: 18px; line-height: 1; letter-spacing: -.4px; }
-.adminBrand small { color: var(--voynu-admin-violet); font-size: 8px; line-height: 1.2; font-weight: 900; letter-spacing: 1.15px; }
+.adminBrand small { color: var(--voynu-primary, var(--voynu-teal)); font-size: 8px; line-height: 1.2; font-weight: 900; letter-spacing: 1.15px; }
 .adminHeaderActions { display: flex; align-items: center; gap: 9px; }
 .adminSettingsLink {
   text-decoration: none;
   color: var(--voynu-text);
   border: 1px solid var(--voynu-border);
-  background: #fff;
+  background: var(--voynu-surface);
   padding: 9px 12px;
   border-radius: 10px;
   font-size: 11px;
   font-weight: 800;
 }
-.adminShellNav { overflow-x: auto; border-top: 1px solid #F1F3F6; }
+.adminShellNav { overflow-x: auto; border-top: 1px solid var(--voynu-border); }
 .adminShellNavInner {
   width: min(1180px, calc(100% - 28px));
   margin: 0 auto;
@@ -84,7 +81,7 @@ main table, main tr, main td, main th { border-color: var(--voynu-border) !impor
   font-size: 11px;
   font-weight: 700;
 }
-.adminNavLink.active { color: var(--voynu-admin-violet); }
+.adminNavLink.active { color: var(--voynu-teal); }
 .adminNavLink.active::after {
   content: "";
   position: absolute;
@@ -93,7 +90,7 @@ main table, main tr, main td, main th { border-color: var(--voynu-border) !impor
   bottom: 0;
   height: 3px;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(90deg, var(--voynu-admin-violet), var(--voynu-admin-blue));
+  background: linear-gradient(90deg, var(--voynu-teal), var(--voynu-accent));
 }
 .adminShellContent { min-height: calc(100vh - 116px); }
 
