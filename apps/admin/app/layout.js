@@ -1,5 +1,5 @@
 import "../styles/globals.css";
-import AdminNotificationBell from "../components/AdminNotificationBell";
+import AdminShell from "../components/AdminShell";
 import PushNotifications from "../../../shared/components/PushNotifications";
 
 export const metadata = {
@@ -10,16 +10,13 @@ export const metadata = {
   appleWebApp: { capable: true, title: "VOYNU Admin", statusBarStyle: "black-translucent" },
 };
 
-export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#00456B" };
+export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#4C1D95" };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <div style={{ position: "fixed", top: 7, right: 105, zIndex: 100 }}>
-          <AdminNotificationBell />
-        </div>
-        {children}
+        <AdminShell>{children}</AdminShell>
         <PushNotifications targetPath="/admin" audience="admin" />
         <script dangerouslySetInnerHTML={{__html:`if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}`}} />
       </body>
