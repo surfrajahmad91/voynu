@@ -13,9 +13,12 @@
   --voynu-teal: #0A7FA6;
   --voynu-teal-light: #12A0C6;
   --voynu-teal-deep: #00456B;
+  --voynu-primary: #0A7FA6;
+  --voynu-primary-tint: #E7F4F8;
   --voynu-accent: #F5813F;
   --voynu-accent-light: #FFB25C;
   --voynu-accent-deep: #D4552A;
+  --voynu-accent-dark: #D4552A;
   --voynu-ink: #1E3348;
   --voynu-slate: #5B6B7C;
   --voynu-mist: #EEF3F7;
@@ -51,9 +54,9 @@ body { background: var(--voynu-bg); color: var(--voynu-text); font-family: var(-
 .retryButton,.upiPayButton,.confirmButton { background: var(--voynu-gradient); box-shadow: 0 10px 24px rgba(10,127,166,.18); }
 .cabCard.active { border-color: var(--voynu-teal); background: #F1FCFA; box-shadow: 0 0 0 2px rgba(10,127,166,.08), var(--voynu-shadow); }
 .cabRadio.active { border-color: var(--voynu-teal); background: var(--voynu-teal); }
-.paymentCard.active { border-color: var(--voynu-teal); background: var(--voynu-primary-tint, #E7F4F8); color: var(--voynu-teal-deep); }
+.paymentCard.active { border-color: var(--voynu-teal); background: var(--voynu-primary-tint); color: var(--voynu-teal-deep); }
 .availabilityNotice { background: #EAF6FA; border-color: #CFE6ED; }
-.availabilityNoticeIcon { background: #E7F4F8; color: var(--voynu-teal); }
+.availabilityNoticeIcon { background: var(--voynu-primary-tint); color: var(--voynu-teal); }
 .fareRow.total { border-top-color: var(--voynu-border); color: var(--voynu-navy); }
 .requirementsCard select,.paymentCard,.upiConfirmRetry { border-color: var(--voynu-border-strong); color: var(--voynu-text); }
 .upiConfirmYes { border-color: var(--voynu-teal); background: var(--voynu-teal); }
@@ -62,14 +65,14 @@ input:focus,select:focus,textarea:focus { outline: none; border-color: var(--voy
 * { scrollbar-color: #C8D2DF transparent; }
 
 /* Harmonise older customer controls that pre-date the current brand tokens. */
-.locationLabelIcon.pickup,.recentPin.pickup { background: var(--voynu-primary-tint, #E7F4F8) !important; color: var(--voynu-teal) !important; }
+.locationLabelIcon.pickup,.recentPin.pickup { background: var(--voynu-primary-tint) !important; color: var(--voynu-teal) !important; }
 .locationLabelIcon.pickup path,.recentPin.pickup path { fill: var(--voynu-teal) !important; }
-.locationLabelIcon.drop,.recentPin.drop { background: #FFF1E7 !important; color: var(--voynu-accent-dark, #D4552A) !important; }
+.locationLabelIcon.drop,.recentPin.drop { background: #FFF1E7 !important; color: var(--voynu-accent-dark) !important; }
 .locationLabelIcon.drop path,.recentPin.drop path { fill: var(--voynu-accent-deep) !important; }
 .locationLabel,.locationHintLabel,.locationHelper { font-family: var(--voynu-font) !important; }
 .mapPickerSearchInput:focus { border-color: var(--voynu-teal) !important; box-shadow: 0 0 0 3px rgba(10,127,166,.10) !important; }
 .voynu-datetime-button:focus-visible { border-color: var(--voynu-teal) !important; box-shadow: 0 0 0 4px rgba(10,127,166,.11) !important; }
-.voynu-datetime-quick button.active { border-color: var(--voynu-teal) !important; background: #E7F4F8 !important; box-shadow: 0 0 0 2px rgba(10,127,166,.08) !important; }
+.voynu-datetime-quick button.active { border-color: var(--voynu-teal) !important; background: var(--voynu-primary-tint) !important; box-shadow: 0 0 0 2px rgba(10,127,166,.08) !important; }
 
 .voynu-dark,[data-voynu-theme="dark"] { --voynu-bg: #0A2337; --voynu-surface: #14263A; --voynu-text: #F8FAFC; --voynu-muted: #A9B5C3; --voynu-border: #263A50; --voynu-border-strong: #38516B; }
 @media (max-width: 600px) { .page { background: var(--voynu-bg); } }
