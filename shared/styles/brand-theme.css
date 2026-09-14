@@ -6,40 +6,18 @@
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/Poppins-Medium.ttf") format("truetype"); }
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/Poppins-SemiBold.ttf") format("truetype"); }
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/Poppins-Bold.ttf") format("truetype"); }
-
 :root {
   --voynu-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --voynu-navy: #0A2337;
-  --voynu-teal: #0A7FA6;
-  --voynu-teal-light: #12A0C6;
-  --voynu-teal-deep: #00456B;
-  --voynu-primary: #0A7FA6;
-  --voynu-primary-tint: #E7F4F8;
-  --voynu-accent: #F5813F;
-  --voynu-accent-light: #FFB25C;
-  --voynu-accent-deep: #D4552A;
-  --voynu-accent-dark: #D4552A;
-  --voynu-ink: #1E3348;
-  --voynu-slate: #5B6B7C;
-  --voynu-mist: #EEF3F7;
-  --voynu-text: #1E3348;
-  --voynu-muted: #5B6B7C;
-  --voynu-bg: #F7F9FC;
-  --voynu-surface: #FFFFFF;
-  --voynu-border: #EEF3F7;
-  --voynu-border-strong: #D8DEE8;
-  --voynu-success: #22C55E;
-  --voynu-warning: #F59E0B;
-  --voynu-error: #EF4444;
+  --voynu-navy: #0A2337; --voynu-teal: #0A7FA6; --voynu-teal-light: #12A0C6; --voynu-teal-deep: #00456B;
+  --voynu-primary: #0A7FA6; --voynu-primary-tint: #E7F4F8;
+  --voynu-accent: #F5813F; --voynu-accent-light: #FFB25C; --voynu-accent-deep: #D4552A; --voynu-accent-dark: #D4552A;
+  --voynu-ink: #1E3348; --voynu-slate: #5B6B7C; --voynu-mist: #EEF3F7;
+  --voynu-text: #1E3348; --voynu-muted: #5B6B7C; --voynu-bg: #F7F9FC; --voynu-surface: #FFFFFF;
+  --voynu-border: #EEF3F7; --voynu-border-strong: #D8DEE8; --voynu-success: #22C55E; --voynu-warning: #F59E0B; --voynu-error: #EF4444;
   --voynu-gradient: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%);
-  --voynu-radius-sm: 10px;
-  --voynu-radius-md: 14px;
-  --voynu-radius-lg: 18px;
-  --voynu-radius-xl: 24px;
-  --voynu-shadow: 0 12px 30px rgba(10, 35, 55, .07);
-  --voynu-shadow-raised: 0 24px 60px rgba(10, 35, 55, .14);
+  --voynu-radius-sm: 10px; --voynu-radius-md: 14px; --voynu-radius-lg: 18px; --voynu-radius-xl: 24px;
+  --voynu-shadow: 0 12px 30px rgba(10,35,55,.07); --voynu-shadow-raised: 0 24px 60px rgba(10,35,55,.14);
 }
-
 html { color-scheme: light; }
 body { background: var(--voynu-bg); color: var(--voynu-text); font-family: var(--voynu-font); }
 .page { background: var(--voynu-bg); color: var(--voynu-text); font-family: inherit; }
@@ -64,18 +42,22 @@ body { background: var(--voynu-bg); color: var(--voynu-text); font-family: var(-
 input:focus,select:focus,textarea:focus { outline: none; border-color: var(--voynu-teal) !important; box-shadow: 0 0 0 3px rgba(10,127,166,.12) !important; }
 * { scrollbar-color: #C8D2DF transparent; }
 
-/* Harmonise older customer controls that pre-date the current brand tokens. */
+/* Legacy customer controls: keep their interactions, normalize their presentation. */
 .locationLabelIcon.pickup,.recentPin.pickup { background: var(--voynu-primary-tint) !important; color: var(--voynu-teal) !important; }
 .locationLabelIcon.pickup path,.recentPin.pickup path { fill: var(--voynu-teal) !important; }
 .locationLabelIcon.drop,.recentPin.drop { background: #FFF1E7 !important; color: var(--voynu-accent-dark) !important; }
 .locationLabelIcon.drop path,.recentPin.drop path { fill: var(--voynu-accent-deep) !important; }
 .locationLabel,.locationHintLabel,.locationHelper { font-family: var(--voynu-font) !important; }
+.locationLabel { color: var(--voynu-navy) !important; }
+.locationHintLabel,.locationHelper { color: var(--voynu-muted) !important; }
+.recentTitle { color: var(--voynu-navy) !important; }
+.recentItem:hover { background: var(--voynu-primary-tint) !important; }
 .mapPickerSearchInput:focus { border-color: var(--voynu-teal) !important; box-shadow: 0 0 0 3px rgba(10,127,166,.10) !important; }
+.mapPickerConfirm:not(.drop) { background: var(--voynu-teal) !important; }
 .voynu-datetime-button:focus-visible { border-color: var(--voynu-teal) !important; box-shadow: 0 0 0 4px rgba(10,127,166,.11) !important; }
 .voynu-datetime-quick button.active { border-color: var(--voynu-teal) !important; background: var(--voynu-primary-tint) !important; box-shadow: 0 0 0 2px rgba(10,127,166,.08) !important; }
 
-/* Legacy compatibility: older components still carry green/copper inline styles.
-   Keep their behavior intact while enforcing the current VOYNU palette. */
+/* Legacy compatibility: older components still carry green inline styles. */
 [style*="#08783f"], [style*="#0a7d42"], [style*="#075c31"], [style*="#173c2b"] { color: var(--voynu-teal-deep) !important; border-color: var(--voynu-teal) !important; }
 button[style*="#08783f"], button[style*="#0a7d42"], button[style*="#075c31"], button[style*="#173c2b"] { background: var(--voynu-teal) !important; color: #fff !important; border-color: var(--voynu-teal) !important; }
 [style*="#f4f6f5"], [style*="#f5faf6"] { background: var(--voynu-bg) !important; color: var(--voynu-text) !important; }
@@ -85,12 +67,6 @@ svg path[fill="#c8622a"] { fill: var(--voynu-accent-deep) !important; }
 
 /* Shared premium layout: generous desktop windows, restrained mobile gutters. */
 .content { width: min(760px, calc(100% - 32px)); }
-@media (min-width: 1100px) {
-  .content { padding-top: 30px; }
-}
-@media (max-width: 600px) {
-  .page { background: var(--voynu-bg); }
-  .content { width: min(760px, calc(100% - 24px)); }
-}
-
-.voynu-dark,[data-voynu-theme="dark"] { --voynu-bg: #0A2337; --voynu-surface: #14263A; --voynu-text: #F8FAFC; --voynu-muted: #A9B5C3; --voynu-border: #263A50; --voynu-border-strong: #38516B; }
+@media (min-width: 1100px) { .content { padding-top: 30px; } }
+@media (max-width: 600px) { .page { background: var(--voynu-bg); } .content { width: min(760px, calc(100% - 24px)); } }
+.voynu-dark,[data-voynu-theme="dark"] { --voynu-bg:#0A2337; --voynu-surface:#14263A; --voynu-text:#F8FAFC; --voynu-muted:#A9B5C3; --voynu-border:#263A50; --voynu-border-strong:#38516B; }
