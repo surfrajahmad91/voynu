@@ -2,106 +2,44 @@
 @import "../../../shared/styles/brand-theme.css";
 
 /* Admin presentation layer: same VOYNU brand system as Customer and Saarthi. */
-:root {
-  --voynu-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
+:root { --voynu-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 html, body { background: var(--voynu-bg); }
 main { background: var(--voynu-bg) !important; color: var(--voynu-text) !important; font-family: var(--voynu-font) !important; }
 main * { font-family: var(--voynu-font) !important; }
 main h1, main h2, main h3 { color: var(--voynu-text) !important; letter-spacing: -.25px; }
-main input, main select, main textarea { background: var(--voynu-surface) !important; color: var(--voynu-text) !important; border-color: var(--voynu-border-strong) !important; border-radius: 10px !important; }
-main button { border-radius: 10px !important; font-family: var(--voynu-font) !important; }
+main input, main select, main textarea { background: var(--voynu-surface) !important; color: var(--voynu-text) !important; border-color: var(--voynu-border-strong) !important; border-radius: 12px !important; }
+main button { border-radius: 12px !important; font-family: var(--voynu-font) !important; }
 main table, main tr, main td, main th { border-color: var(--voynu-border) !important; }
 
 .adminShellHeader {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(255,255,255,.96);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--voynu-border);
-  box-shadow: 0 5px 22px rgba(10,35,55,.06);
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--voynu-border); box-shadow: 0 8px 26px rgba(10,35,55,.07);
 }
-.adminShellInner {
-  width: min(1180px, calc(100% - 28px));
-  min-height: 72px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.adminBrand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  color: inherit;
-  text-decoration: none;
-  min-width: 0;
-}
-.adminBrand img {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: block;
-  box-shadow: 0 7px 18px rgba(10,35,55,.15);
-}
-.adminBrand span { display: grid; gap: 1px; min-width: 0; }
-.adminBrand strong { color: var(--voynu-navy); font-size: 18px; line-height: 1; letter-spacing: -.4px; }
-.adminBrand small { color: var(--voynu-primary, var(--voynu-teal)); font-size: 8px; line-height: 1.2; font-weight: 900; letter-spacing: 1.15px; }
-.adminHeaderActions { display: flex; align-items: center; gap: 9px; }
-.adminSettingsLink {
-  text-decoration: none;
-  color: var(--voynu-text);
-  border: 1px solid var(--voynu-border);
-  background: var(--voynu-surface);
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 800;
-}
-.adminShellNav { overflow-x: auto; border-top: 1px solid var(--voynu-border); }
-.adminShellNavInner {
-  width: min(1180px, calc(100% - 28px));
-  margin: 0 auto;
-  display: flex;
-  gap: 3px;
-  min-height: 43px;
-  align-items: stretch;
-}
-.adminNavLink {
-  position: relative;
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  text-decoration: none;
-  color: var(--voynu-muted);
-  padding: 0 11px;
-  font-size: 11px;
-  font-weight: 700;
-}
-.adminNavLink.active { color: var(--voynu-teal); }
-.adminNavLink.active::after {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: linear-gradient(90deg, var(--voynu-teal), var(--voynu-accent));
-}
-.adminShellContent { min-height: calc(100vh - 116px); }
+.adminShellInner { width: min(1240px, calc(100% - 32px)); min-height: 76px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.adminBrand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; min-width: 0; }
+.adminBrand img { width: 44px; height: 44px; border-radius: 13px; display: block; box-shadow: 0 8px 20px rgba(10,35,55,.16); }
+.adminBrand span { display: grid; gap: 2px; min-width: 0; }
+.adminBrand strong { color: var(--voynu-navy); font-size: 19px; line-height: 1; letter-spacing: -.45px; }
+.adminBrand small { color: var(--voynu-primary); font-size: 8px; line-height: 1.2; font-weight: 900; letter-spacing: 1.2px; }
+.adminHeaderActions { display: flex; align-items: center; gap: 10px; }
+.adminSettingsLink { text-decoration: none; color: var(--voynu-text); border: 1px solid var(--voynu-border-strong); background: var(--voynu-surface); padding: 10px 13px; border-radius: 12px; font-size: 11px; font-weight: 800; }
+.adminShellNav { overflow-x: auto; border-top: 1px solid var(--voynu-border); background: rgba(255,255,255,.76); }
+.adminShellNavInner { width: min(1240px, calc(100% - 32px)); margin: 0 auto; display: flex; gap: 4px; min-height: 46px; align-items: stretch; }
+.adminNavLink { position: relative; display: flex; align-items: center; white-space: nowrap; text-decoration: none; color: var(--voynu-muted); padding: 0 12px; font-size: 11px; font-weight: 700; transition: color .18s ease, background .18s ease; }
+.adminNavLink:hover { color: var(--voynu-navy); background: var(--voynu-primary-tint); }
+.adminNavLink.active { color: var(--voynu-teal-deep); }
+.adminNavLink.active::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, var(--voynu-teal), var(--voynu-accent)); }
+.adminShellContent { min-height: calc(100vh - 122px); }
 
 @media (max-width: 600px) {
-  .adminShellInner { min-height: 64px; width: min(100% - 20px, 1180px); }
-  .adminBrand img { width: 38px; height: 38px; }
+  .adminShellInner { min-height: 66px; width: min(100% - 20px, 1240px); }
+  .adminBrand img { width: 39px; height: 39px; border-radius: 11px; }
   .adminBrand strong { font-size: 16px; }
   .adminBrand small { font-size: 7px; letter-spacing: .9px; }
   .adminSettingsLink { display: none; }
   .adminShellNavInner { width: max-content; min-width: 100%; padding: 0 10px; box-sizing: border-box; }
-  .adminNavLink { padding: 0 9px; }
+  .adminNavLink { padding: 0 10px; }
 }
 
 html[data-voynu-theme="dark"] main [style*="background: #fff"],
