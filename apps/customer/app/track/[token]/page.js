@@ -4,7 +4,16 @@ import { supabase } from "../../../../../shared/lib/supabaseClient";
 import { theme } from "../../../../../shared/lib/theme";
 import LiveTripMap from "../../../../../shared/components/LiveTripMap";
 
-const STATUS_LABEL = { driver_assigned: "Driver assigned", on_the_way: "Driver on the way", arrived: "Driver has arrived", trip_started: "Trip in progress", trip_completed: "Trip completed", cancelled: "Trip cancelled" };
+const STATUS_LABEL = {
+  driver_assigned: "Driver assigned",
+  on_the_way: "Driver on the way",
+  arrived: "Driver has arrived",
+  trip_started: "Trip in progress",
+  waiting_for_return: "Waiting for return trip",
+  return_trip_started: "Return trip in progress",
+  trip_completed: "Trip completed",
+  cancelled: "Trip cancelled",
+};
 
 export default function SharedTripPage({ params }) {
   const { token } = use(params);
