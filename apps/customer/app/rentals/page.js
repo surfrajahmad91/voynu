@@ -5,7 +5,7 @@ import Link from "next/link";
 import PageHeader from "../../../../shared/components/PageHeader";
 import { supabase } from "../../../../shared/lib/supabaseClient";
 import { theme } from "../../../../shared/lib/theme";
-import RentalDateTimeFields from "../../../../components/RentalDateTimeFields";
+import RentalDateTimeFields from "../../components/RentalDateTimeFields";
 
 const TYPES = ["all","car","bike","scooter","auto"];
 const fmt = n => `₹${Number(n||0).toLocaleString("en-IN")}`;
