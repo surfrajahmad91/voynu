@@ -126,3 +126,19 @@ main > div[style*="max-width:1100px"] input,
 main > div[style*="max-width:1100px"] select {
   font-size: 13px !important;
 }
+
+/* Rental-only hero and primary actions. */
+main > div[style*="max-width:1100px"] > section:first-child {
+  background: var(--voynu-gradient) !important;
+}
+
+main > div[style*="max-width:1100px"] > section:first-child h1,
+main > div[style*="max-width:1100px"] > section:first-child p,
+main > div[style*="max-width:1100px"] > section:first-child div {
+  color: #fff !important;
+}
+
+main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child {
+  background: var(--voynu-gradient) !important;
+  box-shadow: 0 10px 24px rgba(10,127,166,.18) !important;
+}
