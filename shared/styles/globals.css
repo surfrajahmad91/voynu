@@ -6,6 +6,8 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 body {
@@ -39,16 +41,20 @@ button {
 
 /* Cab selection — kept in global CSS so production builds cannot lose the page styles */
 .page {
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   background: #f5faf6;
   color: #16241d;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow-x: clip;
 }
 
 .content {
-  width: min(680px, calc(100% - 32px));
+  width: 100%;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 24px 0 60px;
+  padding: 24px 16px 60px;
 }
 
 .spinner {
@@ -542,11 +548,11 @@ button {
 
 @media (max-width: 600px) {
   .content {
-    width: min(680px, calc(100% - 24px));
-    padding-top: 16px;
+    width: 100%;
+    max-width: 760px;
+    padding: 16px 12px 48px;
   }
 
-  /* Keep the passenger/luggage controls side-by-side on mobile, matching the VOYNU standard layout. */
   .requirementsCard {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
@@ -580,4 +586,14 @@ button {
   .upiConfirmActions {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+@media (max-width: 380px) {
+  .content { padding-inline: 10px; }
+  .requirementsCard { gap: 8px; }
+  .requirementsCard select { min-width: 64px; width: 64px; padding-inline: 7px; }
+  .cabCard { gap: 8px; padding-inline: 12px; }
+  .cabCard.active { padding-inline: 11px; }
+  .cabCardRight { gap: 8px; }
+  .cabPrice { font-size: 18px; }
 }
