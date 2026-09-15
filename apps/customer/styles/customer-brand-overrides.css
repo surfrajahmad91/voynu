@@ -1,144 +1,33 @@
-/* VOYNU Customer brand consistency layer
-   Scope: legacy Rentals, Rentals Host and Account inline styles.
-   This is visual-only; booking/auth/data behaviour is intentionally untouched.
-*/
+/* VOYNU Customer brand consistency layer */
+[style*="#f7faf8"],[style*="#f4f7f5"],[style*="#e5ede8"],[style*="#EAF6EE"]{background:var(--voynu-primary-tint)!important;color:var(--voynu-text)!important}
+[style*="#45564c"]{color:var(--voynu-navy)!important}
+button[style*="#EAF6EE"],button[style*="#eaf6ee"]{background:var(--voynu-primary-tint)!important;border-color:var(--voynu-teal)!important;color:var(--voynu-navy)!important}
+main form:has(input[type="file"]) input,main form:has(input[type="file"]) select,main form:has(input[type="file"]) textarea{font-family:var(--voynu-font)!important;color:var(--voynu-text)!important;background:var(--voynu-surface)!important;border-color:var(--voynu-border-strong)!important;border-radius:var(--voynu-radius-sm)!important}
+main form:has(input[type="file"]) input:focus,main form:has(input[type="file"]) select:focus,main form:has(input[type="file"]) textarea:focus{border-color:var(--voynu-teal)!important;box-shadow:0 0 0 3px rgba(10,127,166,.12)!important}
+main form:has(input[type="file"]) h1,main form:has(input[type="file"]) h2{color:var(--voynu-navy)!important;font-family:var(--voynu-font)!important}
+main form:has(input[type="file"]) h2{margin-top:0!important;margin-bottom:12px!important;font-size:18px!important;line-height:1.25!important}
+main form:has(input[type="file"]) button[type="submit"]{background:var(--voynu-gradient)!important;color:#fff!important;border:0!important;box-shadow:0 10px 24px rgba(10,127,166,.18)!important}
+main form:has(input[type="file"]) input[type="file"]{background:var(--voynu-bg)!important;padding:8px!important}
+main form:has(input[type="file"]) label{font-size:12px!important;line-height:1.35!important}
+main form:has(input[type="file"]) input:not([type="file"]),main form:has(input[type="file"]) select,main form:has(input[type="file"]) textarea{margin-top:6px!important;min-height:42px!important;padding:11px 12px!important;font-size:13px!important}
+main form:has(input[type="file"]) h1{font-size:28px!important;line-height:1.2!important;margin:6px 0 8px!important}
+main form:has(input[type="file"]) p{font-size:13px!important;line-height:1.55!important}
+main button[style*="border:1px solid #0A7FA6"],main button[style*="border:1px solid #0a7fa6"]{background:var(--voynu-primary-tint)!important;border-color:var(--voynu-teal)!important;color:var(--voynu-navy)!important}
+main a[href="/rentals/host"]{color:var(--voynu-navy)!important;box-shadow:0 8px 20px rgba(10,35,55,.10)}
+main button{font-family:var(--voynu-font)!important}
+main > div[style*="max-width:1100px"] label{font-size:12px!important}
+main > div[style*="max-width:1100px"] input,main > div[style*="max-width:1100px"] select{font-size:13px!important}
+main > div[style*="max-width:1100px"] > section:first-child{background:var(--voynu-gradient)!important}
+main > div[style*="max-width:1100px"] > section:first-child h1,main > div[style*="max-width:1100px"] > section:first-child p,main > div[style*="max-width:1100px"] > section:first-child div{color:#fff!important}
+main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child{background:var(--voynu-gradient)!important;box-shadow:0 10px 24px rgba(10,127,166,.18)!important}
 
-/* Legacy green surfaces used by Account and older customer components. */
-[style*="#f7faf8"],
-[style*="#f4f7f5"],
-[style*="#e5ede8"],
-[style*="#EAF6EE"] {
-  background: var(--voynu-primary-tint) !important;
-  color: var(--voynu-text) !important;
-}
-
-[style*="#45564c"] {
-  color: var(--voynu-navy) !important;
-}
-
-/* Rental/host controls: replace the older green selection treatment with VOYNU teal. */
-button[style*="#EAF6EE"],
-button[style*="#eaf6ee"] {
-  background: var(--voynu-primary-tint) !important;
-  border-color: var(--voynu-teal) !important;
-  color: var(--voynu-navy) !important;
-}
-
-/* Host-only form controls. :has(input[type=file]) distinguishes the vehicle-host form
-   from the Ride booking form, so the global customer experience is not restyled. */
-main form:has(input[type="file"]) input,
-main form:has(input[type="file"]) select,
-main form:has(input[type="file"]) textarea {
-  font-family: var(--voynu-font) !important;
-  color: var(--voynu-text) !important;
-  background: var(--voynu-surface) !important;
-  border-color: var(--voynu-border-strong) !important;
-  border-radius: var(--voynu-radius-sm) !important;
-}
-
-main form:has(input[type="file"]) input:focus,
-main form:has(input[type="file"]) select:focus,
-main form:has(input[type="file"]) textarea:focus {
-  border-color: var(--voynu-teal) !important;
-  box-shadow: 0 0 0 3px rgba(10,127,166,.12) !important;
-}
-
-main form:has(input[type="file"]) h1,
-main form:has(input[type="file"]) h2 {
-  color: var(--voynu-navy) !important;
-  font-family: var(--voynu-font) !important;
-}
-
-main form:has(input[type="file"]) h2 {
-  margin-top: 0 !important;
-  margin-bottom: 12px !important;
-  font-size: 18px !important;
-  line-height: 1.25 !important;
-}
-
-main form:has(input[type="file"]) [style*="#0A7FA6"],
-main form:has(input[type="file"]) [style*="#0a7fa6"] {
-  color: var(--voynu-teal) !important;
-}
-
-main form:has(input[type="file"]) button[type="submit"] {
-  background: var(--voynu-gradient) !important;
-  color: #fff !important;
-  border: 0 !important;
-  box-shadow: 0 10px 24px rgba(10,127,166,.18) !important;
-}
-
-main form:has(input[type="file"]) input[type="file"] {
-  background: var(--voynu-bg) !important;
-  padding: 8px !important;
-}
-
-/* Host form: the existing 11px labels were too compressed on mobile. */
-main form:has(input[type="file"]) label {
-  font-size: 12px !important;
-  line-height: 1.35 !important;
-}
-
-main form:has(input[type="file"]) input:not([type="file"]),
-main form:has(input[type="file"]) select,
-main form:has(input[type="file"]) textarea {
-  margin-top: 6px !important;
-  min-height: 42px !important;
-  padding: 11px 12px !important;
-  font-size: 13px !important;
-}
-
-main form:has(input[type="file"]) h1 {
-  font-size: 28px !important;
-  line-height: 1.2 !important;
-  margin: 6px 0 8px !important;
-}
-
-main form:has(input[type="file"]) p {
-  font-size: 13px !important;
-  line-height: 1.55 !important;
-}
-
-/* Rentals page: remove the older green selected-category treatment and use the brand tint. */
-main button[style*="border:1px solid #0A7FA6"],
-main button[style*="border:1px solid #0a7fa6"] {
-  background: var(--voynu-primary-tint) !important;
-  border-color: var(--voynu-teal) !important;
-  color: var(--voynu-navy) !important;
-}
-
-/* Rental hero/buttons use the same premium gradient language as the rest of Customer. */
-main a[href="/rentals/host"] {
-  color: var(--voynu-navy) !important;
-  box-shadow: 0 8px 20px rgba(10,35,55,.10);
-}
-
-main button {
-  font-family: var(--voynu-font) !important;
-}
-
-/* Keep the rental search controls compact but readable on small screens. */
-main > div[style*="max-width:1100px"] label {
-  font-size: 12px !important;
-}
-
-main > div[style*="max-width:1100px"] input,
-main > div[style*="max-width:1100px"] select {
-  font-size: 13px !important;
-}
-
-/* Rental-only hero and primary actions. */
-main > div[style*="max-width:1100px"] > section:first-child {
-  background: var(--voynu-gradient) !important;
-}
-
-main > div[style*="max-width:1100px"] > section:first-child h1,
-main > div[style*="max-width:1100px"] > section:first-child p,
-main > div[style*="max-width:1100px"] > section:first-child div {
-  color: #fff !important;
-}
-
-main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child {
-  background: var(--voynu-gradient) !important;
-  box-shadow: 0 10px 24px rgba(10,127,166,.18) !important;
-}
+/* Rental pickup/return controls mirror the Ride booking cards. */
+.voynu-rental-search-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.voynu-rental-datetime-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;grid-column:1/-1}
+.voynu-rental-datetime-field label{display:block;color:var(--voynu-text);font-size:12px;font-weight:800;margin-bottom:6px}
+.voynu-rental-datetime-button{width:100%;min-height:68px;display:flex;align-items:center;gap:12px;padding:10px 14px;border:1.5px solid var(--voynu-border-strong);border-radius:17px;background:linear-gradient(180deg,#fbfdfc,#f6faf7);color:var(--voynu-text);font:inherit;text-align:left;cursor:pointer;box-shadow:0 3px 12px rgba(18,70,43,.045);transition:.18s ease}
+.voynu-rental-datetime-button:hover{border-color:var(--voynu-teal);background:#fff;box-shadow:0 5px 16px rgba(10,127,166,.08)}
+.voynu-rental-datetime-button:focus-visible{outline:none;border-color:var(--voynu-teal);box-shadow:0 0 0 4px rgba(10,127,166,.11)}
+.voynu-rental-datetime-icon{width:40px;height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--voynu-primary-tint);color:var(--voynu-teal);font-size:22px}
+.voynu-rental-datetime-copy{min-width:0;flex:1}.voynu-rental-datetime-copy strong{display:block;color:var(--voynu-navy);font-size:16px;line-height:1.2;font-weight:800}.voynu-rental-datetime-copy strong.placeholder{color:#9aa8a1;font-weight:650}.voynu-rental-datetime-copy small{display:block;margin-top:4px;color:var(--voynu-text-faint);font-size:10.5px;font-weight:600}.voynu-rental-datetime-chevron{color:#607169;font-size:20px}.voynu-rental-datetime-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+@media(max-width:700px){.voynu-rental-datetime-grid{grid-template-columns:1fr}.voynu-rental-datetime-button{min-height:64px}.voynu-rental-datetime-copy strong{font-size:17px}}
