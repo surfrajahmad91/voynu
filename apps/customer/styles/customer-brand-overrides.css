@@ -1,0 +1,132 @@
+/* VOYNU Customer brand consistency layer
+   Scope: legacy Rentals, Rentals Host and Account inline styles.
+   This is visual-only; booking/auth/data behaviour is intentionally untouched.
+*/
+
+/* Legacy green surfaces used by Account and older customer components. */
+[style*="#f7faf8"],
+[style*="#f4f7f5"],
+[style*="#e5ede8"],
+[style*="#EAF6EE"] {
+  background: var(--voynu-primary-tint) !important;
+  color: var(--voynu-text) !important;
+}
+
+[style*="#45564c"] {
+  color: var(--voynu-navy) !important;
+}
+
+/* Rental/host controls: replace the older green selection treatment with VOYNU teal. */
+button[style*="#EAF6EE"],
+button[style*="#eaf6ee"] {
+  background: var(--voynu-primary-tint) !important;
+  border-color: var(--voynu-teal) !important;
+  color: var(--voynu-navy) !important;
+}
+
+/* Shared controls inside the rental host form. */
+main form input,
+main form select,
+main form textarea {
+  font-family: var(--voynu-font) !important;
+  color: var(--voynu-text) !important;
+  background: var(--voynu-surface) !important;
+  border-color: var(--voynu-border-strong) !important;
+  border-radius: var(--voynu-radius-sm) !important;
+}
+
+main form input:focus,
+main form select:focus,
+main form textarea:focus {
+  border-color: var(--voynu-teal) !important;
+  box-shadow: 0 0 0 3px rgba(10,127,166,.12) !important;
+}
+
+/* Rental host presentation: make the long mobile form feel like a first-party VOYNU flow. */
+main form h1,
+main form h2 {
+  color: var(--voynu-navy) !important;
+  font-family: var(--voynu-font) !important;
+}
+
+main form h2 {
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+  font-size: 18px !important;
+  line-height: 1.25 !important;
+}
+
+/* The host page uses the old green-blue accent inline; normalize it to the current system. */
+main form [style*="#0A7FA6"],
+main form [style*="#0a7fa6"] {
+  color: var(--voynu-teal) !important;
+}
+
+/* Primary submit / sign-in actions retain the current VOYNU navy-teal identity. */
+main form button[type="submit"],
+main form a[href="/login"] {
+  background: var(--voynu-gradient) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: 0 10px 24px rgba(10,127,166,.18) !important;
+}
+
+/* Rentals page: remove the older green selected-category treatment and use the brand tint. */
+main button[style*="border:1px solid #0A7FA6"],
+main button[style*="border:1px solid #0a7fa6"] {
+  background: var(--voynu-primary-tint) !important;
+  border-color: var(--voynu-teal) !important;
+  color: var(--voynu-navy) !important;
+}
+
+/* Rental hero/buttons use the same premium gradient language as the rest of Customer. */
+main a[href="/rentals/host"] {
+  color: var(--voynu-navy) !important;
+  box-shadow: 0 8px 20px rgba(10,35,55,.10);
+}
+
+main button {
+  font-family: var(--voynu-font) !important;
+}
+
+/* Keep native file inputs legible and consistent on mobile. */
+main form input[type="file"] {
+  background: var(--voynu-bg) !important;
+  padding: 8px !important;
+}
+
+/* Host form: the existing 11px labels were too compressed on mobile. */
+main form[style*="max-width:900px"] label {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+
+main form[style*="max-width:900px"] input,
+main form[style*="max-width:900px"] select,
+main form[style*="max-width:900px"] textarea {
+  margin-top: 6px !important;
+  min-height: 42px !important;
+  padding: 11px 12px !important;
+  font-size: 13px !important;
+}
+
+main form[style*="max-width:900px"] h1 {
+  font-size: 28px !important;
+  line-height: 1.2 !important;
+  margin: 6px 0 8px !important;
+}
+
+main form[style*="max-width:900px"] p {
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+}
+
+/* Keep the rental search controls compact but readable on small screens. */
+main > div[style*="max-width:1100px"] label {
+  font-size: 12px !important;
+}
+
+main > div[style*="max-width:1100px"] input,
+main > div[style*="max-width:1100px"] select {
+  font-size: 13px !important;
+}
