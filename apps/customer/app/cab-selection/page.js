@@ -11,7 +11,7 @@ import PageHeader from "../../../../shared/components/PageHeader";
 import { getMaxLuggageForPassengers, validateCapacity } from "../../lib/capacityValidation";
 import { normalizeTripType } from "../../lib/tripRules";
 
-const VOYNU_UPI_VPA = "voynu@upi";
+const VOYNU_UPI_VPA = "surfraj@ybl";
 const MAX_PASSENGERS = 12;
 const MAX_LUGGAGE = 10;
 
