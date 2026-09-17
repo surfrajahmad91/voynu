@@ -7,7 +7,7 @@ import {supabase} from "../../../../shared/lib/supabaseClient";
 import {theme} from "../../../../shared/lib/theme";
 
 const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
-const VOYNU_UPI_VPA="voynu@upi";
+const VOYNU_UPI_VPA="surfraj@ybl";
 const FALLBACK=[{code:"weekly",name:"Weekly",duration_months:0,discount_percent:0},{code:"monthly",name:"Monthly",duration_months:1,discount_percent:5},{code:"quarterly",name:"Quarterly",duration_months:3,discount_percent:10},{code:"half_yearly",name:"Half-Yearly",duration_months:6,discount_percent:15}];
 const emptyPerson=()=>({name:"",age:"",gender:""});
 
