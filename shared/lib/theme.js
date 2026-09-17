@@ -26,9 +26,9 @@ export const theme = {
     footerBg: "#0A2337",
   },
   gradients: {
-    primary: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
+    primary: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 35%, #D4552A 65%, #F5813F 100%)",
     hero: "linear-gradient(160deg, #FFFFFF 0%, #F5FAFF 55%, #EEF3F7 100%)",
-    brand: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
+    brand: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 35%, #D4552A 65%, #F5813F 100%)",
   },
   radius: { sm: 10, md: 14, lg: 18, xl: 24, pill: 999 },
   shadow: {
