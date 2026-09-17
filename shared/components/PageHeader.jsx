@@ -22,6 +22,7 @@ export default function PageHeader({
 }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isCommute = pathname?.startsWith("/subscriptions");
   const headerWidth = "min(" + maxWidth + "px, calc(100% - 32px))";
   const whatsappUrl =
     whatsappHref ||
@@ -145,6 +146,28 @@ export default function PageHeader({
             <span>Rent</span>
           </Link>
 
+          <Link
+            className="voynuHeaderAction commuteAction"
+            href="/subscriptions"
+            aria-label="Commute subscription"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "9px 12px",
+              borderRadius: theme.radius.pill,
+              background: isCommute ? theme.colors.primaryTint : theme.colors.surface,
+              color: theme.colors.primaryDark,
+              border:
+                "1px solid " +
+                (isCommute ? theme.colors.primary : theme.colors.borderStrong),
+              fontSize: 12,
+              fontWeight: 800,
+              textDecoration: "none",
+            }}
+          >
+            Commute
+          </Link>
+
           <NotificationBell />
 
           {showAccountLink && (
@@ -185,7 +208,7 @@ export default function PageHeader({
           <div className="homeProductInner">
             <div>
               <strong>How do you want to travel?</strong>
-              <span>Ride with a driver or rent a vehicle and drive yourself.</span>
+              <span>Ride with a driver, rent a vehicle, or set a fixed commute route.</span>
             </div>
             <div className="homeProductSwitch">
               <Link href="/" className="homeProductOption active">
@@ -200,6 +223,13 @@ export default function PageHeader({
                 <span>
                   <b>Rent</b>
                   <small>You drive. You decide.</small>
+                </span>
+              </Link>
+              <Link href="/subscriptions" className="homeProductOption commuteOption">
+                <span>🗓️</span>
+                <span>
+                  <b>Commute</b>
+                  <small>Fixed daily route.</small>
                 </span>
               </Link>
             </div>
@@ -237,20 +267,20 @@ export default function PageHeader({
         }
         .homeProductSwitch {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(3, 1fr);
           gap: 4px;
           padding: 3px;
           border-radius: 14px;
           background: ${theme.colors.bg};
           border: 1px solid ${theme.colors.border};
-          min-width: 300px;
+          min-width: 420px;
         }
         .homeProductOption {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 7px;
-          padding: 7px 12px;
+          padding: 7px 10px;
           border-radius: 10px;
           text-decoration: none;
           color: ${theme.colors.textMuted};
@@ -301,8 +331,8 @@ export default function PageHeader({
             min-width: 0;
           }
           .voynuHeaderAction {
-            padding: 8px 9px !important;
-            font-size: 11px !important;
+            padding: 8px 7px !important;
+            font-size: 10px !important;
           }
           .voynuHeaderWhatsapp {
             padding: 8px 10px !important;
@@ -320,10 +350,11 @@ export default function PageHeader({
             width: 100%;
           }
           .homeProductOption {
-            padding: 6px 8px;
+            padding: 6px 5px;
+            gap: 5px;
           }
           .homeProductOption small {
-            font-size: 7.5px;
+            font-size: 7px;
           }
           .homeProductInner span {
             font-size: 8.5px;
@@ -334,14 +365,14 @@ export default function PageHeader({
             display: none;
           }
           .voynuHeaderAccount :global(a) {
-            padding: 8px 9px !important;
-            font-size: 11px !important;
+            padding: 8px 7px !important;
+            font-size: 10px !important;
           }
           .voynuHeaderWhatsapp .whatsappLabel {
             display: none;
           }
           .voynuHeaderWhatsapp {
-            padding: 8px 9px !important;
+            padding: 8px 8px !important;
           }
           .homeProductInner > div:first-child {
             display: none;
@@ -353,17 +384,17 @@ export default function PageHeader({
             padding: 2px;
           }
           .homeProductOption {
-            padding: 6px 5px;
-            gap: 5px;
+            padding: 6px 3px;
+            gap: 4px;
           }
           .homeProductOption > span:first-child {
-            font-size: 12px;
+            font-size: 11px;
           }
           .homeProductOption b {
-            font-size: 10px;
+            font-size: 9px;
           }
           .homeProductOption small {
-            font-size: 7px;
+            font-size: 6.5px;
           }
           .whatsappLabel {
             display: none;
@@ -371,22 +402,26 @@ export default function PageHeader({
         }
         @media (max-width: 400px) {
           .voynuHeaderActions {
-            gap: 3px !important;
+            gap: 2px !important;
           }
           .voynuHeaderAction {
-            padding: 7px 8px !important;
+            padding: 7px 6px !important;
+            font-size: 9.5px !important;
           }
           .voynuHeaderAccount :global(a) {
-            padding: 7px 8px !important;
+            padding: 7px 6px !important;
           }
           .voynuHeaderWhatsapp {
-            padding: 7px 8px !important;
+            padding: 7px 7px !important;
           }
           .voynuPageHeaderInner {
-            padding-inline: 8px;
+            padding-inline: 7px;
           }
           .homeProductInner {
             width: calc(100% - 16px);
+          }
+          .homeProductOption small {
+            display: none;
           }
         }
       `}</style>
