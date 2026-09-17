@@ -31,3 +31,37 @@ main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child{b
 .voynu-rental-datetime-icon{width:40px;height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--voynu-primary-tint);color:var(--voynu-teal);font-size:22px}
 .voynu-rental-datetime-copy{min-width:0;flex:1}.voynu-rental-datetime-copy strong{display:block;color:var(--voynu-navy);font-size:16px;line-height:1.2;font-weight:800}.voynu-rental-datetime-copy strong.placeholder{color:#9aa8a1;font-weight:650}.voynu-rental-datetime-copy small{display:block;margin-top:4px;color:var(--voynu-text-faint);font-size:10.5px;font-weight:600}.voynu-rental-datetime-chevron{color:#607169;font-size:20px}.voynu-rental-datetime-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 @media(max-width:700px){.voynu-rental-datetime-grid{grid-template-columns:1fr}.voynu-rental-datetime-button{min-height:64px}.voynu-rental-datetime-copy strong{font-size:17px}}
+
+/* Commute subscription: treat tablets and narrow PWA viewports as mobile. */
+@media(max-width:1024px){
+  body{overflow-x:hidden}
+  main.page{overflow-x:hidden}
+  main.page .wrap{width:calc(100% - 24px)!important;max-width:none!important}
+  main.page .grid{grid-template-columns:1fr!important;gap:14px!important;padding-top:14px!important}
+  main.page .card{width:100%;box-sizing:border-box}
+  main.page .hero{padding:24px 0!important}
+  main.page .hero h1{font-size:clamp(28px,6vw,40px)!important}
+}
+
+@media(max-width:600px){
+  main.page .wrap{width:calc(100% - 16px)!important}
+  main.page .card{padding:14px!important;border-radius:14px!important}
+  main.page h2{font-size:17px!important}
+  main.page .two{grid-template-columns:1fr!important;gap:0!important}
+  main.page .passengers{grid-template-columns:repeat(4,1fr)!important;gap:7px!important}
+  main.page .plans{grid-template-columns:1fr!important}
+  main.page .days{gap:4px!important}
+  main.page .day,main.page .dayOn{padding:8px 1px!important}
+  main.page .person{padding:10px!important}
+  main.page .distance{align-items:stretch!important;flex-direction:column!important}
+  main.page .distance button{width:100%!important}
+  main.page .hero p{font-size:12px!important;line-height:1.5!important}
+}
+
+/* Keep the global navigation from forcing a desktop-width layout on compact PWA viewports. */
+@media(max-width:1024px){
+  .voynuPageHeader{overflow:hidden!important}
+  .voynuPageHeaderInner{width:100%!important;box-sizing:border-box!important;padding-left:10px!important;padding-right:10px!important}
+  .voynuHeaderActions{min-width:0!important;max-width:100%!important;overflow:hidden!important}
+  .voynuHeaderAction{white-space:nowrap!important}
+}
