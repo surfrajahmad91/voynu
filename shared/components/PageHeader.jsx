@@ -61,8 +61,8 @@ export default function PageHeader({
             alignItems: "center",
             gap: 10,
             textDecoration: "none",
-            minWidth: 0,
-            flexShrink: 1,
+            flexShrink: 0,
+            overflow: "hidden",
           }}
         >
           <img
@@ -95,7 +95,12 @@ export default function PageHeader({
             display: "flex",
             alignItems: "center",
             gap: 8,
-            flexShrink: 0,
+            flexShrink: 1,
+            minWidth: 0,
+            overflowX: "auto",
+            overflowY: "hidden",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
           }}
         >
           <Link
@@ -238,6 +243,15 @@ export default function PageHeader({
       )}
 
       <style jsx>{`
+        .voynuHeaderActions {
+          scrollbar-width: none;
+        }
+        .voynuHeaderActions::-webkit-scrollbar {
+          display: none;
+        }
+        .voynuHeaderActions > :global(*) {
+          flex-shrink: 0;
+        }
         .homeProductBar {
           border-top: 1px solid ${theme.colors.border};
           background: ${theme.colors.surface};
@@ -367,6 +381,9 @@ export default function PageHeader({
           .voynuHeaderAccount :global(a) {
             padding: 8px 7px !important;
             font-size: 10px !important;
+          }
+          .voynuHeaderAccount :global(a span) {
+            display: none;
           }
           .voynuHeaderWhatsapp .whatsappLabel {
             display: none;
