@@ -32,7 +32,7 @@ main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child{b
 .voynu-rental-datetime-copy{min-width:0;flex:1}.voynu-rental-datetime-copy strong{display:block;color:var(--voynu-navy);font-size:16px;line-height:1.2;font-weight:800}.voynu-rental-datetime-copy strong.placeholder{color:#9aa8a1;font-weight:650}.voynu-rental-datetime-copy small{display:block;margin-top:4px;color:var(--voynu-text-faint);font-size:10.5px;font-weight:600}.voynu-rental-datetime-chevron{color:#607169;font-size:20px}.voynu-rental-datetime-native{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 @media(max-width:700px){.voynu-rental-datetime-grid{grid-template-columns:1fr}.voynu-rental-datetime-button{min-height:64px}.voynu-rental-datetime-copy strong{font-size:17px}}
 
-/* Commute subscription: treat tablets and narrow PWA viewports as mobile. */
+/* Commute subscription mobile layout. */
 @media(max-width:1024px){
   body{overflow-x:hidden}
   main.page{overflow-x:hidden}
@@ -42,7 +42,6 @@ main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child{b
   main.page .hero{padding:24px 0!important}
   main.page .hero h1{font-size:clamp(28px,6vw,40px)!important}
 }
-
 @media(max-width:600px){
   main.page .wrap{width:calc(100% - 16px)!important}
   main.page .card{padding:14px!important;border-radius:14px!important}
@@ -58,7 +57,7 @@ main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child{b
   main.page .hero p{font-size:12px!important;line-height:1.5!important}
 }
 
-/* Keep the global navigation from forcing a desktop-width layout on compact PWA viewports. */
+/* Prevent the shared navigation from forcing a wide layout on compact PWA viewports. */
 @media(max-width:1024px){
   .voynuPageHeader{overflow:hidden!important}
   .voynuPageHeaderInner{width:100%!important;box-sizing:border-box!important;padding-left:10px!important;padding-right:10px!important}
