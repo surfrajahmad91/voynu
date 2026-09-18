@@ -103,76 +103,6 @@ export default function PageHeader({
             scrollbarWidth: "none",
           }}
         >
-          <Link
-            className="voynuHeaderAction"
-            href="/"
-            aria-label="Book a ride"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "9px 12px",
-              borderRadius: theme.radius.pill,
-              background: isHome ? theme.colors.primaryTint : theme.colors.surface,
-              color: theme.colors.primaryDark,
-              border:
-                "1px solid " +
-                (isHome ? theme.colors.primary : theme.colors.borderStrong),
-              fontSize: 12,
-              fontWeight: 800,
-              textDecoration: "none",
-            }}
-          >
-            Ride
-          </Link>
-
-          <Link
-            className="voynuHeaderAction"
-            href="/rentals"
-            aria-label="Rent a vehicle"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "9px 12px",
-              borderRadius: theme.radius.pill,
-              background: pathname?.startsWith("/rentals")
-                ? theme.colors.primaryTint
-                : theme.colors.surface,
-              color: theme.colors.primaryDark,
-              border:
-                "1px solid " +
-                (pathname?.startsWith("/rentals")
-                  ? theme.colors.primary
-                  : theme.colors.borderStrong),
-              fontSize: 12,
-              fontWeight: 800,
-              textDecoration: "none",
-            }}
-          >
-            <span>Rent</span>
-          </Link>
-
-          <Link
-            className="voynuHeaderAction commuteAction"
-            href="/subscriptions"
-            aria-label="Commute subscription"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "9px 12px",
-              borderRadius: theme.radius.pill,
-              background: isCommute ? theme.colors.primaryTint : theme.colors.surface,
-              color: theme.colors.primaryDark,
-              border:
-                "1px solid " +
-                (isCommute ? theme.colors.primary : theme.colors.borderStrong),
-              fontSize: 12,
-              fontWeight: 800,
-              textDecoration: "none",
-            }}
-          >
-            Commute
-          </Link>
-
           <NotificationBell />
 
           {showAccountLink && (
@@ -208,39 +138,39 @@ export default function PageHeader({
         </div>
       </div>
 
-      {isHome && (
-        <div className="homeProductBar">
-          <div className="homeProductInner">
-            <div>
+      <div className="homeProductBar">
+        <div className="homeProductInner">
+          {isHome && (
+            <div className="homeProductIntro">
               <strong>How do you want to travel?</strong>
               <span>Ride with a driver, rent a vehicle, or set a fixed commute route.</span>
             </div>
-            <div className="homeProductSwitch">
-              <Link href="/" className="homeProductOption active">
-                <span>🚕</span>
-                <span>
-                  <b>Ride</b>
-                  <small>We drive. You relax.</small>
-                </span>
-              </Link>
-              <Link href="/rentals" className="homeProductOption">
-                <span>🚗</span>
-                <span>
-                  <b>Rent</b>
-                  <small>You drive. You decide.</small>
-                </span>
-              </Link>
-              <Link href="/subscriptions" className="homeProductOption commuteOption">
-                <span>🗓️</span>
-                <span>
-                  <b>Commute</b>
-                  <small>Fixed daily route.</small>
-                </span>
-              </Link>
-            </div>
+          )}
+          <div className="homeProductSwitch">
+            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"}>
+              <span>🚕</span>
+              <span>
+                <b>Ride</b>
+                <small>We drive. You relax.</small>
+              </span>
+            </Link>
+            <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"}>
+              <span>🚗</span>
+              <span>
+                <b>Rent</b>
+                <small>You drive. You decide.</small>
+              </span>
+            </Link>
+            <Link href="/subscriptions" className={isCommute ? "homeProductOption active commuteOption" : "homeProductOption commuteOption"}>
+              <span>🗓️</span>
+              <span>
+                <b>Commute</b>
+                <small>Fixed daily route.</small>
+              </span>
+            </Link>
           </div>
         </div>
-      )}
+      </div>
 
       <style jsx>{`
         .voynuHeaderActions {
@@ -265,7 +195,7 @@ export default function PageHeader({
           justify-content: space-between;
           gap: 14px;
         }
-        .homeProductInner > div:first-child {
+        .homeProductIntro {
           display: flex;
           flex-direction: column;
           gap: 1px;
@@ -356,7 +286,7 @@ export default function PageHeader({
             padding: 8px 0;
             display: block;
           }
-          .homeProductInner > div:first-child {
+          .homeProductIntro {
             margin-bottom: 7px;
           }
           .homeProductSwitch {
@@ -391,7 +321,7 @@ export default function PageHeader({
           .voynuHeaderWhatsapp {
             padding: 8px 8px !important;
           }
-          .homeProductInner > div:first-child {
+          .homeProductIntro {
             display: none;
           }
           .homeProductBar {
