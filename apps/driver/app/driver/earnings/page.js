@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
-import DriverChrome from "../../components/DriverChrome";
+import DriverChrome from "../../../components/DriverChrome";
 import {supabase} from "../../../../../shared/lib/supabaseClient";
 import {theme} from "../../../../../shared/lib/theme";
 const money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:0});
