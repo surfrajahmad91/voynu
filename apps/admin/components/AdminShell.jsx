@@ -14,6 +14,7 @@ const nav = [
   ["/admin/vehicle-categories", "Vehicle types"],
   ["/admin/rentals", "Rentals"],
   ["/admin/pricing", "Pricing"],
+  ["/admin/subscriptions", "Commute subscriptions"],
 ];
 
 export default function AdminShell({ children }) {
