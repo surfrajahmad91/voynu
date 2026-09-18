@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { loadGoogleMaps, extractCityName } from "../lib/googleMaps";
+import { theme } from "../../../shared/lib/theme";
 import MapLocationPicker from "./MapLocationPicker";
 
 const RECENT_LOCATIONS_KEY = "voynu_recent_locations_v1";
 const MAX_RECENT_LOCATIONS = 4;
 
 function PinIcon({ tone = "pickup", size = 17 }) {
-  const color = tone === "drop" ? "#c8622a" : "#08783f";
+  const color = tone === "drop" ? theme.colors.accentDark : theme.colors.primary;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M20 10.2c0 5.2-8 11-8 11s-8-5.8-8-11a8 8 0 1 1 16 0Z" fill={color} />
@@ -401,38 +402,38 @@ export default function LocationPicker({
       <style jsx>{`
         .locationPicker { width: 100%; min-width: 0; position: relative; }
         .locationLabelRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
-        .locationLabel { display:flex; align-items:center; gap:7px; color:#34483d; font-size:12px; font-weight:800; }
-        .locationLabelIcon { width:25px; height:25px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#eaf6ee; color:#08783f; }
-        .locationLabelIcon.drop { background:#fff0e8; color:#c8622a; }
-        .locationHintLabel { color:#94a099; font-size:10px; font-weight:600; }
+        .locationLabel { display:flex; align-items:center; gap:7px; color:${theme.colors.text}; font-size:12px; font-weight:800; }
+        .locationLabelIcon { width:25px; height:25px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:${theme.colors.primaryTint}; color:${theme.colors.primary}; }
+        .locationLabelIcon.drop { background:#FFF1E7; color:${theme.colors.accentDark}; }
+        .locationHintLabel { color:${theme.colors.textFaint}; font-size:10px; font-weight:600; }
         .inputWrapper { position:relative; width:100%; }
-        .locationInput { width:100%; height:56px; padding:0 15px; border:1.5px solid #dfe8e2; border-radius:14px; background:#fbfdfc; color:#1d3027; font-family:inherit; font-size:14px; outline:none; transition:border-color .2s ease,box-shadow .2s ease,background .2s ease; }
-        .locationInput::placeholder { color:#9aa8a1; }
-        .locationInput:focus { border-color:#08783f; background:#fff; box-shadow:0 0 0 4px rgba(8,120,63,.09); }
-        .inputWrapper:has(.locationInput:focus) .locationLabelIcon { box-shadow:0 0 0 3px rgba(8,120,63,.08); }
-        .inputWrapper.hasValue .locationInput { border-color:#b8d9c3; background:#f7fcf8; padding-right:96px !important; }
+        .locationInput { width:100%; height:56px; padding:0 15px; border:1.5px solid ${theme.colors.border}; border-radius:14px; background:${theme.colors.bg}; color:${theme.colors.text}; font-family:inherit; font-size:14px; outline:none; transition:border-color .2s ease,box-shadow .2s ease,background .2s ease; }
+        .locationInput::placeholder { color:${theme.colors.textFaint}; }
+        .locationInput:focus { border-color:${theme.colors.primary}; background:#fff; box-shadow:0 0 0 4px rgba(10,127,166,.10); }
+        .inputWrapper:has(.locationInput:focus) .locationLabelIcon { box-shadow:0 0 0 3px rgba(10,127,166,.10); }
+        .inputWrapper.hasValue .locationInput { border-color:${theme.colors.primaryLight}; background:#fff; padding-right:96px !important; }
         .inputActions { position:absolute; top:50%; right:8px; transform:translateY(-50%); display:flex; gap:5px; z-index:2; }
-        .actionButton { width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:0; border-radius:9px; background:#eef6f0; color:#08783f; cursor:pointer; transition:transform .15s ease,background .15s ease; }
-        .actionButton:hover:not(:disabled) { background:#e1f1e6; transform:translateY(-1px); }
-        .actionButton.clearButton { background:#f2f4f3; color:#64736b; }
-        .actionButton.currentButton { background:#e5f4e9; }
+        .actionButton { width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:0; border-radius:9px; background:${theme.colors.primaryTint}; color:${theme.colors.primary}; cursor:pointer; transition:transform .15s ease,background .15s ease; }
+        .actionButton:hover:not(:disabled) { background:#d9edf3; transform:translateY(-1px); }
+        .actionButton.clearButton { background:${theme.colors.border}; color:${theme.colors.textMuted}; }
+        .actionButton.currentButton { background:${theme.colors.primaryTint}; }
         .actionButton:disabled { opacity:.55; cursor:wait; }
-        .spinner { width:14px; height:14px; border:2px solid rgba(8,120,63,.22); border-top-color:#08783f; border-radius:50%; animation:spin .7s linear infinite; }
-        .selectedBadge { position:absolute; left:13px; bottom:7px; display:flex; align-items:center; gap:3px; font-size:9px; line-height:1; font-weight:800; color:#08783f; pointer-events:none; }
-        .selectedBadge.drop { color:#b95420; }
-        .currentLocationLink { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:2px 0; border:0; background:transparent; color:#08783f; font-family:inherit; font-size:11px; font-weight:800; cursor:pointer; }
+        .spinner { width:14px; height:14px; border:2px solid rgba(10,127,166,.22); border-top-color:${theme.colors.primary}; border-radius:50%; animation:spin .7s linear infinite; }
+        .selectedBadge { position:absolute; left:13px; bottom:7px; display:flex; align-items:center; gap:3px; font-size:9px; line-height:1; font-weight:800; color:${theme.colors.primary}; pointer-events:none; }
+        .selectedBadge.drop { color:${theme.colors.accentDark}; }
+        .currentLocationLink { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:2px 0; border:0; background:transparent; color:${theme.colors.primary}; font-family:inherit; font-size:11px; font-weight:800; cursor:pointer; }
         .currentLocationLink:disabled { opacity:.55; cursor:wait; }
-        .locationHelper { display:flex; justify-content:space-between; align-items:center; margin-top:6px; color:#97a39d; font-size:9.5px; line-height:1.3; }
-        .mapHelper { display:inline-flex; align-items:center; gap:3px; color:#738178; font-weight:700; }
-        .recentLocations { position:absolute; left:0; right:0; top:86px; z-index:30; padding:9px; border:1px solid #e0e8e3; border-radius:13px; background:#fff; box-shadow:0 18px 35px rgba(18,47,32,.14); }
-        .recentTitle { display:flex; align-items:center; gap:6px; padding:3px 5px 7px; color:#738178; font-size:10px; font-weight:800; }
-        .recentItem { width:100%; display:flex; align-items:center; gap:9px; padding:9px 7px; border:0; border-radius:9px; background:transparent; color:#2d4036; text-align:left; font-family:inherit; cursor:pointer; }
-        .recentItem:hover { background:#f4f8f5; }
-        .recentPin { width:28px; height:28px; flex:0 0 28px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#eaf6ee; }
-        .recentPin.drop { background:#fff0e8; }
+        .locationHelper { display:flex; justify-content:space-between; align-items:center; margin-top:6px; color:${theme.colors.textFaint}; font-size:9.5px; line-height:1.3; }
+        .mapHelper { display:inline-flex; align-items:center; gap:3px; color:${theme.colors.textMuted}; font-weight:700; }
+        .recentLocations { position:absolute; left:0; right:0; top:86px; z-index:30; padding:9px; border:1px solid ${theme.colors.border}; border-radius:13px; background:#fff; box-shadow:${theme.shadow.raised}; }
+        .recentTitle { display:flex; align-items:center; gap:6px; padding:3px 5px 7px; color:${theme.colors.textMuted}; font-size:10px; font-weight:800; }
+        .recentItem { width:100%; display:flex; align-items:center; gap:9px; padding:9px 7px; border:0; border-radius:9px; background:transparent; color:${theme.colors.text}; text-align:left; font-family:inherit; cursor:pointer; }
+        .recentItem:hover { background:${theme.colors.primaryTint}; }
+        .recentPin { width:28px; height:28px; flex:0 0 28px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:${theme.colors.primaryTint}; }
+        .recentPin.drop { background:#FFF1E7; }
         .recentText { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:650; }
-        .locationHint { margin-top:5px; color:#8b9790; font-size:10px; }
-        .locationError { margin-top:6px; color:#b33d34; font-size:10px; line-height:1.4; }
+        .locationHint { margin-top:5px; color:${theme.colors.textFaint}; font-size:10px; }
+        .locationError { margin-top:6px; color:${theme.colors.error}; font-size:10px; line-height:1.4; }
         @keyframes spin { to { transform:rotate(360deg); } }
         @media (max-width:700px) { .locationInput { height:54px; font-size:14px; } .locationHintLabel { display:none; } .locationHelper { font-size:9px; } }
       `}</style>
