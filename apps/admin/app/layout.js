@@ -10,7 +10,7 @@ export const metadata = {
   appleWebApp: { capable: true, title: "VOYNU Admin", statusBarStyle: "black-translucent" },
 };
 
-export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#4C1D95" };
+export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#071b2d" };
 
 export default function RootLayout({ children }) {
   return (
