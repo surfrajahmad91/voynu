@@ -36,5 +36,5 @@ export default function AdminDashboard(){
  </div>
 }
 function Kpi({icon,label,value,note,tone}){return <div className="kpi"><span className={"kpiIcon "+tone}>{icon}</span><div><small>{label}</small><b>{value}</b><em>{note}</em></div></div>}
-function Mix({label,value,total,icon}){const pct=Math.round(value/total*100);return <div className="mix"><span>{icon}</span><div><div className="mixTop"><b>{label}</b><strong>{value}</strong></div><div className="bar"><i style={{width:String(Math.min(pct,100))+"%"}}/></div><small>{pct}% of current workload</small></div>}
+function Mix({label,value,total,icon}){const pct=Math.round(value/total*100);return <div className="mix"><span>{icon}</span><div><div className="mixTop"><b>{label}</b><strong>{value}</strong></div><div className="bar"><i style={{width:String(Math.min(pct,100))+"%"}}/></div><small>{pct}% of current workload</small></div></div>}}
 function Quick({href,icon,title,text}){return <Link href={href} className="quick"><span>{icon}</span><div><b>{title}</b><small>{text}</small></div><strong>→</strong></Link>}
