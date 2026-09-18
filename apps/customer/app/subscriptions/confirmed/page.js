@@ -83,12 +83,12 @@ export default function SubscriptionConfirmedPage() {
         <div style={{ padding: 20, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
             <div style={{ width: 10, height: 10, marginTop: 4, borderRadius: "50%", background: theme.colors.primary, flexShrink: 0 }} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: "#24352b", lineHeight: 1.4 }}>{subscription.pickupName}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: theme.colors.text, lineHeight: 1.4 }}>{subscription.pickupName}</div>
           </div>
-          <div style={{ width: 1.5, height: 16, marginLeft: 4.25, background: "#dbe6df" }} />
+          <div style={{ width: 1.5, height: 16, marginLeft: 4.25, background: theme.colors.border }} />
           <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
             <div style={{ width: 10, height: 10, marginTop: 4, borderRadius: "50%", background: theme.colors.accent, flexShrink: 0 }} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: "#24352b", lineHeight: 1.4 }}>{subscription.dropName}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: theme.colors.text, lineHeight: 1.4 }}>{subscription.dropName}</div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16, paddingTop: 16, borderTop: `1px dashed ${theme.colors.border}` }}>
             <DetailCell label="Plan" value={subscription.planName} />
