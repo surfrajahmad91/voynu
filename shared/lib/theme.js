@@ -30,7 +30,7 @@ export const theme = {
     hero: "linear-gradient(160deg, #FFFFFF 0%, #F5FAFF 55%, #EEF3F7 100%)",
     brand: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 35%, #D4552A 65%, #F5813F 100%)",
   },
-  radius: { sm: 10, md: 14, lg: 18, xl: 24, pill: 999 },
+  radius: { sm: 12, md: 16, lg: 20, xl: 28, pill: 999 },
   spacing: { xs: 6, sm: 10, md: 16, lg: 24, xl: 32, xxl: 48 },
   type: {
     h1: { size: 32, weight: 800, lineHeight: 1.15, letterSpacing: -0.6 },
@@ -42,8 +42,8 @@ export const theme = {
     eyebrow: { size: 10.5, weight: 800, lineHeight: 1.2, letterSpacing: 1.2 },
   },
   shadow: {
-    subtle: "0 4px 12px rgba(10,35,55,0.05)",
-    card: "0 12px 30px rgba(10,35,55,0.07)",
+    subtle: "0 6px 16px rgba(10,35,55,0.08)",
+    card: "0 18px 44px rgba(10,35,55,0.11)",
     raised: "0 30px 80px -20px rgba(10,35,55,0.16)",
     button: "0 10px 24px rgba(10,127,166,.18)",
   },
