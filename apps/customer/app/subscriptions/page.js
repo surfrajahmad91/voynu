@@ -351,5 +351,63 @@ export default function CommuteSubscriptionPage(){
         <div className="actions"><button className="secondary" type="button" onClick={previousStep}>← Back</button><span></span></div>
       </section>}
     </div>
+    <style jsx>{`
+      .page{min-height:100vh;background:${theme.colors.bg};color:${theme.colors.text}}
+      .wrap{width:min(900px,calc(100% - 28px));margin:auto}
+      .hero{background:${theme.colors.navy};color:#fff;border-bottom:3px solid ${theme.colors.accent};padding:30px 0}
+      .eyebrow{font-size:10px;font-weight:900;letter-spacing:1.6px;color:${theme.colors.accentLight}}
+      .hero h1{font-size:clamp(28px,5vw,44px);line-height:1.05;letter-spacing:-1.2px;margin:7px 0 10px}
+      .hero p{font-size:13px;line-height:1.6;color:rgba(255,255,255,.76);max-width:720px;margin:0}
+      .content{padding:20px 0 60px}
+      .stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+      .stepItem{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:6px 8px;border:1px solid ${theme.colors.border};border-radius:12px;background:#fff;color:${theme.colors.textMuted};font-size:11px;font-weight:800}
+      .stepItem span{width:23px;height:23px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${theme.colors.bg};font-size:10px}
+      .stepItem.active{border-color:${theme.colors.primary};background:${theme.colors.primaryTint};color:${theme.colors.primaryDark}}
+      .stepItem.active span,.stepItem.done span{background:${theme.colors.primary};color:#fff}
+      .stepItem.done{color:${theme.colors.primaryDark}}
+      .card{background:#fff;border:1px solid ${theme.colors.border};border-radius:18px;padding:22px;box-shadow:${theme.shadow.card}}
+      .cardHead{display:flex;justify-content:space-between;gap:15px;margin-bottom:20px}
+      .stepKicker{font-size:9px;letter-spacing:1.3px;font-weight:900;color:${theme.colors.primary}}
+      h2{font-size:20px;margin:5px 0 5px;letter-spacing:-.3px}
+      .cardHead p{margin:0;color:${theme.colors.textMuted};font-size:12px;line-height:1.5}
+      .stepBadge{width:38px;height:38px;flex:0 0 38px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${theme.colors.primaryTint};color:${theme.colors.primaryDark};font-weight:900}
+      .locationGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      .distance{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0;padding:13px;border:1px solid ${theme.colors.border};border-radius:12px;background:${theme.colors.bg}}
+      .distance div{display:flex;flex-direction:column;gap:3px;font-size:11px}.distance span{color:${theme.colors.textMuted}}
+      .distance button,.secondary{border:1px solid ${theme.colors.borderStrong};background:#fff;color:${theme.colors.text};border-radius:10px;padding:10px 13px;font-weight:800;cursor:pointer}
+      .distance button{border-color:${theme.colors.primary};color:${theme.colors.primaryDark};background:${theme.colors.primaryTint}}
+      .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      label,.label{display:block;font-size:11px;font-weight:800;margin:0 0 13px;color:${theme.colors.text}}
+      input,select{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:11px 12px;border:1px solid ${theme.colors.borderStrong};border-radius:10px;background:#fff;color:${theme.colors.text};font-size:13px}
+      input:focus,select:focus{outline:none;border-color:${theme.colors.primary};box-shadow:0 0 0 3px rgba(10,127,166,.10)}
+      .labelHint{font-weight:600;color:${theme.colors.textFaint};margin-left:4px}
+      .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:7px}
+      .day,.dayOn{padding:10px 2px;border-radius:9px;font-size:10px;font-weight:800;cursor:pointer}
+      .day{border:1px solid ${theme.colors.border};background:${theme.colors.bg};color:${theme.colors.textMuted}}
+      .dayOn{border:1px solid ${theme.colors.primary};background:${theme.colors.primaryTint};color:${theme.colors.primaryDark}}
+      .policyNote{display:flex;flex-direction:column;gap:3px;margin:14px 0;padding:12px;border-radius:11px;background:${theme.colors.bg};color:${theme.colors.textMuted};font-size:10.5px;line-height:1.5}
+      .policyNote b{color:${theme.colors.text}}
+      .fieldBlock{margin-bottom:15px}.fieldTitle{font-size:11px;font-weight:800;margin-bottom:8px}
+      .passengers{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px}
+      .sel,.un{padding:11px 2px;border-radius:9px;font-size:14px;font-weight:900;cursor:pointer}
+      .sel{border:1px solid ${theme.colors.primary};background:${theme.gradients.primary};color:#fff}.un{border:1px solid ${theme.colors.border};background:${theme.colors.bg};color:${theme.colors.text}}
+      small{display:block;font-size:8px;font-weight:700}.sectionIntro{margin:0 0 10px;padding:10px 11px;border-radius:10px;background:${theme.colors.primaryTint};color:${theme.colors.primaryDark}}
+      .sectionIntro b,.sectionIntro span{display:block}.sectionIntro b{font-size:12px}.sectionIntro span{font-size:9.5px;margin-top:3px;font-weight:600}
+      .person{border:1px solid ${theme.colors.border};border-radius:11px;padding:12px;margin-bottom:9px;background:#fff}.personTitle{font-size:11px;font-weight:900;color:${theme.colors.primaryDark};margin-bottom:9px}
+      .plans{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:9px 0 14px}
+      .plan,.planOn{text-align:left;padding:13px;border-radius:11px;cursor:pointer}.plan{border:1px solid ${theme.colors.border};background:${theme.colors.bg};color:${theme.colors.text}}.planOn{border:1px solid ${theme.colors.primary};background:${theme.colors.primaryTint};color:${theme.colors.primaryDark}}
+      .plans span,.plans small{display:block;margin-top:5px;font-size:9px;color:${theme.colors.textMuted}}
+      .summaryStrip{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:14px 0;padding:10px 12px;border-radius:10px;background:${theme.colors.bg};color:${theme.colors.textMuted};font-size:10px}.summaryStrip b{color:${theme.colors.text}}
+      .actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:20px}.primary{border:0;border-radius:11px;background:${theme.gradients.primary};color:#fff;padding:12px 16px;font-weight:900;cursor:pointer}.primary:disabled{opacity:.65;cursor:wait}
+      .error,.success{margin-bottom:14px;padding:11px 12px;border-radius:10px;font-size:11px;line-height:1.45}.error{background:${theme.colors.errorBg};color:${theme.colors.error}}.success{background:${theme.colors.successBg};color:${theme.colors.success}}
+      .reviewGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:15px}.reviewItem{padding:12px;border:1px solid ${theme.colors.border};border-radius:11px;background:${theme.colors.bg}}.reviewItem span,.reviewItem small{display:block;color:${theme.colors.textMuted};font-size:9px}.reviewItem b{display:block;margin:4px 0;font-size:11px}
+      .recalculateBox{display:flex;flex-direction:column;gap:5px;padding:14px;border:1px dashed ${theme.colors.borderStrong};border-radius:12px;background:${theme.colors.bg};font-size:11px;color:${theme.colors.textMuted}}.recalculateBox b{color:${theme.colors.text}}
+      .quote{margin-top:14px;padding:14px;border-radius:12px;background:${theme.colors.bg}}.quote>div{display:flex;justify-content:space-between;padding:6px 0;font-size:11px}.quote .total{border-top:1px solid ${theme.colors.border};margin-top:5px;padding-top:10px;font-size:15px}
+      .upiFlow{margin-top:12px}.upiPayButton{min-height:50px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:${theme.colors.primary};color:#fff;text-decoration:none;font-weight:800;font-size:12.5px}
+      .upiConfirmRow{margin-top:10px;padding:12px;border:1px solid ${theme.colors.border};border-radius:12px;background:#fff}.upiConfirmRow p{margin:0 0 10px;font-weight:800;font-size:12px}.upiConfirmActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.upiConfirmYes,.upiConfirmRetry{min-height:42px;border-radius:10px;font-weight:800;cursor:pointer;font-size:11.5px}.upiConfirmYes{border:1px solid ${theme.colors.primary};background:${theme.colors.primary};color:#fff}.upiConfirmRetry{border:1px solid ${theme.colors.borderStrong};background:#fff;color:${theme.colors.text}}
+      .upiConfirmedChip{margin-top:10px;padding:11px;border-radius:11px;background:${theme.colors.successBg};color:${theme.colors.success};font-weight:800;font-size:12px;text-align:center}.upiHint{margin:8px 2px 0;color:${theme.colors.textFaint};font-size:10.5px;line-height:1.5;text-align:center}.submit{margin-top:12px;width:100%}
+      @media(max-width:720px){.wrap{width:calc(100% - 20px)}.hero{padding:24px 0}.content{padding-top:12px}.stepper{gap:4px}.stepItem{min-height:40px;padding:5px 3px;gap:4px;font-size:9px}.stepItem span{width:21px;height:21px;font-size:9px}.card{padding:16px;border-radius:15px}.cardHead{margin-bottom:16px}.cardHead p{font-size:11px}.stepBadge{width:34px;height:34px;flex-basis:34px}.locationGrid,.reviewGrid{grid-template-columns:1fr}.two{grid-template-columns:1fr;gap:0}.plans{grid-template-columns:1fr 1fr}.passengers{grid-template-columns:repeat(4,1fr)}.days{gap:4px}.day,.dayOn{padding:9px 1px}.distance{align-items:stretch;flex-direction:column}.distance button{width:100%}.actions .primary{flex:1}.actions .secondary{flex:0 0 auto}.hero h1{font-size:30px}}
+      @media(max-width:420px){.stepItem b{display:none}.stepItem{justify-content:center}.plans{grid-template-columns:1fr}.cardHead h2{font-size:18px}.hero h1{font-size:27px}.hero p{font-size:11px}}
+    `}</style>
   </main></>;
 }
