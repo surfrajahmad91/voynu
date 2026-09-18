@@ -34,14 +34,18 @@ function needsReason(booking, next) {
 }
 function formatDate(b) { return `${b.travel_date || ""} · ${b.pickup_time || ""}`; }
 function time(value) {
-  if (!value) return "—";
-  if (/^\d{2}:\d{2}/.test(String(value))) {
-    const [hh, mm] = String(value).slice(0, 5).split(":").map(Number);
-    const d = new Date(2000, 0, 1, hh, mm);
-    return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  if (value === null || value === undefined || value === "") return "—";
+  const raw = String(value).trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (match) {
+    const hh = Number(match[1]);
+    const mm = Number(match[2]);
+    if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+      return new Date(2000, 0, 1, hh, mm).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    }
   }
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 function todayIndia() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -129,6 +133,9 @@ export default function DriverPage() {
       <div style={{marginTop:10}}>
         <div style={{display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:800,color:theme.colors.textMuted,marginBottom:5}}><span>Service days completed</span><span>{completed}/{serviceTrips.length}</span></div>
         <div style={{height:7,borderRadius:10,background:"#EDF1F5",overflow:"hidden"}}><div style={{height:"100%",width:progress+"%",background:theme.gradients.primary,borderRadius:10}}/></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:5,marginTop:9}}>
+          {serviceTrips.slice(0,12).map((t)=>{const done=t.status==="completed";const isToday=t.trip_date===today;return <div key={t.id} title={t.trip_date} style={{textAlign:"center",padding:"5px 2px",borderRadius:8,background:done?"#EAFBF2":isToday?"#EAF5FB":"#F7F9FB",border:`1px solid ${done?"#BDE8D0":isToday?theme.colors.primaryTint:theme.colors.border}`}}><div style={{fontSize:8,fontWeight:900,color:done?"#16824A":isToday?theme.colors.primary:theme.colors.textMuted}}>{done?"✓":isToday?"TODAY":"○"}</div><div style={{fontSize:8,color:theme.colors.textFaint,marginTop:2}}>{new Date(t.trip_date+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short"})}</div></div>})}
+        </div>
       </div>
       {todayBooking ? <div style={{marginTop:11,padding:11,borderRadius:11,background:"#EAF5FB",color:theme.colors.primary,fontSize:11,fontWeight:800}}>Today's commute · {todayBooking.booking_status.replace(/_/g," ")} · {time(todayBooking.pickup_time)}</div>
        : todayTrip?.status==="completed" ? <div style={{marginTop:11,padding:11,borderRadius:11,background:"#EAFBF2",color:"#16824A",fontSize:11,fontWeight:800}}>Today's commute completed.</div>
