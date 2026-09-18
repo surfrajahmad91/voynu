@@ -1,48 +1,30 @@
 @import "../../../shared/styles/globals.css";
 @import "../../../shared/styles/brand-theme.css";
 
-/* Admin presentation layer: same VOYNU brand system as Customer and Saarthi. */
-:root { --voynu-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-html, body { background: var(--voynu-bg); }
-main { background: var(--voynu-bg) !important; color: var(--voynu-text) !important; font-family: var(--voynu-font) !important; }
-main * { font-family: var(--voynu-font) !important; }
-main h1, main h2, main h3 { color: var(--voynu-text) !important; letter-spacing: -.25px; }
-main input, main select, main textarea { background: var(--voynu-surface) !important; color: var(--voynu-text) !important; border-color: var(--voynu-border-strong) !important; border-radius: 12px !important; }
-main button { border-radius: 12px !important; font-family: var(--voynu-font) !important; }
-main table, main tr, main td, main th { border-color: var(--voynu-border) !important; }
-
-.adminShellHeader {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(255,255,255,.92); backdrop-filter: blur(18px);
-  border-bottom: 1px solid var(--voynu-border); box-shadow: 0 8px 26px rgba(10,35,55,.07);
+:root{--voynu-font:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+html,body{margin:0;background:var(--voynu-bg);color:var(--voynu-text);font-family:var(--voynu-font)}
+*{box-sizing:border-box}
+button,input,select,textarea{font-family:inherit}
+.adminApp{min-height:100vh;background:#f6f9fc;color:var(--voynu-text)}
+.adminSidebar{position:fixed;inset:0 auto 0 0;width:236px;background:linear-gradient(180deg,#071b2d,#0b2740);color:#fff;display:flex;flex-direction:column;z-index:200}
+.adminSidebarBrand{padding:17px 16px 14px;border-bottom:1px solid rgba(255,255,255,.09);display:flex;align-items:center;justify-content:space-between}
+.adminBrand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;min-width:0}
+.adminBrand img{border-radius:12px;box-shadow:0 7px 18px rgba(0,0,0,.2)}
+.adminBrand span{display:grid;gap:3px;min-width:0}.adminBrand strong{font-size:18px;line-height:1;letter-spacing:.2px}.adminBrand small{font-size:7px;line-height:1.25;color:#9ec4d6;font-weight:700;letter-spacing:.2px}
+.adminSidebarClose{display:none;background:none;border:0;color:#fff;font-size:25px}
+.adminNavScroll{padding:13px 10px;overflow:auto;flex:1}.adminNavGroup{margin-bottom:18px}.adminNavLabel{padding:0 10px 7px;color:#6f96aa;font-size:8px;font-weight:900;letter-spacing:1.2px}
+.adminNavItem{display:flex;align-items:center;gap:10px;min-height:38px;padding:7px 10px;border-radius:9px;color:#d2e0e8;text-decoration:none;font-size:10.5px;font-weight:700;margin:2px 0;transition:.16s}
+.adminNavItem:hover{background:rgba(255,255,255,.07);color:#fff}.adminNavItem.active{background:linear-gradient(90deg,#128dcc,#0b7fa6);color:#fff;box-shadow:0 5px 14px rgba(0,126,174,.22)}
+.adminNavIcon{width:22px;text-align:center;font-size:14px;flex:0 0 22px}.adminSidebarFooter{padding:13px 14px;border-top:1px solid rgba(255,255,255,.09);display:flex;align-items:center;gap:9px}.adminSidebarFooter>div:nth-child(2){display:grid;gap:2px;flex:1}.adminSidebarFooter strong{font-size:10px}.adminSidebarFooter small{font-size:8px;color:#89adbd}.adminSidebarFooter>span{color:#7292a2;font-size:10px}.adminUserAvatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#5b7cff;font-size:9px;font-weight:900}
+.adminMain{margin-left:236px;min-height:100vh}.adminTopbar{height:64px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--voynu-border);display:flex;align-items:center;gap:14px;padding:0 22px;position:sticky;top:0;z-index:100;backdrop-filter:blur(14px)}
+.adminMenuButton,.adminMobileBrand{display:none}.adminSearch{width:min(430px,46vw);height:38px;border:1px solid var(--voynu-border);border-radius:9px;background:#f8fafc;display:flex;align-items:center;gap:8px;padding:0 11px;color:#8293a1}.adminSearch input{border:0;outline:0;background:transparent;width:100%;font-size:10.5px;color:var(--voynu-text)}.adminTopActions{margin-left:auto;display:flex;align-items:center;gap:10px}.adminSystem{display:flex;align-items:center;gap:6px;border:1px solid var(--voynu-border);padding:8px 10px;border-radius:999px;font-size:9px;font-weight:800;color:#2c6755;background:#f7fcfa}.adminSystem i{width:7px;height:7px;border-radius:50%;background:#16a36b}.adminGear{width:36px;height:36px;border:1px solid var(--voynu-border);border-radius:9px;display:grid;place-items:center;text-decoration:none;color:var(--voynu-text);font-size:14px}
+.adminPage{max-width:1250px;margin:0 auto;padding:25px 26px 55px}.adminBottomNav{display:none}
+main{font-family:var(--voynu-font)!important}main h1,main h2,main h3{color:var(--voynu-text)!important}
+main input,main select,main textarea{border-color:var(--voynu-border-strong)!important;background:var(--voynu-surface)!important;color:var(--voynu-text)!important;border-radius:10px!important}
+main table{width:100%}main th,main td{border-color:var(--voynu-border)!important}
+@media(max-width:800px){
+ .adminSidebar{transform:translateX(-100%);transition:transform .2s ease;width:280px}.adminSidebar.open{transform:translateX(0)}.adminSidebarClose{display:block}.adminOverlay{position:fixed;inset:0;background:rgba(2,15,27,.5);border:0;z-index:150}
+ .adminMain{margin-left:0;padding-bottom:68px}.adminTopbar{height:62px;padding:0 12px;gap:9px}.adminMenuButton{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--voynu-border);background:#fff;border-radius:10px;font-size:18px}.adminMobileBrand{display:flex;align-items:center;gap:6px;color:var(--voynu-navy);text-decoration:none;font-size:15px}.adminMobileBrand img{border-radius:9px}.adminSearch{flex:1;width:auto;max-width:none}.adminSystem{display:none}.adminGear{display:none}.adminTopActions{margin-left:0}.adminPage{padding:17px 12px 30px}
+ .adminBottomNav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:0;right:0;bottom:0;height:64px;background:rgba(255,255,255,.97);border-top:1px solid var(--voynu-border);z-index:120;padding-bottom:env(safe-area-inset-bottom);backdrop-filter:blur(16px)}.adminBottomNav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:var(--voynu-muted);font-size:16px}.adminBottomNav a small{font-size:7.5px;font-weight:800}.adminBottomNav a.active{color:var(--voynu-primary)}
 }
-.adminShellInner { width: min(1240px, calc(100% - 32px)); min-height: 76px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-.adminBrand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; min-width: 0; }
-.adminBrand img { width: 44px; height: 44px; border-radius: 13px; display: block; box-shadow: 0 8px 20px rgba(10,35,55,.16); }
-.adminBrand span { display: grid; gap: 2px; min-width: 0; }
-.adminBrand strong { color: var(--voynu-navy); font-size: 19px; line-height: 1; letter-spacing: -.45px; }
-.adminBrand small { color: var(--voynu-primary); font-size: 8px; line-height: 1.2; font-weight: 900; letter-spacing: 1.2px; }
-.adminHeaderActions { display: flex; align-items: center; gap: 10px; }
-.adminSettingsLink { text-decoration: none; color: var(--voynu-text); border: 1px solid var(--voynu-border-strong); background: var(--voynu-surface); padding: 10px 13px; border-radius: 12px; font-size: 11px; font-weight: 800; }
-.adminShellNav { overflow-x: auto; border-top: 1px solid var(--voynu-border); background: rgba(255,255,255,.76); }
-.adminShellNavInner { width: min(1240px, calc(100% - 32px)); margin: 0 auto; display: flex; gap: 4px; min-height: 46px; align-items: stretch; }
-.adminNavLink { position: relative; display: flex; align-items: center; white-space: nowrap; text-decoration: none; color: var(--voynu-muted); padding: 0 12px; font-size: 11px; font-weight: 700; transition: color .18s ease, background .18s ease; }
-.adminNavLink:hover { color: var(--voynu-navy); background: var(--voynu-primary-tint); }
-.adminNavLink.active { color: var(--voynu-teal-deep); }
-.adminNavLink.active::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, var(--voynu-teal), var(--voynu-accent)); }
-.adminShellContent { min-height: calc(100vh - 122px); }
-
-@media (max-width: 600px) {
-  .adminShellInner { min-height: 66px; width: min(100% - 20px, 1240px); }
-  .adminBrand img { width: 39px; height: 39px; border-radius: 11px; }
-  .adminBrand strong { font-size: 16px; }
-  .adminBrand small { font-size: 7px; letter-spacing: .9px; }
-  .adminSettingsLink { display: none; }
-  .adminShellNavInner { width: max-content; min-width: 100%; padding: 0 10px; box-sizing: border-box; }
-  .adminNavLink { padding: 0 10px; }
-}
-
-html[data-voynu-theme="dark"] main [style*="background: #fff"],
-html[data-voynu-theme="dark"] main [style*="background:#fff"],
-html[data-voynu-theme="dark"] main [style*="background: #ffffff"],
-html[data-voynu-theme="dark"] main [style*="background:#ffffff"] { background: var(--voynu-surface) !important; color: var(--voynu-text) !important; }
+@media(max-width:430px){.adminMobileBrand strong{display:none}.adminSearch input{font-size:9.5px}.adminPage{padding-left:10px;padding-right:10px}}
