@@ -140,12 +140,6 @@ export default function PageHeader({
 
       <div className="homeProductBar">
         <div className="homeProductInner">
-          {isHome && (
-            <div className="homeProductIntro">
-              <strong>How do you want to travel?</strong>
-              <span>Ride with a driver, rent a vehicle, or set a fixed commute route.</span>
-            </div>
-          )}
           <div className="homeProductSwitch">
             <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"}>
               <span>🚕</span>
@@ -189,10 +183,10 @@ export default function PageHeader({
         .homeProductInner {
           width: min(${maxWidth}px, calc(100% - 32px));
           margin: 0 auto;
-          padding: 9px 0;
+          padding: 10px 0;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: center;
           gap: 14px;
         }
         .homeProductIntro {
@@ -211,21 +205,22 @@ export default function PageHeader({
         }
         .homeProductSwitch {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 4px;
-          padding: 3px;
-          border-radius: 14px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 5px;
+          padding: 4px;
+          border-radius: 16px;
           background: ${theme.colors.bg};
           border: 1px solid ${theme.colors.border};
-          min-width: 420px;
+          width: min(560px, 100%);
         }
         .homeProductOption {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 7px;
-          padding: 7px 10px;
-          border-radius: 10px;
+          gap: 9px;
+          min-height: 54px;
+          padding: 8px 12px;
+          border-radius: 12px;
           text-decoration: none;
           color: ${theme.colors.textMuted};
           transition: 0.18s ease;
@@ -240,15 +235,17 @@ export default function PageHeader({
           display: block;
         }
         .homeProductOption b {
-          font-size: 10.5px;
+          font-size: 13px;
+          line-height: 1.1;
         }
         .homeProductOption small {
-          font-size: 8px;
-          margin-top: 1px;
+          font-size: 9.5px;
+          margin-top: 3px;
           opacity: 0.8;
         }
         .homeProductOption > span:first-child {
-          font-size: 14px;
+          font-size: 19px;
+          line-height: 1;
         }
         .whatsappLabel {
           display: inline;
@@ -284,23 +281,19 @@ export default function PageHeader({
           .homeProductInner {
             width: calc(100% - 20px);
             padding: 8px 0;
-            display: block;
-          }
-          .homeProductIntro {
-            margin-bottom: 7px;
           }
           .homeProductSwitch {
-            min-width: 0;
             width: 100%;
           }
           .homeProductOption {
-            padding: 6px 5px;
-            gap: 5px;
+            min-height: 58px;
+            padding: 8px 6px;
+            gap: 6px;
+          }
+          .homeProductOption b {
+            font-size: 12px;
           }
           .homeProductOption small {
-            font-size: 7px;
-          }
-          .homeProductInner span {
             font-size: 8.5px;
           }
         }
@@ -321,33 +314,38 @@ export default function PageHeader({
           .voynuHeaderWhatsapp {
             padding: 8px 8px !important;
           }
-          .homeProductIntro {
-            display: none;
-          }
           .homeProductBar {
-            padding: 4px 0;
+            padding: 5px 0;
           }
           .homeProductSwitch {
-            padding: 2px;
+            padding: 3px;
           }
           .homeProductOption {
-            padding: 6px 3px;
-            gap: 4px;
+            min-height: 56px;
+            padding: 7px 4px;
+            gap: 5px;
           }
           .homeProductOption > span:first-child {
-            font-size: 11px;
+            font-size: 16px;
           }
           .homeProductOption b {
-            font-size: 9px;
+            font-size: 11px;
           }
           .homeProductOption small {
-            font-size: 6.5px;
+            display: block;
+            font-size: 7.5px;
           }
           .whatsappLabel {
             display: none;
           }
         }
         @media (max-width: 400px) {
+          .homeProductOption small {
+            font-size: 7px;
+          }
+          .homeProductOption b {
+            font-size: 10.5px;
+          }
           .voynuHeaderActions {
             gap: 2px !important;
           }
