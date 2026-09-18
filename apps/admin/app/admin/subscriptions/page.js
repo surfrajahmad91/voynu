@@ -171,7 +171,7 @@ function Info({label,value,badge}){return <div className="infoBox"><small>{label
 function Empty(){return <div className="empty"><span>✓</span><b>No requests in this view</b><small>Try another status or search term.</small></div>}
 function statusClass(v){const s=String(v||"").toLowerCase();if(s.includes("paid")||s==="active"||s==="completed")return "good";if(s.includes("cancel")||s.includes("failed")||s==="refunded")return "bad";return "pending"}
 
-const styles=String.raw\`
+const styles=String.raw`
 .subPage{min-height:100vh;background:#f5f8fb;color:#173047;font-family:var(--voynu-font),Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .subContainer{max-width:1280px;margin:0 auto;padding:28px 28px 70px}.subHeader{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:18px}.crumb{display:inline-flex;margin-bottom:10px;color:#607b8b;text-decoration:none;font-size:10px;font-weight:800}.eyebrow,.sectionLabel{display:block;color:#087fa5;font-size:8px;font-weight:900;letter-spacing:1.5px}.subHeader h1{margin:5px 0 6px;font-size:32px;line-height:1.1;letter-spacing:-.8px;color:#122b40}.subHeader p,.panelHeader p{margin:0;color:#718492;font-size:11px;line-height:1.5}.refreshButton{height:39px;border:1px solid #d9e5ec;background:#fff;border-radius:10px;padding:0 15px;color:#173047;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap}.refreshButton:disabled{opacity:.55}
 .notice{padding:11px 13px;border-radius:10px;margin-bottom:12px;font-size:10px;font-weight:800}.notice.error{background:#fff0f1;color:#c94b55;border:1px solid #ffd6d9}.notice.success{background:#eaf8f1;color:#16835b;border:1px solid #cdeedf}
@@ -196,4 +196,4 @@ const styles=String.raw\`
  .detailsToggle{width:100%;margin-top:8px;padding:8px 0;border:0;border-top:1px solid #edf1f4;background:transparent;color:#0b7ea2;font-size:7.5px;font-weight:900;display:flex;justify-content:center;gap:5px}.detailsToggle span{font-size:9px}.details{border-top:1px solid #edf1f4;padding-top:8px}.detailLine{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #f0f3f5}.detailLine span{font-size:7px;color:#81919d}.detailLine b{text-align:right;font-size:7.5px;color:#294458;max-width:65%}.passengerList{margin-top:9px}.miniLabel{font-size:6.5px;color:#81919d;font-weight:900;letter-spacing:.8px;margin-bottom:5px}.passenger{display:flex;justify-content:space-between;gap:8px;padding:6px 7px;border-radius:7px;background:#eef8fb;margin-bottom:4px}.passenger b,.passenger span{font-size:7.5px;color:#31566a}
 }
 @media(max-width:370px){.subContainer{padding-left:8px;padding-right:8px}.summaryCard strong{font-size:18px}.requestCard{padding:10px}}
-\`;
+`;
