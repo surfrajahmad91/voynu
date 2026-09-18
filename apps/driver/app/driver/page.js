@@ -95,11 +95,12 @@ export default function DriverPage() {
   useEffect(()=>{const b=bookings.find((x)=>NAVIGATION_STATUSES.includes(x.booking_status)); if(b&&!navigationBookingId&&!navigationDismissed.current)setNavigationBookingId(b.id); if(navigationBookingId&&!b){navigationDismissed.current=false;setNavigationBookingId(null);}},[bookings,navigationBookingId]);
   const exitNavigation=()=>{navigationDismissed.current=true;setNavigationBookingId(null);};
 
+  const commuteBookingIds = useMemo(() => new Set(commuteSubscriptions.flatMap((s) => (s.subscription_trips || []).flatMap((t) => [t.morning_booking_id, t.return_booking_id]).filter(Boolean))), [commuteSubscriptions]);
+
   if(checking)return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",background:theme.colors.bg}}>Checking access…</main>;
   if(notADriver)return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24,background:theme.colors.bg,fontFamily:theme.fontFamily}}><div style={{maxWidth:380,textAlign:"center",padding:30,borderRadius:20,background:"#fff",boxShadow:theme.shadow.card}}><h1>No driver profile found</h1><p style={{color:theme.colors.textFaint}}>Ask your admin to add or reactivate your Saarthi profile.</p><Link href="/" style={{color:theme.colors.primary,fontWeight:800}}>Back to home</Link></div></main>;
   if(activeNavigationBooking)return <div style={{position:"relative",width:"100vw",height:"100dvh"}}><DriverNavigationMode booking={activeNavigationBooking} driverLocation={driverLocation} targetType={navigationTargetType} onExit={exitNavigation} onComplete={()=>advance(activeNavigationBooking)} /></div>;
 
-  const commuteBookingIds = useMemo(() => new Set(commuteSubscriptions.flatMap((s) => (s.subscription_trips || []).flatMap((t) => [t.morning_booking_id, t.return_booking_id]).filter(Boolean))), [commuteSubscriptions]);
   const active=bookings.filter((b)=>ACTIVE_STATUSES.includes(b.booking_status));
   const upcoming=bookings.filter((b)=>b.booking_status==="driver_assigned" && !commuteBookingIds.has(b.id));
   const past=bookings.filter((b)=>b.booking_status==="trip_completed" && !commuteBookingIds.has(b.id));
