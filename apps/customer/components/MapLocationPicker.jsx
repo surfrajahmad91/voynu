@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadGoogleMaps, extractCityName } from "../lib/googleMaps";
+import { theme } from "../../../shared/lib/theme";
 
 const DEFAULT_CENTER = { lat: 26.4499, lng: 80.3319 };
 
 function Marker({ tone }) {
-  const color = tone === "drop" ? "#c8622a" : "#08783f";
+  const color = tone === "drop" ? theme.colors.accentDark : theme.colors.primary;
   return (
     <svg width="38" height="46" viewBox="0 0 38 46" fill="none" aria-hidden="true">
       <path d="M19 1C9.06 1 1 9.06 1 19c0 12.5 18 25 18 25s18-12.5 18-25C37 9.06 28.94 1 19 1Z" fill={color} stroke="#fff" strokeWidth="2" />
@@ -191,12 +192,12 @@ export default function MapLocationPicker({ open, title = "Choose location", ini
         .mapPickerOverlay{position:fixed;inset:0;z-index:1000;background:rgba(10,20,15,.58);display:flex;align-items:flex-end;justify-content:center;touch-action:none;overscroll-behavior:contain}
         .mapPickerSheet{width:100%;max-width:560px;height:min(88vh,720px);background:#fff;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;touch-action:none;box-shadow:0 20px 60px rgba(0,0,0,.25)}
         @media(min-width:700px){.mapPickerOverlay{align-items:center}.mapPickerSheet{border-radius:20px;height:min(80vh,680px)}}
-        .mapPickerHeader{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid #edf1ee;color:#16241d;font-size:15px;font-weight:800;touch-action:manipulation}
-        .titleWrap{display:flex;align-items:center;gap:10px}.titleMarker{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:#eaf6ee;overflow:hidden}.titleMarker.drop{background:#fff0e8}.titleMarker svg{width:19px;height:23px}
-        .mapPickerClose{border:0;background:#f1f4f2;width:32px;height:32px;border-radius:50%;font-size:23px;line-height:1;color:#526158;cursor:pointer}
-        .mapPickerSearch{padding:10px 14px;touch-action:manipulation}.mapPickerSearchInput{width:100%;height:46px;border:1px solid #dfe7e1;border-radius:11px;padding:0 14px;font-size:14px;outline:none;box-sizing:border-box}.mapPickerSearchInput:focus{border-color:#08783f;box-shadow:0 0 0 3px rgba(8,120,63,.09)}
-        .mapPickerMapWrap{position:relative;flex:1;min-height:0;background:#eef2ef;overflow:hidden;touch-action:none}.mapPickerMap{position:absolute;inset:0;touch-action:none}.mapPickerPin{position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 6px 7px rgba(0,0,0,.27))}.mapPickerPin svg{width:38px;height:46px}.mapInstruction{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:7px 11px;border-radius:20px;background:rgba(18,33,26,.86);color:#fff;font-size:10px;font-weight:700;white-space:nowrap;pointer-events:none}
-        .mapPickerFooter{padding:13px 16px 17px;border-top:1px solid #edf1ee;background:#fff;touch-action:manipulation}.mapPickerAddressRow{display:flex;align-items:flex-start;gap:9px;min-height:38px}.addressDot{width:10px;height:10px;flex:0 0 10px;margin-top:4px;border-radius:50%;background:#08783f;box-shadow:0 0 0 4px #eaf6ee}.addressDot.drop{background:#c8622a;box-shadow:0 0 0 4px #fff0e8}.mapPickerAddress{font-size:13px;line-height:1.45;color:#4b5c53}.mapPickerConfirm{width:100%;height:51px;margin-top:10px;border:0;border-radius:12px;background:#08783f;color:#fff;font-weight:800;font-size:14px;cursor:pointer}.mapPickerConfirm.drop{background:#c8622a}.mapPickerConfirm:disabled{opacity:.5;cursor:not-allowed}
+        .mapPickerHeader{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid ${theme.colors.border};color:${theme.colors.text};font-size:15px;font-weight:800;touch-action:manipulation}
+        .titleWrap{display:flex;align-items:center;gap:10px}.titleMarker{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:${theme.colors.primaryTint};overflow:hidden}.titleMarker.drop{background:#FFF1E7}.titleMarker svg{width:19px;height:23px}
+        .mapPickerClose{border:0;background:${theme.colors.border};width:32px;height:32px;border-radius:50%;font-size:23px;line-height:1;color:${theme.colors.textMuted};cursor:pointer}
+        .mapPickerSearch{padding:10px 14px;touch-action:manipulation}.mapPickerSearchInput{width:100%;height:46px;border:1px solid ${theme.colors.border};border-radius:11px;padding:0 14px;font-size:14px;outline:none;box-sizing:border-box}.mapPickerSearchInput:focus{border-color:${theme.colors.primary};box-shadow:0 0 0 3px rgba(10,127,166,.10)}
+        .mapPickerMapWrap{position:relative;flex:1;min-height:0;background:${theme.colors.bg};overflow:hidden;touch-action:none}.mapPickerMap{position:absolute;inset:0;touch-action:none}.mapPickerPin{position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 6px 7px rgba(0,0,0,.27))}.mapPickerPin svg{width:38px;height:46px}.mapInstruction{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:7px 11px;border-radius:20px;background:rgba(18,33,26,.86);color:#fff;font-size:10px;font-weight:700;white-space:nowrap;pointer-events:none}
+        .mapPickerFooter{padding:13px 16px 17px;border-top:1px solid ${theme.colors.border};background:#fff;touch-action:manipulation}.mapPickerAddressRow{display:flex;align-items:flex-start;gap:9px;min-height:38px}.addressDot{width:10px;height:10px;flex:0 0 10px;margin-top:4px;border-radius:50%;background:${theme.colors.primary};box-shadow:0 0 0 4px ${theme.colors.primaryTint}}.addressDot.drop{background:${theme.colors.accentDark};box-shadow:0 0 0 4px #FFF1E7}.mapPickerAddress{font-size:13px;line-height:1.45;color:${theme.colors.textMuted}}.mapPickerConfirm{width:100%;height:51px;margin-top:10px;border:0;border-radius:12px;background:${theme.colors.primary};color:#fff;font-weight:800;font-size:14px;cursor:pointer}.mapPickerConfirm.drop{background:${theme.colors.accentDark}}.mapPickerConfirm:disabled{opacity:.5;cursor:not-allowed}
       `}</style>
     </div>
   );
