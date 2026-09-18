@@ -12,7 +12,6 @@ export default function DriverChrome({children,active="home",subtitle="Good even
     ["₹","Earnings","/driver/earnings","earnings"],
     ["♙","Account","/driver/account","account"]
   ];
-  const logout=async()=>{await (await import("../../../shared/lib/supabaseClient")).supabase.auth.signOut();router.push("/login");};
   return <main style={{minHeight:"100vh",background:"linear-gradient(180deg,#F7F9FC 0%,#F3F7FB 100%)",fontFamily:theme.fontFamily,color:theme.colors.text,paddingBottom:86}}>
     <header style={{background:"#fff",borderBottom:"1px solid "+theme.colors.border,position:"sticky",top:0,zIndex:40}}>
       <div style={{width:"min(760px,calc(100% - 28px))",margin:"auto",minHeight:72,display:"flex",alignItems:"center",gap:10}}>
@@ -25,7 +24,6 @@ export default function DriverChrome({children,active="home",subtitle="Good even
         </Link>
         <div style={{display:"flex",alignItems:"center",gap:7}}>
           <NotificationBell targetPath="/driver" audience="driver"/>
-          <button onClick={logout} style={{height:42,padding:"0 15px",borderRadius:13,border:"1px solid "+theme.colors.border,background:"#fff",color:theme.colors.text,fontWeight:900,fontSize:11,cursor:"pointer"}}>Log out</button>
         </div>
       </div>
     </header>
