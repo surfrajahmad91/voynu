@@ -1,5 +1,4 @@
 import "../styles/globals.css";
-import NotificationBell from "../../../shared/components/NotificationBell";
 import PushNotifications from "../../../shared/components/PushNotifications";
 
 export const metadata = {
@@ -16,9 +15,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <div style={{ position: "fixed", top: 78, right: 14, zIndex: 100 }}>
-          <NotificationBell targetPath="/driver" audience="driver" />
-        </div>
         {children}
         <PushNotifications targetPath="/driver" audience="driver" />
         <script dangerouslySetInnerHTML={{__html:`if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}`}} />
