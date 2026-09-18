@@ -35,7 +35,7 @@ function needsReason(booking, next) {
 function formatDate(b) { return `${b.travel_date || ""} · ${b.pickup_time || ""}`; }
 function time(value) {
   if (!value) return "—";
-  if (/^\\d{2}:\\d{2}/.test(String(value))) {
+  if (/^\d{2}:\d{2}/.test(String(value))) {
     const [hh, mm] = String(value).slice(0, 5).split(":").map(Number);
     const d = new Date(2000, 0, 1, hh, mm);
     return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
