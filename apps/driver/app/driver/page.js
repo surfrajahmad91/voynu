@@ -148,7 +148,7 @@ export default function DriverPage() {
 
   const header = <header style={{background:"#fff",borderBottom:"1px solid "+theme.colors.border,position:"sticky",top:0,zIndex:30}}>
     <div style={{width:"min(760px,calc(100% - 28px))",margin:"0 auto",minHeight:74,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:11,minWidth:0}}><img src="/icon.svg" alt="VOYNU" width="50" height="50" style={{borderRadius:14,boxShadow:"0 7px 18px rgba(10,127,166,.15)"}}/><div style={{minWidth:0}}><div style={{fontWeight:900,color:theme.colors.primary,fontSize:19,lineHeight:1.1}}>VOYNU Saarthi</div><div style={{fontSize:11,color:theme.colors.textFaint,marginTop:4}}>Good evening, DRIVER 👋</div></div></div>
+      <div style={{display:"flex",alignItems:"center",gap:11,minWidth:0}}><img src="/icon.svg" alt="VOYNU" width="50" height="50" style={{borderRadius:14,boxShadow:"0 7px 18px rgba(10,127,166,.15)"}}/><div style={{minWidth:0}}><div style={{fontWeight:900,color:theme.colors.primary,fontSize:19,lineHeight:1.1}}>VOYNU Saarthi</div><div style={{fontSize:11,color:theme.colors.textFaint,marginTop:4}}>Good evening, {driver.full_name.split(" ")[0]} 👋</div></div></div>
       <div style={{display:"flex",alignItems:"center",gap:8}}><NotificationBell targetPath="/driver" audience="driver"/><Link href="/driver/account" aria-label="Account" style={{width:44,height:44,borderRadius:"50%",border:"1px solid "+theme.colors.border,display:"grid",placeItems:"center",color:theme.colors.primary,background:"#fff",textDecoration:"none"}}><span style={{fontSize:22}}>♙</span></Link></div>
     </div>
   </header>;
