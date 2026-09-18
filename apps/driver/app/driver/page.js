@@ -146,17 +146,7 @@ export default function DriverPage() {
   };
 
 
-  const header = <header style={{background:"#fff",borderBottom:"1px solid "+theme.colors.border,position:"sticky",top:0,zIndex:30}}>
-    <div style={{width:"min(760px,calc(100% - 28px))",margin:"0 auto",minHeight:74,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:11,minWidth:0}}><img src="/icon.svg" alt="VOYNU" width="50" height="50" style={{borderRadius:14,boxShadow:"0 7px 18px rgba(10,127,166,.15)"}}/><div style={{minWidth:0}}><div style={{fontWeight:900,color:theme.colors.primary,fontSize:19,lineHeight:1.1}}>VOYNU Saarthi</div><div style={{fontSize:11,color:theme.colors.textFaint,marginTop:4}}>Good evening, {driver.full_name.split(" ")[0]} 👋</div></div></div>
-      <div style={{display:"flex",alignItems:"center",gap:8}}><NotificationBell targetPath="/driver" audience="driver"/><Link href="/driver/account" aria-label="Account" style={{width:44,height:44,borderRadius:"50%",border:"1px solid "+theme.colors.border,display:"grid",placeItems:"center",color:theme.colors.primary,background:"#fff",textDecoration:"none"}}><span style={{fontSize:22}}>♙</span></Link></div>
-    </div>
-  </header>;
-  const bottomNav=<nav style={{position:"fixed",bottom:0,left:0,right:0,zIndex:25,background:"rgba(255,255,255,.97)",backdropFilter:"blur(16px)",borderTop:"1px solid "+theme.colors.border,padding:"8px 14px calc(8px + env(safe-area-inset-bottom))"}}>
-    <div style={{width:"min(760px,100%)",margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4}}>{[["⌂","Home","/driver"],["▣","Trips","/driver/trips"],["▥","Earnings","/driver/earnings"],["♙","Account","/driver/account"]].map(([icon,label,href],i)=><Link key={label} href={href} style={{textDecoration:"none",color:i===0?theme.colors.primary:theme.colors.textFaint,textAlign:"center",fontSize:10,fontWeight:800,padding:"5px 2px"}}><div style={{fontSize:20,lineHeight:1.1}}>{icon}</div><div style={{marginTop:3}}>{label}</div></Link>)}</div>
-  </nav>;
-  return <main style={{minHeight:"100vh",background:"linear-gradient(180deg,#F7F9FC 0%,#F3F7FB 100%)",fontFamily:theme.fontFamily,color:theme.colors.text,paddingBottom:86}}>
-    {header}
+  return <DriverChrome active="home" subtitle={driver ? `Good evening, ${driver.full_name.split(" ")[0]} 👋` : "Good evening"}>
     <div style={{width:"min(760px,calc(100% - 28px))",margin:"0 auto",padding:"16px 0 30px"}}>
       <section style={{background:"#fff",border:"1px solid "+theme.colors.border,borderRadius:22,boxShadow:theme.shadow.card,overflow:"hidden",marginBottom:14}}>
         <div style={{padding:18}}>
@@ -185,6 +175,6 @@ export default function DriverPage() {
       <section style={{marginTop:24}}><h2 style={{fontSize:18,margin:"0 4px 10px"}}>Quick actions</h2><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7}}>{[["ϟ","Fuel / Charge"],["!","Report issue"],["◉","Contact support"],["☎","Emergency"]].map(([i,l])=><button key={l} style={{border:"1px solid "+theme.colors.border,background:"#fff",borderRadius:15,padding:"13px 4px",fontSize:9,fontWeight:900,color:theme.colors.text}}><div style={{fontSize:20,color:theme.colors.primary,marginBottom:5}}>{i}</div>{l}</button>)}</div></section>
       <section style={{marginTop:24}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h2 style={{fontSize:18,margin:"0 4px 10px"}}>Recent activity</h2><Link href="/driver/trips" style={{color:theme.colors.primary,fontSize:10,fontWeight:900,textDecoration:"none"}}>View all</Link></div>{past.slice(0,3).map(renderCard)}</section>
       {reasonPrompt&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(13,27,42,.55)",display:"grid",placeItems:"center",padding:18}}><div style={{width:"min(430px,100%)",background:"#fff",borderRadius:18,padding:18,boxShadow:"0 20px 60px rgba(0,0,0,.25)"}}><h3 style={{margin:"0 0 6px",fontSize:16}}>Why is this trip late?</h3><p style={{margin:"0 0 12px",fontSize:11,color:theme.colors.textMuted}}>The system recorded this action after its scheduled time. Please select a clear operational reason.</p><textarea autoFocus value={reasonPrompt.reason||""} onChange={(e)=>setReasonPrompt((p)=>({...p,reason:e.target.value}))} rows={4} placeholder="Example: passenger requested a delayed departure" style={{width:"100%",boxSizing:"border-box",border:"1px solid #D8DEE8",borderRadius:10,padding:10,fontSize:12}}/><div style={{display:"flex",gap:8,marginTop:12}}><button onClick={()=>setReasonPrompt(null)} style={{flex:1,padding:10,borderRadius:10,border:"1px solid "+theme.colors.border,background:"#fff"}}>Cancel</button><button onClick={submitReason} style={{flex:1,padding:10,borderRadius:10,border:0,background:theme.colors.primary,color:"#fff",fontWeight:900}}>Continue</button></div></div></div>}
-    </div>{bottomNav}</main>
+    </div></DriverChrome>
 }
 }
