@@ -8,6 +8,7 @@ import { theme } from "../../../../shared/lib/theme";
 import LiveTripMap from "../../../../shared/components/LiveTripMap";
 import DriverNavigationMode from "../../components/DriverNavigationMode";
 import NotificationBell from "../../../../shared/components/NotificationBell";
+import DriverChrome from "../../components/DriverChrome";
 
 const ACTIVE_STATUSES = ["on_the_way", "arrived", "trip_started", "waiting_for_return", "return_trip_started"];
 const NAVIGATION_STATUSES = ["on_the_way", "trip_started", "return_trip_started"];
