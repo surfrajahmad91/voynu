@@ -1,4 +1,4 @@
-const CACHE_NAME = "voynu-saarthi-static-v7";
+const CACHE_NAME = "voynu-saarthi-static-v8";
 const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest", "/notification-badge.svg"];
 
 function notificationCopy(data) {
