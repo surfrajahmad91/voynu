@@ -56,7 +56,7 @@ function todayIndia() {
 export default function DriverPage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true), [driver, setDriver] = useState(null), [notADriver, setNotADriver] = useState(false);
-  const [bookings, setBookings] = useState([]), [commuteSubscriptions, setCommuteSubscriptions] = useState([]), [loading, setLoading] = useState(false), [error, setError] = useState("");
+  const [bookings, setBookings] = useState([]), [commuteSubscriptions, setCommuteSubscriptions] = useState([]), [assignmentStatuses, setAssignmentStatuses] = useState({}), [loading, setLoading] = useState(false), [error, setError] = useState("");
   const [locationStatus, setLocationStatus] = useState("Location tracking is off"), [driverLocation, setDriverLocation] = useState(null);
   const [navigationBookingId, setNavigationBookingId] = useState(null), [reasonPrompt, setReasonPrompt] = useState(null);
   const lastLocationSent = useRef(0), navigationDismissed = useRef(false);
@@ -65,14 +65,16 @@ export default function DriverPage() {
   const fetchBookings = async()=>{
   if(!driver)return;
   setLoading(true);
-  const [{data,error:e},{data:cs,error:ce}]=await Promise.all([
+  const [{data,error:e},{data:cs,error:ce},{data:as,error:ae}]=await Promise.all([
     supabase.from("bookings").select("*").eq("driver_id",driver.id).order("travel_date",{ascending:true}).order("pickup_time",{ascending:true}),
-    supabase.from("commute_subscriptions").select("id,plan_id,pickup_name,pickup_lat,pickup_lon,drop_name,drop_lat,drop_lon,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,payment_status,status,assigned_vehicle_id,subscription_plans(name,code),subscription_trips(trip_date,status,morning_booking_id,return_booking_id)").eq("assigned_driver_id",driver.id).order("start_date",{ascending:true})
+    supabase.from("commute_subscriptions").select("id,plan_id,pickup_name,pickup_lat,pickup_lon,drop_name,drop_lat,drop_lon,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,payment_status,status,assigned_vehicle_id,subscription_plans(name,code),subscription_trips(trip_date,status,morning_booking_id,return_booking_id)").eq("assigned_driver_id",driver.id).order("start_date",{ascending:true}),
+    supabase.rpc("get_driver_assignment_statuses")
   ]);
   setLoading(false);
-  if(e||ce){setError((e||ce).message);return;}
+  if(e||ce||ae){setError((e||ce||ae).message);return;}
   setBookings(data||[]);
   setCommuteSubscriptions(cs||[]);
+  setAssignmentStatuses(Object.fromEntries((as||[]).map((x)=>[x.booking_id,x.status])));
 };
   useEffect(()=>{fetchBookings();},[driver]);
   useEffect(()=>{ if(!driver)return; const channel=supabase.channel(`voynu-driver-bookings-${driver.id}`).on("postgres_changes",{event:"*",schema:"public",table:"bookings",filter:`driver_id=eq.${driver.id}`},()=>fetchBookings()).subscribe(); const subChannel=supabase.channel(`voynu-driver-commute-${driver.id}`).on("postgres_changes",{event:"*",schema:"public",table:"commute_subscriptions",filter:`assigned_driver_id=eq.${driver.id}`},()=>fetchBookings()).subscribe(); const id=setInterval(fetchBookings,10000); return()=>{clearInterval(id);supabase.removeChannel(channel);supabase.removeChannel(subChannel);}; },[driver]);
@@ -85,6 +87,13 @@ export default function DriverPage() {
     const watch=navigator.geolocation.watchPosition(async(pos)=>{ const point={lat:pos.coords.latitude,lon:pos.coords.longitude}; setDriverLocation(point); const now=Date.now(); if(now-lastLocationSent.current<5000)return; lastLocationSent.current=now; const {error:e}=await supabase.rpc("update_driver_location",{p_booking_id:activeTrip.id,p_lat:point.lat,p_lon:point.lon}); if(e)setLocationStatus(e.message); else setLocationStatus(`Live location updated ${new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}`); },(e)=>setLocationStatus(e.code===1?"Location permission is required for live tracking":"Unable to read device location"),{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
     return()=>navigator.geolocation.clearWatch(watch);
   },[driver,bookings]);
+
+  const acceptTrip = async (booking) => {
+    setError("");
+    const { data, error: e } = await supabase.rpc("accept_driver_booking", { p_booking_id: booking.id });
+    if (e) { setError(e.message); return; }
+    if (data) setAssignmentStatuses((prev) => ({ ...prev, [booking.id]: "accepted" }));
+  };
 
   const advance = async(booking, suppliedReason=null)=>{
     const step=nextStep(booking); if(!step)return;
@@ -108,7 +117,7 @@ export default function DriverPage() {
   if(activeNavigationBooking)return <div style={{position:"relative",width:"100vw",height:"100dvh"}}><DriverNavigationMode booking={activeNavigationBooking} driverLocation={driverLocation} targetType={navigationTargetType} onExit={exitNavigation} onComplete={()=>advance(activeNavigationBooking)} /></div>;
 
   const active=bookings.filter((b)=>ACTIVE_STATUSES.includes(b.booking_status));
-  const upcoming=bookings.filter((b)=>b.booking_status==="driver_assigned" && !commuteBookingIds.has(b.id));
+  const upcoming=bookings.filter((b)=>["driver_assigned","on_the_way","arrived","trip_started","waiting_for_return","return_trip_started"].includes(b.booking_status) && !commuteBookingIds.has(b.id));
   const past=bookings.filter((b)=>b.booking_status==="trip_completed" && !commuteBookingIds.has(b.id));
 
   const renderCard=(b)=>{const step=nextStep(b),status=statusColors[b.booking_status]||statusColors.driver_assigned;const isRound=b.trip_type==="roundtrip";const mapTarget=["trip_started"].includes(b.booking_status)?"destination":"pickup";return <article key={b.id} style={{padding:16,borderRadius:18,background:"#fff",border:`1px solid ${theme.colors.border}`,boxShadow:theme.shadow.card}}><div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",marginBottom:10}}><strong style={{fontSize:13}}>{formatDate(b)}</strong><span style={{padding:"4px 9px",borderRadius:20,fontSize:10,fontWeight:800,textTransform:"capitalize",background:status.bg,color:status.text}}>{b.booking_status.replace(/_/g," ")}</span></div><div style={{fontSize:13.5,fontWeight:700,lineHeight:1.6}}>📍 {b.pickup_name}<br/>🏁 {b.drop_name}</div><div style={{fontSize:11.5,color:theme.colors.textMuted,marginTop:8}}>{b.passenger_name} · {b.phone}<br/>{isRound?"Round Trip":"One Way"} · {b.vehicle_type} · ₹{b.fare}</div>{isRound&&<div style={{marginTop:10,padding:10,borderRadius:10,background:"#F3E8FF",color:"#6D28D9",fontSize:11,fontWeight:800}}>Return: {time(b.scheduled_return_start_at)} · Final arrival due: {time(b.scheduled_completion_at)}</div>}{ACTIVE_STATUSES.includes(b.booking_status)&&<div style={{marginTop:12}}><LiveTripMap pickup={{lat:b.pickup_lat,lon:b.pickup_lon}} destination={{lat:b.drop_lat,lon:b.drop_lon}} driverLocation={driverLocation} targetType={mapTarget} compact/><div style={{marginTop:7,fontSize:10,color:theme.colors.textFaint}}>Live GPS · current target: {mapTarget==="pickup"?"Pickup / return pickup":"Destination"}</div></div>}{b.booking_status==="waiting_for_return"&&<div style={{marginTop:10,padding:11,borderRadius:11,background:"#EEF2FF",color:"#4F46E5",fontSize:11.5,fontWeight:800}}>You are at the destination. Waiting for the scheduled return journey at {time(b.scheduled_return_start_at)}.</div>}{step&&<button onClick={()=>advance(b)} style={{width:"100%",minHeight:46,marginTop:12,border:0,borderRadius:12,background:theme.gradients.primary,color:"#fff",fontWeight:900,fontSize:13,cursor:"pointer"}}>{step.label}</button>}</article>;};
@@ -213,10 +222,15 @@ export default function DriverPage() {
           <article key={b.id} style={{padding:14,borderRadius:18,background:"#fff",border:"1px solid "+theme.colors.border,boxShadow:theme.shadow.card}}>
             <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center"}}>
               <strong style={{fontSize:12}}>{formatDate(b)}</strong>
-              <span style={{padding:"4px 8px",borderRadius:20,fontSize:9,fontWeight:900,background:"#E0EDF7",color:"#2563A8"}}>Assigned</span>
+              <span style={{padding:"4px 8px",borderRadius:20,fontSize:9,fontWeight:900,textTransform:"capitalize",background:(statusColors[b.booking_status]||statusColors.driver_assigned).bg,color:(statusColors[b.booking_status]||statusColors.driver_assigned).text}}>{b.booking_status.replace(/_/g," ")}</span>
             </div>
             <div style={{marginTop:8,fontSize:12.5,fontWeight:800,lineHeight:1.5}}>📍 {b.pickup_name}<br/>🏁 {b.drop_name}</div>
             <div style={{marginTop:7,fontSize:10.5,color:theme.colors.textMuted}}>{b.passenger_name || "Passenger"} · {b.passenger_count || 1} passenger{(b.passenger_count || 1) === 1 ? "" : "s"} · {b.trip_type === "roundtrip" ? "Round Trip" : "One Way"}</div>
+            {b.booking_status === "driver_assigned" && assignmentStatuses[b.id] !== "accepted" ? (
+              <button type="button" onClick={() => acceptTrip(b)} style={{width:"100%",minHeight:44,marginTop:11,border:0,borderRadius:12,background:theme.gradients.primary,color:"#fff",fontWeight:900,fontSize:12,cursor:"pointer"}}>Accept Trip →</button>
+            ) : nextStep(b) ? (
+              <button type="button" onClick={() => advance(b)} style={{width:"100%",minHeight:44,marginTop:11,border:0,borderRadius:12,background:theme.gradients.primary,color:"#fff",fontWeight:900,fontSize:12,cursor:"pointer"}}>{nextStep(b).label} →</button>
+            ) : null}
           </article>
         ))}</div> : <div style={{padding:16,borderRadius:18,background:"#fff",border:"1px solid "+theme.colors.border,color:theme.colors.textFaint,fontSize:11}}>No upcoming trips assigned right now.</div>}
       </section>
