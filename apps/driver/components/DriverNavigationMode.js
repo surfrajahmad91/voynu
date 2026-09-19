@@ -160,18 +160,23 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   useEffect(() => {
     // Clear any ETA from a previous leg (pickup -> destination) so it is never shown against the new target.
     setTrafficEtaText("");
-    setEtaMeta("");
-    if (!validPoint(target)) return;
+    setEtaMeta("v4 · starting ETA…");
+    if (!validPoint(target)) { setEtaMeta("v4 · no valid destination coordinates"); return; }
     let cancelled = false;
     let timer = null;
     const loadEta = async () => {
       const point = driverRef.current;
       if (!validPoint(point)) {
+        if (!cancelled) setEtaMeta("v4 · waiting for GPS fix");
         if (!cancelled) timer = window.setTimeout(loadEta, 3000);
         return;
       }
+      const controller = new AbortController();
+      const abortTimer = window.setTimeout(() => controller.abort(), 12000);
+      if (!cancelled) setEtaMeta((m) => (m && !m.startsWith("v4 · starting") ? m : "v4 · requesting ETA…"));
       try {
         const response = await fetch("/api/route-distance", {
+          signal: controller.signal,
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ origin: point, destination: target, purpose: "eta" }),
@@ -187,8 +192,8 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
           setEtaMeta(`ETA error: HTTP ${response.status} ${String(data?.error || (response.ok ? "no duration in response" : "")).slice(0, 90)}`);
         }
       } catch (err) {
-        if (!cancelled) setEtaMeta(`ETA request failed: ${String(err?.message || err).slice(0, 90)}`);
-      }
+        if (!cancelled) setEtaMeta(err?.name === "AbortError" ? "ETA request timed out (12s)" : `ETA request failed: ${String(err?.message || err).slice(0, 90)}`);
+      } finally { window.clearTimeout(abortTimer); }
       if (!cancelled) timer = window.setTimeout(loadEta, ETA_REFRESH_MS);
     };
     loadEta();
