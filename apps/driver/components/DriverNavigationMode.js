@@ -110,6 +110,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   const [viewportHeight, setViewportHeight] = useState(700);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [wakeLockActive, setWakeLockActive] = useState(false);
+  const [trafficEtaText, setTrafficEtaText] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const driverRef = useRef(driverLocation || null);
   const lastRouteRef = useRef({ point: null, target: null, at: 0 });
@@ -153,6 +154,32 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     document.addEventListener("visibilitychange", retryWakeLock);
     return () => document.removeEventListener("visibilitychange", retryWakeLock);
   }, []);
+
+  useEffect(() => {
+    if (!validPoint(target)) { setTrafficEtaText(""); return; }
+    let cancelled = false;
+    let timer = null;
+    const loadEta = async () => {
+      const point = driverRef.current;
+      if (!validPoint(point)) {
+        if (!cancelled) timer = window.setTimeout(loadEta, 60000);
+        return;
+      }
+      try {
+        const response = await fetch("/api/route-distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin: point, destination: target, purpose: "eta" }),
+          cache: "no-store",
+        });
+        const data = await response.json();
+        if (!cancelled && response.ok && data?.durationText) setTrafficEtaText(data.durationText);
+      } catch {}
+      if (!cancelled) timer = window.setTimeout(loadEta, 60000);
+    };
+    loadEta();
+    return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
+  }, [target?.lat, target?.lon]);
 
   useEffect(() => {
     if (!validPoint(driverPoint) || !validPoint(target)) { setRoute(null); setRouteStatus("waiting"); return; }
@@ -281,7 +308,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   const handleExit = async () => { window.speechSynthesis?.cancel?.(); await exitFullscreen(); onExit?.(); };
   const complete = async () => { window.speechSynthesis?.cancel?.(); await exitFullscreen(); onComplete?.(); };
 
-  const eta = route?.durationSeconds != null ? formatDuration(route.durationSeconds) : "—";
+  const eta = trafficEtaText || (route?.durationSeconds != null ? formatDuration(route.durationSeconds) : "—");
   const remaining = navigation ? formatDistance(navigation.remainingDistance) : "—";
   const nextDistance = navigation ? formatDistance(navigation.distanceToNext) : "—";
 
