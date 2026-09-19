@@ -112,6 +112,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [wakeLockActive, setWakeLockActive] = useState(false);
   const [trafficEtaText, setTrafficEtaText] = useState("");
+  const [etaMeta, setEtaMeta] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const driverRef = useRef(driverLocation || null);
   const lastRouteRef = useRef({ point: null, target: null, at: 0 });
@@ -159,6 +160,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   useEffect(() => {
     // Clear any ETA from a previous leg (pickup -> destination) so it is never shown against the new target.
     setTrafficEtaText("");
+    setEtaMeta("");
     if (!validPoint(target)) return;
     let cancelled = false;
     let timer = null;
@@ -176,7 +178,11 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
           cache: "no-store",
         });
         const data = await response.json();
-        if (!cancelled && response.ok && data?.durationText) setTrafficEtaText(data.durationText);
+        if (!cancelled && response.ok && data?.durationText) {
+          setTrafficEtaText(data.durationText);
+          const mins = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v) / 60) : "?");
+          setEtaMeta(`${data.routingPreference === "TRAFFIC_AWARE" ? "live" : "NO-TRAFFIC"} ${mins(data.durationSeconds)}m · free-flow ${mins(data.staticDurationSeconds)}m · ${Math.round(Number(data.distanceMeters || 0) / 100) / 10}km`);
+        }
       } catch {}
       if (!cancelled) timer = window.setTimeout(loadEta, ETA_REFRESH_MS);
     };
@@ -326,7 +332,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     <div style={{ position: "absolute", top: "max(12px, env(safe-area-inset-top))", left: 12, right: 12, display: "flex", justifyContent: "space-between", gap: 8, zIndex: 10, pointerEvents: "none" }}>
       <button onClick={handleExit} style={{ pointerEvents: "auto", border: 0, borderRadius: 18, background: "rgba(255,255,255,.96)", color: "#173126", padding: "10px 14px", fontWeight: 800, boxShadow: "0 3px 14px rgba(0,0,0,.16)", cursor: "pointer" }}>← Exit</button>
       <div style={{ borderRadius: 18, background: "rgba(11,135,80,.96)", color: "#fff", padding: "10px 14px", fontWeight: 850, boxShadow: "0 3px 14px rgba(0,0,0,.16)" }}>{targetType === "pickup" ? "Driver → Pickup" : "Driver → Destination"}</div>
-      <div style={{ borderRadius: 18, background: "rgba(255,255,255,.96)", color: "#205d42", padding: "10px 14px", fontWeight: 850, boxShadow: "0 3px 14px rgba(0,0,0,.16)" }}>ETA ~{eta}</div>
+      <div style={{ borderRadius: 18, background: "rgba(255,255,255,.96)", color: "#205d42", padding: "10px 14px", fontWeight: 850, boxShadow: "0 3px 14px rgba(0,0,0,.16)" }}>ETA ~{eta}{etaMeta ? <div style={{ fontSize: 9, fontWeight: 700, color: "#7b847f", marginTop: 2 }}>{etaMeta}</div> : null}</div>
     </div>
 
     <div style={{ position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 58px)", left: 12, right: 12, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
