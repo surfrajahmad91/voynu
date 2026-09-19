@@ -112,7 +112,6 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [wakeLockActive, setWakeLockActive] = useState(false);
   const [trafficEtaText, setTrafficEtaText] = useState("");
-  const [etaMeta, setEtaMeta] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const driverRef = useRef(driverLocation || null);
   const lastRouteRef = useRef({ point: null, target: null, at: 0 });
@@ -160,20 +159,18 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   useEffect(() => {
     // Clear any ETA from a previous leg (pickup -> destination) so it is never shown against the new target.
     setTrafficEtaText("");
-    setEtaMeta("v4 · starting ETA…");
-    if (!validPoint(target)) { setEtaMeta("v4 · no valid destination coordinates"); return; }
+    if (!validPoint(target)) return;
     let cancelled = false;
     let timer = null;
     const loadEta = async () => {
       const point = driverRef.current;
       if (!validPoint(point)) {
-        if (!cancelled) setEtaMeta("v4 · waiting for GPS fix");
         if (!cancelled) timer = window.setTimeout(loadEta, 3000);
         return;
       }
       const controller = new AbortController();
-      const abortTimer = window.setTimeout(() => controller.abort(), 12000);
-      if (!cancelled) setEtaMeta((m) => (m && !m.startsWith("v4 · starting") ? m : "v4 · requesting ETA…"));
+      const abortTimer = window.setTimeout(() => controller.abort(), 15000);
+      let ok = false;
       try {
         const response = await fetch("/api/route-distance", {
           signal: controller.signal,
@@ -187,14 +184,12 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
         if (cancelled) return;
         if (response.ok && data?.durationText) {
           setTrafficEtaText(data.durationText);
-          setEtaMeta(`${data.routingPreference === "TRAFFIC_AWARE" ? "live traffic" : "NO-TRAFFIC fallback"} · ${Math.round(Number(data.distanceMeters || 0) / 100) / 10} km`);
-        } else {
-          setEtaMeta(`ETA error: HTTP ${response.status} ${String(data?.error || (response.ok ? "no duration in response" : "")).slice(0, 90)}`);
+          ok = true;
         }
-      } catch (err) {
-        if (!cancelled) setEtaMeta(err?.name === "AbortError" ? "ETA request timed out (12s)" : `ETA request failed: ${String(err?.message || err).slice(0, 90)}`);
-      } finally { window.clearTimeout(abortTimer); }
-      if (!cancelled) timer = window.setTimeout(loadEta, ETA_REFRESH_MS);
+      } catch {}
+      finally { window.clearTimeout(abortTimer); }
+      // Poll the live position from driverRef (never restart on GPS ticks); retry sooner after a failure.
+      if (!cancelled) timer = window.setTimeout(loadEta, ok ? ETA_REFRESH_MS : 10000);
     };
     loadEta();
     return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
@@ -342,7 +337,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     <div style={{ position: "absolute", top: "max(12px, env(safe-area-inset-top))", left: 12, right: 12, display: "flex", justifyContent: "space-between", gap: 8, zIndex: 10, pointerEvents: "none" }}>
       <button onClick={handleExit} style={{ pointerEvents: "auto", border: 0, borderRadius: 18, background: "rgba(255,255,255,.96)", color: "#173126", padding: "10px 14px", fontWeight: 800, boxShadow: "0 3px 14px rgba(0,0,0,.16)", cursor: "pointer" }}>← Exit</button>
       <div style={{ borderRadius: 18, background: "rgba(11,135,80,.96)", color: "#fff", padding: "10px 14px", fontWeight: 850, boxShadow: "0 3px 14px rgba(0,0,0,.16)" }}>{targetType === "pickup" ? "Driver → Pickup" : "Driver → Destination"}</div>
-      <div style={{ borderRadius: 18, background: "rgba(255,255,255,.96)", color: "#205d42", padding: "10px 14px", fontWeight: 850, boxShadow: "0 3px 14px rgba(0,0,0,.16)" }}>ETA ~{eta}{etaMeta ? <div style={{ fontSize: 9, fontWeight: 700, color: "#7b847f", marginTop: 2 }}>{etaMeta}</div> : null}</div>
+      <div style={{ borderRadius: 18, background: "rgba(255,255,255,.96)", color: "#205d42", padding: "10px 14px", fontWeight: 850, boxShadow: "0 3px 14px rgba(0,0,0,.16)" }}>ETA ~{eta}</div>
     </div>
 
     <div style={{ position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 58px)", left: 12, right: 12, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
