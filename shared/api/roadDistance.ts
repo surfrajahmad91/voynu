@@ -12,7 +12,6 @@ export type RoadDistanceResult = {
   durationText: string;
   // Diagnostics: which Google routing mode actually produced this result, and the no-traffic duration for comparison.
   routingPreference?: "TRAFFIC_AWARE" | "TRAFFIC_UNAWARE";
-  staticDurationSeconds?: number | null;
 };
 
 const cache = new Map<string, { expiresAt: number; payload: RoadDistanceResult }>();
@@ -59,7 +58,7 @@ async function requestGoogleRoute(
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.staticDuration",
+        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
       },
       body: JSON.stringify({
         origin: { location: { latLng: { latitude: originLat, longitude: originLon } } },
@@ -150,7 +149,6 @@ export async function getRoadDistance(origin: Point, destination: Point): Promis
         durationSeconds,
         durationText: Number.isFinite(durationSeconds) ? formatDuration(durationSeconds as number) : "",
         routingPreference,
-        staticDurationSeconds: parseDurationSeconds(route.staticDuration),
       };
       if (routingPreference !== "TRAFFIC_AWARE") console.warn("VOYNU road-distance used TRAFFIC_UNAWARE fallback; last error:", lastError);
       cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
