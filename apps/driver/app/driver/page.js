@@ -113,6 +113,36 @@ export default function DriverPage() {
 
   const renderCard=(b)=>{const step=nextStep(b),status=statusColors[b.booking_status]||statusColors.driver_assigned;const isRound=b.trip_type==="roundtrip";const mapTarget=["trip_started"].includes(b.booking_status)?"destination":"pickup";return <article key={b.id} style={{padding:16,borderRadius:18,background:"#fff",border:`1px solid ${theme.colors.border}`,boxShadow:theme.shadow.card}}><div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",marginBottom:10}}><strong style={{fontSize:13}}>{formatDate(b)}</strong><span style={{padding:"4px 9px",borderRadius:20,fontSize:10,fontWeight:800,textTransform:"capitalize",background:status.bg,color:status.text}}>{b.booking_status.replace(/_/g," ")}</span></div><div style={{fontSize:13.5,fontWeight:700,lineHeight:1.6}}>📍 {b.pickup_name}<br/>🏁 {b.drop_name}</div><div style={{fontSize:11.5,color:theme.colors.textMuted,marginTop:8}}>{b.passenger_name} · {b.phone}<br/>{isRound?"Round Trip":"One Way"} · {b.vehicle_type} · ₹{b.fare}</div>{isRound&&<div style={{marginTop:10,padding:10,borderRadius:10,background:"#F3E8FF",color:"#6D28D9",fontSize:11,fontWeight:800}}>Return: {time(b.scheduled_return_start_at)} · Final arrival due: {time(b.scheduled_completion_at)}</div>}{ACTIVE_STATUSES.includes(b.booking_status)&&<div style={{marginTop:12}}><LiveTripMap pickup={{lat:b.pickup_lat,lon:b.pickup_lon}} destination={{lat:b.drop_lat,lon:b.drop_lon}} driverLocation={driverLocation} targetType={mapTarget} compact/><div style={{marginTop:7,fontSize:10,color:theme.colors.textFaint}}>Live GPS · current target: {mapTarget==="pickup"?"Pickup / return pickup":"Destination"}</div></div>}{b.booking_status==="waiting_for_return"&&<div style={{marginTop:10,padding:11,borderRadius:11,background:"#EEF2FF",color:"#4F46E5",fontSize:11.5,fontWeight:800}}>You are at the destination. Waiting for the scheduled return journey at {time(b.scheduled_return_start_at)}.</div>}{step&&<button onClick={()=>advance(b)} style={{width:"100%",minHeight:46,marginTop:12,border:0,borderRadius:12,background:theme.gradients.primary,color:"#fff",fontWeight:900,fontSize:13,cursor:"pointer"}}>{step.label}</button>}</article>;};
 
+  const openWhatsApp = (message) => window.open("https://wa.me/919918614844?text=" + encodeURIComponent(message), "_blank", "noopener,noreferrer");
+  const quickAction = async (action) => {
+    if (action === "support") {
+      openWhatsApp("Hi VOYNU, I need help with my Saarthi driver account.");
+      return;
+    }
+    if (action === "issue") {
+      openWhatsApp("Hi VOYNU, I want to report an issue from the Saarthi driver app.");
+      return;
+    }
+    if (action === "emergency") {
+      window.location.href = "tel:112";
+      return;
+    }
+    if (action === "charge") {
+      const openSearch = (lat, lon) => {
+        window.open("https://www.google.com/maps/search/?api=1&query=EV+charging+station+" + lat + "," + lon, "_blank", "noopener,noreferrer");
+      };
+      if (typeof navigator !== "undefined" && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => openSearch(pos.coords.latitude, pos.coords.longitude),
+          () => window.open("https://www.google.com/maps/search/?api=1&query=EV+charging+station", "_blank", "noopener,noreferrer"),
+          { enableHighAccuracy: false, timeout: 7000, maximumAge: 60000 }
+        );
+      } else {
+        window.open("https://www.google.com/maps/search/?api=1&query=EV+charging+station", "_blank", "noopener,noreferrer");
+      }
+    }
+  };
+
   const renderCommuteCard=(s)=>{
     const allTrips=(s.subscription_trips||[]).sort((a,b)=>String(a.trip_date).localeCompare(String(b.trip_date)));
     const serviceTrips=allTrips.filter((t)=>t.status!=="off" && t.status!=="cancelled");
@@ -173,8 +203,23 @@ export default function DriverPage() {
           <Link href="/driver/trips" style={{display:"block",padding:"12px 17px",borderTop:"1px solid "+theme.colors.border,textAlign:"center",color:theme.colors.primary,textDecoration:"none",fontSize:11,fontWeight:900}}>View subscription details →</Link>
         </article>;
       })}</div>:<div style={{padding:18,background:"#fff",borderRadius:18,color:theme.colors.textFaint,fontSize:12}}>No commute subscriptions assigned to you.</div>}
-      <section style={{marginTop:24}}><h2 style={{fontSize:18,margin:"0 4px 10px"}}>Quick actions</h2><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7}}>{[["ϟ","Fuel / Charge"],["!","Report issue"],["◉","Contact support"],["☎","Emergency"]].map(([i,l])=><button key={l} style={{border:"1px solid "+theme.colors.border,background:"#fff",borderRadius:15,padding:"13px 4px",fontSize:9,fontWeight:900,color:theme.colors.text}}><div style={{fontSize:20,color:theme.colors.primary,marginBottom:5}}>{i}</div>{l}</button>)}</div></section>
-      <section style={{marginTop:24}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h2 style={{fontSize:18,margin:"0 4px 10px"}}>Recent activity</h2><Link href="/driver/trips" style={{color:theme.colors.primary,fontSize:10,fontWeight:900,textDecoration:"none"}}>View all</Link></div>{past.slice(0,3).map(renderCard)}</section>
+      <section style={{marginTop:24}}><h2 style={{fontSize:18,margin:"0 4px 10px"}}>Quick actions</h2><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7}}>{[["ϟ","Fuel / Charge","charge"],["!","Report issue","issue"],["◉","Contact support","support"],["☎","Emergency","emergency"]].map(([i,l,a])=><button type="button" key={l} onClick={()=>quickAction(a)} style={{border:"1px solid "+theme.colors.border,background:"#fff",borderRadius:15,padding:"13px 4px",fontSize:9,fontWeight:900,color:theme.colors.text,cursor:"pointer"}}><div style={{fontSize:20,color:theme.colors.primary,marginBottom:5}}>{i}</div>{l}</button>)}</div></section>
+      <section style={{marginTop:24}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <h2 style={{fontSize:18,margin:"0 4px 10px"}}>Upcoming trips</h2>
+          <Link href="/driver/trips" style={{color:theme.colors.primary,fontSize:10,fontWeight:900,textDecoration:"none"}}>View all</Link>
+        </div>
+        {upcoming.length ? <div style={{display:"grid",gap:10}}>{upcoming.slice(0,3).map((b)=>(
+          <article key={b.id} style={{padding:14,borderRadius:18,background:"#fff",border:"1px solid "+theme.colors.border,boxShadow:theme.shadow.card}}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center"}}>
+              <strong style={{fontSize:12}}>{formatDate(b)}</strong>
+              <span style={{padding:"4px 8px",borderRadius:20,fontSize:9,fontWeight:900,background:"#E0EDF7",color:"#2563A8"}}>Assigned</span>
+            </div>
+            <div style={{marginTop:8,fontSize:12.5,fontWeight:800,lineHeight:1.5}}>📍 {b.pickup_name}<br/>🏁 {b.drop_name}</div>
+            <div style={{marginTop:7,fontSize:10.5,color:theme.colors.textMuted}}>{b.passenger_name || "Passenger"} · {b.passenger_count || 1} passenger{(b.passenger_count || 1) === 1 ? "" : "s"} · {b.trip_type === "roundtrip" ? "Round Trip" : "One Way"}</div>
+          </article>
+        ))}</div> : <div style={{padding:16,borderRadius:18,background:"#fff",border:"1px solid "+theme.colors.border,color:theme.colors.textFaint,fontSize:11}}>No upcoming trips assigned right now.</div>}
+      </section>
       {reasonPrompt&&<div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(13,27,42,.55)",display:"grid",placeItems:"center",padding:18}}><div style={{width:"min(430px,100%)",background:"#fff",borderRadius:18,padding:18,boxShadow:"0 20px 60px rgba(0,0,0,.25)"}}><h3 style={{margin:"0 0 6px",fontSize:16}}>Why is this trip late?</h3><p style={{margin:"0 0 12px",fontSize:11,color:theme.colors.textMuted}}>The system recorded this action after its scheduled time. Please select a clear operational reason.</p><textarea autoFocus value={reasonPrompt.reason||""} onChange={(e)=>setReasonPrompt((p)=>({...p,reason:e.target.value}))} rows={4} placeholder="Example: passenger requested a delayed departure" style={{width:"100%",boxSizing:"border-box",border:"1px solid #D8DEE8",borderRadius:10,padding:10,fontSize:12}}/><div style={{display:"flex",gap:8,marginTop:12}}><button onClick={()=>setReasonPrompt(null)} style={{flex:1,padding:10,borderRadius:10,border:"1px solid "+theme.colors.border,background:"#fff"}}>Cancel</button><button onClick={submitReason} style={{flex:1,padding:10,borderRadius:10,border:0,background:theme.colors.primary,color:"#fff",fontWeight:900}}>Continue</button></div></div></div>}
     </div></DriverChrome>
 }
