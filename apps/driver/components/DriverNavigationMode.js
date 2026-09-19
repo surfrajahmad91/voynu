@@ -179,7 +179,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     };
     loadEta();
     return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
-  }, [target?.lat, target?.lon]);
+  }, [driverPoint?.lat, driverPoint?.lon, target?.lat, target?.lon]);
 
   useEffect(() => {
     if (!validPoint(driverPoint) || !validPoint(target)) { setRoute(null); setRouteStatus("waiting"); return; }
@@ -308,7 +308,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   const handleExit = async () => { window.speechSynthesis?.cancel?.(); await exitFullscreen(); onExit?.(); };
   const complete = async () => { window.speechSynthesis?.cancel?.(); await exitFullscreen(); onComplete?.(); };
 
-  const eta = trafficEtaText || (route?.durationSeconds != null ? formatDuration(route.durationSeconds) : "—");
+  const eta = trafficEtaText || "Updating…";
   const remaining = navigation ? formatDistance(navigation.remainingDistance) : "—";
   const nextDistance = navigation ? formatDistance(navigation.distanceToNext) : "—";
 
