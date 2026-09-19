@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const TILE_SIZE = 256;
 const OSM = "https://tile.openstreetmap.org";
 const ROUTE_REFRESH_MS = 15000;
+const ETA_REFRESH_MS = 30000;
 const ROUTE_MOVE_THRESHOLD_KM = 0.05;
 
 function validPoint(point) {
@@ -156,13 +157,15 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
   }, []);
 
   useEffect(() => {
-    if (!validPoint(target)) { setTrafficEtaText(""); return; }
+    // Clear any ETA from a previous leg (pickup -> destination) so it is never shown against the new target.
+    setTrafficEtaText("");
+    if (!validPoint(target)) return;
     let cancelled = false;
     let timer = null;
     const loadEta = async () => {
       const point = driverRef.current;
       if (!validPoint(point)) {
-        if (!cancelled) timer = window.setTimeout(loadEta, 60000);
+        if (!cancelled) timer = window.setTimeout(loadEta, 3000);
         return;
       }
       try {
@@ -175,11 +178,11 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
         const data = await response.json();
         if (!cancelled && response.ok && data?.durationText) setTrafficEtaText(data.durationText);
       } catch {}
-      if (!cancelled) timer = window.setTimeout(loadEta, 60000);
+      if (!cancelled) timer = window.setTimeout(loadEta, ETA_REFRESH_MS);
     };
     loadEta();
     return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
-  }, [driverPoint?.lat, driverPoint?.lon, target?.lat, target?.lon]);
+  }, [target?.lat, target?.lon]);
 
   useEffect(() => {
     if (!validPoint(driverPoint) || !validPoint(target)) { setRoute(null); setRouteStatus("waiting"); return; }
