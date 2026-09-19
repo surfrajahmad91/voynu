@@ -177,13 +177,18 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
           body: JSON.stringify({ origin: point, destination: target, purpose: "eta" }),
           cache: "no-store",
         });
-        const data = await response.json();
-        if (!cancelled && response.ok && data?.durationText) {
+        let data = null;
+        try { data = await response.json(); } catch {}
+        if (cancelled) return;
+        if (response.ok && data?.durationText) {
           setTrafficEtaText(data.durationText);
-          const mins = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v) / 60) : "?");
-          setEtaMeta(`${data.routingPreference === "TRAFFIC_AWARE" ? "live" : "NO-TRAFFIC"} ${mins(data.durationSeconds)}m · free-flow ${mins(data.staticDurationSeconds)}m · ${Math.round(Number(data.distanceMeters || 0) / 100) / 10}km`);
+          setEtaMeta(`${data.routingPreference === "TRAFFIC_AWARE" ? "live traffic" : "NO-TRAFFIC fallback"} · ${Math.round(Number(data.distanceMeters || 0) / 100) / 10} km`);
+        } else {
+          setEtaMeta(`ETA error: HTTP ${response.status} ${String(data?.error || (response.ok ? "no duration in response" : "")).slice(0, 90)}`);
         }
-      } catch {}
+      } catch (err) {
+        if (!cancelled) setEtaMeta(`ETA request failed: ${String(err?.message || err).slice(0, 90)}`);
+      }
       if (!cancelled) timer = window.setTimeout(loadEta, ETA_REFRESH_MS);
     };
     loadEta();
