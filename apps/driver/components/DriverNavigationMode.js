@@ -104,7 +104,7 @@ function instructionFor(step, targetLabel) {
   return { title: road ? `Continue on ${road}` : "Continue ahead", detail: "Follow the highlighted route", arrow, key: `ahead-${road}` };
 }
 
-export default function DriverNavigationMode({ booking, driverLocation, targetType = "destination", onExit, onComplete, actionLabel = "Complete Trip", notice = "", onDismissNotice }) {
+export default function DriverNavigationMode({ booking, driverLocation, targetType = "destination", onExit, onComplete, actionLabel = "Complete Trip", notice = "", onDismissNotice, overlay = null }) {
   const [driverPoint, setDriverPoint] = useState(driverLocation || null);
   const [route, setRoute] = useState(null);
   const [routeStatus, setRouteStatus] = useState("waiting");
@@ -365,6 +365,8 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     </div>
 
     {notice ? <div style={{ position: "absolute", left: 12, right: 12, top: "calc(max(12px, env(safe-area-inset-top)) + 100px)", zIndex: 30, background: "#fff1f0", color: "#a12622", border: "1px solid #f3c1bd", borderRadius: 14, padding: "11px 13px", fontSize: 13, fontWeight: 800, boxShadow: "0 6px 22px rgba(0,0,0,.18)", display: "flex", gap: 10, alignItems: "flex-start" }}><span style={{ flex: 1 }}>{notice}</span>{onDismissNotice && <button onClick={onDismissNotice} style={{ border: 0, background: "transparent", color: "#a12622", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>×</button>}</div> : null}
+
+    {overlay}
 
     <div style={{ position: "absolute", left: 10, bottom: "calc(70px + env(safe-area-inset-bottom))", background: "rgba(255,255,255,.88)", borderRadius: 8, padding: "3px 6px", fontSize: 9.5, color: "#555", zIndex: 13 }}>© OpenStreetMap contributors</div>
   </div>;
