@@ -53,7 +53,7 @@ export default function TripActionSheet({ sheet, busy, error, onCancel, onConfir
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(13,27,42,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(13,27,42,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div style={{ width: "min(520px,100%)", maxHeight: "92dvh", overflowY: "auto", background: "#fff", borderRadius: "22px 22px 0 0", padding: "18px 18px 22px", boxShadow: "0 -20px 60px rgba(0,0,0,.25)", fontFamily: theme.fontFamily }}>
         <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1, color: theme.colors.primary, textTransform: "uppercase" }}>{step?.label}</div>
         <h3 style={{ margin: "4px 0 10px", fontSize: 18 }}>{needsReason ? "Quick note needed" : "Confirm payment"}</h3>
