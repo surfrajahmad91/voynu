@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { distanceMeters } from "../lib/tripWorkflow";
 
 const TILE_SIZE = 256;
 const OSM = "https://tile.openstreetmap.org";
@@ -103,7 +104,7 @@ function instructionFor(step, targetLabel) {
   return { title: road ? `Continue on ${road}` : "Continue ahead", detail: "Follow the highlighted route", arrow, key: `ahead-${road}` };
 }
 
-export default function DriverNavigationMode({ booking, driverLocation, targetType = "destination", onExit, onComplete }) {
+export default function DriverNavigationMode({ booking, driverLocation, targetType = "destination", onExit, onComplete, actionLabel = "Complete Trip", notice = "", onDismissNotice }) {
   const [driverPoint, setDriverPoint] = useState(driverLocation || null);
   const [route, setRoute] = useState(null);
   const [routeStatus, setRouteStatus] = useState("waiting");
@@ -122,6 +123,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
 
   const target = targetType === "pickup" ? { lat: booking.pickup_lat, lon: booking.pickup_lon } : { lat: booking.drop_lat, lon: booking.drop_lon };
   const targetLabel = targetType === "pickup" ? "Pickup" : "Destination";
+  const toTargetM = distanceMeters(driverLocation, target);
 
   useEffect(() => {
     const measure = () => { setWidth(Math.max(300, window.innerWidth)); setViewportHeight(Math.max(420, window.innerHeight)); };
@@ -342,6 +344,7 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
 
     <div style={{ position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 58px)", left: 12, right: 12, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
       <div style={{ background: "rgba(255,255,255,.92)", borderRadius: 14, padding: "7px 10px", color: "#5e6963", fontSize: 11, fontWeight: 800 }}>Zoom {zoom} · GPS navigation</div>
+      {toTargetM !== null && <div style={{ background: "rgba(255,255,255,.92)", borderRadius: 14, padding: "7px 10px", color: toTargetM < 500 ? "#0b8750" : "#5e6963", fontSize: 11, fontWeight: 850 }}>{formatDistance(toTargetM)} to {targetLabel.toLowerCase()}</div>}
       <div style={{ background: "rgba(255,255,255,.92)", borderRadius: 14, padding: "7px 10px", color: wakeLockActive ? "#0b8750" : "#7b847f", fontSize: 11, fontWeight: 800 }}>{wakeLockActive ? "Screen awake" : "Screen wake unavailable"}</div>
     </div>
 
@@ -358,8 +361,10 @@ export default function DriverNavigationMode({ booking, driverLocation, targetTy
     <div style={{ position: "absolute", left: 12, right: 12, bottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 14, display: "flex", gap: 8 }}>
       <button onClick={handleVoiceToggle} style={{ flex: 1, minHeight: 48, borderRadius: 15, border: "1px solid #dce6df", background: "rgba(255,255,255,.97)", color: "#205d42", fontWeight: 850, fontSize: 13, cursor: "pointer" }}>{voiceEnabled ? "🔊 Voice on" : "🔇 Voice off"}</button>
       {!isFullscreen && <button onClick={enterFullscreen} style={{ flex: 1, minHeight: 48, borderRadius: 15, border: "1px solid #dce6df", background: "rgba(255,255,255,.97)", color: "#205d42", fontWeight: 850, fontSize: 13, cursor: "pointer" }}>⛶ Full screen</button>}
-      <button onClick={complete} style={{ flex: 1.5, minHeight: 48, border: 0, borderRadius: 15, background: "#08783f", color: "#fff", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>Complete Trip</button>
+      <button onClick={complete} style={{ flex: 1.5, minHeight: 48, border: 0, borderRadius: 15, background: "#08783f", color: "#fff", fontWeight: 900, fontSize: 12.5, lineHeight: 1.15, cursor: "pointer" }}>{actionLabel}</button>
     </div>
+
+    {notice ? <div style={{ position: "absolute", left: 12, right: 12, top: "calc(max(12px, env(safe-area-inset-top)) + 100px)", zIndex: 30, background: "#fff1f0", color: "#a12622", border: "1px solid #f3c1bd", borderRadius: 14, padding: "11px 13px", fontSize: 13, fontWeight: 800, boxShadow: "0 6px 22px rgba(0,0,0,.18)", display: "flex", gap: 10, alignItems: "flex-start" }}><span style={{ flex: 1 }}>{notice}</span>{onDismissNotice && <button onClick={onDismissNotice} style={{ border: 0, background: "transparent", color: "#a12622", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>×</button>}</div> : null}
 
     <div style={{ position: "absolute", left: 10, bottom: "calc(70px + env(safe-area-inset-bottom))", background: "rgba(255,255,255,.88)", borderRadius: 8, padding: "3px 6px", fontSize: 9.5, color: "#555", zIndex: 13 }}>© OpenStreetMap contributors</div>
   </div>;
