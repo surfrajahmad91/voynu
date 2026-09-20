@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabaseClient";
 import { theme } from "../lib/theme";
 
 const NOTIFICATION_TYPES = {
-  customer: ["booking_created", "booking_confirmed", "driver_assigned", "driver_on_the_way", "driver_arrived", "trip_started", "trip_completed", "booking_cancelled"],
+  customer: ["booking_created", "booking_confirmed", "driver_assigned", "driver_on_the_way", "driver_arrived", "trip_started", "trip_waiting_for_return", "return_trip_started", "trip_completed", "booking_cancelled"],
   driver: ["driver_trip_assigned"],
   admin: ["admin_booking_created"],
 };
@@ -56,6 +56,10 @@ function notificationCopy(notification) {
       return { title: "Driver Has Arrived", message: `Your driver has arrived for booking ${reference}.` };
     case "trip_started":
       return { title: "Trip Started", message: `Your journey for booking ${reference} has started.` };
+    case "trip_waiting_for_return":
+      return { title: "Reached Your Destination", message: `You have reached your destination for booking ${reference}. Your driver will wait for the return journey.` };
+    case "return_trip_started":
+      return { title: "Return Journey Started", message: `Your return journey for booking ${reference} has started.` };
     case "trip_completed":
       return { title: "Trip Completed", message: `Your journey for booking ${reference} has been completed. Thank you for riding with VOYNU.` };
     case "booking_cancelled":
