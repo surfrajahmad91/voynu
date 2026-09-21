@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation";
 import {supabase} from "../../../../shared/lib/supabaseClient";
 import { isAdminUser } from "../../lib/admin";
 
-const ACTIVE=["driver_assigned","on_the_way","arrived","trip_started","waiting_for_return","return_trip_started"];
+const ACTIVE=["on_the_way","arrived","trip_started","waiting_for_return","return_trip_started"]; // "live" = a driver is engaged on the trip; assigned-for-later trips are not live
 const shortId=id=>id?id.slice(0,8).toUpperCase():"—";
 const short=v=>v?v.split(",")[0].trim()||v:"—";
 const money=v=>Number(v||0).toLocaleString("en-IN");
