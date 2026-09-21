@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "../../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 
 const button = { padding: "9px 14px", borderRadius: 7, border: "1px solid #d9e0dc", background: "#fff", fontFamily: "ui-monospace,monospace", fontWeight: 700, fontSize: 12, cursor: "pointer" };
 const primary = { ...button, background: "#173c2b", color: "#fff", borderColor: "#173c2b" };
@@ -17,6 +17,8 @@ export default function DispatchPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [pick, setPick] = useState({});
+  const [loadedAt, setLoadedAt] = useState(null);
 
   const load = async () => {
     setError("");
@@ -31,6 +33,7 @@ export default function DispatchPage() {
     setMode(setting?.mode || "manual");
     setBookings(bs || []);
     setDrivers(ds || []);
+    setLoadedAt(new Date());
   };
 
   useEffect(() => {
@@ -38,10 +41,19 @@ export default function DispatchPage() {
       const { data } = await supabase.auth.getSession();
       const email = data?.session?.user?.email || "";
       if (!data?.session) { window.location.href = "/login"; return; }
-      if (!ADMIN_EMAILS.includes(email)) { setChecking(false); return; }
+      if (!(await isAdminUser(email))) { setChecking(false); return; }
       setAuthorized(true); setChecking(false); await load();
     })();
   }, []);
+
+  // keep the queue fresh while the tab is open (new confirmed bookings appear without a manual reload)
+  useEffect(() => {
+    if (!authorized) return undefined;
+    const tick = () => { if (!document.hidden && !busy) load(); };
+    const id = setInterval(tick, 20000);
+    document.addEventListener("visibilitychange", tick);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", tick); };
+  }, [authorized, busy]);
 
   const setDispatchMode = async (next) => {
     setBusy(true); setError(""); setMessage("");
@@ -64,6 +76,17 @@ export default function DispatchPage() {
     return data;
   };
 
+  const manualAssign = async (booking) => {
+    const driver = drivers.find((d) => d.id === pick[booking.id]);
+    if (!driver?.vehicle_id) return setError("Choose a driver who has an active assigned vehicle.");
+    setBusy(true); setError(""); setMessage("");
+    const { error: e } = await supabase.rpc("assign_booking_driver", { p_booking_id: booking.id, p_driver_id: driver.id, p_vehicle_id: driver.vehicle_id });
+    setBusy(false);
+    if (e) return setError(e.message.replace(/^VOYNU:\s*/, ""));
+    setMessage(`${driver.full_name} assigned to #${booking.id.slice(0, 8).toUpperCase()}.`);
+    await load();
+  };
+
   const assignableDrivers = drivers.filter((d) => d.availability_status === "available" && d.vehicle_id && d.vehicles?.active !== false && d.vehicles?.status === "active");
   const unavailableWithoutVehicle = drivers.filter((d) => d.availability_status === "available" && (!d.vehicle_id || !d.vehicles || d.vehicles.active === false || d.vehicles.status !== "active"));
 
@@ -72,7 +95,7 @@ export default function DispatchPage() {
 
   return <main style={{ minHeight: "100vh", background: "#f4f6f5", color: "#1d2b24", fontFamily: "ui-monospace,monospace", padding: 18 }}>
     <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 18 }}><div><h1 style={{ margin: 0, fontSize: 22 }}>VOYNU DISPATCH</h1><p style={{ margin: "5px 0", color: "#66756d", fontSize: 12 }}>Manual or automatic driver assignment. A driver must have an assigned active vehicle.</p></div><Link href="/admin" style={{ ...button, textDecoration: "none" }}>ADMIN DASHBOARD</Link></div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 18 }}><div><h1 style={{ margin: 0, fontSize: 22 }}>VOYNU DISPATCH</h1><p style={{ margin: "5px 0", color: "#66756d", fontSize: 12 }}>Manual or automatic driver assignment. A driver must have an assigned active vehicle.</p></div><div style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ fontSize: 10, color: "#66756d" }}>{loadedAt ? `Updated ${loadedAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` : ""}</span><button disabled={busy} onClick={load} style={button}>REFRESH</button><Link href="/admin" style={{ ...button, textDecoration: "none" }}>ADMIN DASHBOARD</Link></div></div>
       {message && <div style={{ padding: 11, background: "#eaf5ed", border: "1px solid #cfe3d4", borderRadius: 7, marginBottom: 12, fontSize: 12 }}>{message}</div>}
       {error && <div style={{ padding: 11, background: "#fff0f0", border: "1px solid #e5caca", borderRadius: 7, marginBottom: 12, color: "#a22", fontSize: 12 }}>{error}</div>}
       <section style={{ background: "#fff", border: "1px solid #d9e0dc", borderRadius: 9, padding: 16, marginBottom: 12 }}>
@@ -80,7 +103,7 @@ export default function DispatchPage() {
       </section>
       <section style={{ background: "#fff", border: "1px solid #d9e0dc", borderRadius: 9, padding: 16 }}>
         <h2 style={{ margin: "0 0 12px", fontSize: 15 }}>Confirmed bookings awaiting assignment</h2>
-        {bookings.length === 0 ? <p style={{ color: "#66756d", fontSize: 12 }}>No confirmed bookings are currently awaiting assignment.</p> : bookings.map(b => <div key={b.id} style={{ borderTop: "1px solid #edf0ee", padding: "12px 0", display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}><div><strong>#{b.id.slice(0, 8).toUpperCase()}</strong> · {b.pickup_name} → {b.drop_name}<div style={{ color: "#66756d", fontSize: 11, marginTop: 4 }}>{b.travel_date} {b.pickup_time} · {b.vehicle_type} · {b.passenger_count} passenger(s) · {b.luggage_count} luggage · payment: {b.payment_method}/{b.payment_status}</div></div><button disabled={busy || mode !== "automatic"} onClick={() => autoAssign(b)} style={primary}>{mode === "automatic" ? "AUTO ASSIGN" : "AUTO OFF"}</button></div>)}
+        {bookings.length === 0 ? <p style={{ color: "#66756d", fontSize: 12 }}>No confirmed bookings are currently awaiting assignment.</p> : bookings.map(b => <div key={b.id} style={{ borderTop: "1px solid #edf0ee", padding: "12px 0", display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}><div><strong>#{b.id.slice(0, 8).toUpperCase()}</strong> · {b.pickup_name} → {b.drop_name}<div style={{ color: "#66756d", fontSize: 11, marginTop: 4 }}>{b.travel_date} {b.pickup_time} · {b.vehicle_type} · {b.passenger_count} passenger(s) · {b.luggage_count} luggage · payment: {b.payment_method}/{b.payment_status}</div></div><div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}><select value={pick[b.id] || ""} onChange={(e) => setPick((prev) => ({ ...prev, [b.id]: e.target.value }))} style={{ ...button, fontWeight: 600, maxWidth: 220 }}><option value="">Choose driver…</option>{assignableDrivers.map((d) => <option key={d.id} value={d.id}>{d.full_name} · {d.vehicles?.registration_number || "—"}</option>)}</select><button disabled={busy || !pick[b.id]} onClick={() => manualAssign(b)} style={primary}>ASSIGN</button><button disabled={busy || mode !== "automatic"} onClick={() => autoAssign(b)} style={button} title={mode === "automatic" ? "Let the dispatcher pick" : "Turn automatic dispatch on to use this"}>AUTO</button></div></div>)}
       </section>
       <section style={{ marginTop: 12, background: "#fff", border: "1px solid #d9e0dc", borderRadius: 9, padding: 16 }}><h2 style={{ margin: "0 0 10px", fontSize: 15 }}>Available drivers with an active vehicle</h2>{assignableDrivers.map(d => <div key={d.id} style={{ padding: "7px 0", borderTop: "1px solid #edf0ee", fontSize: 12 }}>{d.full_name} · {d.vehicles?.registration_number} · {d.vehicles?.category || "—"}</div>)}{assignableDrivers.length === 0 && <p style={{ color: "#66756d", fontSize: 12 }}>No drivers are currently eligible for assignment.</p>}{unavailableWithoutVehicle.length > 0 && <div style={{ marginTop: 12, padding: 10, borderRadius: 7, background: "#fff7e8", color: "#8a5700", fontSize: 11 }}>{unavailableWithoutVehicle.length} available driver(s) are excluded because they do not have an active assigned vehicle.</div>}</section>
     </div>
