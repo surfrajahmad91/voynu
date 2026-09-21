@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "../../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 import { theme } from "../../../../../shared/lib/theme";
 import AdminLiveMap from "../../../components/AdminLiveMap";
 
@@ -13,7 +13,7 @@ const timeOnly = (value) => value ? new Date(value).toLocaleTimeString("en-IN", 
 const ref = (id) => id ? `VOY-${id.slice(0, 8).toUpperCase()}` : "—";
 const pretty = (value) => String(value || "").replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
 
-const cashIssue = (b) => b.payment_method === "cash" && b.booking_status === "trip_completed" && b.cash_collection_status !== "collected";
+const cashIssue = (b) => b.payment_method === "cash" && b.booking_status === "trip_completed" && ["partial", "not_collected", "unreported"].includes(b.cash_collection_status);
 function delayText(minutes) { const n = Number(minutes); return Number.isFinite(n) && n > 0 ? `${n} min late` : "On time"; }
 
 export default function TripMonitorPage() {
@@ -23,12 +23,13 @@ export default function TripMonitorPage() {
 
   const load = async (runWatchdog = true) => {
     setError("");
+    const recentCutoff = new Date(Date.now() - 7 * 86400000).toISOString(); // completed trips older than a week are history, not "live"; keep the query bounded
     if (runWatchdog) {
       const { error: watchdogError } = await supabase.rpc("check_trip_timing_alerts");
       if (watchdogError) setError(watchdogError.message);
     }
     const [{ data: bs, error: be }, { data: as, error: ae }, { data: ds, error: de }] = await Promise.all([
-      supabase.from("bookings").select("id,booking_status,travel_date,pickup_time,return_date,return_time,passenger_name,pickup_name,pickup_lat,pickup_lon,drop_name,drop_lat,drop_lon,driver_id,vehicle_id,vehicle_type,trip_type,fare,scheduled_pickup_at,scheduled_return_start_at,scheduled_completion_at,expected_duration_seconds,trip_started_at,trip_start_on_time,trip_start_delay_minutes,trip_start_delay_reason,outbound_arrived_at,return_wait_started_at,return_trip_started_at,return_trip_start_on_time,return_trip_start_delay_minutes,return_trip_start_delay_reason,completed_at,trip_completion_on_time,trip_completion_delay_minutes,trip_completion_delay_reason,outbound_arrival_delay_reason,payment_method,payment_status,cash_collection_status,cash_collected_amount,cash_collection_note,cash_collected_at").in("booking_status", [...ACTIVE, "trip_completed"]).order("scheduled_pickup_at", { ascending: true, nullsFirst: false }),
+      supabase.from("bookings").select("id,booking_status,travel_date,pickup_time,return_date,return_time,passenger_name,pickup_name,pickup_lat,pickup_lon,drop_name,drop_lat,drop_lon,driver_id,vehicle_id,vehicle_type,trip_type,fare,scheduled_pickup_at,scheduled_return_start_at,scheduled_completion_at,expected_duration_seconds,trip_started_at,trip_start_on_time,trip_start_delay_minutes,trip_start_delay_reason,outbound_arrived_at,return_wait_started_at,return_trip_started_at,return_trip_start_on_time,return_trip_start_delay_minutes,return_trip_start_delay_reason,completed_at,trip_completion_on_time,trip_completion_delay_minutes,trip_completion_delay_reason,outbound_arrival_delay_reason,payment_method,payment_status,cash_collection_status,cash_collected_amount,cash_collection_note,cash_collected_at").or(`booking_status.in.(${ACTIVE.join(",")}),and(booking_status.eq.trip_completed,completed_at.gte.${recentCutoff})`).order("scheduled_pickup_at", { ascending: true, nullsFirst: false }),
       supabase.rpc("get_trip_timing_alerts"),
       supabase.from("drivers").select("id,full_name,phone,vehicle_id,availability_status,active,vehicles(registration_number,make,model,category)").eq("active", true),
     ]);
@@ -44,7 +45,7 @@ export default function TripMonitorPage() {
     setLastCheck(new Date());
   };
 
-  useEffect(() => { let cancelled = false; (async () => { const { data } = await supabase.auth.getSession(); const email = data?.session?.user?.email || ""; if (!data?.session) { window.location.href = "/login"; return; } if (!ADMIN_EMAILS.includes(email)) { setChecking(false); return; } if (!cancelled) { setAuthorized(true); setChecking(false); } })(); return () => { cancelled = true; }; }, []);
+  useEffect(() => { let cancelled = false; (async () => { const { data } = await supabase.auth.getSession(); const email = data?.session?.user?.email || ""; if (!data?.session) { window.location.href = "/login"; return; } if (!(await isAdminUser(email))) { setChecking(false); return; } if (!cancelled) { setAuthorized(true); setChecking(false); } })(); return () => { cancelled = true; }; }, []);
   useEffect(() => { if (!authorized) return; load(true); const timer = setInterval(() => load(true), 15000); const refresh = () => { if (document.visibilityState === "visible") load(true); }; window.addEventListener("focus", refresh); document.addEventListener("visibilitychange", refresh); return () => { clearInterval(timer); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); }; }, [authorized]);
 
   const metrics = useMemo(() => ({
@@ -90,7 +91,7 @@ export default function TripMonitorPage() {
           <div><div className="opsLabel">Final arrival actual</div><strong>{fmt(b.completed_at)}</strong>{lateCompletion && <div className="opsLate">{delayText(b.trip_completion_delay_minutes)}</div>}</div>
         </div>
         <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: "#F8FAFC", border: "1px solid #EEF3F7" }}><div style={{ fontSize: 10, color: theme.colors.textFaint, fontWeight: 900, textTransform: "uppercase" }}>Driver & vehicle</div><div style={{ marginTop: 5, fontWeight: 800 }}>{driver?.full_name || "Not assigned"}</div><div style={{ marginTop: 3, color: theme.colors.textMuted, fontSize: 11 }}>{driver?.vehicles ? `${driver.vehicles.registration_number} · ${driver.vehicles.make || ""} ${driver.vehicles.model || ""}` : "No vehicle data"}{location?.updated_at ? ` · GPS ${timeOnly(location.updated_at)}` : " · GPS unavailable"}</div></div>
-        {b.payment_method === "cash" && b.booking_status === "trip_completed" && <div className="reasonLine" style={{ marginTop: 10, background: b.cash_collection_status === "collected" ? "#EAFBF2" : "#fff1f0" }}><b>Cash:</b> {b.cash_collection_status === "collected" ? `Collected ₹${b.cash_collected_amount ?? b.fare} of ₹${b.fare}` : b.cash_collection_status === "partial" ? `Part payment ₹${b.cash_collected_amount} of ₹${b.fare} — ${b.cash_collection_note || "no note"}` : b.cash_collection_status === "not_collected" ? `Not collected (₹${b.fare} due) — ${b.cash_collection_note || "no note"}` : `Driver did not report the collection (₹${b.fare} due)`}</div>}
+        {b.payment_method === "cash" && b.booking_status === "trip_completed" && <div className="reasonLine" style={{ marginTop: 10, background: b.cash_collection_status === "collected" ? "#EAFBF2" : b.cash_collection_status ? "#fff1f0" : "#F3F7FA" }}><b>Cash:</b> {b.cash_collection_status === "collected" ? `Collected ₹${b.cash_collected_amount ?? b.fare} of ₹${b.fare}` : b.cash_collection_status === "partial" ? `Part payment ₹${b.cash_collected_amount} of ₹${b.fare} — ${b.cash_collection_note || "no note"}` : b.cash_collection_status === "not_collected" ? `Not collected (₹${b.fare} due) — ${b.cash_collection_note || "no note"}` : b.cash_collection_status === "unreported" ? `Driver did not report the collection (₹${b.fare} due)` : "Not recorded (completed before cash tracking)"}</div>}
         {(lateStart || lateReturn || lateCompletion || b.outbound_arrival_delay_reason) && <div style={{ marginTop: 10, display: "grid", gap: 5 }}>{b.outbound_arrival_delay_reason && <div className="reasonLine"><b>Late reaching destination:</b> {b.outbound_arrival_delay_reason}</div>}{lateStart && <div className="reasonLine"><b>Outbound delay:</b> {b.trip_start_delay_reason || "Reason not recorded"}</div>}{lateReturn && <div className="reasonLine"><b>Return delay:</b> {b.return_trip_start_delay_reason || "Reason not recorded"}</div>}{lateCompletion && <div className="reasonLine"><b>Final arrival delay:</b> {b.trip_completion_delay_reason || "Reason not recorded"}</div>}</div>}
         {related.length > 0 && <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: "#fff7e8", color: "#8a5700", fontSize: 11, fontWeight: 800 }}>{related.map((a) => <div key={a.id} style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}><span>{a.alert_type === "start_overdue" ? "Outbound trip has not started." : a.alert_type === "return_start_overdue" ? "Return trip has not started." : "Final arrival is overdue."}</span><button onClick={() => acknowledge(a)} style={{ border: 0, background: "transparent", color: "#6D28D9", fontWeight: 900 }}>Acknowledge</button></div>)}</div>}
         </div>
