@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { supabase } from "../../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 import { theme } from "../../../../../shared/lib/theme";
 
 const EMPTY_FORM = {
@@ -51,7 +51,7 @@ export default function VehicleCategoriesAdminPage() {
         return;
       }
 
-      if (!ADMIN_EMAILS.includes(email)) {
+      if (!(await isAdminUser(email))) {
         if (!cancelled) {
           setAuthorized(false);
           setChecking(false);
