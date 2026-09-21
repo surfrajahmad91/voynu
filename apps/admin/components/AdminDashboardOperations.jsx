@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../lib/admin";
+import { isAdminUser } from "../lib/admin";
 import { theme } from "../../../shared/lib/theme";
 
 const ACTIVE_STATUSES = ["confirmed", "driver_assigned", "on_the_way", "arrived", "trip_started"];
@@ -36,13 +36,14 @@ export default function AdminDashboardOperations() {
       supabase
         .from("bookings")
         .select("id,booking_status,passenger_name,pickup_name,drop_name,driver_id,vehicle_id,scheduled_pickup_at,scheduled_completion_at,trip_started_at,trip_start_on_time,trip_start_delay_minutes,completed_at,trip_completion_on_time,trip_completion_delay_minutes")
-        .in("booking_status", [...ACTIVE_STATUSES, "trip_completed"])
+        .or(`booking_status.in.(${ACTIVE_STATUSES.join(",")}),and(booking_status.eq.trip_completed,completed_at.gte.${new Date(Date.now() - 7 * 86400000).toISOString()})`)
         .order("scheduled_pickup_at", { ascending: true, nullsFirst: false }),
       supabase
         .from("trip_timing_alerts")
         .select("id,booking_id,alert_type,threshold_minutes,created_at,acknowledged_at")
         .is("acknowledged_at", null)
-        .order("created_at", { ascending: false }),
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
 
     if (be) setError(be.message);
@@ -58,7 +59,7 @@ export default function AdminDashboardOperations() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       const email = data?.session?.user?.email || "";
-      if (!data?.session || !ADMIN_EMAILS.includes(email)) return;
+      if (!data?.session || !(await isAdminUser(email))) return;
       if (!cancelled) setAuthorized(true);
     })();
     return () => { cancelled = true; };
