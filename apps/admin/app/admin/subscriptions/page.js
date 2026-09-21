@@ -4,7 +4,7 @@ import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {supabase} from "../../../../../shared/lib/supabaseClient";
-import {ADMIN_EMAILS} from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 
 const money=v=>Number(v||0).toLocaleString("en-IN");
 const statusText=v=>String(v||"pending").replace(/_/g," ");
@@ -45,7 +45,7 @@ export default function SubscriptionAdminPage(){
  useEffect(()=>{(async()=>{
   const{data}=await supabase.auth.getSession();const email=data?.session?.user?.email||"";
   if(!data?.session){router.replace("/login");return}
-  setAuthorized(ADMIN_EMAILS.includes(email));setChecking(false);
+  setAuthorized((await isAdminUser(email)));setChecking(false);
  })()},[router]);
  useEffect(()=>{if(authorized)load()},[authorized]);
 
