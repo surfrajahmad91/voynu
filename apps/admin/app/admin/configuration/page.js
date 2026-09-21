@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 import { theme } from "../../../../../shared/lib/theme";
 
 const AREAS = [
@@ -27,7 +27,7 @@ export default function ConfigurationPage() {
       const { data } = await supabase.auth.getSession();
       const email = data?.session?.user?.email || "";
       if (!data?.session) return router.replace("/login");
-      if (!ADMIN_EMAILS.includes(email)) return setChecking(false);
+      if (!(await isAdminUser(email))) return setChecking(false);
       if (!cancelled) { setAuthorized(true); setChecking(false); }
     })();
     return () => { cancelled = true; };
