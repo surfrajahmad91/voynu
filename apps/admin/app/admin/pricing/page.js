@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 import { theme } from "../../../../../shared/lib/theme";
 
 const emptyRule = () => ({ base_fare: 0, per_km_rate: 0, driver_allowance_per_day: 0, minimum_fare: 0, rounding_unit: 10 });
@@ -27,7 +27,7 @@ export default function PricingAdminPage() {
     if (ruleError) return setError(ruleError.message);
     const map = {}; (existing || []).forEach((r) => { map[`${r.vehicle_category_id}:${r.trip_type}`] = { ...emptyRule(), ...r }; }); setRules(map); setReady(true);
   };
-  useEffect(() => { (async () => { const { data } = await supabase.auth.getSession(); const email = data?.session?.user?.email || ""; if (!data?.session) return router.replace("/login"); if (!ADMIN_EMAILS.includes(email)) return setReady(false); await load(); })(); }, [router]);
+  useEffect(() => { (async () => { const { data } = await supabase.auth.getSession(); const email = data?.session?.user?.email || ""; if (!data?.session) return router.replace("/login"); if (!(await isAdminUser(email))) return setReady(false); await load(); })(); }, [router]);
   const updateRule = (categoryId, tripType, field, value) => setRules((prev) => ({ ...prev, [`${categoryId}:${tripType}`]: { ...emptyRule(), ...(prev[`${categoryId}:${tripType}`] || {}), [field]: value } }));
   const save = async () => {
     setSaving(true); setError(""); setMessage("");
@@ -48,12 +48,10 @@ export default function PricingAdminPage() {
         if (values[4] <= 0) throw new Error(`Rounding unit must be greater than zero in ${category.name} · ${tripType === "oneway" ? "One Way" : "Round Trip"}.`);
         rows.push({ vehicle_category_id: category.id, trip_type: tripType, base_fare: values[0], per_km_rate: values[1], driver_allowance_per_day: values[2], minimum_fare: values[3], rounding_unit: values[4] });
       }
-      const { data: latest, error: latestError } = await supabase.from("pricing_versions").select("version").order("version", { ascending: false }).limit(1).maybeSingle(); if (latestError) throw latestError;
-      const nextVersion = (latest?.version || 0) + 1, effectiveIso = new Date().toISOString();
-      const { data: version, error: versionError } = await supabase.from("pricing_versions").insert({ version: nextVersion, name: name.trim() || `Pricing v${nextVersion}`, status: "archived", effective_from: effectiveIso, created_by: user.user.id, waiting_fee_per_interval: fee, waiting_interval_minutes: interval, max_roundtrip_wait_minutes: maximum }).select("id,version,effective_from").single(); if (versionError) throw versionError;
-      const { error: ruleError } = await supabase.from("pricing_rules").insert(rows.map((row) => ({ ...row, pricing_version_id: version.id }))); if (ruleError) { await supabase.from("pricing_versions").delete().eq("id", version.id); throw ruleError; }
-      const { data: activatedRows, error: activateError } = await supabase.from("pricing_versions").update({ status: "active" }).eq("id", version.id).select("id"); if (activateError) throw activateError; if (!activatedRows?.length) throw new Error("Pricing version could not be activated. Please refresh and try again.");
-      const { error: archiveError } = await supabase.from("pricing_versions").update({ status: "archived" }).eq("status", "active").neq("id", version.id); if (archiveError) throw archiveError;
+      // One atomic database call: create the version, its rules, archive the old one and activate the new one together.
+      const { data: published, error: publishError } = await supabase.rpc("admin_publish_pricing", { p_name: name.trim(), p_waiting_fee: fee, p_interval: interval, p_max_wait: maximum, p_rules: rows });
+      if (publishError) throw new Error(String(publishError.message).replace(/^VOYNU:\s*/, ""));
+      const nextVersion = published?.version;
       setMessage(`Pricing updated. New bookings now use V${nextVersion}. Existing bookings keep their original fare.`); await load();
     } catch (e) { setError(e?.message || "Unable to save pricing."); } finally { setSaving(false); }
   };
