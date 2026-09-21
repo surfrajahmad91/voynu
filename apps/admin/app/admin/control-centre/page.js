@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 import { theme } from "../../../../../shared/lib/theme";
 
 const AREAS = [
@@ -20,7 +20,7 @@ const AREAS = [
 export default function ControlCentrePage() {
   const router = useRouter();
   const [checking,setChecking]=useState(true),[authorized,setAuthorized]=useState(false),[categories,setCategories]=useState([]),[vehicles,setVehicles]=useState([]),[error,setError]=useState("");
-  useEffect(()=>{let cancelled=false;(async()=>{const {data}=await supabase.auth.getSession();const email=data?.session?.user?.email||"";if(!data?.session)return router.replace("/login");if(!ADMIN_EMAILS.includes(email))return setChecking(false);if(!cancelled){setAuthorized(true);setChecking(false)}})();return()=>{cancelled=true}},[router]);
+  useEffect(()=>{let cancelled=false;(async()=>{const {data}=await supabase.auth.getSession();const email=data?.session?.user?.email||"";if(!data?.session)return router.replace("/login");if(!(await isAdminUser(email)))return setChecking(false);if(!cancelled){setAuthorized(true);setChecking(false)}})();return()=>{cancelled=true}},[router]);
   useEffect(()=>{if(!authorized)return;(async()=>{const [c,v]=await Promise.all([supabase.from("vehicle_categories").select("id,name,slug,active,bookable,sort_order,passenger_capacity,luggage_capacity").order("sort_order"),supabase.from("vehicles").select("id,vehicle_category_id,active,status")]);if(c.error)return setError(c.error.message);if(v.error)return setError(v.error.message);setCategories(c.data||[]);setVehicles(v.data||[])})()},[authorized]);
   const activeVehicleCount=id=>vehicles.filter(v=>v.vehicle_category_id===id&&v.active&&!['maintenance','inactive','unavailable','retired'].includes(v.status||'active')).length;
   const visibleCount=categories.filter(c=>c.active&&c.bookable&&activeVehicleCount(c.id)>0).length;
