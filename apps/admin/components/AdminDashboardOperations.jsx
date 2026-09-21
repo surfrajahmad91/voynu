@@ -6,7 +6,7 @@ import { supabase } from "../../../shared/lib/supabaseClient";
 import { isAdminUser } from "../lib/admin";
 import { theme } from "../../../shared/lib/theme";
 
-const ACTIVE_STATUSES = ["confirmed", "driver_assigned", "on_the_way", "arrived", "trip_started"];
+const ACTIVE_STATUSES = ["confirmed", "driver_assigned", "on_the_way", "arrived", "trip_started", "waiting_for_return", "return_trip_started"];
 const fmt = (value) => value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
 const ref = (id) => id ? `VOY-${id.slice(0, 8).toUpperCase()}` : "—";
 
