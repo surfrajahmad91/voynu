@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../../lib/admin";
+import { isAdminUser } from "../../../lib/admin";
 import { theme } from "../../../../../shared/lib/theme";
 
 const card = { background: "#fff", border: `1px solid ${theme.colors.border}`, borderRadius: 14, padding: 15 };
@@ -19,7 +19,7 @@ export default function DriversPage() {
   const [error, setError] = useState(""), [notice, setNotice] = useState(""), [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(null), [editForm, setEditForm] = useState({ full_name: "", phone: "", email: "", vehicle_id: "", availability_status: "available", active: true }), [savingEdit, setSavingEdit] = useState(false);
 
-  useEffect(() => { let cancelled = false; (async () => { const { data } = await supabase.auth.getSession(); const email = data?.session?.user?.email || ""; if (!data?.session) return router.replace("/login"); if (!ADMIN_EMAILS.includes(email)) return setChecking(false); if (!cancelled) { setAuthorized(true); setChecking(false); } })(); return () => { cancelled = true; }; }, [router]);
+  useEffect(() => { let cancelled = false; (async () => { const { data } = await supabase.auth.getSession(); const email = data?.session?.user?.email || ""; if (!data?.session) return router.replace("/login"); if (!(await isAdminUser(email))) return setChecking(false); if (!cancelled) { setAuthorized(true); setChecking(false); } })(); return () => { cancelled = true; }; }, [router]);
 
   const load = async () => { setError(""); const [{ data: ds, error: de }, { data: vs, error: ve }] = await Promise.all([
     supabase.from("drivers").select("*, vehicles(*)").order("created_at", { ascending: false }),
