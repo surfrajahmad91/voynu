@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../shared/lib/supabaseClient";
-import { ADMIN_EMAILS } from "../../lib/admin";
+import { isAdminUser } from "../../lib/admin";
 import { theme } from "../../../../shared/lib/theme";
 
 export default function AdminLoginPage() {
@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       const currentEmail = data?.session?.user?.email || "";
-      if (!cancelled && data?.session && ADMIN_EMAILS.includes(currentEmail)) router.replace("/admin");
+      if (!cancelled && data?.session && (await isAdminUser(currentEmail))) router.replace("/admin");
       if (!cancelled) setChecking(false);
     })();
     return () => { cancelled = true; };
@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
       return;
     }
     const loggedInEmail = data?.user?.email || "";
-    if (!ADMIN_EMAILS.includes(loggedInEmail)) {
+    if (!(await isAdminUser(loggedInEmail))) {
       await supabase.auth.signOut();
       setLoading(false);
       setError("This account is not authorized for VOYNU Admin.");
