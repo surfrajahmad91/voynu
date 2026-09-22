@@ -10,10 +10,10 @@ import {theme} from "../../../../shared/lib/theme";
 const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
 const VOYNU_UPI_VPA="surfraj@ybl";
 const FALLBACK=[
-  {code:"weekly",name:"Weekly",duration_months:0,discount_percent:0},
-  {code:"monthly",name:"Monthly",duration_months:1,discount_percent:5},
-  {code:"quarterly",name:"Quarterly",duration_months:3,discount_percent:10},
-  {code:"half_yearly",name:"Half-Yearly",duration_months:6,discount_percent:15}
+  {code:"weekly",name:"Weekly",duration_months:0,discount_percent:0,wallet_reward_amount:0},
+  {code:"monthly",name:"Monthly",duration_months:1,discount_percent:5,wallet_reward_amount:0},
+  {code:"quarterly",name:"Quarterly",duration_months:3,discount_percent:10,wallet_reward_amount:0},
+  {code:"half_yearly",name:"Half-Yearly",duration_months:6,discount_percent:15,wallet_reward_amount:0}
 ];
 const emptyPerson=()=>({name:"",age:"",gender:""});
 
@@ -60,7 +60,7 @@ export default function CommuteSubscriptionPage(){
     setStart(v=>v||tomorrow);
     Promise.all([
       supabase.from("vehicle_categories").select("id,name,passenger_capacity,active,bookable,sort_order").eq("active",true).eq("bookable",true).order("sort_order"),
-      supabase.from("subscription_plans").select("id,code,name,duration_months,discount_percent,sort_order,active").eq("active",true).order("sort_order")
+      supabase.from("subscription_plans").select("id,code,name,duration_months,discount_percent,wallet_reward_amount,sort_order,active").eq("active",true).order("sort_order")
     ]).then(([c,p])=>{
       if(!c.error)setCategories(c.data||[]);
       if(!p.error&&p.data?.length)setPlans(p.data);
@@ -320,7 +320,7 @@ export default function CommuteSubscriptionPage(){
         <label>Vehicle category<select value={vehicle} onChange={e=>{setVehicle(e.target.value);setHasCalculated(false);setQuote(null)}}><option value="">Select vehicle</option>{eligible.map(c=><option key={c.id} value={c.id}>{c.name} · up to {c.passenger_capacity} passengers</option>)}</select></label>
         <div className="summaryStrip"><span><b>{passengers}</b> {passengers===1?"passenger":"passengers"}</span><span>•</span><span>{distance||"—"} km each way</span><span>•</span><span>{dayNames||"No days selected"}</span></div>
         <div className="fieldTitle planTitle">Subscription period</div>
-        <div className="plans">{plans.map(p=><button type="button" key={p.code} onClick={()=>{setPlan(p.code);setHasCalculated(false);setQuote(null)}} className={plan===p.code?"planOn":"plan"}><strong>{p.name}</strong><span>{Number(p.discount_percent||0)>0?`${p.discount_percent}% discount`:"Standard pricing"}</span><small>{p.duration_months===0?"7 days":`${p.duration_months} month${p.duration_months>1?"s":""}`}</small></button>)}</div>
+        <div className="plans">{plans.map(p=><button type="button" key={p.code} onClick={()=>{setPlan(p.code);setHasCalculated(false);setQuote(null)}} className={plan===p.code?"planOn":"plan"}><strong>{p.name}</strong><span>{Number(p.discount_percent||0)>0?`${p.discount_percent}% discount`:"Standard pricing"}</span>{Number(p.wallet_reward_amount||0)>0&&<span style={{color:theme.colors.primary,fontWeight:800}}>+ ₹{Number(p.wallet_reward_amount).toLocaleString("en-IN")} wallet reward</span>}<small>{p.duration_months===0?"7 days":`${p.duration_months} month${p.duration_months>1?"s":""}`}</small></button>)}</div>
         <div className="policyNote"><b>How billing works</b><span>Your scheduled days are billed even when only some of the subscribed passengers travel. Approved holidays and customer off-days are treated separately according to the service rules.</span></div>
         <div className="actions"><button className="secondary" type="button" onClick={previousStep}>← Back</button><button className="primary" type="button" onClick={nextStep} disabled={calculating}>{calculating?"Calculating…":"Continue to review & pay →"}</button></div>
       </section>}
