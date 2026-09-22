@@ -6,6 +6,7 @@ import PageHeader from "../../../../shared/components/PageHeader";
 import LocationPicker from "../../components/LocationPicker";
 import {supabase} from "../../../../shared/lib/supabaseClient";
 import {theme} from "../../../../shared/lib/theme";
+import WalletCheckoutCard from "../../components/WalletCheckoutCard";
 
 const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
 const VOYNU_UPI_VPA="surfraj@ybl";
@@ -42,6 +43,7 @@ export default function CommuteSubscriptionPage(){
   const[busy,setBusy]=useState(false);
   const[upiPayClicked,setUpiPayClicked]=useState(false);
   const[upiPaymentConfirmed,setUpiPaymentConfirmed]=useState(false);
+  const[walletApplied,setWalletApplied]=useState(0);
   const[step,setStep]=useState(1);
 
   const tomorrow=useMemo(()=>{
@@ -226,7 +228,8 @@ export default function CommuteSubscriptionPage(){
       p_evening_return_time:evening,
       p_start_date:start,
       p_weekdays:weekdays,
-      p_passengers:people.map(p=>({name:String(p.name).trim(),age:Number(p.age),gender:p.gender}))
+      p_passengers:people.map(p=>({name:String(p.name).trim(),age:Number(p.age),gender:p.gender})),
+      p_wallet_requested_amount:Number(walletApplied || 0)
     });
     setBusy(false);
     if(e)return setError(e.message||"Unable to submit subscription request.");
@@ -244,6 +247,8 @@ export default function CommuteSubscriptionPage(){
         passengers,
         vehicle,
         quote,
+        walletUsed:walletApplied,
+        payableAmount:payableSubscriptionAmount,
         confirmedAt:new Date().toISOString()
       }));
     }catch(storageError){console.error("VOYNU: unable to store confirmed subscription:",storageError)}
@@ -253,6 +258,7 @@ export default function CommuteSubscriptionPage(){
   const selectedPlan=plans.find(p=>p.code===plan);
   const selectedVehicle=categories.find(c=>c.id===vehicle);
 
+  const payableSubscriptionAmount=Math.max(0,Number(quote?.totalAmount||0)-Number(walletApplied||0));
   const money=v=>Number(v||0).toLocaleString("en-IN");
   const dayNames=weekdays.map(n=>DAYS.find(d=>d[0]===n)?.[1]).filter(Boolean).join(", ");
 
@@ -339,9 +345,10 @@ export default function CommuteSubscriptionPage(){
           <div><span>Billable days</span><b>{quote.billableDays}</b></div>
           <div><span>Base amount</span><b>₹{money(quote.baseAmount)}</b></div>
           <div><span>Discount</span><b>- ₹{money(quote.discountAmount)}</b></div>
-          <div className="total"><span>Total payable</span><b>₹{money(quote.totalAmount)}</b></div>
+          <WalletCheckoutCard bookingAmount={quote.totalAmount} onAmountChange={setWalletApplied} disabled={busy||upiPaymentConfirmed}/>
+          <div className="total"><span>Total payable</span><b>₹{money(payableSubscriptionAmount)}</b></div>
           <div className="upiFlow">
-            {!upiPaymentConfirmed&&<a href={`upi://pay?pa=${encodeURIComponent(VOYNU_UPI_VPA)}&pn=${encodeURIComponent("VOYNU")}&am=${Number(quote.totalAmount)}&cu=INR&tn=${encodeURIComponent("VOYNU Commute Subscription")}`} className="upiPayButton" onClick={()=>setUpiPayClicked(true)}>Pay ₹{money(quote.totalAmount)} via UPI app</a>}
+            {!upiPaymentConfirmed&&<a href={`upi://pay?pa=${encodeURIComponent(VOYNU_UPI_VPA)}&pn=${encodeURIComponent("VOYNU")}&am=${Number(payableSubscriptionAmount)}&cu=INR&tn=${encodeURIComponent("VOYNU Commute Subscription")}`} className="upiPayButton" onClick={()=>setUpiPayClicked(true)}>Pay ₹{money(payableSubscriptionAmount)} via UPI app</a>}
             {upiPayClicked&&!upiPaymentConfirmed&&<div className="upiConfirmRow"><p>Completed the payment in your UPI app?</p><div className="upiConfirmActions"><button type="button" className="upiConfirmYes" onClick={()=>setUpiPaymentConfirmed(true)}>Yes, I’ve paid</button><button type="button" className="upiConfirmRetry" onClick={()=>setUpiPayClicked(false)}>I didn’t pay yet</button></div></div>}
             {upiPaymentConfirmed&&<div className="upiConfirmedChip">✓ Payment marked as completed</div>}
           </div>
