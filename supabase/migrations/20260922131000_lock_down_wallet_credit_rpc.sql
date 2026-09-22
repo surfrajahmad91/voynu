@@ -1,0 +1,1 @@
+revoke execute on function public.wallet_credit(uuid,numeric,text,text,text,uuid,uuid,text,timestamptz,uuid) from authenticated;
