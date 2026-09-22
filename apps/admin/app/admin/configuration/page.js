@@ -15,7 +15,7 @@ const AREAS = [
   ["Pricing", "Manage published fare versions and waiting policy.", "/admin/pricing", "pricing", "₹", "accent"],
   ["Dispatch", "Control manual or automatic driver assignment.", "/admin/dispatch", "dispatch", "⇄", "info"],
   ["Service area", "See the pickup zones and drop-distance limits the booking flow enforces right now.", "/admin/configuration/service-area", "serviceArea", "📍", "live"],
-  ["Access & audit", "Who has admin access, and a live log of every change admins make.", "/admin/configuration/access-audit", "audit", "🛡", "muted"],
+  ["Admin roster", "Who currently has admin access. For the change history itself, see Activity log in the sidebar.", "/admin/configuration/admin-roster", "roster", "🛡", "muted"],
 ];
 const UNAVAILABLE = [
   ["Booking rules", "Advance-booking windows and trip-type constraints aren't a configurable setting yet — they're fixed in code.", "/admin/configuration/booking-rules"],
@@ -33,28 +33,27 @@ export default function ConfigurationPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [cats, vehicles, dispatch, pricing, areas, auditLatest] = await Promise.all([
+      const [cats, vehicles, dispatch, pricing, areas, adminCount] = await Promise.all([
         supabase.from("vehicle_categories").select("id,active,bookable"),
         supabase.from("vehicles").select("id,vehicle_category_id,active,status"),
         supabase.from("dispatch_settings").select("mode").eq("id", true).maybeSingle(),
         supabase.from("pricing_versions").select("id,name,version").eq("status", "active").order("version", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("service_areas").select("id", { count: "exact", head: true }).eq("active", true),
-        supabase.from("admin_audit_log").select("occurred_at").order("occurred_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "admin"),
       ]);
       if (cancelled) return;
-      const firstError = cats.error || vehicles.error || dispatch.error || pricing.error || areas.error || auditLatest.error;
+      const firstError = cats.error || vehicles.error || dispatch.error || pricing.error || areas.error || adminCount.error;
       if (firstError) return setError(firstError.message);
       const vehicleRows = vehicles.data || [];
       const usable = vehicleRows.filter((v) => v.active && !RETIRED_STATUS.includes(v.status || "active"));
       const visible = (cats.data || []).filter((cat) => cat.active && cat.bookable && usable.some((v) => v.vehicle_category_id === cat.id));
-      const auditAgo = auditLatest.data?.occurred_at ? timeAgo(auditLatest.data.occurred_at) : "No changes logged";
       setSummary({
         visibility: { primary: `${visible.length} / ${(cats.data || []).length}`, note: "categories customer-visible" },
         fleet: { primary: `${usable.length} / ${vehicleRows.length}`, note: "vehicles usable" },
         pricing: { primary: pricing.data ? pricing.data.name || `v${pricing.data.version}` : "None set", note: "active fare version" },
         dispatch: { primary: dispatch.data?.mode === "automatic" ? "Automatic" : "Manual", note: "assignment mode" },
         serviceArea: { primary: String(areas.count ?? 0), note: "active service areas" },
-        audit: { primary: auditAgo, note: "last admin change" },
+        roster: { primary: String(adminCount.count ?? 0), note: "admin accounts" },
       });
     })();
     return () => { cancelled = true; };
@@ -106,14 +105,4 @@ export default function ConfigurationPage() {
       </section>
     </div>
   </main>;
-}
-
-function timeAgo(iso) {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.round(ms / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.round(hrs / 24)}d ago`;
 }
