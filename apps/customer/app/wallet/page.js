@@ -12,7 +12,6 @@ const labels = { reward: "Reward", refund: "Refund credit", booking_use: "Used o
 
 export default function WalletPage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [rules, setRules] = useState([]);
@@ -39,10 +38,10 @@ export default function WalletPage() {
     supabase.auth.getSession().then(({ data }) => {
       const u = data?.session?.user;
       if (!u) { router.replace("/login"); return; }
-      if (!cancelled) { setUser(u); load(u.id); }
+      if (!cancelled) { load(u.id); }
     });
     return () => { cancelled = true; };
-  }, [router]);
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextMilestone = useMemo(() => rules[0] || null, [rules]);
 
