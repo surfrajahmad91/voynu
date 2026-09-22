@@ -17,21 +17,22 @@ const HIDDEN_FIELDS = new Set(["updated_at", "created_at", "fare_breakdown", "sh
 const label = (v) => String(v || "").replace(/_/g, " ");
 const shortId = (v) => (v && String(v).length > 12 ? String(v).slice(0, 8).toUpperCase() : v || "—");
 const when = (v) => new Date(v).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-const show = (v) => v === null || v === undefined ? "empty" : typeof v === "object" ? JSON.stringify(v).slice(0, 60) : String(v).length > 48 ? `${String(v).slice(0, 48)}…` : String(v);
+const show = (v) => (v === null || v === undefined ? "empty" : typeof v === "object" ? JSON.stringify(v).slice(0, 60) : String(v).length > 48 ? `${String(v).slice(0, 48)}…` : String(v));
 
 function describe(row) {
-  const c = row.changes || {};
+  const changes = row.changes || {};
   if (row.action === "UPDATE") {
-    return Object.entries(c).filter(([k]) => !HIDDEN_FIELDS.has(k)).slice(0, 8).map(([k, v]) => `${label(k)}: ${show(v?.old)} → ${show(v?.new)}`);
+    return Object.entries(changes).filter(([k]) => !HIDDEN_FIELDS.has(k)).slice(0, 8).map(([k, v]) => `${label(k)}: ${show(v?.old)} → ${show(v?.new)}`);
   }
   const keys = ["booking_status", "status", "name", "full_name", "registration_number", "version", "mode", "trip_type", "base_fare", "per_km_rate", "passenger_name"];
-  const picked = keys.filter((k) => c[k] !== undefined && c[k] !== null).slice(0, 5).map((k) => `${label(k)}: ${show(c[k])}`);
+  const picked = keys.filter((k) => changes[k] !== undefined && changes[k] !== null).slice(0, 5).map((k) => `${label(k)}: ${show(changes[k])}`);
   return picked.length ? picked : [row.action === "DELETE" ? "Record removed" : "Record created"];
 }
 
-const card = { background: "#fff", border: `1px solid ${theme.colors.border}`, borderRadius: 14, padding: 14 };
-const field = { padding: "9px 10px", border: `1px solid ${theme.colors.border}`, borderRadius: 8, background: "#fff", font: "inherit", fontSize: 12 };
-const ghost = { border: `1px solid ${theme.colors.border}`, borderRadius: 8, padding: "8px 11px", background: "#fff", fontWeight: 800, fontSize: 11, cursor: "pointer" };
+const c = theme.colors;
+const card = { background: c.surface, border: `1px solid ${c.border}`, borderRadius: 14, padding: 14 };
+const field = { minHeight: 40, padding: "0 10px", border: `1px solid ${c.borderStrong}`, borderRadius: 10, background: c.surface, color: c.text, font: "inherit", fontSize: 13 };
+const ghost = { border: `1px solid ${c.borderStrong}`, borderRadius: 10, minHeight: 40, padding: "0 14px", background: c.surface, color: c.text, fontWeight: 700, fontSize: 13, cursor: "pointer", font: "inherit" };
 
 export default function ActivityLogPage() {
   const [rows, setRows] = useState([]), [table, setTable] = useState("all"), [range, setRange] = useState("7"), [record, setRecord] = useState("");
@@ -61,20 +62,32 @@ export default function ActivityLogPage() {
     setRows((prev) => [...prev, ...(data || [])]); setMore((data || []).length === PAGE_SIZE);
   };
 
-  return <main style={{ background: theme.colors.bg, color: theme.colors.text, fontFamily: theme.fontFamily, padding: "8px 4px 60px" }}><div style={{ maxWidth: 980, margin: "0 auto" }}>
-    <header style={{ marginBottom: 16 }}><div style={{ fontSize: 11, color: theme.colors.primary, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>VOYNU Admin · Accountability</div><h1 style={{ margin: "5px 0 0", fontSize: 27 }}>Activity log</h1><p style={{ margin: "5px 0 0", color: theme.colors.textFaint, fontSize: 12 }}>Every change made by an administrator: who, when, and what changed. Driver trip steps and delay reasons are on each booking's timeline.</p></header>
-    <section style={{ ...card, display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-      <select value={table} onChange={(e) => setTable(e.target.value)} style={field} aria-label="What changed">{TABLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-      <select value={range} onChange={(e) => setRange(e.target.value)} style={field} aria-label="Period">{RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-      <input value={record} onChange={(e) => setRecord(e.target.value)} placeholder="Record / booking reference" style={{ ...field, flex: 1, minWidth: 180 }} aria-label="Record reference" />
-      <button onClick={load} style={ghost}>{loading ? "Loading…" : "Refresh"}</button>
-    </section>
-    {error && <div role="alert" style={{ marginBottom: 12, padding: 11, borderRadius: 9, background: theme.colors.errorBg, color: theme.colors.error, fontSize: 12, fontWeight: 700 }}>{error}</div>}
-    {loading && rows.length === 0 ? <div style={card}>Loading activity…</div> : rows.length === 0 ? <div style={{ ...card, color: theme.colors.textFaint }}>No admin changes match this view.</div> : <div style={{ display: "grid", gap: 8 }}>{rows.map((r) => <article key={r.id} style={card}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", fontSize: 11 }}><strong>{tableName[r.table_name] || label(r.table_name)} · #{shortId(r.record_id)}</strong><span style={{ color: theme.colors.textFaint }}>{when(r.occurred_at)}</span></div>
-      <div style={{ marginTop: 3, fontSize: 10.5, color: theme.colors.textMuted }}><span style={{ padding: "2px 7px", borderRadius: 999, background: r.action === "DELETE" ? theme.colors.errorBg : theme.colors.primaryTint, color: r.action === "DELETE" ? theme.colors.error : theme.colors.primary, fontWeight: 900, fontSize: 9 }}>{r.action}</span> by {r.actor_email || "unknown"}</div>
-      <ul style={{ margin: "8px 0 0", paddingLeft: 17, fontSize: 11.5, lineHeight: 1.55 }}>{describe(r).map((line, i) => <li key={i}>{line}</li>)}</ul>
-    </article>)}</div>}
-    {more && <div style={{ textAlign: "center", marginTop: 14 }}><button onClick={loadMore} style={ghost}>Load older activity</button></div>}
-  </div></main>;
+  return <main style={{ background: c.bg, color: c.text, fontFamily: theme.fontFamily, padding: "4px 2px 32px" }}>
+    <div style={{ maxWidth: 980, margin: "0 auto" }}>
+      <header style={{ margin: "6px 0 16px" }}>
+        <h1 style={{ margin: 0, fontSize: 26, lineHeight: 1.15, letterSpacing: -0.4 }}>Activity log</h1>
+        <p style={{ margin: "5px 0 0", fontSize: 13.5, color: c.textFaint, lineHeight: 1.5 }}>Every change an administrator makes: who, when, and what changed. Driver trip steps and delay reasons live on each booking's own timeline instead.</p>
+      </header>
+      <section style={{ ...card, display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+        <select value={table} onChange={(e) => setTable(e.target.value)} style={field} aria-label="What changed">{TABLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+        <select value={range} onChange={(e) => setRange(e.target.value)} style={field} aria-label="Period">{RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+        <input value={record} onChange={(e) => setRecord(e.target.value)} placeholder="Record / booking reference" style={{ ...field, flex: 1, minWidth: 180 }} aria-label="Record reference" />
+        <button onClick={load} style={ghost}>{loading ? "Loading…" : "Refresh"}</button>
+      </section>
+      {error && <div role="alert" style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: c.errorBg, color: "#B42318", fontSize: 13, fontWeight: 700 }}>{error}</div>}
+      {loading && rows.length === 0 ? <div style={{ display: "grid", gap: 8 }}>{[0, 1, 2].map((i) => <div key={i} style={{ ...card, height: 70, background: c.border, opacity: 0.5 }} />)}</div>
+        : rows.length === 0 ? <div style={{ ...card, color: c.textFaint }}>No admin changes match this view.</div>
+        : <div style={{ display: "grid", gap: 8 }}>{rows.map((r) => <article key={r.id} style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", fontSize: 12.5 }}>
+              <strong>{tableName[r.table_name] || label(r.table_name)} · #{shortId(r.record_id)}</strong>
+              <span style={{ color: c.textFaint }}>{when(r.occurred_at)}</span>
+            </div>
+            <div style={{ marginTop: 4, fontSize: 12, color: c.textMuted }}>
+              <span style={{ padding: "2px 8px", borderRadius: 999, background: r.action === "DELETE" ? c.errorBg : c.primaryTint, color: r.action === "DELETE" ? "#B42318" : c.primaryDark, fontWeight: 800, fontSize: 10.5 }}>{r.action}</span> by {r.actor_email || "unknown"}
+            </div>
+            <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12.5, lineHeight: 1.55 }}>{describe(r).map((line, i) => <li key={i}>{line}</li>)}</ul>
+          </article>)}</div>}
+      {more && <div style={{ textAlign: "center", marginTop: 14 }}><button onClick={loadMore} style={ghost}>Load older activity</button></div>}
+    </div>
+  </main>;
 }
