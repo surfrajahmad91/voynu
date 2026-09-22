@@ -26,6 +26,7 @@ const groups=[
  {label:"MANAGE",items:[
   ["/admin/pricing","Pricing","₹"],
   ["/admin/configuration","Configuration","⚙"],
+  ["/admin/wallet","Wallet & rewards","₹"],
   ["/admin/activity","Activity log","☰"],
  ]},
 ];
