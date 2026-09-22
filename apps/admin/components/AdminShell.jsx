@@ -25,7 +25,8 @@ const groups=[
  ]},
  {label:"MANAGE",items:[
   ["/admin/pricing","Pricing","₹"],
-  ["/admin/configuration","Configuration","⚙"],\n  ["/admin/activity","Activity log","☰"],
+  ["/admin/configuration","Configuration","⚙"],
+  ["/admin/activity","Activity log","☰"],
  ]},
 ];
 
