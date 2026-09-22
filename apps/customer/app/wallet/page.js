@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import PageHeader from "../../../../shared/components/PageHeader";
 import { supabase } from "../../../../shared/lib/supabaseClient";
 import { theme } from "../../../../shared/lib/theme";
-import { buildWhatsAppLink } from "../lib/contact";
+import { buildWhatsAppLink } from "../../lib/contact";
 
 const money = (v) => Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const labels = { reward: "Reward", refund: "Refund credit", booking_use: "Used on booking", reversal: "Reversal", expiry: "Expired", admin_adjustment: "Wallet adjustment" };
