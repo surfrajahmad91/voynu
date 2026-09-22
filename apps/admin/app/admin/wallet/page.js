@@ -26,7 +26,7 @@ export default function WalletAdminPage() {
     const { data, error: e } = await supabase.rpc("admin_wallet_customers", { p_query: term.trim() });
     if (e) setError(e.message); else setCustomers(data || []);
   };
-  useEffect(() => { load(); searchCustomers(""); }, []);
+  useEffect(() => { load(); searchCustomers(""); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveSettings = async () => {
     if (!settings) return;
