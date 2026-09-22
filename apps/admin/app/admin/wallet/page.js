@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import { supabase } from "../../../../../shared/lib/supabaseClient";
 import { theme } from "../../../../../shared/lib/theme";
