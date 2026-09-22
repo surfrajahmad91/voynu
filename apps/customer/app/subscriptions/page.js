@@ -346,7 +346,7 @@ export default function CommuteSubscriptionPage(){
           <div><span>Base amount</span><b>₹{money(quote.baseAmount)}</b></div>
           <div><span>Discount</span><b>- ₹{money(quote.discountAmount)}</b></div>
           <WalletCheckoutCard bookingAmount={quote.totalAmount} onAmountChange={setWalletApplied} disabled={busy||upiPaymentConfirmed}/>
-          <div className="total"><span>Total payable</span><b>₹{money(payableSubscriptionAmount)}</b></div>
+          <div className="total"><span>Total payable</span><b>₹{money(payableSubscriptionAmount)}</b></div><div style={{marginTop:6,fontSize:10,color:theme.colors.textMuted}}>Wallet credits, when available, are limited by the configured wallet usage policy and are deducted before the remaining payment.</div>
           <div className="upiFlow">
             {!upiPaymentConfirmed&&<a href={`upi://pay?pa=${encodeURIComponent(VOYNU_UPI_VPA)}&pn=${encodeURIComponent("VOYNU")}&am=${Number(payableSubscriptionAmount)}&cu=INR&tn=${encodeURIComponent("VOYNU Commute Subscription")}`} className="upiPayButton" onClick={()=>setUpiPayClicked(true)}>Pay ₹{money(payableSubscriptionAmount)} via UPI app</a>}
             {upiPayClicked&&!upiPaymentConfirmed&&<div className="upiConfirmRow"><p>Completed the payment in your UPI app?</p><div className="upiConfirmActions"><button type="button" className="upiConfirmYes" onClick={()=>setUpiPaymentConfirmed(true)}>Yes, I’ve paid</button><button type="button" className="upiConfirmRetry" onClick={()=>setUpiPayClicked(false)}>I didn’t pay yet</button></div></div>}
