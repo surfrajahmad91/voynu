@@ -2,9 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import PageHeader from "../../../shared/components/PageHeader";
-import { supabase } from "../../../shared/lib/supabaseClient";
-import { theme } from "../../../shared/lib/theme";
+import PageHeader from "../../../../shared/components/PageHeader";
+import { supabase } from "../../../../shared/lib/supabaseClient";
+import { theme } from "../../../../shared/lib/theme";
 import { buildWhatsAppLink } from "../lib/contact";
 
 const money = (v) => Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
