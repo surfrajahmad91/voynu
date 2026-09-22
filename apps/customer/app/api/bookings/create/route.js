@@ -43,11 +43,9 @@ function calculateWaitingFee(waitMinutes, rate, interval) { const minutes = Math
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { booking, vehicleCategoryId, passengerCount, luggageCount, paymentMethod, walletRequestedAmount, idempotencyKey } = body || {};
+    const { booking, vehicleCategoryId, passengerCount, luggageCount, paymentMethod, idempotencyKey } = body || {};
     if (!booking || !vehicleCategoryId || !idempotencyKey) return NextResponse.json({ error: "Invalid booking request: booking, vehicle category and idempotency key are required.", code: "INVALID_BOOKING_REQUEST", stage: "request.validation" }, { status: 400 });
     if (paymentMethod !== "cash" && paymentMethod !== "upi") return NextResponse.json({ error: "Invalid payment method. Choose Pay on Pickup or UPI.", code: "INVALID_PAYMENT_METHOD", stage: "request.validation" }, { status: 400 });
-    const requestedWalletAmount = Number(walletRequestedAmount || 0);
-    if (!Number.isFinite(requestedWalletAmount) || requestedWalletAmount < 0) return NextResponse.json({ error: "Invalid wallet credit amount.", code: "INVALID_WALLET_AMOUNT", stage: "wallet.validation" }, { status: 400 });
     const auth = await authenticatedUser(request);
     if (!auth) return NextResponse.json({ error: "You must be logged in to complete a booking. Your login session may have expired; please sign in again.", code: "AUTHENTICATION_FAILED", stage: "authentication" }, { status: 401 });
     const { user, accessToken } = auth; const client = dbForUser(accessToken);
@@ -86,11 +84,11 @@ export async function POST(request) {
       user_id: user.id, trip_type: tripType, pickup_name: booking.pickup?.name, pickup_lat: booking.pickup?.lat, pickup_lon: booking.pickup?.lon, drop_name: booking.drop?.name, drop_lat: booking.drop?.lat, drop_lon: booking.drop?.lon,
       one_way_distance_km: oneWayKm, total_distance_km: billedKm, travel_date: booking.travelDate, pickup_time: booking.pickupTime, return_date: booking.returnDate, return_time: booking.returnTime,
       passenger_name: booking.passengerName, phone: booking.phone, whatsapp: booking.whatsapp, vehicle_type: category.slug || category.name, vehicle_category_id: category.id, passenger_count: Number(passengerCount), luggage_count: Number(luggageCount),
-      passenger_capacity_snapshot: Number(category.passenger_capacity), luggage_capacity_snapshot: Number(category.luggage_capacity), fare, payment_method: paymentMethod, payment_status: isUpi ? "pending" : "due_on_pickup", booking_status: isUpi ? "pending_payment" : "confirmed", pricing_version_id: pricing.id, quoted_fare: fare, wallet_requested_amount: requestedWalletAmount, idempotency_key: idempotencyKey,
+      passenger_capacity_snapshot: Number(category.passenger_capacity), luggage_capacity_snapshot: Number(category.luggage_capacity), fare, payment_method: paymentMethod, payment_status: isUpi ? "pending" : "due_on_pickup", booking_status: isUpi ? "pending_payment" : "confirmed", pricing_version_id: pricing.id, quoted_fare: fare, idempotency_key: idempotencyKey,
       fare_breakdown: { baseFare: Number(rule.base_fare), distanceFare: billedKm * Number(rule.per_km_rate), driverAllowance: tripType === "roundtrip" ? Number(rule.driver_allowance_per_day || 0) : 0, waitingFee, waitingMinutes: schedule.waitMinutes || 0, waitingIntervalMinutes: Number(pricing.waiting_interval_minutes), waitingFeePerInterval: Number(pricing.waiting_fee_per_interval), maxRoundTripWaitMinutes: Number(pricing.max_roundtrip_wait_minutes), estimatedArrivalAt: schedule.arrivalAt || null, billedDistanceKm: billedKm, authoritativeOneWayDistanceKm: oneWayKm, authoritativeDistanceText: roadDistance.distanceText, authoritativeDurationSeconds: roadDistance.durationSeconds, authoritativeDurationText: roadDistance.durationText },
       confirmed_at: isUpi ? null : new Date().toISOString(),
     };
-    const { data, error } = await client.from("bookings").insert(row).select("id, booking_status, payment_status, fare, quoted_fare, wallet_used, pricing_version_id, user_id, one_way_distance_km, total_distance_km, fare_breakdown").single();
+    const { data, error } = await client.from("bookings").insert(row).select("id, booking_status, payment_status, fare, quoted_fare, pricing_version_id, user_id, one_way_distance_km, total_distance_km, fare_breakdown").single();
     if (error) return NextResponse.json({ error: "Booking could not be saved. Please try again.", code: "BOOKING_INSERT_FAILED", stage: "bookings.insert" }, { status: 400 });
     try { await sendBookingNotifications({ userEmail: user.email, booking, category, savedBooking: data }); } catch (emailError) { console.error("VOYNU booking email notification error", emailError); }
     return NextResponse.json({ booking: data, duplicate: false });
