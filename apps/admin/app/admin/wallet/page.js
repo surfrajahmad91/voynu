@@ -12,6 +12,7 @@ const buttonStyle = { minHeight: 42, padding: "0 16px", border: 0, borderRadius:
 export default function WalletAdminPage() {
   const [settings, setSettings] = useState(null);
   const [rules, setRules] = useState([]);
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [query, setQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -29,13 +30,15 @@ export default function WalletAdminPage() {
 
   async function load() {
     setError("");
-    const [settingsResult, rulesResult] = await Promise.all([
+    const [settingsResult, rulesResult, plansResult] = await Promise.all([
       supabase.from("wallet_settings").select("*").eq("id", true).maybeSingle(),
       supabase.from("wallet_reward_rules").select("*").order("qualifying_rides"),
+      supabase.from("subscription_plans").select("id,code,name,duration_months,discount_percent,wallet_reward_amount,active,sort_order").order("sort_order"),
     ]);
-    if (settingsResult.error || rulesResult.error) { setError((settingsResult.error || rulesResult.error).message); return; }
+    if (settingsResult.error || rulesResult.error || plansResult.error) { setError((settingsResult.error || rulesResult.error || plansResult.error).message); return; }
     setSettings(settingsResult.data);
     setRules(rulesResult.data || []);
+    setSubscriptionPlans(plansResult.data || []);
     await loadCustomers("");
   }
 
@@ -98,6 +101,18 @@ export default function WalletAdminPage() {
         </div>
         <label style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 13, fontSize: 12 }}><input type="checkbox" checked={Boolean(settings.refund_to_wallet_enabled)} onChange={(e) => setSettings({ ...settings, refund_to_wallet_enabled: e.target.checked })} /> Return wallet-used credits after a customer cancellation.</label>
         <button type="button" disabled={busy} onClick={saveSettings} style={{ ...buttonStyle, width: "100%", marginTop: 14, opacity: busy ? 0.7 : 1 }}>Save wallet policy</button>
+      </section>
+
+      <section style={{ ...card, marginBottom: 12 }}>
+        <h2 style={{ margin: 0, fontSize: 15 }}>Commute subscription rewards</h2>
+        <p style={{ margin: "5px 0 14px", color: c.textMuted, fontSize: 12 }}>Set a modest plan discount and an optional wallet reward. The reward is issued only when the subscription becomes active after payment confirmation.</p>
+        <div style={{ display: "grid", gap: 9 }}>
+          {subscriptionPlans.map((item) => <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 130px 110px", gap: 9, alignItems: "end", padding: 12, border: "1px solid " + c.border, borderRadius: 12 }}>
+            <div><strong style={{ fontSize: 13 }}>{item.name}</strong><div style={{ marginTop: 4, color: c.textFaint, fontSize: 10.5 }}>{Number(item.discount_percent || 0)}% discount · {item.duration_months === 0 ? "7 days" : item.duration_months + " month" + (item.duration_months > 1 ? "s" : "")}</div></div>
+            <label style={{ fontSize: 10.5, fontWeight: 700 }}>Wallet reward (₹)<input type="number" min="0" step="1" value={item.wallet_reward_amount || 0} onChange={(e) => setSubscriptionPlans((current) => current.map((p) => p.id === item.id ? { ...p, wallet_reward_amount: e.target.value } : p))} style={inputStyle} /></label>
+            <button type="button" disabled={busy} onClick={async () => { setBusy(true); setError(""); setMessage(""); const { data, error: e } = await supabase.rpc("admin_set_subscription_wallet_reward", { p_id: item.id, p_reward_amount: Number(item.wallet_reward_amount || 0) }); if (e) setError(e.message); else { setSubscriptionPlans((current) => current.map((p) => p.id === item.id ? data : p)); setMessage(item.name + " subscription reward saved."); } setBusy(false); }} style={buttonStyle}>Save reward</button>
+          </div>)}
+        </div>
       </section>
 
       <section style={{ ...card, marginBottom: 12 }}>
