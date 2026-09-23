@@ -32,6 +32,10 @@ begin
   end if;
 end $$;
 
+alter table public.booking_financials alter column commission_percent set default 10;
+alter table public.booking_financials drop constraint if exists booking_financials_status_check;
+alter table public.booking_financials drop constraint if exists driver_commute_earnings_status_check;
+
 update public.booking_financials f
 set
   subscription_id=b.subscription_id,
@@ -45,9 +49,6 @@ set
 from public.bookings b
 where b.id=f.booking_id;
 
-alter table public.booking_financials alter column commission_percent set default 10;
-alter table public.booking_financials drop constraint if exists booking_financials_status_check;
-alter table public.booking_financials drop constraint if exists driver_commute_earnings_status_check;
 alter table public.booking_financials add constraint booking_financials_status_check check (settlement_status in ('accrued','settled','held','cancelled'));
 alter table public.booking_financials add constraint booking_financials_commission_check check (commission_percent=10 and commission_amount=round(gross_amount*0.10,2) and driver_payout_amount=round(gross_amount*0.90,2));
 
