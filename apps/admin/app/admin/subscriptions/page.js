@@ -81,7 +81,8 @@ export default function SubscriptionAdminPage(){
   await run(s.id,d.full_name+" assigned to subscription.",()=>supabase.rpc("admin_assign_commute_subscription",{p_subscription_id:s.id,p_driver_id:d.id,p_vehicle_id:d.vehicle_id}));
   setAssigning(null);setDriverId("");
  };
- const today=()=>{const parts=new Intl.DateTimeFormat("en",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=k=>parts.find(p=>p.type===k)?.value||"";return `${get("year")}-${get("month")}-${get("day")}`;};\n const openReason=(s,action)=>{setReasonModal({s,action});setReason("");setPauseDates(action==="pause"?((s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today()).map(t=>t.trip_date)):[])};
+ const today=()=>{const parts=new Intl.DateTimeFormat("en",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=k=>parts.find(p=>p.type===k)?.value||"";return `${get("year")}-${get("month")}-${get("day")}`;};
+ const openReason=(s,action)=>{setReasonModal({s,action});setReason("");setPauseDates(action==="pause"?((s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today()).map(t=>t.trip_date)):[])};
  const submitReason=async()=>{
   const s=reasonModal?.s, action=reasonModal?.action;
   if(!s||!action)return;
