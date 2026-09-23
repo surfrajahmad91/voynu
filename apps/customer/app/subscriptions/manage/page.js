@@ -5,7 +5,7 @@ import Link from "next/link";
 import {supabase} from "../../../../../shared/lib/supabaseClient";
 import PageHeader from "../../../../../shared/components/PageHeader";
 
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const parts=new Intl.DateTimeFormat("en",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=k=>parts.find(p=>p.type===k)?.value||"";return `${get("year")}-${get("month")}-${get("day")}`;};
 const dateText=v=>v?new Date(v+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"—";
 const timeText=v=>String(v||"").slice(0,5)||"—";
 const statusText=v=>String(v||"pending").replace(/_/g," ");
@@ -31,7 +31,7 @@ export default function ManageSubscriptions(){
   const args=modal.action==="pause"?{p_subscription_id:modal.s.id,p_dates:dates,p_reason:reason.trim()}:{p_subscription_id:modal.s.id,p_reason:reason.trim()};
   const{error:e}=await supabase.rpc(rpc,args);
   if(e){setError(e.message);setBusy(false);return}
-  setBusy(false);setModal(null);setMessage(modal.action==="cancel"?"Subscription cancelled. Eligible unused service value has been returned to VOYNU Wallet Credits.":"Selected service days paused. The schedule has been extended without changing the subscription price.");await load();
+  setBusy(false);setModal(null);setMessage(modal.action==="cancel"?"Subscription cancelled. Eligible unused service value has been returned to VOYNU Wallet Credits.":"Pause request recorded. Days paused at least 4 hours before pickup are removed from the chargeable schedule; days after the cutoff remain fully chargeable.");await load();
  };
  if(!session&&!loading)return <><PageHeader/><main className="page"><section className="card"><h1>Sign in to manage subscriptions</h1><p>Your commute subscriptions are linked to your VOYNU account.</p><Link href="/login?next=/subscriptions/manage" className="btn primary">Sign in</Link></section></main><style jsx>{styles}</style></>;
  return <><PageHeader/><main className="page">
@@ -45,7 +45,7 @@ export default function ManageSubscriptions(){
     {exceptions.length>0&&<div className="exceptions"><b>Upcoming exceptions</b>{exceptions.map(e=><div key={e.exception_date+"-"+e.kind}><span>{dateText(e.exception_date)} · {statusText(e.kind)}</span><small>{e.reason||"—"}</small></div>)}</div>}
     <div className="actions">{canPause&&<button className="btn secondary" onClick={()=>open(s,"pause")}>Ⅱ Pause service days</button>}{canCancel&&<button className="btn danger" onClick={()=>open(s,"cancel")}>Cancel subscription</button>}</div>
    </article>})}</div>}
-  {modal&&<div className="overlay"><div className="modal"><span className="eyebrow">{modal.action==="pause"?"PAUSE SERVICE DAYS":"CANCEL SUBSCRIPTION"}</span><h2>{modal.action==="pause"?"Choose service days to pause":"Cancel this subscription?"}</h2><p>{modal.action==="pause"?"Selected days leave the chargeable schedule and eligible weekdays are added back at the end.":"Your current/in-progress round trip is not interrupted. The server calculates and credits only eligible unused service value."}</p>
+  {modal&&<div className="overlay"><div className="modal"><span className="eyebrow">{modal.action==="pause"?"PAUSE SERVICE DAYS":"CANCEL SUBSCRIPTION"}</span><h2>{modal.action==="pause"?"Choose service days to pause":"Cancel this subscription?"}</h2><p>{modal.action==="pause"?"Days paused at least 4 hours before pickup leave the chargeable schedule and are added back at the end. If the 4-hour cutoff has passed, that full round-trip day remains chargeable.":"Your current/in-progress round trip is not interrupted. The server calculates and credits only eligible unused service value."}</p>
    {modal.action==="pause"&&<div className="choices">{(modal.s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today()).map(t=><label key={t.trip_date}><input type="checkbox" checked={dates.includes(t.trip_date)} onChange={e=>setDates(v=>e.target.checked?[...new Set([...v,t.trip_date])]:v.filter(x=>x!==t.trip_date))}/><span>{dateText(t.trip_date)} · {timeText(modal.s.morning_pickup_time)} pickup</span></label>)}</div>}
    <label className="reason">Reason<textarea value={reason} onChange={e=>setReason(e.target.value)} rows={4} placeholder={modal.action==="cancel"?"Why are you cancelling?":"Why are you pausing these service days?"}/></label>
    <div className="modalActions"><button className="btn secondary" onClick={()=>!busy&&setModal(null)} disabled={busy}>Back</button><button className={"btn "+(modal.action==="cancel"?"danger":"primary")} onClick={submit} disabled={busy||reason.trim().length<3||(modal.action==="pause"&&!dates.length)}>{busy?"Saving…":modal.action==="cancel"?"Cancel subscription":"Pause selected days"}</button></div>
