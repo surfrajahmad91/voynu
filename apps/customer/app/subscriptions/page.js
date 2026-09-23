@@ -121,7 +121,7 @@ export default function CommuteSubscriptionPage(){
     if(!drop?.name||!Number.isFinite(Number(drop.lat))||!Number.isFinite(Number(drop.lon)))return "Please select a valid destination.";
     if(!distance)return "Please calculate the road distance first.";
     if(!morning||!evening)return "Please select both morning pickup and evening return times.";
-    if(morning===evening)return "Morning pickup and evening return times should be different.";
+    if(morning>=evening)return "Evening return time must be later than morning pickup time.";
     if(!start)return "Please select a start date.";
     if(!weekdays.length)return "Select at least one travel day.";
     return "";
