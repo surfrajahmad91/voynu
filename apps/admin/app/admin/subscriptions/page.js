@@ -81,7 +81,7 @@ export default function SubscriptionAdminPage(){
   await run(s.id,d.full_name+" assigned to subscription.",()=>supabase.rpc("admin_assign_commute_subscription",{p_subscription_id:s.id,p_driver_id:d.id,p_vehicle_id:d.vehicle_id}));
   setAssigning(null);setDriverId("");
  };
- const openReason=(s,action)=>{setReasonModal({s,action});setReason("");setPauseDates(action==="pause"?((s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=new Date().toISOString().slice(0,10)).map(t=>t.trip_date)):[])};
+ const today=()=>{const parts=new Intl.DateTimeFormat("en",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=k=>parts.find(p=>p.type===k)?.value||"";return `${get("year")}-${get("month")}-${get("day")}`;};\n const openReason=(s,action)=>{setReasonModal({s,action});setReason("");setPauseDates(action==="pause"?((s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today()).map(t=>t.trip_date)):[])};
  const submitReason=async()=>{
   const s=reasonModal?.s, action=reasonModal?.action;
   if(!s||!action)return;
@@ -94,7 +94,7 @@ export default function SubscriptionAdminPage(){
   const args=action==="cancel"?{p_subscription_id:s.id,p_reason:String(reason).trim()}:{p_subscription_id:s.id,p_dates:dates,p_reason:String(reason).trim()};
   const {data,error:e}=await supabase.rpc(rpc,args);
   if(e){setBusyId(null);setError(e.message);return}
-  setBusyId(null);setMessage(action==="cancel"?"Subscription cancelled and applicable unused value returned to wallet.":"Selected future service days paused and the schedule extended.");
+  setBusyId(null);setMessage(action==="cancel"?"Subscription cancelled and applicable unused value returned to wallet.":"Pause request recorded. Days at least 4 hours before pickup are removed from the chargeable schedule; days after the cutoff remain fully chargeable.");
   await load();
  };
 
@@ -134,7 +134,7 @@ export default function SubscriptionAdminPage(){
 
    <div className="desktopTable"><table><thead><tr><th>Request</th><th>Plan / schedule</th><th>Passengers</th><th>Amount</th><th>Payment</th><th>Operations</th></tr></thead><tbody>{visible.map(s=><SubscriptionRow key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} busy={busyId===s.id} onPayment={()=>confirmPayment(s)} onAssign={()=>{setAssigning(s.id);setDriverId("")}} onPause={()=>openReason(s,"pause")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>openReason(s,"cancel")} onRefund={()=>refundSubscription(s)} />)}</tbody></table>{!visible.length&&<Empty/>}</div>
 
-   <div className="mobileCards">{visible.map(s=><SubscriptionCard key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} expanded={expanded===s.id} busy={busyId===s.id} assigning={assigning===s.id} drivers={assignable} driverId={driverId} setDriverId={setDriverId} onExpand={()=>setExpanded(expanded===s.id?null:s.id)} onPayment={()=>confirmPayment(s)} onAssign={()=>assign(s)} startAssign={()=>{setAssigning(s.id);setDriverId("")}} closeAssign={()=>setAssigning(null)} onPause={()=>changeStatus(s,"paused")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>changeStatus(s,"cancelled")} onRefund={()=>refundSubscription(s)}/>) }{!visible.length&&<Empty/>}</div>
+   <div className="mobileCards">{visible.map(s=><SubscriptionCard key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} expanded={expanded===s.id} busy={busyId===s.id} assigning={assigning===s.id} drivers={assignable} driverId={driverId} setDriverId={setDriverId} onExpand={()=>setExpanded(expanded===s.id?null:s.id)} onPayment={()=>confirmPayment(s)} onAssign={()=>assign(s)} startAssign={()=>{setAssigning(s.id);setDriverId("")}} closeAssign={()=>setAssigning(null)} onPause={()=>openReason(s,"pause")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>openReason(s,"cancel")} onRefund={()=>refundSubscription(s)}/>) }{!visible.length&&<Empty/>}</div>
   </section>
  </div><style jsx>{styles}</style></div>;
 }
