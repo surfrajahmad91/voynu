@@ -28,6 +28,7 @@ export default function SubscriptionAdminPage(){
  const[drafts,setDrafts]=useState({}),[filter,setFilter]=useState("all"),[search,setSearch]=useState("");
  const[error,setError]=useState(""),[message,setMessage]=useState(""),[loading,setLoading]=useState(false);
  const[busyId,setBusyId]=useState(null),[assigning,setAssigning]=useState(null),[driverId,setDriverId]=useState(""),[expanded,setExpanded]=useState(null);
+ const[reasonModal,setReasonModal]=useState(null),[reason,setReason]=useState("");
 
  const load=async()=>{
   setLoading(true);setError("");
@@ -80,7 +81,22 @@ export default function SubscriptionAdminPage(){
   await run(s.id,d.full_name+" assigned to subscription.",()=>supabase.rpc("admin_assign_commute_subscription",{p_subscription_id:s.id,p_driver_id:d.id,p_vehicle_id:d.vehicle_id}));
   setAssigning(null);setDriverId("");
  };
- const changeStatus=(s,status)=>run(s.id,"Subscription "+statusText(status)+".",()=>supabase.rpc("admin_set_commute_subscription_status",{p_subscription_id:s.id,p_status:status}));
+ const openReason=(s,action)=>{setReasonModal({s,action});setReason("")};
+ const submitReason=async()=>{
+  const s=reasonModal?.s, action=reasonModal?.action;
+  if(!s||!action)return;
+  if(String(reason).trim().length<3)return setError(action==="cancel"?"Enter a cancellation reason.":"Enter a pause reason.");
+  const rpc=action==="cancel"?"admin_cancel_commute_subscription":"admin_pause_commute_subscription";
+  const dates=action==="pause" ? ((s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=new Date().toISOString().slice(0,10)).map(t=>t.trip_date)) : null;
+  if(action==="pause" && !dates?.length){setError("There are no future scheduled service days available to pause.");return}
+  setReasonModal(null);
+  setBusyId(s.id);setError("");setMessage("");
+  const args=action==="cancel"?{p_subscription_id:s.id,p_reason:String(reason).trim()}:{p_subscription_id:s.id,p_dates:dates,p_reason:String(reason).trim()};
+  const {data,error:e}=await supabase.rpc(rpc,args);
+  if(e){setBusyId(null);setError(e.message);return}
+  setBusyId(null);setMessage(action==="cancel"?"Subscription cancelled and applicable unused value returned to wallet.":"Selected future service days paused and the schedule extended.");
+  await load();
+ };
 
  const save=async plan=>{
   setError("");setMessage("");
@@ -116,7 +132,7 @@ export default function SubscriptionAdminPage(){
    <div className="panelHeader requestsHeader"><div><span className="sectionLabel">OPERATIONS QUEUE</span><h2>Subscription requests</h2><p>Every request has its payment, assignment and lifecycle controls here.</p></div><span className="countPill">{visible.length} shown</span></div>
    <div className="toolbar"><div className="searchBox"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search route, request or passenger"/></div><div className="filters">{STATUS_FILTERS.map(x=><button key={x.key} className={filter===x.key?"selected":""} onClick={()=>setFilter(x.key)}>{x.label}{x.key!=="all"&&<em>{subs.filter(s=>s.status===x.key).length}</em>}</button>)}</div></div>
 
-   <div className="desktopTable"><table><thead><tr><th>Request</th><th>Plan / schedule</th><th>Passengers</th><th>Amount</th><th>Payment</th><th>Operations</th></tr></thead><tbody>{visible.map(s=><SubscriptionRow key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} busy={busyId===s.id} onPayment={()=>confirmPayment(s)} onAssign={()=>{setAssigning(s.id);setDriverId("")}} onPause={()=>changeStatus(s,"paused")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>changeStatus(s,"cancelled")} onRefund={()=>refundSubscription(s)} />)}</tbody></table>{!visible.length&&<Empty/>}</div>
+   <div className="desktopTable"><table><thead><tr><th>Request</th><th>Plan / schedule</th><th>Passengers</th><th>Amount</th><th>Payment</th><th>Operations</th></tr></thead><tbody>{visible.map(s=><SubscriptionRow key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} busy={busyId===s.id} onPayment={()=>confirmPayment(s)} onAssign={()=>{setAssigning(s.id);setDriverId("")}} onPause={()=>openReason(s,"pause")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>openReason(s,"cancel")} onRefund={()=>refundSubscription(s)} />)}</tbody></table>{!visible.length&&<Empty/>}</div>
 
    <div className="mobileCards">{visible.map(s=><SubscriptionCard key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} expanded={expanded===s.id} busy={busyId===s.id} assigning={assigning===s.id} drivers={assignable} driverId={driverId} setDriverId={setDriverId} onExpand={()=>setExpanded(expanded===s.id?null:s.id)} onPayment={()=>confirmPayment(s)} onAssign={()=>assign(s)} startAssign={()=>{setAssigning(s.id);setDriverId("")}} closeAssign={()=>setAssigning(null)} onPause={()=>changeStatus(s,"paused")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>changeStatus(s,"cancelled")} onRefund={()=>refundSubscription(s)}/>) }{!visible.length&&<Empty/>}</div>
   </section>
@@ -174,7 +190,7 @@ function Empty(){return <div className="empty"><span>✓</span><b>No requests in
 function statusClass(v){const s=String(v||"").toLowerCase();if(s.includes("paid")||s==="active"||s==="completed")return "good";if(s.includes("cancel")||s.includes("failed")||s==="refunded")return "bad";return "pending"}
 
 const styles=String.raw`
-.subPage{min-height:100vh;background:#f5f8fb;color:#173047;font-family:var(--voynu-font),Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.reasonOverlay{position:fixed;inset:0;background:rgba(10,24,34,.48);display:grid;place-items:center;padding:18px;z-index:50}.reasonModal{width:min(520px,100%);background:#fff;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.2)}.reasonModal h2{margin:5px 0 7px;font-size:19px}.reasonModal p{margin:0 0 14px;color:#718492;font-size:10px;line-height:1.5}.reasonModal label{display:grid;gap:6px;font-size:9px;font-weight:900;color:#445c6c}.reasonModal textarea{width:100%;box-sizing:border-box;border:1px solid #ccd9e1;border-radius:10px;padding:10px;resize:vertical;font:inherit;font-size:10px;outline:none}.modalActions{display:flex;justify-content:flex-end;gap:7px;margin-top:12px}.modalActions button{border:1px solid #dbe5eb;border-radius:9px;padding:9px 12px;font-size:8px;font-weight:900;cursor:pointer}.modalActions .primary{background:#0b82a5;border-color:#0b82a5;color:#fff}.modalActions .danger{background:#fff0f1;border-color:#f3c5c9;color:#c74c56}.modalActions .quiet{background:#fff;color:#526b7b}.subPage{min-height:100vh;background:#f5f8fb;color:#173047;font-family:var(--voynu-font),Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .subContainer{max-width:1280px;margin:0 auto;padding:28px 28px 70px}.subHeader{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:18px}.crumb{display:inline-flex;margin-bottom:10px;color:#607b8b;text-decoration:none;font-size:10px;font-weight:800}.eyebrow,.sectionLabel{display:block;color:#087fa5;font-size:8px;font-weight:900;letter-spacing:1.5px}.subHeader h1{margin:5px 0 6px;font-size:32px;line-height:1.1;letter-spacing:-.8px;color:#122b40}.subHeader p,.panelHeader p{margin:0;color:#718492;font-size:11px;line-height:1.5}.refreshButton{height:39px;border:1px solid #d9e5ec;background:#fff;border-radius:10px;padding:0 15px;color:#173047;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap}.refreshButton:disabled{opacity:.55}
 .notice{padding:11px 13px;border-radius:10px;margin-bottom:12px;font-size:10px;font-weight:800}.notice.error{background:#fff0f1;color:#c94b55;border:1px solid #ffd6d9}.notice.success{background:#eaf8f1;color:#16835b;border:1px solid #cdeedf}
 .summaryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.summaryCard{background:#fff;border:1px solid #dfe8ee;border-radius:13px;padding:13px 14px;display:grid;gap:3px;box-shadow:0 5px 18px rgba(17,48,70,.035)}.summaryCard.alert{border-color:#f0d6ad;background:#fffaf2}.summaryCard span{font-size:8px;color:#7c8e9b;font-weight:900;text-transform:uppercase}.summaryCard strong{font-size:24px;line-height:1.1;color:#19344a}.summaryCard small{font-size:8px;color:#a0adb6}
