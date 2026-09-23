@@ -143,18 +143,38 @@ export default function CommuteSubscriptionPage(){
     if(routeError){setError(routeError);return false}
     if(!vehicle){setError("Please select a vehicle category.");return false}
     clearFeedback();
+    if(!session?.access_token){setError("Please sign in again before calculating the subscription price.");return false}
     setCalculating(true);
-    const{data,error:e}=await supabase.rpc("quote_commute_subscription",{
-      p_plan_code:plan,
-      p_vehicle_category_id:vehicle,
-      p_one_way_distance_km:Number(distance),
-      p_start_date:start,
-      p_passenger_count:passengers,
-      p_weekdays:weekdays
-    });
-    setCalculating(false);
-    if(e){setError(e.message||"Unable to calculate subscription price.");return false}
-    setQuote(data);
+    try{
+      const r=await fetch("/api/subscriptions/quote",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${session.access_token}`
+        },
+        body:JSON.stringify({
+          planCode:plan,
+          vehicleCategoryId:vehicle,
+          pickup,
+          drop,
+          startDate:start,
+          passengerCount:passengers,
+          weekdays
+        })
+      });
+      const d=await r.json();
+      if(!r.ok)throw Error(d?.error||"Unable to calculate subscription price.");
+      const authoritativeKm=Number(d?.authoritativeDistance?.distanceKm);
+      if(!Number.isFinite(authoritativeKm)||authoritativeKm<=0)throw Error("Unable to verify the authoritative road distance.");
+      setDistance(authoritativeKm.toFixed(1));
+      setQuote(d?.quote||null);
+      if(!d?.quote)throw Error("No subscription quote was returned.");
+    }catch(e){
+      setError(e.message||"Unable to calculate subscription price.");
+      return false;
+    }finally{
+      setCalculating(false);
+    }
     setHasCalculated(true);
     setUpiPayClicked(false);
     setUpiPaymentConfirmed(false);
@@ -211,48 +231,62 @@ export default function CommuteSubscriptionPage(){
       if(!ok)return;
     }
     if(!upiPaymentConfirmed)return setError("Please complete the UPI payment and confirm it above before requesting the subscription.");
+    if(!session?.access_token)return setError("Please sign in again before submitting the subscription.");
     setBusy(true);
     setError("");
-    const{data,error:e}=await supabase.rpc("create_commute_subscription",{
-      p_plan_code:plan,
-      p_vehicle_category_id:vehicle,
-      p_pickup_name:pickup.name,
-      p_pickup_lat:Number(pickup.lat),
-      p_pickup_lon:Number(pickup.lon),
-      p_drop_name:drop.name,
-      p_drop_lat:Number(drop.lat),
-      p_drop_lon:Number(drop.lon),
-      p_one_way_distance_km:Number(distance),
-      p_passenger_count:passengers,
-      p_morning_pickup_time:morning,
-      p_evening_return_time:evening,
-      p_start_date:start,
-      p_weekdays:weekdays,
-      p_passengers:people.map(p=>({name:String(p.name).trim(),age:Number(p.age),gender:p.gender})),
-      p_wallet_requested_amount:Number(walletApplied || 0)
-    });
-    setBusy(false);
-    if(e)return setError(e.message||"Unable to submit subscription request.");
     try{
-      sessionStorage.setItem("voynu_confirmed_subscription",JSON.stringify({
-        id:data?.id||null,
-        planName:plans.find(p=>p.code===plan)?.name||plan,
-        pickupName:pickup.name,
-        dropName:drop.name,
-        distance,
-        morning,
-        evening,
-        start,
-        weekdays,
-        passengers,
-        vehicle,
-        quote,
-        walletUsed:walletApplied,
-        payableAmount:payableSubscriptionAmount,
-        confirmedAt:new Date().toISOString()
-      }));
-    }catch(storageError){console.error("VOYNU: unable to store confirmed subscription:",storageError)}
-    router.push("/subscriptions/confirmed");
+      const r=await fetch("/api/subscriptions/create",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${session.access_token}`
+        },
+        body:JSON.stringify({
+          planCode:plan,
+          vehicleCategoryId:vehicle,
+          pickup,
+          drop,
+          passengerCount:passengers,
+          morningPickupTime:morning,
+          eveningReturnTime:evening,
+          startDate:start,
+          weekdays,
+          passengers:people.map(p=>({name:String(p.name).trim(),age:Number(p.age),gender:p.gender})),
+          walletRequestedAmount:Number(walletApplied || 0)
+        })
+      });
+      const d=await r.json();
+      if(!r.ok)throw Error(d?.error||"Unable to submit subscription request.");
+      const subscription=d?.subscription;
+      if(!subscription?.id)throw Error("Subscription was not created.");
+      const actualWalletUsed=Number(subscription.wallet_used||0);
+      const actualPayableAmount=Math.max(0,Number(subscription.total_amount||0));
+      try{
+        sessionStorage.setItem("voynu_confirmed_subscription",JSON.stringify({
+          id:subscription.id,
+          planName:plans.find(p=>p.code===plan)?.name||plan,
+          pickupName:pickup.name,
+          dropName:drop.name,
+          distance:Number(d?.authoritativeDistance?.distanceKm||distance).toFixed(1),
+          morning,
+          evening,
+          start,
+          weekdays,
+          passengers,
+          vehicle,
+          quote,
+          walletUsed:actualWalletUsed,
+          payableAmount:actualPayableAmount,
+          confirmedAt:new Date().toISOString()
+        }));
+      }catch(storageError){console.error("VOYNU: unable to store confirmed subscription:",storageError)}
+      router.push("/subscriptions/confirmed");
+    }catch(e){
+      setError(e.message||"Unable to submit subscription request.");
+    }finally{
+      setBusy(false);
+    }
+    return;
   };
 
   const selectedPlan=plans.find(p=>p.code===plan);
