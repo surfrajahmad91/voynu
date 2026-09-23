@@ -28,7 +28,8 @@ export default function SubscriptionAdminPage(){
  const[drafts,setDrafts]=useState({}),[filter,setFilter]=useState("all"),[search,setSearch]=useState("");
  const[error,setError]=useState(""),[message,setMessage]=useState(""),[loading,setLoading]=useState(false);
  const[busyId,setBusyId]=useState(null),[assigning,setAssigning]=useState(null),[driverId,setDriverId]=useState(""),[expanded,setExpanded]=useState(null);
- const[reasonModal,setReasonModal]=useState(null),[reason,setReason]=useState(""),[pauseDates,setPauseDates]=useState([]);\n const[replacementQueue,setReplacementQueue]=useState([]),[replacementBusy,setReplacementBusy]=useState(null),[replacementDriver,setReplacementDriver]=useState("");
+ const[reasonModal,setReasonModal]=useState(null),[reason,setReason]=useState(""),[pauseDates,setPauseDates]=useState([]);
+ const[replacementQueue,setReplacementQueue]=useState([]),[replacementBusy,setReplacementBusy]=useState(null),[replacementDriver,setReplacementDriver]=useState("");
 
  const load=async()=>{
   setLoading(true);setError("");
