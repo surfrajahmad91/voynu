@@ -28,7 +28,7 @@ export default function SubscriptionAdminPage(){
  const[drafts,setDrafts]=useState({}),[filter,setFilter]=useState("all"),[search,setSearch]=useState("");
  const[error,setError]=useState(""),[message,setMessage]=useState(""),[loading,setLoading]=useState(false);
  const[busyId,setBusyId]=useState(null),[assigning,setAssigning]=useState(null),[driverId,setDriverId]=useState(""),[expanded,setExpanded]=useState(null);
- const[reasonModal,setReasonModal]=useState(null),[reason,setReason]=useState(""),[pauseDates,setPauseDates]=useState([]);
+ const[reasonModal,setReasonModal]=useState(null),[reason,setReason]=useState(""),[pauseDates,setPauseDates]=useState([]);\n const[replacementQueue,setReplacementQueue]=useState([]),[replacementBusy,setReplacementBusy]=useState(null),[replacementDriver,setReplacementDriver]=useState("");
 
  const load=async()=>{
   setLoading(true);setError("");
@@ -37,8 +37,13 @@ export default function SubscriptionAdminPage(){
    supabase.from("commute_subscriptions").select("id,user_id,plan_id,pickup_name,drop_name,one_way_distance_km,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,base_amount,discount_amount,discount_percent,billable_days,daily_roundtrip_fare,payment_status,status,created_at,updated_at,assigned_driver_id,assigned_vehicle_id,payment_confirmed_at,subscription_trips(id,trip_date,status),subscription_exceptions(exception_date,kind,reason,chargeable)").order("created_at",{ascending:false}).limit(100),
    supabase.from("drivers").select("id,full_name,phone,availability_status,active,vehicle_id,vehicles(id,registration_number,category,seating_capacity,active,status,vehicle_category_id)").eq("active",true).order("full_name")
   ]);
-  if(pe||se||de)setError((pe||se||de).message);
-  setPlans(p||[]);setSubs(s||[]);setDrivers(d||[]);
+  const {data:rq,error:re}=await supabase
+   .from("subscription_trip_driver_overrides")
+   .select("id,subscription_trip_id,original_driver_id,replacement_driver_id,replacement_vehicle_id,reason,status,created_at,subscription_trips(id,trip_date,subscription_id,status,commute_subscriptions(id,pickup_name,drop_name,morning_pickup_time,evening_return_time,assigned_driver_id))")
+   .eq("status","replacement_required")
+   .order("created_at",{ascending:true});
+  if(pe||se||de||re)setError((pe||se||de||re).message);
+  setPlans(p||[]);setSubs(s||[]);setDrivers(d||[]);setReplacementQueue(rq||[]);
   setDrafts(Object.fromEntries((p||[]).map(x=>[x.id,String(x.discount_percent??0)])));
   setLoading(false);
  };
@@ -64,6 +69,7 @@ export default function SubscriptionAdminPage(){
  },[subs,filter,search]);
 
  const assignable=useMemo(()=>drivers.filter(d=>d.active!==false&&d.vehicle_id&&d.vehicles?.active!==false&&d.vehicles?.status==="active"),[drivers]);
+ const replacementAssignable=useMemo(()=>assignable.filter(d=>d.availability_status!=="offline"),[assignable]);
 
  const run=async(id,action,fn)=>{
   setBusyId(id);setError("");setMessage("");
@@ -100,6 +106,18 @@ export default function SubscriptionAdminPage(){
   await load();
  };
 
+ const assignReplacement=async item=>{
+  const d=replacementAssignable.find(x=>x.id===replacementDriver);
+  if(!d?.vehicle_id)return setError("Select an active replacement driver with an assigned vehicle.");
+  setReplacementBusy(item.id);setError("");setMessage("");
+  const {error:e}=await supabase.rpc("admin_reassign_commute_subscription_trip",{
+   p_subscription_trip_id:item.subscription_trip_id,p_driver_id:d.id,p_vehicle_id:d.vehicle_id
+  });
+  if(e){setReplacementBusy(null);setError(e.message);return}
+  setReplacementBusy(null);setReplacementDriver("");
+  setMessage(d.full_name+" assigned to the affected commute date.");
+  await load();
+ };
  const save=async plan=>{
   setError("");setMessage("");
   const discount=Number(drafts[plan.id]);
@@ -128,6 +146,20 @@ export default function SubscriptionAdminPage(){
     <div className="planTop"><div><h3>{plan.name}</h3><span>{plan.code} · {plan.duration_months===0?"7 days":plan.duration_months+" month"+(plan.duration_months>1?"s":"")}</span></div><b className={plan.active?"activePill":"inactivePill"}>{plan.active?"ACTIVE":"OFF"}</b></div>
     <label>Discount</label><div className="discountRow"><div className="percentInput"><input type="number" min="0" max="99.99" step="0.01" value={drafts[plan.id]??""} onChange={e=>setDrafts(v=>({...v,[plan.id]:e.target.value}))}/><span>%</span></div><button onClick={()=>save(plan)}>Save changes</button></div>
    </article>)}</div>
+  </section>
+
+  <section className="panel replacementPanel">
+   <div className="panelHeader requestsHeader"><div><span className="sectionLabel">ACTION REQUIRED</span><h2>Driver replacement queue</h2><p>Future commute dates that need a replacement Saarthi. Current or in-progress trips are never placed here.</p></div><span className="countPill">{replacementQueue.length} pending</span></div>
+   {replacementQueue.length===0?<div className="queueEmpty">✓ No driver replacements are currently waiting for action.</div>:<div className="replacementList">
+    {replacementQueue.map(item=>{
+      const st=item.subscription_trips||{}; const sub=st.commute_subscriptions||{}; const original=drivers.find(d=>d.id===item.original_driver_id);
+      return <article className="replacementItem" key={item.id}>
+       <div className="replacementMain"><div><span className="requestId">SERVICE DATE</span><b>{dateText(st.trip_date)}</b><strong>{sub.pickup_name||"Pickup"} → {sub.drop_name||"Drop"}</strong><small>{timeText(sub.morning_pickup_time)} → {timeText(sub.evening_return_time)} · Request #{shortId(sub.id)}</small></div><span className="badge pending">Replacement required</span></div>
+       <div className="replacementMeta"><span><b>Original Saarthi</b>{original?.full_name||"Driver"}</span><span><b>Reason</b>{item.reason}</span></div>
+       <div className="replacementActions"><select value={replacementDriver} onChange={e=>setReplacementDriver(e.target.value)} disabled={replacementBusy===item.id}><option value="">Select replacement driver…</option>{replacementAssignable.filter(d=>d.id!==item.original_driver_id).map(d=><option key={d.id} value={d.id}>{d.full_name} · {d.vehicles?.registration_number||"—"}</option>)}</select><button className="primary" disabled={!replacementDriver||replacementBusy===item.id} onClick={()=>assignReplacement(item)}>{replacementBusy===item.id?"Assigning…":"Assign replacement"}</button></div>
+      </article>
+    })}
+   </div>}
   </section>
 
   <section className="panel requestsPanel">
@@ -195,7 +227,7 @@ const styles=String.raw`
 .reasonOverlay{position:fixed;inset:0;background:rgba(10,24,34,.48);display:grid;place-items:center;padding:18px;z-index:50}.reasonModal{width:min(520px,100%);background:#fff;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.2)}.reasonModal h2{margin:5px 0 7px;font-size:19px}.reasonModal p{margin:0 0 14px;color:#718492;font-size:10px;line-height:1.5}.reasonModal label{display:grid;gap:6px;font-size:9px;font-weight:900;color:#445c6c}.dateChoices{display:grid;gap:6px;margin:0 0 13px;max-height:220px;overflow:auto}.dateChoice{display:flex!important;align-items:center;gap:8px;padding:8px 9px;border:1px solid #dfe8ee;border-radius:9px;background:#f8fafc;font-size:8px!important;font-weight:800!important}.dateChoice input{accent-color:#0b82a5}.reasonModal textarea{width:100%;box-sizing:border-box;border:1px solid #ccd9e1;border-radius:10px;padding:10px;resize:vertical;font:inherit;font-size:10px;outline:none}.modalActions{display:flex;justify-content:flex-end;gap:7px;margin-top:12px}.modalActions button{border:1px solid #dbe5eb;border-radius:9px;padding:9px 12px;font-size:8px;font-weight:900;cursor:pointer}.modalActions .primary{background:#0b82a5;border-color:#0b82a5;color:#fff}.modalActions .danger{background:#fff0f1;border-color:#f3c5c9;color:#c74c56}.modalActions .quiet{background:#fff;color:#526b7b}.subPage{min-height:100vh;background:#f5f8fb;color:#173047;font-family:var(--voynu-font),Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .subContainer{max-width:1280px;margin:0 auto;padding:28px 28px 70px}.subHeader{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:18px}.crumb{display:inline-flex;margin-bottom:10px;color:#607b8b;text-decoration:none;font-size:10px;font-weight:800}.eyebrow,.sectionLabel{display:block;color:#087fa5;font-size:8px;font-weight:900;letter-spacing:1.5px}.subHeader h1{margin:5px 0 6px;font-size:32px;line-height:1.1;letter-spacing:-.8px;color:#122b40}.subHeader p,.panelHeader p{margin:0;color:#718492;font-size:11px;line-height:1.5}.refreshButton{height:39px;border:1px solid #d9e5ec;background:#fff;border-radius:10px;padding:0 15px;color:#173047;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap}.refreshButton:disabled{opacity:.55}
 .notice{padding:11px 13px;border-radius:10px;margin-bottom:12px;font-size:10px;font-weight:800}.notice.error{background:#fff0f1;color:#c94b55;border:1px solid #ffd6d9}.notice.success{background:#eaf8f1;color:#16835b;border:1px solid #cdeedf}
-.summaryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.summaryCard{background:#fff;border:1px solid #dfe8ee;border-radius:13px;padding:13px 14px;display:grid;gap:3px;box-shadow:0 5px 18px rgba(17,48,70,.035)}.summaryCard.alert{border-color:#f0d6ad;background:#fffaf2}.summaryCard span{font-size:8px;color:#7c8e9b;font-weight:900;text-transform:uppercase}.summaryCard strong{font-size:24px;line-height:1.1;color:#19344a}.summaryCard small{font-size:8px;color:#a0adb6}
+.replacementPanel{border-color:#f0d6ad;background:#fffdf8}.replacementList{display:grid;gap:8px}.replacementItem{border:1px solid #eadfca;border-radius:11px;padding:11px;background:#fff}.replacementMain{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.replacementMain>div{display:grid;gap:3px}.replacementMain b{font-size:10px;color:#203b4f}.replacementMain strong{font-size:10px;color:#173047}.replacementMain small{font-size:7.5px;color:#84949f}.replacementMeta{display:flex;gap:18px;margin-top:9px;padding:8px;border-radius:8px;background:#faf7f0}.replacementMeta span{display:grid;gap:3px;font-size:8px;color:#617786;min-width:150px}.replacementMeta b{font-size:6.5px;color:#8b7c65;text-transform:uppercase;letter-spacing:.5px}.replacementActions{display:flex;gap:7px;margin-top:9px}.replacementActions select{flex:1;height:34px;border:1px solid #ccd9e1;border-radius:8px;background:#fff;padding:0 8px;font-size:8px}.replacementActions button{height:34px;border:0;border-radius:8px;padding:0 12px;font-size:8px;font-weight:900;cursor:pointer}.replacementActions .primary{background:#0b82a5;color:#fff}.replacementActions button:disabled{opacity:.5;cursor:wait}.queueEmpty{padding:20px 10px;border:1px dashed #dfd3bb;border-radius:10px;text-align:center;color:#7e8f99;font-size:9px;background:#fff}.summaryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.summaryCard{background:#fff;border:1px solid #dfe8ee;border-radius:13px;padding:13px 14px;display:grid;gap:3px;box-shadow:0 5px 18px rgba(17,48,70,.035)}.summaryCard.alert{border-color:#f0d6ad;background:#fffaf2}.summaryCard span{font-size:8px;color:#7c8e9b;font-weight:900;text-transform:uppercase}.summaryCard strong{font-size:24px;line-height:1.1;color:#19344a}.summaryCard small{font-size:8px;color:#a0adb6}
 .panel{background:#fff;border:1px solid #dfe8ee;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 5px 20px rgba(17,48,70,.035)}.panelHeader{margin-bottom:14px}.panelHeader h2{margin:4px 0;font-size:17px;letter-spacing:-.2px}.requestsHeader{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.countPill{padding:6px 9px;border-radius:99px;background:#eef7fa;color:#087b9f;font-size:8px;font-weight:900;white-space:nowrap}
 .planGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.planCard{border:1px solid #dfe8ee;border-radius:12px;padding:13px;background:#f9fbfc}.planTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.planTop h3{margin:0;font-size:12px}.planTop span{display:block;margin-top:3px;font-size:8px;color:#7b8e9b}.activePill,.inactivePill{font-size:7px;padding:4px 6px;border-radius:99px;font-weight:900}.activePill{background:#e8f8ef;color:#12825a}.inactivePill{background:#f2f3f4;color:#75818a}.planCard label{display:block;margin-top:13px;font-size:9px;font-weight:900;color:#445c6c}.discountRow{display:flex;gap:7px;margin-top:5px}.percentInput{position:relative;display:flex;align-items:center}.percentInput input{width:82px;height:36px;border:1px solid #ccd9e1;border-radius:9px;padding:0 24px 0 9px;background:#fff;font-size:11px}.percentInput span{position:absolute;right:9px;color:#7d909d;font-size:9px;font-weight:900}.discountRow button{height:36px;flex:1;border:0;border-radius:9px;background:linear-gradient(135deg,#0b86aa,#087a9f);color:#fff;font-size:8px;font-weight:900;cursor:pointer}
 .toolbar{display:grid;grid-template-columns:minmax(220px,320px) 1fr;gap:10px;margin-bottom:12px}.searchBox{height:38px;border:1px solid #dbe5eb;border-radius:10px;background:#f8fafc;display:flex;align-items:center;gap:7px;padding:0 10px}.searchBox span{color:#8295a2}.searchBox input{width:100%;border:0!important;outline:0;background:transparent!important;font-size:10px}.filters{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.filters button{height:34px;border:1px solid #dbe5eb;border-radius:9px;background:#fff;color:#607786;padding:0 9px;font-size:8px;font-weight:900;cursor:pointer}.filters button.selected{background:#0b82a5;border-color:#0b82a5;color:#fff}.filters em{font-style:normal;margin-left:4px;opacity:.7}
@@ -206,7 +238,7 @@ const styles=String.raw`
 @media(max-width:650px){
  .subContainer{padding:14px 10px 82px}.subHeader{align-items:flex-start;flex-direction:column;gap:10px;margin-bottom:13px}.subHeader h1{font-size:25px}.subHeader p{font-size:10px;max-width:360px}.refreshButton{width:100%;height:39px}
  .summaryGrid{grid-template-columns:repeat(2,1fr);gap:7px}.summaryCard{padding:10px;border-radius:11px}.summaryCard strong{font-size:19px}.summaryCard span{font-size:7px}.summaryCard small{font-size:7px}
- .panel{padding:12px;border-radius:13px;margin-bottom:9px}.panelHeader{margin-bottom:11px}.panelHeader h2{font-size:14px}.panelHeader p{font-size:8.5px}.sectionLabel{font-size:7px}.planGrid{grid-template-columns:1fr;gap:7px}.planCard{padding:11px}.discountRow button{font-size:8px}
+ .panel{padding:12px;border-radius:13px;margin-bottom:9px}.replacementMain{gap:6px}.replacementMeta{display:grid;gap:7px;margin-top:8px}.replacementActions{display:grid;grid-template-columns:1fr;gap:5px}.replacementActions select,.replacementActions button{width:100%;height:36px}.replacementItem{padding:10px}.panelHeader{margin-bottom:11px}.panelHeader h2{font-size:14px}.panelHeader p{font-size:8.5px}.sectionLabel{font-size:7px}.planGrid{grid-template-columns:1fr;gap:7px}.planCard{padding:11px}.discountRow button{font-size:8px}
  .toolbar{display:flex;flex-direction:column;gap:7px}.searchBox{height:37px}.filters{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.filters button{flex:0 0 auto;height:32px}
  .requestsHeader{align-items:flex-start}.countPill{margin-top:1px}.desktopTable{display:none}.mobileCards{display:grid;gap:8px}
  .requestCard{border:1px solid #dce7ed;border-radius:13px;padding:11px;background:#fff;box-shadow:0 3px 13px rgba(17,48,70,.035)}.requestCard.expanded{border-color:#b9dbe7}.requestTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.requestTop>div{min-width:0}.requestId{display:block;font-size:6.5px;color:#81919d;font-weight:900;letter-spacing:.7px}.requestCard h3{margin:4px 0 3px;font-size:10.5px;line-height:1.35}.requestCard h3 span{color:#0b82a6}.requestTop small{display:block;color:#7e909d;font-size:7.5px}
