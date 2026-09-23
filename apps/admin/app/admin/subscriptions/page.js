@@ -34,7 +34,7 @@ export default function SubscriptionAdminPage(){
   setLoading(true);setError("");
   const [{data:p,error:pe},{data:s,error:se},{data:d,error:de}]=await Promise.all([
    supabase.from("subscription_plans").select("id,code,name,duration_months,discount_percent,sort_order,active,updated_at").order("sort_order"),
-   supabase.from("commute_subscriptions").select("id,user_id,plan_id,pickup_name,drop_name,one_way_distance_km,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,base_amount,discount_amount,discount_percent,billable_days,daily_roundtrip_fare,payment_status,status,created_at,updated_at,assigned_driver_id,assigned_vehicle_id,payment_confirmed_at").order("created_at",{ascending:false}).limit(100),
+   supabase.from("commute_subscriptions").select("id,user_id,plan_id,pickup_name,drop_name,one_way_distance_km,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,base_amount,discount_amount,discount_percent,billable_days,daily_roundtrip_fare,payment_status,status,created_at,updated_at,assigned_driver_id,assigned_vehicle_id,payment_confirmed_at,subscription_trips(id,trip_date,status),subscription_exceptions(exception_date,kind,reason,chargeable)").order("created_at",{ascending:false}).limit(100),
    supabase.from("drivers").select("id,full_name,phone,availability_status,active,vehicle_id,vehicles(id,registration_number,category,seating_capacity,active,status,vehicle_category_id)").eq("active",true).order("full_name")
   ]);
   if(pe||se||de)setError((pe||se||de).message);
