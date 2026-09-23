@@ -2,8 +2,8 @@
 
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {supabase} from "../../../../shared/lib/supabaseClient";
-import PageHeader from "../../../../shared/components/PageHeader";
+import {supabase} from "../../../../../shared/lib/supabaseClient";
+import PageHeader from "../../../../../shared/components/PageHeader";
 
 const today=()=>new Date().toISOString().slice(0,10);
 const dateText=v=>v?new Date(v+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"—";
