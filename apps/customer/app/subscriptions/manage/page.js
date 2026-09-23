@@ -1,0 +1,57 @@
+'use client';
+
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {supabase} from "../../../../shared/lib/supabaseClient";
+import PageHeader from "../../../../shared/components/PageHeader";
+
+const today=()=>new Date().toISOString().slice(0,10);
+const dateText=v=>v?new Date(v+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"—";
+const timeText=v=>String(v||"").slice(0,5)||"—";
+const statusText=v=>String(v||"pending").replace(/_/g," ");
+
+export default function ManageSubscriptions(){
+ const[session,setSession]=useState(null),[subs,setSubs]=useState([]),[loading,setLoading]=useState(true);
+ const[error,setError]=useState(""),[message,setMessage]=useState(""),[modal,setModal]=useState(null),[reason,setReason]=useState(""),[dates,setDates]=useState([]),[busy,setBusy]=useState(false);
+ const load=async()=>{
+  setLoading(true);setError("");
+  const{data:{session:s}}=await supabase.auth.getSession();setSession(s);
+  if(!s){setLoading(false);return}
+  const{data,error:e}=await supabase.from("commute_subscriptions").select("id,pickup_name,drop_name,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,daily_roundtrip_fare,payment_status,status,subscription_trips(id,trip_date,status),subscription_exceptions(exception_date,kind,reason,chargeable)").eq("user_id",s.user.id).order("created_at",{ascending:false});
+  if(e)setError(e.message);setSubs(data||[]);setLoading(false);
+ };
+ useEffect(()=>{load()},[]);
+ const open=(s,action)=>{setModal({s,action});setReason("");setDates(action==="pause"?(s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today()).map(t=>t.trip_date):[]);setError("");setMessage("")};
+ const submit=async()=>{
+  if(!modal)return;
+  if(reason.trim().length<3)return setError(modal.action==="cancel"?"Please enter a cancellation reason.":"Please enter a pause reason.");
+  if(modal.action==="pause"&&!dates.length)return setError("Select at least one future service day.");
+  setBusy(true);setError("");
+  const rpc=modal.action==="pause"?"customer_pause_commute_subscription":"customer_cancel_commute_subscription";
+  const args=modal.action==="pause"?{p_subscription_id:modal.s.id,p_dates:dates,p_reason:reason.trim()}:{p_subscription_id:modal.s.id,p_reason:reason.trim()};
+  const{error:e}=await supabase.rpc(rpc,args);
+  if(e){setError(e.message);setBusy(false);return}
+  setBusy(false);setModal(null);setMessage(modal.action==="cancel"?"Subscription cancelled. Eligible unused service value has been returned to VOYNU Wallet Credits.":"Selected service days paused. The schedule has been extended without changing the subscription price.");await load();
+ };
+ if(!session&&!loading)return <><PageHeader/><main className="page"><section className="card"><h1>Sign in to manage subscriptions</h1><p>Your commute subscriptions are linked to your VOYNU account.</p><Link href="/login?next=/subscriptions/manage" className="btn primary">Sign in</Link></section></main><style jsx>{styles}</style></>;
+ return <><PageHeader/><main className="page">
+  <div className="head"><div><span className="eyebrow">VOYNU COMMUTE</span><h1>My subscriptions</h1><p>Manage future service days without changing the agreed subscription price.</p></div><Link href="/subscriptions" className="btn secondary">＋ New subscription</Link></div>
+  {error&&<div className="notice error">{error}</div>}{message&&<div className="notice success">{message}</div>}
+  {loading?<div className="loading">Loading subscriptions…</div>:!subs.length?<section className="card empty"><h2>No commute subscriptions yet</h2><p>Start a fixed daily route and manage its service days here.</p><Link href="/subscriptions" className="btn primary">Create subscription</Link></section>:
+   <div className="list">{subs.map(s=>{const trips=(s.subscription_trips||[]).sort((a,b)=>String(a.trip_date).localeCompare(String(b.trip_date)));const future=trips.filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today());const exceptions=(s.subscription_exceptions||[]).filter(e=>String(e.exception_date)>=today());const canPause=s.status==="active"&&s.payment_status==="paid"&&future.length>0;const canCancel=!["cancelled","completed"].includes(s.status);return <article className="card" key={s.id}>
+    <div className="top"><div><span className="ref">VOY-SUB-{String(s.id).slice(0,8).toUpperCase()}</span><h2>{s.pickup_name} <i>→</i> {s.drop_name}</h2><span className={"pill "+s.status}>{statusText(s.status)}</span></div><div className="amount">₹{Number(s.total_amount||0).toLocaleString("en-IN")}<small>subscription payable</small></div></div>
+    <div className="grid"><Info label="Period" value={dateText(s.start_date)+" → "+dateText(s.end_date)}/><Info label="Daily round trip" value={"₹"+Number(s.daily_roundtrip_fare||0).toLocaleString("en-IN")}/><Info label="Schedule" value={timeText(s.morning_pickup_time)+" pickup · "+timeText(s.evening_return_time)+" return"}/><Info label="Payment" value={statusText(s.payment_status)}/></div>
+    <div className="rule"><b>4-hour cutoff</b><span>At least 4 hours before morning pickup: the whole round-trip day can be non-chargeable. After the cutoff, the full day remains chargeable.</span></div>
+    {exceptions.length>0&&<div className="exceptions"><b>Upcoming exceptions</b>{exceptions.map(e=><div key={e.exception_date+"-"+e.kind}><span>{dateText(e.exception_date)} · {statusText(e.kind)}</span><small>{e.reason||"—"}</small></div>)}</div>}
+    <div className="actions">{canPause&&<button className="btn secondary" onClick={()=>open(s,"pause")}>Ⅱ Pause service days</button>}{canCancel&&<button className="btn danger" onClick={()=>open(s,"cancel")}>Cancel subscription</button>}</div>
+   </article>})}</div>}
+  {modal&&<div className="overlay"><div className="modal"><span className="eyebrow">{modal.action==="pause"?"PAUSE SERVICE DAYS":"CANCEL SUBSCRIPTION"}</span><h2>{modal.action==="pause"?"Choose service days to pause":"Cancel this subscription?"}</h2><p>{modal.action==="pause"?"Selected days leave the chargeable schedule and eligible weekdays are added back at the end.":"Your current/in-progress round trip is not interrupted. The server calculates and credits only eligible unused service value."}</p>
+   {modal.action==="pause"&&<div className="choices">{(modal.s.subscription_trips||[]).filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today()).map(t=><label key={t.trip_date}><input type="checkbox" checked={dates.includes(t.trip_date)} onChange={e=>setDates(v=>e.target.checked?[...new Set([...v,t.trip_date])]:v.filter(x=>x!==t.trip_date))}/><span>{dateText(t.trip_date)} · {timeText(modal.s.morning_pickup_time)} pickup</span></label>)}</div>}
+   <label className="reason">Reason<textarea value={reason} onChange={e=>setReason(e.target.value)} rows={4} placeholder={modal.action==="cancel"?"Why are you cancelling?":"Why are you pausing these service days?"}/></label>
+   <div className="modalActions"><button className="btn secondary" onClick={()=>!busy&&setModal(null)} disabled={busy}>Back</button><button className={"btn "+(modal.action==="cancel"?"danger":"primary")} onClick={submit} disabled={busy||reason.trim().length<3||(modal.action==="pause"&&!dates.length)}>{busy?"Saving…":modal.action==="cancel"?"Cancel subscription":"Pause selected days"}</button></div>
+  </div></div>}
+ </main><style jsx>{styles}</style></>;
+}
+function Info({label,value}){return <div className="info"><small>{label}</small><b>{value}</b></div>}
+const styles = `
+.page{min-height:100vh;background:#f5f8fb;padding:28px max(16px,calc((100vw - 1100px)/2)) 70px;font-family:Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#173047}.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:16px}.eyebrow{display:block;color:#087fa5;font-size:9px;font-weight:900;letter-spacing:1.4px}.head h1{margin:5px 0;font-size:30px}.head p{margin:0;color:#718492;font-size:12px}.card{background:#fff;border:1px solid #dfe8ee;border-radius:16px;padding:18px;box-shadow:0 5px 20px rgba(17,48,70,.035);margin-bottom:12px}.list{display:grid;gap:12px}.top{display:flex;justify-content:space-between;gap:14px}.ref{font-size:8px;color:#81919d;font-weight:900;letter-spacing:.8px}.top h2{margin:5px 0 7px;font-size:17px}.top h2 i{font-style:normal;color:#087fa5}.pill{display:inline-block;padding:5px 8px;border-radius:99px;background:#eef7fa;color:#087fa5;font-size:8px;font-weight:900;text-transform:capitalize}.pill.cancelled{background:#ffeff0;color:#bd4d55}.pill.completed{background:#eaf8f1;color:#16835b}.amount{font-size:19px;font-weight:900;text-align:right}.amount small{display:block;font-size:8px;color:#81919d;font-weight:700;margin-top:2px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:15px}.info{padding:10px;border-radius:10px;background:#f7f9fb}.info small{display:block;color:#81919d;font-size:7px;text-transform:uppercase;font-weight:900}.info b{display:block;margin-top:4px;font-size:9px;line-height:1.35}.rule{margin-top:10px;padding:11px;border-radius:10px;background:#eef7fa;color:#087fa5;display:grid;gap:3px}.rule b{font-size:9px}.rule span{font-size:9px;line-height:1.45}.exceptions{margin-top:10px}.exceptions>b{font-size:9px}.exceptions>div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #dfe8ee;font-size:9px}.exceptions small{color:#718492}.btn{border:1px solid #dfe8ee;border-radius:10px;padding:9px 12px;font-size:9px;font-weight:900;text-decoration:none;cursor:pointer}.primary{background:#087fa5;border-color:#087fa5;color:#fff}.secondary{background:#fff;color:#087fa5}.danger{background:#fff0f1;border-color:#f3c5c9;color:#c74c56}.actions{display:flex;gap:7px;margin-top:12px}.notice{padding:11px;border-radius:10px;margin-bottom:10px;font-size:10px;font-weight:800}.notice.error{background:#fff0f1;color:#bd4d55}.notice.success{background:#eaf8f1;color:#16835b}.loading,.empty{text-align:center;color:#718492;font-size:11px}.empty h2{font-size:16px;color:#173047}.empty p{font-size:10px;margin-bottom:14px}.overlay{position:fixed;inset:0;background:rgba(10,24,34,.48);display:grid;place-items:center;padding:16px;z-index:50}.modal{width:min(540px,100%);background:#fff;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.2)}.modal h2{margin:5px 0 7px;font-size:19px}.modal p{margin:0 0 13px;color:#718492;font-size:10px;line-height:1.5}.choices{display:grid;gap:6px;max-height:230px;overflow:auto;margin-bottom:13px}.choices label{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #dfe8ee;border-radius:9px;background:#f8fafc;font-size:9px;font-weight:800}.choices input{accent-color:#087fa5}.reason{display:grid;gap:6px;font-size:9px;font-weight:900}.reason textarea{width:100%;box-sizing:border-box;border:1px solid #ccd9e1;border-radius:10px;padding:10px;resize:vertical;font:inherit;font-size:10px;outline:none}.modalActions{display:flex;justify-content:flex-end;gap:7px;margin-top:12px}.modalActions button:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.page{padding:18px 12px 55px}.head{align-items:flex-start;flex-direction:column}.head .btn{width:100%;box-sizing:border-box;text-align:center}.grid{grid-template-columns:repeat(2,1fr)}.top{align-items:flex-start}.amount{font-size:15px}.actions{display:grid;grid-template-columns:1fr}.actions .btn{width:100%}}`;
