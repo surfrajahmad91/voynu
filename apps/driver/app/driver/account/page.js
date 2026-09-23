@@ -47,6 +47,11 @@ export default function AccountPage() {
   const [notifications, setNotifications] = useState([]);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [availabilitySaving, setAvailabilitySaving] = useState(false);
+  const [commuteSaving, setCommuteSaving] = useState(false);
+  const [unavailability, setUnavailability] = useState([]);
+  const [commuteReason, setCommuteReason] = useState("");
+  const [commuteStart, setCommuteStart] = useState("");
+  const [commuteEnd, setCommuteEnd] = useState("");
   const [error, setError] = useState("");
   const [compact, setCompact] = useState(false);
   const [notificationSound, setNotificationSound] = useState(true);
@@ -74,6 +79,7 @@ export default function AccountPage() {
       if (!cancelled) {
         if (e) setError(e.message);
         setDriver(d);
+        if (d) loadCommuteAvailability(d.id);
       }
     })();
     return () => { cancelled = true; };
@@ -110,6 +116,49 @@ export default function AccountPage() {
     }
     const now = new Date().toISOString();
     setNotifications((items) => items.map((item) => item.read_at ? item : { ...item, read_at: now }));
+  };
+
+  const tomorrowDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const loadCommuteAvailability = async (driverId) => {
+    if (!driverId) return;
+    const { data } = await supabase
+      .from("driver_subscription_unavailability")
+      .select("id,start_date,end_date,reason,status,created_at")
+      .eq("driver_id", driverId)
+      .order("start_date", { ascending: false })
+      .limit(20);
+    setUnavailability(data || []);
+  };
+
+  const submitCommuteUnavailability = async () => {
+    if (!driver || commuteSaving) return;
+    setError("");
+    if (!commuteStart || !commuteEnd) { setError("Select the start and end date."); return; }
+    if (commuteStart < tomorrowDate()) { setError("Commute unavailability must start from tomorrow or later."); return; }
+    if (commuteEnd < commuteStart) { setError("End date cannot be before the start date."); return; }
+    if (commuteReason.trim().length < 3) { setError("Please provide a reason for the unavailability."); return; }
+    setCommuteSaving(true);
+    const { error: e } = await supabase.rpc("request_driver_subscription_unavailability", {
+      p_start_date: commuteStart,
+      p_end_date: commuteEnd,
+      p_reason: commuteReason.trim(),
+    });
+    if (e) {
+      setError(e.message);
+      setCommuteSaving(false);
+      return;
+    }
+    await loadCommuteAvailability(driver.id);
+    setCommuteStart("");
+    setCommuteEnd("");
+    setCommuteReason("");
+    setCommuteSaving(false);
+    setModal(null);
   };
 
   const setAvailability = async (value) => {
@@ -149,6 +198,7 @@ export default function AccountPage() {
   const rows = [
     ["♨", "Notifications", notifications.length ? `${notifications.filter((n) => !n.read_at).length} unread booking/trip alerts` : "Booking and trip alerts", openNotifications],
     ["◉", "Availability", driver.availability_status || "Not set", () => setModal("availability")],
+    ["◷", "Commute availability", unavailability.some((x) => x.status === "active") ? "Active future unavailability request" : "Unavailable for future subscription trips", () => setModal("commute")],
     ["?", "Help & Support", "Get help from VOYNU operations", () => window.open("https://wa.me/919918614844?text=" + encodeURIComponent("Hi VOYNU, I need help with my Saarthi driver account."), "_blank", "noopener,noreferrer")],
     ["⚙", "App settings", "Language, appearance and preferences", () => setModal("settings")],
   ];
@@ -219,6 +269,29 @@ export default function AccountPage() {
             <button type="button" disabled={availabilitySaving} onClick={() => setAvailability("available")} style={{ minHeight: 46, border: 0, borderRadius: 12, background: theme.gradients.primary, color: "#fff", fontWeight: 900, cursor: "pointer" }}>{availabilitySaving ? "Saving…" : "Set Available"}</button>
             <button type="button" disabled={availabilitySaving} onClick={() => setAvailability("offline")} style={{ minHeight: 46, border: "1px solid " + theme.colors.border, borderRadius: 12, background: "#fff", color: theme.colors.text, fontWeight: 900, cursor: "pointer" }}>Set Offline</button>
           </div>
+        </Modal>
+      )}
+
+      {modal === "commute" && (
+        <Modal title="Commute availability" onClose={() => setModal(null)}>
+          <div style={{ padding: 13, borderRadius: 13, background: "#F7F9FB", marginBottom: 12, fontSize: 11, lineHeight: 1.5, color: theme.colors.textMuted }}>
+            Use this when you cannot operate your <b>future scheduled commute subscription trips</b>. Your current or in-progress trip is never interrupted. VOYNU will place affected future dates into the admin replacement queue.
+          </div>
+          <label style={{ display: "block", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>Unavailable from</label>
+          <input type="date" min={tomorrowDate()} value={commuteStart} onChange={(e) => setCommuteStart(e.target.value)} style={{ width: "100%", boxSizing: "border-box", minHeight: 44, padding: "0 11px", border: "1px solid " + theme.colors.border, borderRadius: 11, marginBottom: 10 }} />
+          <label style={{ display: "block", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>Unavailable until</label>
+          <input type="date" min={commuteStart || tomorrowDate()} value={commuteEnd} onChange={(e) => setCommuteEnd(e.target.value)} style={{ width: "100%", boxSizing: "border-box", minHeight: 44, padding: "0 11px", border: "1px solid " + theme.colors.border, borderRadius: 11, marginBottom: 10 }} />
+          <label style={{ display: "block", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>Reason</label>
+          <textarea value={commuteReason} onChange={(e) => setCommuteReason(e.target.value)} placeholder="Tell VOYNU why you are unavailable" rows={4} style={{ width: "100%", boxSizing: "border-box", padding: 11, border: "1px solid " + theme.colors.border, borderRadius: 11, resize: "vertical" }} />
+          <div style={{ marginTop: 7, fontSize: 10, color: theme.colors.textMuted }}>Only future dates are accepted. If a date has already started or is in progress, VOYNU leaves that trip untouched.</div>
+          <button type="button" disabled={commuteSaving} onClick={submitCommuteUnavailability} style={{ width: "100%", minHeight: 46, marginTop: 13, border: 0, borderRadius: 12, background: theme.gradients.primary, color: "#fff", fontWeight: 900, cursor: "pointer" }}>{commuteSaving ? "Submitting…" : "Submit unavailability"}</button>
+          {unavailability.length > 0 && <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 900, marginBottom: 8 }}>Previous requests</div>
+            <div style={{ display: "grid", gap: 8 }}>{unavailability.map((item) => <div key={item.id} style={{ padding: 11, borderRadius: 12, border: "1px solid " + theme.colors.border }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><b style={{ fontSize: 11 }}>{item.start_date} → {item.end_date}</b><span style={{ fontSize: 9, fontWeight: 900, textTransform: "capitalize", color: item.status === "active" ? theme.colors.primary : theme.colors.textMuted }}>{item.status}</span></div>
+              <div style={{ fontSize: 10, color: theme.colors.textMuted, marginTop: 4 }}>{item.reason}</div>
+            </div>)}</div>
+          </div>}
         </Modal>
       )}
 
