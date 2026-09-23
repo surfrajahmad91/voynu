@@ -30,6 +30,7 @@ export default function SubscriptionAdminPage(){
  const[busyId,setBusyId]=useState(null),[assigning,setAssigning]=useState(null),[driverId,setDriverId]=useState(""),[expanded,setExpanded]=useState(null);
  const[reasonModal,setReasonModal]=useState(null),[reason,setReason]=useState(""),[pauseDates,setPauseDates]=useState([]);
  const[replacementQueue,setReplacementQueue]=useState([]),[replacementBusy,setReplacementBusy]=useState(null),[replacementDriver,setReplacementDriver]=useState("");
+ const[unavailabilityQueue,setUnavailabilityQueue]=useState([]),[unavailabilityBusy,setUnavailabilityBusy]=useState(null);
 
  const load=async()=>{
   setLoading(true);setError("");
@@ -38,13 +39,18 @@ export default function SubscriptionAdminPage(){
    supabase.from("commute_subscriptions").select("id,user_id,plan_id,pickup_name,drop_name,one_way_distance_km,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,base_amount,discount_amount,discount_percent,billable_days,daily_roundtrip_fare,payment_status,status,created_at,updated_at,assigned_driver_id,assigned_vehicle_id,payment_confirmed_at,subscription_trips(id,trip_date,status),subscription_exceptions(exception_date,kind,reason,chargeable)").order("created_at",{ascending:false}).limit(100),
    supabase.from("drivers").select("id,full_name,phone,availability_status,active,vehicle_id,vehicles(id,registration_number,category,seating_capacity,active,status,vehicle_category_id)").eq("active",true).order("full_name")
   ]);
+  const {data:uq,error:ue}=await supabase
+   .from("driver_subscription_unavailability")
+   .select("id,driver_id,start_date,end_date,reason,status,created_at,drivers(full_name)")
+   .eq("status","active")
+   .order("created_at",{ascending:false});
   const {data:rq,error:re}=await supabase
    .from("subscription_trip_driver_overrides")
    .select("id,subscription_trip_id,original_driver_id,replacement_driver_id,replacement_vehicle_id,reason,status,created_at,subscription_trips(id,trip_date,subscription_id,status,commute_subscriptions(id,pickup_name,drop_name,morning_pickup_time,evening_return_time,assigned_driver_id))")
    .eq("status","replacement_required")
    .order("created_at",{ascending:true});
-  if(pe||se||de||re)setError((pe||se||de||re).message);
-  setPlans(p||[]);setSubs(s||[]);setDrivers(d||[]);setReplacementQueue(rq||[]);
+  if(pe||se||de||ue||re)setError((pe||se||de||ue||re).message);
+  setPlans(p||[]);setSubs(s||[]);setDrivers(d||[]);setUnavailabilityQueue(uq||[]);setReplacementQueue(rq||[]);
   setDrafts(Object.fromEntries((p||[]).map(x=>[x.id,String(x.discount_percent??0)])));
   setLoading(false);
  };
@@ -107,6 +113,14 @@ export default function SubscriptionAdminPage(){
   await load();
  };
 
+ const resolveUnavailability=async item=>{
+  setUnavailabilityBusy(item.id);setError("");setMessage("");
+  const {data,error:e}=await supabase.rpc("admin_resolve_driver_subscription_unavailability",{p_unavailability_id:item.id});
+  if(e){setUnavailabilityBusy(null);setError(e.message);return}
+  setUnavailabilityBusy(null);
+  setMessage((item.drivers?.full_name||"Driver")+" unavailability request resolved.");
+  await load();
+ };
  const assignReplacement=async item=>{
   const d=replacementAssignable.find(x=>x.id===replacementDriver);
   if(!d?.vehicle_id)return setError("Select an active replacement driver with an assigned vehicle.");
@@ -158,6 +172,20 @@ export default function SubscriptionAdminPage(){
        <div className="replacementMain"><div><span className="requestId">SERVICE DATE</span><b>{dateText(st.trip_date)}</b><strong>{sub.pickup_name||"Pickup"} → {sub.drop_name||"Drop"}</strong><small>{timeText(sub.morning_pickup_time)} → {timeText(sub.evening_return_time)} · Request #{shortId(sub.id)}</small></div><span className="badge pending">Replacement required</span></div>
        <div className="replacementMeta"><span><b>Original Saarthi</b>{original?.full_name||"Driver"}</span><span><b>Reason</b>{item.reason}</span></div>
        <div className="replacementActions"><select value={replacementDriver} onChange={e=>setReplacementDriver(e.target.value)} disabled={replacementBusy===item.id}><option value="">Select replacement driver…</option>{replacementAssignable.filter(d=>d.id!==item.original_driver_id).map(d=><option key={d.id} value={d.id}>{d.full_name} · {d.vehicles?.registration_number||"—"}</option>)}</select><button className="primary" disabled={!replacementDriver||replacementBusy===item.id} onClick={()=>assignReplacement(item)}>{replacementBusy===item.id?"Assigning…":"Assign replacement"}</button></div>
+      </article>
+    })}
+   </div>}
+  </section>
+
+  <section className="panel unavailabilityPanel">
+   <div className="panelHeader requestsHeader"><div><span className="sectionLabel">DRIVER AVAILABILITY</span><h2>Driver unavailability</h2><p>Active future unavailability requests. They can only be resolved after every affected subscription trip has a replacement.</p></div><span className="countPill">{unavailabilityQueue.length} active</span></div>
+   {unavailabilityQueue.length===0?<div className="queueEmpty">✓ No active driver unavailability requests.</div>:<div className="replacementList">
+    {unavailabilityQueue.map(item=>{
+      const pending=replacementQueue.filter(x=>x.original_driver_id===item.driver_id && x.reason===item.reason).length;
+      return <article className="replacementItem" key={item.id}>
+       <div className="replacementMain"><div><span className="requestId">UNAVAILABILITY</span><b>{item.drivers?.full_name||"Driver"}</b><strong>{dateText(item.start_date)} → {dateText(item.end_date)}</strong><small>{item.reason||"No reason provided"}</small></div><span className="badge pending">{pending?"Replacement pending":"Ready to resolve"}</span></div>
+       <div className="replacementMeta"><span><b>Reason</b>{item.reason||"—"}</span><span><b>Created</b>{dateText(String(item.created_at||"").slice(0,10))}</span></div>
+       <div className="replacementActions"><button className="primary" disabled={pending>0||unavailabilityBusy===item.id} onClick={()=>resolveUnavailability(item)}>{unavailabilityBusy===item.id?"Resolving…":pending?"Resolve after replacement":"Resolve unavailability"}</button></div>
       </article>
     })}
    </div>}
