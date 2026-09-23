@@ -73,6 +73,7 @@ export default function SubscriptionAdminPage(){
  };
 
  const confirmPayment=s=>run(s.id,"Payment confirmed and subscription activated.",()=>supabase.rpc("admin_confirm_commute_subscription",{p_subscription_id:s.id}));
+ const refundSubscription=s=>{if(!window.confirm("Refund this paid subscription and cancel it? Any unused subscription wallet reward will be reversed automatically."))return;run(s.id,"Subscription refunded and cancelled.",()=>supabase.rpc("admin_refund_commute_subscription",{p_subscription_id:s.id}));};
  const assign=async s=>{
   const d=drivers.find(x=>x.id===driverId);
   if(!d?.vehicle_id)return setError("Select a driver with an assigned active vehicle.");
@@ -115,16 +116,16 @@ export default function SubscriptionAdminPage(){
    <div className="panelHeader requestsHeader"><div><span className="sectionLabel">OPERATIONS QUEUE</span><h2>Subscription requests</h2><p>Every request has its payment, assignment and lifecycle controls here.</p></div><span className="countPill">{visible.length} shown</span></div>
    <div className="toolbar"><div className="searchBox"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search route, request or passenger"/></div><div className="filters">{STATUS_FILTERS.map(x=><button key={x.key} className={filter===x.key?"selected":""} onClick={()=>setFilter(x.key)}>{x.label}{x.key!=="all"&&<em>{subs.filter(s=>s.status===x.key).length}</em>}</button>)}</div></div>
 
-   <div className="desktopTable"><table><thead><tr><th>Request</th><th>Plan / schedule</th><th>Passengers</th><th>Amount</th><th>Payment</th><th>Operations</th></tr></thead><tbody>{visible.map(s=><SubscriptionRow key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} busy={busyId===s.id} onPayment={()=>confirmPayment(s)} onAssign={()=>{setAssigning(s.id);setDriverId("")}} onPause={()=>changeStatus(s,"paused")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>changeStatus(s,"cancelled")} />)}</tbody></table>{!visible.length&&<Empty/>}</div>
+   <div className="desktopTable"><table><thead><tr><th>Request</th><th>Plan / schedule</th><th>Passengers</th><th>Amount</th><th>Payment</th><th>Operations</th></tr></thead><tbody>{visible.map(s=><SubscriptionRow key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} busy={busyId===s.id} onPayment={()=>confirmPayment(s)} onAssign={()=>{setAssigning(s.id);setDriverId("")}} onPause={()=>changeStatus(s,"paused")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>changeStatus(s,"cancelled")} onRefund={()=>refundSubscription(s)} />)}</tbody></table>{!visible.length&&<Empty/>}</div>
 
-   <div className="mobileCards">{visible.map(s=><SubscriptionCard key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} expanded={expanded===s.id} busy={busyId===s.id} assigning={assigning===s.id} drivers={assignable} driverId={driverId} setDriverId={setDriverId} onExpand={()=>setExpanded(expanded===s.id?null:s.id)} onPayment={()=>confirmPayment(s)} onAssign={()=>assign(s)} startAssign={()=>{setAssigning(s.id);setDriverId("")}} closeAssign={()=>setAssigning(null)} onPause={()=>changeStatus(s,"paused")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>changeStatus(s,"cancelled")}/>) }{!visible.length&&<Empty/>}</div>
+   <div className="mobileCards">{visible.map(s=><SubscriptionCard key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} expanded={expanded===s.id} busy={busyId===s.id} assigning={assigning===s.id} drivers={assignable} driverId={driverId} setDriverId={setDriverId} onExpand={()=>setExpanded(expanded===s.id?null:s.id)} onPayment={()=>confirmPayment(s)} onAssign={()=>assign(s)} startAssign={()=>{setAssigning(s.id);setDriverId("")}} closeAssign={()=>setAssigning(null)} onPause={()=>changeStatus(s,"paused")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>changeStatus(s,"cancelled")} onRefund={()=>refundSubscription(s)}/>) }{!visible.length&&<Empty/>}</div>
   </section>
  </div><style jsx>{styles}</style></div>;
 }
 
 function Summary({label,value,hint,alert}){return <div className={"summaryCard"+(alert?" alert":"")}><span>{label}</span><strong>{value}</strong><small>{hint}</small></div>}
 
-function ActionButtons({s,busy,onPayment,onAssign,onPause,onActivate,onCancel,compact=false}){
+function ActionButtons({s,busy,onPayment,onAssign,onPause,onActivate,onCancel,onRefund,compact=false}){
  const canPay=s.payment_status==="pending"&&s.status==="pending_payment";
  const canAssign=s.payment_status==="paid"&&["active","paused"].includes(s.status);
  return <div className={"actions"+(compact?" compact":"")}>
@@ -133,28 +134,29 @@ function ActionButtons({s,busy,onPayment,onAssign,onPause,onActivate,onCancel,co
   {canAssign&&s.assigned_driver_id&&<button className="secondary" disabled={busy} onClick={onAssign}>↔ Change driver</button>}
   {s.status==="paused"&&s.payment_status==="paid"&&<button className="secondary" disabled={busy} onClick={onActivate}>▶ Resume</button>}
   {s.status==="active"&&<button className="quiet" disabled={busy} onClick={onPause}>Ⅱ Pause</button>}
-  {!["cancelled","completed"].includes(s.status)&&<button className="danger" disabled={busy} onClick={()=>{if(window.confirm("Cancel this subscription?"))onCancel()}}>Cancel</button>}
+  {s.payment_status==="paid"&&!["cancelled","completed"].includes(s.status)&&<button className="danger" disabled={busy} onClick={onRefund}>↩ Refund & cancel</button>}
+  {s.payment_status!=="paid"&&!["cancelled","completed"].includes(s.status)&&<button className="danger" disabled={busy} onClick={()=>{if(window.confirm("Cancel this subscription?"))onCancel()}}>Cancel</button>}
  </div>
 }
 
-function SubscriptionRow({s,plan,busy,onPayment,onAssign,onPause,onActivate,onCancel}){
+function SubscriptionRow({s,plan,busy,onPayment,onAssign,onPause,onActivate,onCancel,onRefund}){
  return <tr>
   <td><div className="requestCell"><b>#{shortId(s.id)}</b><strong>{s.pickup_name} <i>→</i> {s.drop_name}</strong><small>{Number(s.one_way_distance_km||0).toFixed(1)} km · {dateText(s.start_date)} → {dateText(s.end_date)}</small></div></td>
   <td><b>{plan?.name||"—"}</b><small>{timeText(s.morning_pickup_time)} → {timeText(s.evening_return_time)}</small></td>
   <td><b>{s.passenger_count}</b><small>{Array.isArray(s.passengers)?s.passengers.map(p=>p?.name||"Passenger").join(", "):"—"}</small></td>
   <td><b>₹{money(s.total_amount)}</b><small>{s.billable_days} billable days</small></td>
   <td><span className={"badge "+statusClass(s.payment_status)}>{statusText(s.payment_status)}</span><small>{s.payment_confirmed_at?"Confirmed":""}</small></td>
-  <td><div className="rowStatus"><span className={"badge "+statusClass(s.status)}>{statusText(s.status)}</span>{s.assigned_driver_id&&<small>Driver assigned</small>}</div><ActionButtons s={s} busy={busy} onPayment={onPayment} onAssign={onAssign} onPause={onPause} onActivate={onActivate} onCancel={onCancel} compact/></td>
+  <td><div className="rowStatus"><span className={"badge "+statusClass(s.status)}>{statusText(s.status)}</span>{s.assigned_driver_id&&<small>Driver assigned</small>}</div><ActionButtons s={s} busy={busy} onPayment={onPayment} onAssign={onAssign} onPause={onPause} onActivate={onActivate} onCancel={onCancel} onRefund={onRefund} compact/></td>
  </tr>
 }
 
-function SubscriptionCard({s,plan,expanded,busy,assigning,drivers,driverId,setDriverId,onExpand,onPayment,onAssign,startAssign,closeAssign,onPause,onActivate,onCancel}){
+function SubscriptionCard({s,plan,expanded,busy,assigning,drivers,driverId,setDriverId,onExpand,onPayment,onAssign,startAssign,closeAssign,onPause,onActivate,onCancel,onRefund}){
  const driver=drivers.find(d=>d.id===s.assigned_driver_id);
  return <article className={"requestCard"+(expanded?" expanded":"")}>
   <div className="requestTop"><div><span className="requestId">REQUEST #{shortId(s.id)}</span><h3>{s.pickup_name} <span>→</span> {s.drop_name}</h3><small>{Number(s.one_way_distance_km||0).toFixed(1)} km · {plan?.name||"Plan not found"}</small></div><span className={"badge "+statusClass(s.status)}>{statusText(s.status)}</span></div>
   <div className="requestGrid"><Info label="Passengers" value={s.passenger_count}/><Info label="Schedule" value={timeText(s.morning_pickup_time)+" → "+timeText(s.evening_return_time)}/><Info label="Amount" value={"₹"+money(s.total_amount)}/><Info label="Payment" value={statusText(s.payment_status)} badge={statusClass(s.payment_status)}/></div>
   {driver&&<div className="assignedDriver"><span>DRIVER</span><div><b>{driver.full_name}</b><small>{driver.vehicles?.registration_number||"No vehicle"} · {driver.vehicles?.category||"Vehicle"}</small></div><button onClick={startAssign}>Change</button></div>}
-  <ActionButtons s={s} busy={busy} onPayment={onPayment} onAssign={startAssign} onPause={onPause} onActivate={onActivate} onCancel={onCancel}/>
+  <ActionButtons s={s} busy={busy} onPayment={onPayment} onAssign={startAssign} onPause={onPause} onActivate={onActivate} onCancel={onCancel} onRefund={onRefund}/>
   {assigning&&<div className="assignBox"><div><b>Assign driver</b><small>Only active drivers with an active assigned vehicle are shown.</small></div><select value={driverId} onChange={e=>setDriverId(e.target.value)}><option value="">Select driver…</option>{drivers.map(d=><option key={d.id} value={d.id}>{d.full_name} · {d.vehicles?.registration_number||"—"}</option>)}</select><div className="assignActions"><button className="primary" disabled={!driverId||busy} onClick={onAssign}>Assign driver</button><button className="quiet" onClick={closeAssign}>Close</button></div></div>}
   <button className="detailsToggle" onClick={onExpand}>{expanded?"Hide details":"View full request details"} <span>{expanded?"↑":"↓"}</span></button>
   {expanded&&<div className="details">
