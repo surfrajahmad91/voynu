@@ -11,6 +11,7 @@ import PageHeader from "../../../../shared/components/PageHeader";
 import { getMaxLuggageForPassengers, validateCapacity } from "../../lib/capacityValidation";
 import { normalizeTripType } from "../../lib/tripRules";
 import WalletCheckoutCard from "../../components/WalletCheckoutCard";
+import { deserializeBookingDraft } from "../../lib/bookingDraft";
 
 const VOYNU_UPI_VPA = "surfraj@ybl";
 const MAX_PASSENGERS = 12;
@@ -33,7 +34,7 @@ export default function CabSelectionPage() {
   const router = useRouter();
   const [booking, setBooking] = useState(null), [loaded, setLoaded] = useState(false), [dataStatus, setDataStatus] = useState("loading"), [dataError, setDataError] = useState(""), [dataDiagnostics, setDataDiagnostics] = useState(null), [vehicleCategories, setVehicleCategories] = useState([]), [pricingRules, setPricingRules] = useState([]), [pricingVersion, setPricingVersion] = useState(null), [passengerCount, setPassengerCount] = useState(1), [luggageCount, setLuggageCount] = useState(0), [selectedVehicleId, setSelectedVehicleId] = useState(null), [paymentMethod, setPaymentMethod] = useState("cash"), [upiPayClicked, setUpiPayClicked] = useState(false), [upiPaymentConfirmed, setUpiPaymentConfirmed] = useState(false), [isConfirming, setIsConfirming] = useState(false), [flowError, setFlowError] = useState(""), [walletApplied, setWalletApplied] = useState(0);
 
-  useEffect(() => { try { const raw = sessionStorage.getItem("voynu_booking"); if (!raw) return; const parsed = JSON.parse(raw); setBooking(parsed); setPassengerCount(Math.max(1, Number(parsed?.passengerCount) || 1)); setLuggageCount(Math.max(0, Number(parsed?.luggageCount) || 0)); } catch (error) { setFlowError(`Booking session could not be read: ${error?.message || "invalid session data"}`); } finally { setLoaded(true); } }, []);
+  useEffect(() => { try { const raw = sessionStorage.getItem("voynu_booking"); if (!raw) return; const parsedResult = deserializeBookingDraft(raw); if (parsedResult.error) { setFlowError(`Booking session could not be read: ${parsedResult.error}`); return; } const parsed = parsedResult.draft; setBooking(parsed); setPassengerCount(Math.max(1, Number(parsed?.passengerCount) || 1)); setLuggageCount(Math.max(0, Number(parsed?.luggageCount) || 0)); } catch (error) { setFlowError(`Booking session could not be read: ${error?.message || "invalid session data"}`); } finally { setLoaded(true); } }, []);
   useEffect(() => { if (loaded && !booking) router.replace("/"); }, [loaded, booking, router]);
   const maxLuggageForPassengers = useMemo(() => Math.min(MAX_LUGGAGE, getMaxLuggageForPassengers(passengerCount, MAX_LUGGAGE)), [passengerCount]);
   useEffect(() => { if (luggageCount > maxLuggageForPassengers) setLuggageCount(maxLuggageForPassengers); }, [luggageCount, maxLuggageForPassengers]);
