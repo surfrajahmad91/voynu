@@ -140,9 +140,7 @@ export default function SubscriptionConfirmedPage() {
           </div>
         </div>
 
-        <Link href="/" style={{ display: "block", marginTop: 22, textAlign: "center", color: theme.colors.primary, fontWeight: 700, fontSize: 13 }}>
-          Back to home
-        </Link>
+        <div style={{ display: "grid", gap: 10, marginTop: 22 }}><Link href="/subscriptions/manage" style={{ display: "block", textAlign: "center", padding: "12px 14px", borderRadius: 12, background: theme.colors.primary, color: "#fff", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>Manage my subscriptions</Link><Link href="/" style={{ display: "block", textAlign: "center", color: theme.colors.primary, fontWeight: 700, fontSize: 13 }}>Back to home</Link></div>
       </div>
     </main>
   );
