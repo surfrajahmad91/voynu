@@ -8,7 +8,7 @@ import PageHeader from "../../../../../shared/components/PageHeader";
 const today=()=>{const parts=new Intl.DateTimeFormat("en",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const get=k=>parts.find(p=>p.type===k)?.value||"";return `${get("year")}-${get("month")}-${get("day")}`;};
 const dateText=v=>v?new Date(v+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"—";
 const timeText=v=>String(v||"").slice(0,5)||"—";
-const statusText=v=>String(v||"pending").replace(/_/g," ");
+const statusText=v=>v==="pending_payment"?"awaiting approval":String(v||"pending").replace(/_/g," ");
 
 export default function ManageSubscriptions(){
  const[session,setSession]=useState(null),[subs,setSubs]=useState([]),[loading,setLoading]=useState(true);
@@ -38,7 +38,7 @@ export default function ManageSubscriptions(){
   <div className="head"><div><span className="eyebrow">VOYNU COMMUTE</span><h1>My subscriptions</h1><p>Manage future service days without changing the agreed subscription price.</p></div><Link href="/subscriptions" className="btn secondary">＋ New subscription</Link></div>
   {error&&<div className="notice error">{error}</div>}{message&&<div className="notice success">{message}</div>}
   {loading?<div className="loading">Loading subscriptions…</div>:!subs.length?<section className="card empty"><h2>No commute subscriptions yet</h2><p>Start a fixed daily route and manage its service days here.</p><Link href="/subscriptions" className="btn primary">Create subscription</Link></section>:
-   <div className="list">{subs.map(s=>{const trips=(s.subscription_trips||[]).sort((a,b)=>String(a.trip_date).localeCompare(String(b.trip_date)));const future=trips.filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today());const exceptions=(s.subscription_exceptions||[]).filter(e=>String(e.exception_date)>=today());const canPause=s.status==="active"&&s.payment_status==="paid"&&future.length>0;const canCancel=!["cancelled","completed"].includes(s.status);return <article className="card" key={s.id}>
+   <div className="list">{subs.map(s=>{const trips=(s.subscription_trips||[]).sort((a,b)=>String(a.trip_date).localeCompare(String(b.trip_date)));const future=trips.filter(t=>t.status==="scheduled"&&String(t.trip_date)>=today());const exceptions=(s.subscription_exceptions||[]).filter(e=>String(e.exception_date)>=today());const canPause=s.status==="active"&&future.length>0;const canCancel=!["cancelled","completed"].includes(s.status);return <article className="card" key={s.id}>
     <div className="top"><div><span className="ref">VOY-SUB-{String(s.id).slice(0,8).toUpperCase()}</span><h2>{s.pickup_name} <i>→</i> {s.drop_name}</h2><span className={"pill "+s.status}>{statusText(s.status)}</span></div><div className="amount">₹{Number(s.total_amount||0).toLocaleString("en-IN")}<small>subscription payable</small></div></div>
     <div className="grid"><Info label="Period" value={dateText(s.start_date)+" → "+dateText(s.end_date)}/><Info label="Daily round trip" value={"₹"+Number(s.daily_roundtrip_fare||0).toLocaleString("en-IN")}/><Info label="Schedule" value={timeText(s.morning_pickup_time)+" pickup · "+timeText(s.evening_return_time)+" return"}/><Info label="Payment" value={statusText(s.payment_status)}/></div>
     <div className="rule"><b>4-hour cutoff</b><span>At least 4 hours before morning pickup: the whole round-trip day can be non-chargeable. After the cutoff, the full day remains chargeable.</span></div>
