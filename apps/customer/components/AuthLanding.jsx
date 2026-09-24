@@ -150,7 +150,7 @@ const steps = [
   {
     icon: <IconShield size={22} />,
     title: "Track, ride & pay",
-    desc: "Follow your driver live on the way to pickup, ride safely, and pay by UPI or cash \u2014 whichever you prefer.",
+    desc: "Follow your driver live on the way to pickup, ride safely, and pay your driver at pickup.",
   },
 ];
 
