@@ -4,7 +4,7 @@ import { getRoadDistance } from "../../_lib/roadDistance";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
 function bearer(request) {
   const value = request.headers.get("authorization");
@@ -34,7 +34,7 @@ export async function POST(request) {
     const auth = await authenticatedUser(request);
     if (!auth) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     if (!serviceRoleKey) {
-      console.error("VOYNU subscription create: SUPABASE_SERVICE_ROLE_KEY is not configured.");
+      console.error("VOYNU subscription create: SUPABASE_SERVICE_ROLE_KEY/SUPABASE_SECRET_KEY is not configured.");
       return NextResponse.json({ error: "Subscription service is not configured. Please contact VOYNU." }, { status: 503 });
     }
 
