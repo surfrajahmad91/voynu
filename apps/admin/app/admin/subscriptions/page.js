@@ -199,6 +199,25 @@ export default function SubscriptionAdminPage(){
 
    <div className="mobileCards">{visible.map(s=><SubscriptionCard key={s.id} s={s} plan={plans.find(p=>p.id===s.plan_id)} expanded={expanded===s.id} busy={busyId===s.id} assigning={assigning===s.id} drivers={assignable} driverId={driverId} setDriverId={setDriverId} onExpand={()=>setExpanded(expanded===s.id?null:s.id)} onPayment={()=>confirmPayment(s)} onAssign={()=>assign(s)} startAssign={()=>{setAssigning(s.id);setDriverId("")}} closeAssign={()=>setAssigning(null)} onPause={()=>openReason(s,"pause")} onActivate={()=>changeStatus(s,"active")} onCancel={()=>openReason(s,"cancel")} onRefund={()=>refundSubscription(s)}/>) }{!visible.length&&<Empty/>}</div>
   </section>
+ {reasonModal&&<div className="reasonOverlay" role="dialog" aria-modal="true">
+   <div className="reasonModal">
+    <span className="sectionLabel">{reasonModal.action==="pause"?"PAUSE SUBSCRIPTION":"CANCEL SUBSCRIPTION"}</span>
+    <h2>{reasonModal.action==="pause"?"Pause service days":"Cancel subscription"}</h2>
+    <p>{reasonModal.action==="pause"?"Select the future service days to pause and provide a reason. Days paused before the 4-hour cutoff are removed from the chargeable schedule; later requests remain chargeable.":"Cancellation requires a reason. The backend will calculate any eligible unused service-day value."}</p>
+    {reasonModal.action==="pause"&&<label>Service days
+      <div className="dateChoices">
+       {pauseDates.length?pauseDates.map(d=><label className="dateChoice" key={d}><input type="checkbox" checked={pauseDates.includes(d)} onChange={e=>setPauseDates(v=>e.target.checked?[...new Set([...v,d])]:v.filter(x=>x!==d))}/><span>{dateText(d)}</span></label>):<span style={{fontSize:"9px",color:"#81919d"}}>No future scheduled service days are available.</span>}
+      </div>
+     </label>}
+    <label>Reason
+     <textarea rows="4" value={reason} onChange={e=>setReason(e.target.value)} placeholder={reasonModal.action==="pause"?"Why should these service days be paused?":"Why is this subscription being cancelled?"} autoFocus />
+    </label>
+    <div className="modalActions">
+     <button className="quiet" onClick={()=>setReasonModal(null)}>Close</button>
+     <button className={reasonModal.action==="cancel"?"danger":"primary"} disabled={reason.trim().length<3||(reasonModal.action==="pause"&&!pauseDates.length)} onClick={submitReason}>{reasonModal.action==="cancel"?"Refund & cancel":"Pause selected days"}</button>
+    </div>
+   </div>
+  </div>}
  </div><style jsx>{styles}</style></div>;
 }
 
