@@ -1,8 +1,8 @@
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
-import {supabase} from "../../../shared/lib/supabaseClient";
-import {theme} from "../../../shared/lib/theme";
+import {supabase} from "../../../../../shared/lib/supabaseClient";
+import {theme} from "../../../../../shared/lib/theme";
 
 const TZ="Asia/Kolkata";
 const money=v=>"₹"+Number(v||0).toLocaleString("en-IN",{maximumFractionDigits:0});
