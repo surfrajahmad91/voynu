@@ -4,7 +4,7 @@ import { getRoadDistance } from "../../_lib/roadDistance";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+// Subscription creation is protected by the authenticated Supabase session and the RPC\n// verifies auth.uid() against p_user_id. No Vercel service-role secret is required.
 
 function bearer(request) {
   const value = request.headers.get("authorization");
