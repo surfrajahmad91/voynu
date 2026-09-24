@@ -33,11 +33,6 @@ export async function POST(request) {
   try {
     const auth = await authenticatedUser(request);
     if (!auth) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    if (!serviceRoleKey) {
-      console.error("VOYNU subscription create: SUPABASE_SERVICE_ROLE_KEY/SUPABASE_SECRET_KEY is not configured.");
-      return NextResponse.json({ error: "Subscription service is not configured. Please contact VOYNU." }, { status: 503 });
-    }
-
     const body = await request.json();
     const {
       planCode,
@@ -63,8 +58,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "The authoritative road-distance service returned an invalid distance." }, { status: 502 });
     }
 
-    const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+    const token = bearer(request);
+    const serviceClient = createClient(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
     });
 
     const { data, error } = await serviceClient.rpc("create_commute_subscription", {
