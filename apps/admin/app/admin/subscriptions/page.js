@@ -87,7 +87,7 @@ export default function SubscriptionAdminPage(){
  };
 
  const confirmPayment=s=>run(s.id,"Payment confirmed and subscription activated.",()=>supabase.rpc("admin_confirm_commute_subscription",{p_subscription_id:s.id}));
- const refundSubscription=s=>{if(!window.confirm("Refund this paid subscription and cancel it? Any unused subscription wallet reward will be reversed automatically."))return;run(s.id,"Subscription refunded and cancelled.",()=>supabase.rpc("admin_refund_commute_subscription",{p_subscription_id:s.id}));};
+ const refundSubscription=s=>openReason(s,"cancel");
  const assign=async s=>{
   const d=drivers.find(x=>x.id===driverId);
   if(!d?.vehicle_id)return setError("Select a driver with an assigned active vehicle.");
