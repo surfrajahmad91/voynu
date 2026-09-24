@@ -4,7 +4,6 @@ import { getRoadDistance } from "../../_lib/roadDistance";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-// Subscription creation is protected by the authenticated Supabase session and the RPC\n// verifies auth.uid() against p_user_id. No Vercel service-role secret is required.
 
 function bearer(request) {
   const value = request.headers.get("authorization");
@@ -19,7 +18,7 @@ async function authenticatedUser(request) {
   });
   const { data, error } = await client.auth.getUser(token);
   if (error || !data?.user) return null;
-  return { user: data.user };
+  return { user: data.user, token };
 }
 
 function validPoint(point) {
@@ -33,6 +32,7 @@ export async function POST(request) {
   try {
     const auth = await authenticatedUser(request);
     if (!auth) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+
     const body = await request.json();
     const {
       planCode,
@@ -58,13 +58,15 @@ export async function POST(request) {
       return NextResponse.json({ error: "The authoritative road-distance service returned an invalid distance." }, { status: 502 });
     }
 
-    const token = bearer(request);
-    const serviceClient = createClient(supabaseUrl, anonKey, {
+    // The RPC is SECURITY DEFINER but explicitly requires an authenticated
+    // session whose auth.uid() matches p_user_id. Use the customer's bearer
+    // token with the publishable/anon key; no service-role secret is needed.
+    const authenticatedClient = createClient(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
-      global: { headers: { Authorization: `Bearer ${token}` } },
+      global: { headers: { Authorization: `Bearer ${auth.token}` } },
     });
 
-    const { data, error } = await serviceClient.rpc("create_commute_subscription", {
+    const { data, error } = await authenticatedClient.rpc("create_commute_subscription", {
       p_user_id: auth.user.id,
       p_plan_code: planCode,
       p_vehicle_category_id: vehicleCategoryId,
