@@ -3,29 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { theme } from "../../../../../shared/lib/theme";
 import PageHeader from "../../../../../shared/components/PageHeader";
 
 const DAY_LABELS = { 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat", 7: "Sun" };
-
-function IconCheckBig() {
-  return (
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-function IconPhoneCall({ size = 15 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 4h4l2 5-2.5 1.6a11.3 11.3 0 0 0 5.4 5.4L15.4 13l5 2v4a2 2 0 0 1-2 2A16.5 16.5 0 0 1 3 6a2 2 0 0 1 2-2z" />
-    </svg>
-  );
-}
-
-function subscriptionReference(id) {
-  return id ? `VOY-SUB-${String(id).slice(0, 8).toUpperCase()}` : "—";
-}
+const money = (v) => Number(v || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+const reference = (id) => (id ? `VOY-SUB-${String(id).slice(0, 8).toUpperCase()}` : "—");
 
 export default function SubscriptionConfirmedPage() {
   const router = useRouter();
@@ -50,115 +32,119 @@ export default function SubscriptionConfirmedPage() {
   if (loaded && !subscription) return null;
   if (!loaded || !subscription) {
     return (
-      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: theme.colors.bg }}>
-        <div style={{ width: 34, height: 34, border: "3px solid rgba(10,127,166,0.18)", borderTopColor: theme.colors.primary, borderRadius: "50%" }} />
+      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--voynu-bg,#F7F9FC)" }}>
+        <div style={{ width: 34, height: 34, border: "3px solid rgba(10,127,166,0.18)", borderTopColor: "#0A7FA6", borderRadius: "50%" }} />
       </main>
     );
   }
 
-  const reference = subscriptionReference(subscription.id);
   const quote = subscription.quote || {};
-  const weekdayLabels = (subscription.weekdays || []).map((d) => DAY_LABELS[d] || d).join(", ");
+  const days = (subscription.weekdays || []).map((d) => DAY_LABELS[d] || d).join(", ");
+  const payable = Number(subscription.payableAmount ?? quote.totalAmount ?? 0);
+  const billable = Number(subscription.billableDays || quote.billableDays || 0);
+  const perDay = billable > 0 ? Math.round(payable / billable) : 0;
+  const walletUsed = Number(subscription.walletUsed || 0);
 
   return (
-    <main style={{ minHeight: "100vh", background: theme.colors.bg, fontFamily: theme.fontFamily, color: theme.colors.text }}>
-      <PageHeader maxWidth={theme.maxWidth.content} showWhatsapp={false} />
-      <div style={{ width: `min(${theme.maxWidth.content}px, calc(100% - 32px))`, margin: "0 auto", padding: "32px 0 60px" }}>
-        <div style={{ textAlign: "center", marginBottom: 26 }}>
-          <div style={{ width: 68, height: 68, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "linear-gradient(135deg, #1fa855, #0a7d42)", color: "#ffffff", boxShadow: "0 14px 30px rgba(31,168,85,0.28)" }}>
-            <IconCheckBig />
-          </div>
-          <h1 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>Subscription Requested!</h1>
-          <p style={{ maxWidth: 560, margin: "0 auto", color: theme.colors.textMuted, fontSize: 13.5, lineHeight: 1.55 }}>
-            Your commute subscription request has been saved. Your UPI payment is awaiting verification — our team will confirm it and activate your subscription shortly.
-          </p>
-        </div>
-
-        <div style={{ marginBottom: 14, padding: "13px 16px", borderRadius: theme.radius.lg, background: theme.colors.primaryTint, border: `1px solid ${theme.colors.border}`, textAlign: "center" }}>
-          <div style={{ color: theme.colors.textFaint, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase" }}>Subscription reference</div>
-          <div style={{ marginTop: 3, color: theme.colors.primary, fontSize: 18, fontWeight: 800, letterSpacing: 0.5 }}>{reference}</div>
-          <div style={{ marginTop: 7, color: theme.colors.textMuted, fontSize: 11.5, fontWeight: 700 }}>Payment verification pending</div>
-        </div>
-
-        <div style={{ padding: 20, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
-            <div style={{ width: 10, height: 10, marginTop: 4, borderRadius: "50%", background: theme.colors.primary, flexShrink: 0 }} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: theme.colors.text, lineHeight: 1.4 }}>{subscription.pickupName}</div>
-          </div>
-          <div style={{ width: 1.5, height: 16, marginLeft: 4.25, background: theme.colors.border }} />
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
-            <div style={{ width: 10, height: 10, marginTop: 4, borderRadius: "50%", background: theme.colors.accent, flexShrink: 0 }} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: theme.colors.text, lineHeight: 1.4 }}>{subscription.dropName}</div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16, paddingTop: 16, borderTop: `1px dashed ${theme.colors.border}` }}>
-            <DetailCell label="Plan" value={subscription.planName} />
-            <DetailCell label="Distance" value={subscription.distance ? `${subscription.distance} km one-way` : ""} />
-            <DetailCell label="Morning pickup" value={subscription.morning} />
-            <DetailCell label="Evening return" value={subscription.evening} />
-            <DetailCell label="Start date" value={subscription.start} />
-            <DetailCell label="Travel days" value={weekdayLabels} />
-            <DetailCell label="Passengers" value={String(subscription.passengers || 1)} />
-            <DetailCell label="Payment" value="UPI — Verification pending" />
-          </div>
-        </div>
-
-        <section style={{ marginTop: 14, padding: 18, borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
-            <div style={{ fontSize: 14, fontWeight: 800 }}>Subscription amount</div>
-            <div style={{ color: theme.colors.textFaint, fontSize: 10.5, fontWeight: 700 }}>Transparent pricing</div>
-          </div>
-          <FareRow label="Daily round trip" value={quote.dailyRoundTripFare} />
-          <FareRow label={`Billable days (${quote.billableDays ?? "—"})`} value={quote.baseAmount} />
-          {Number(quote.discountAmount) > 0 && (
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.success, fontSize: 12.5, fontWeight: 700 }}>
-              <span>Discount</span>
-              <span>- ₹{Number(quote.discountAmount).toFixed(2)}</span>
+    <>
+      <PageHeader showWhatsapp={false} />
+      <main className="page">
+        <div className="wrap">
+          <div className="hero">
+            <div className="tick" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
             </div>
-          )}
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 7, paddingTop: 13, borderTop: `1px solid ${theme.colors.border}`, color: theme.colors.text, fontSize: 16, fontWeight: 800 }}>
-            <span>Total payable</span>
-            <span>₹{Number(quote.totalAmount || 0).toFixed(2)}</span>
+            <h1>Request sent</h1>
+            <p>Your commute subscription is with the VOYNU team. We&apos;ll notify you as soon as it is approved.</p>
           </div>
-          <div style={{ marginTop: 9, color: theme.colors.textFaint, fontSize: 10.5, lineHeight: 1.45 }}>
-            Full payment is required before activation. Scheduled days remain chargeable when fewer passengers travel; approved holidays and off-days are handled separately.
-          </div>
-        </section>
 
-        <div style={{ marginTop: 14, padding: "13px 16px", borderRadius: theme.radius.lg, background: theme.colors.primaryTint, fontSize: 11.5, color: theme.colors.primaryDark, lineHeight: 1.5 }}>
-          Once your UPI payment is verified, your subscription will be activated and your morning/evening pickups will begin from your start date. You can track subscription status from My Account.
-        </div>
-
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginTop: 22, padding: "16px 18px", borderRadius: theme.radius.lg, background: theme.colors.warningBg, border: "1px solid #f0dfa8" }}>
-          <div style={{ width: 36, height: 36, flex: "0 0 36px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: "#f7e3ac", color: theme.colors.warning }}>
-            <IconPhoneCall size={17} />
+          <div className="ref">
+            <small>Subscription reference</small>
+            <b>{reference(subscription.id)}</b>
+            <span className="badge">Awaiting approval</span>
           </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: theme.colors.warning }}>Need help with your subscription?</div>
-            <div style={{ marginTop: 3, fontSize: 12, lineHeight: 1.5, color: "#8a6b1c" }}>
-              Your request details are already with the VOYNU team. If you need to make a change, please contact us and quote your subscription reference.
+
+          <section className="card">
+            <h2>What happens next</h2>
+            <ol className="next">
+              <li><b>1</b><div><strong>VOYNU approves your request</strong><span>Requests not approved within 4 hours lapse automatically, and any wallet credits used are returned.</span></div></li>
+              <li><b>2</b><div><strong>Your driver picks you up</strong><span>Pickups begin on {subscription.start || "your start date"}.</span></div></li>
+              <li><b>3</b><div><strong>You pay at pickup</strong><span>At least that day&apos;s fare{perDay > 0 ? <> (about <em>₹{money(perDay)}</em>)</> : null}. Cash up to that amount, or UPI to VOYNU — your driver verifies the transaction reference.</span></div></li>
+            </ol>
+          </section>
+
+          <section className="card">
+            <h2>Your commute</h2>
+            <div className="route">
+              <div><i className="dot a" /><span>{subscription.pickupName}</span></div>
+              <div className="line" />
+              <div><i className="dot b" /><span>{subscription.dropName}</span></div>
             </div>
+            <dl className="facts">
+              <div><dt>Plan</dt><dd>{subscription.planName}</dd></div>
+              <div><dt>Distance</dt><dd>{subscription.distance ? `${subscription.distance} km one way` : "—"}</dd></div>
+              <div><dt>Morning pickup</dt><dd>{subscription.morning}</dd></div>
+              <div><dt>Evening return</dt><dd>{subscription.evening}</dd></div>
+              <div><dt>Start date</dt><dd>{subscription.start}</dd></div>
+              <div><dt>Travel days</dt><dd>{days || "—"}</dd></div>
+              <div><dt>Riders</dt><dd>{subscription.passengers || 1}</dd></div>
+              <div><dt>Payment</dt><dd>Pay at pickup</dd></div>
+            </dl>
+          </section>
+
+          <section className="card">
+            <h2>Amount</h2>
+            <div className="rows">
+              <div><span>Daily round trip</span><b>₹{money(quote.dailyRoundTripFare)}</b></div>
+              <div><span>Billable days</span><b>{quote.billableDays ?? "—"}</b></div>
+              {Number(quote.discountAmount) > 0 && <div className="good"><span>Plan discount</span><b>− ₹{money(quote.discountAmount)}</b></div>}
+              {walletUsed > 0 && <div className="good"><span>Wallet credits used</span><b>− ₹{money(walletUsed)}</b></div>}
+            </div>
+            <div className="total"><span>To pay across the plan</span><b>₹{money(payable)}</b></div>
+            <p className="note">Scheduled days stay chargeable when fewer riders travel. Off-days paused at least 4 hours before pickup are not charged.</p>
+          </section>
+
+          <div className="actions">
+            <Link href="/subscriptions/manage" className="primary">My subscriptions</Link>
+            <Link href="/" className="secondary">Back to home</Link>
           </div>
         </div>
 
-        <div style={{ display: "grid", gap: 10, marginTop: 22 }}><Link href="/subscriptions/manage" style={{ display: "block", textAlign: "center", padding: "12px 14px", borderRadius: 12, background: theme.colors.primary, color: "#fff", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>Manage my subscriptions</Link><Link href="/" style={{ display: "block", textAlign: "center", color: theme.colors.primary, fontWeight: 700, fontSize: 13 }}>Back to home</Link></div>
-      </div>
-    </main>
-  );
-}
-
-function FareRow({ label, value }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "7px 0", color: theme.colors.textMuted, fontSize: 12.5 }}>
-      <span>{label}</span>
-      <span>₹{Number(value || 0).toFixed(2)}</span>
-    </div>
-  );
-}
-function DetailCell({ label, value }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <span style={{ color: theme.colors.textFaint, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3 }}>{label}</span>
-      <span style={{ color: theme.colors.text, fontSize: 13, fontWeight: 700 }}>{value || "—"}</span>
-    </div>
+        <style jsx>{`
+          .page{min-height:100vh;background:var(--voynu-bg,#F7F9FC);color:var(--voynu-text,#1E3348);padding:18px 0 calc(40px + env(safe-area-inset-bottom))}
+          .wrap{width:min(680px,calc(100% - 28px));margin:0 auto}
+          .hero{text-align:center;padding:14px 0 8px}
+          .tick{width:72px;height:72px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#12A0C6,#0A7FA6);color:#fff;box-shadow:0 14px 30px rgba(10,127,166,.28)}
+          h1{margin:0 0 6px;font-size:26px;letter-spacing:-.5px;font-weight:700;color:var(--voynu-navy,#0A2337)}
+          .hero p{max-width:460px;margin:0 auto;font-size:15px;line-height:1.55;color:var(--voynu-muted,#5B6B7C)}
+          .ref{margin:16px 0 14px;padding:14px 16px;border-radius:18px;background:var(--voynu-primary-tint,#E7F4F8);text-align:center}
+          .ref small{display:block;font-size:12px;font-weight:600;color:var(--voynu-muted,#5B6B7C)}
+          .ref b{display:block;margin:2px 0 8px;font-size:20px;letter-spacing:.6px;color:var(--voynu-teal-deep,#00456B)}
+          .badge{display:inline-block;padding:5px 12px;border-radius:99px;background:#FFF7E6;color:#8A5A00;font-size:13px;font-weight:700}
+          .card{background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7);border-radius:20px;padding:20px 18px;margin-bottom:14px;box-shadow:var(--voynu-shadow,0 12px 30px rgba(10,35,55,.07))}
+          h2{margin:0 0 12px;font-size:18px;letter-spacing:-.2px;font-weight:700;color:var(--voynu-navy,#0A2337)}
+          .next{margin:0;padding:0;list-style:none;display:grid;gap:14px}
+          .next li{display:flex;gap:12px;align-items:flex-start}
+          .next li>b{width:28px;height:28px;flex:0 0 28px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--voynu-teal,#0A7FA6);color:#fff;font-size:13px}
+          .next strong{display:block;font-size:15px;color:var(--voynu-navy,#0A2337)}
+          .next span{display:block;margin-top:2px;font-size:14px;line-height:1.55;color:var(--voynu-muted,#5B6B7C)}
+          .next em{font-style:normal;font-weight:700;color:var(--voynu-accent-deep,#D4552A)}
+          .route>div{display:flex;gap:12px;align-items:flex-start;font-size:15px;font-weight:600;line-height:1.4}
+          .dot{width:12px;height:12px;flex:0 0 12px;margin-top:5px;border-radius:50%}.dot.a{background:var(--voynu-teal,#0A7FA6)}.dot.b{background:var(--voynu-accent,#F5813F)}
+          .line{width:2px;height:16px;margin:3px 0 3px 5px;background:var(--voynu-border-strong,#D8DEE8)}
+          .facts{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;margin:16px 0 0;padding-top:14px;border-top:1px dashed var(--voynu-border-strong,#D8DEE8)}
+          .facts dt{font-size:12px;font-weight:600;color:var(--voynu-muted,#5B6B7C)}.facts dd{margin:3px 0 0;font-size:14px;font-weight:600}
+          .rows>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;font-size:14.5px;color:var(--voynu-muted,#5B6B7C)}.rows b{color:var(--voynu-text,#1E3348);font-variant-numeric:tabular-nums}
+          .rows .good b,.rows .good span{color:#15803D}
+          .total{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;padding-top:14px;border-top:1px solid var(--voynu-border-strong,#D8DEE8);font-size:15px;font-weight:600}
+          .total b{font-size:24px;color:var(--voynu-navy,#0A2337);font-variant-numeric:tabular-nums}
+          .note{margin:12px 0 0;font-size:12.5px;line-height:1.55;color:var(--voynu-muted,#5B6B7C)}
+          .actions{display:grid;gap:10px;margin-top:18px}
+          .actions :global(a){display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:16px;font-size:16px;font-weight:700}
+          .actions :global(a.primary){background:var(--voynu-gradient,linear-gradient(135deg,#12A0C6,#0A7FA6));color:#fff;box-shadow:0 10px 24px rgba(10,127,166,.22)}
+          .actions :global(a.secondary){border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:#fff;color:var(--voynu-navy,#0A2337)}
+        `}</style>
+      </main>
+    </>
   );
 }
