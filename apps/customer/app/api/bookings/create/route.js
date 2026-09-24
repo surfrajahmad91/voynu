@@ -45,7 +45,7 @@ export async function POST(request) {
     const body = await request.json();
     const { booking, vehicleCategoryId, passengerCount, luggageCount, paymentMethod, walletRequestedAmount, idempotencyKey } = body || {};
     if (!booking || !vehicleCategoryId || !idempotencyKey) return NextResponse.json({ error: "Invalid booking request: booking, vehicle category and idempotency key are required.", code: "INVALID_BOOKING_REQUEST", stage: "request.validation" }, { status: 400 });
-    if (paymentMethod !== "cash" && paymentMethod !== "upi") return NextResponse.json({ error: "Invalid payment method. Choose Pay on Pickup or UPI.", code: "INVALID_PAYMENT_METHOD", stage: "request.validation" }, { status: 400 });
+    if (paymentMethod !== "cash") return NextResponse.json({ error: "Online UPI payment is not available for ride bookings. Please choose Pay on Pickup.", code: "INVALID_PAYMENT_METHOD", stage: "request.validation" }, { status: 400 });
     const requestedWalletAmount = Number(walletRequestedAmount || 0);
     if (!Number.isFinite(requestedWalletAmount) || requestedWalletAmount < 0) return NextResponse.json({ error: "Invalid wallet credit amount.", code: "INVALID_WALLET_AMOUNT", stage: "wallet.validation" }, { status: 400 });
     const auth = await authenticatedUser(request);
