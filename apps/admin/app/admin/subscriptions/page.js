@@ -36,7 +36,7 @@ export default function SubscriptionAdminPage(){
   setLoading(true);setError("");
   const [{data:p,error:pe},{data:s,error:se},{data:d,error:de}]=await Promise.all([
    supabase.from("subscription_plans").select("id,code,name,duration_months,discount_percent,sort_order,active,updated_at").order("sort_order"),
-   supabase.from("commute_subscriptions").select("id,user_id,plan_id,pickup_name,drop_name,one_way_distance_km,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,base_amount,discount_amount,discount_percent,billable_days,daily_roundtrip_fare,payment_status,status,created_at,updated_at,assigned_driver_id,assigned_vehicle_id,payment_confirmed_at,subscription_trips(id,trip_date,status),subscription_exceptions(exception_date,kind,reason,chargeable)").order("created_at",{ascending:false}).limit(100),
+   supabase.from("commute_subscriptions").select("id,user_id,plan_id,pickup_name,drop_name,one_way_distance_km,passenger_count,passengers,morning_pickup_time,evening_return_time,start_date,end_date,total_amount,amount_paid,base_amount,discount_amount,discount_percent,billable_days,daily_roundtrip_fare,payment_status,status,created_at,updated_at,assigned_driver_id,assigned_vehicle_id,payment_confirmed_at,subscription_trips(id,trip_date,status),subscription_exceptions(exception_date,kind,reason,chargeable)").order("created_at",{ascending:false}).limit(100),
    supabase.from("drivers").select("id,full_name,phone,availability_status,active,vehicle_id,vehicles(id,registration_number,category,seating_capacity,active,status,vehicle_category_id)").eq("active",true).order("full_name")
   ]);
   const {data:uq,error:ue}=await supabase
@@ -86,7 +86,7 @@ export default function SubscriptionAdminPage(){
   setBusyId(null);setMessage(action);
  };
 
- const confirmPayment=s=>run(s.id,"Payment confirmed and subscription activated.",()=>supabase.rpc("admin_confirm_commute_subscription",{p_subscription_id:s.id}));
+ const confirmPayment=s=>run(s.id,"Subscription approved. Assign a driver to start the trips.",()=>supabase.rpc("admin_confirm_commute_subscription",{p_subscription_id:s.id}));
  const refundSubscription=s=>openReason(s,"cancel");
  const assign=async s=>{
   const d=drivers.find(x=>x.id===driverId);
@@ -225,15 +225,15 @@ function Summary({label,value,hint,alert}){return <div className={"summaryCard"+
 
 function ActionButtons({s,busy,onPayment,onAssign,onPause,onActivate,onCancel,onRefund,compact=false}){
  const canPay=s.payment_status==="pending"&&s.status==="pending_payment";
- const canAssign=s.payment_status==="paid"&&["active","paused"].includes(s.status);
+ const canAssign=["active","paused"].includes(s.status);
  return <div className={"actions"+(compact?" compact":"")}>
-  {canPay&&<button className="primary" disabled={busy} onClick={onPayment}>✓ Confirm payment</button>}
+  {canPay&&<button className="primary" disabled={busy} onClick={onPayment}>✓ Approve subscription</button>}
   {canAssign&&!s.assigned_driver_id&&<button className="secondary" disabled={busy} onClick={onAssign}>＋ Assign driver</button>}
   {canAssign&&s.assigned_driver_id&&<button className="secondary" disabled={busy} onClick={onAssign}>↔ Change driver</button>}
-  {s.status==="paused"&&s.payment_status==="paid"&&<button className="secondary" disabled={busy} onClick={onActivate}>▶ Resume</button>}
+  {s.status==="paused"&&<button className="secondary" disabled={busy} onClick={onActivate}>▶ Resume</button>}
   {s.status==="active"&&<button className="quiet" disabled={busy} onClick={onPause}>Ⅱ Pause</button>}
-  {s.payment_status==="paid"&&!["cancelled","completed"].includes(s.status)&&<button className="danger" disabled={busy} onClick={onRefund}>↩ Refund & cancel</button>}
-  {s.payment_status!=="paid"&&!["cancelled","completed"].includes(s.status)&&<button className="danger" disabled={busy} onClick={()=>{if(window.confirm("Cancel this subscription?"))onCancel()}}>Cancel</button>}
+  {["active","paused"].includes(s.status)&&<button className="danger" disabled={busy} onClick={onRefund}>↩ Refund & cancel</button>}
+  {s.status==="pending_payment"&&<button className="danger" disabled={busy} onClick={()=>{if(window.confirm("Cancel this subscription?"))onCancel()}}>Cancel</button>}
  </div>
 }
 
@@ -243,7 +243,7 @@ function SubscriptionRow({s,plan,busy,onPayment,onAssign,onPause,onActivate,onCa
   <td><b>{plan?.name||"—"}</b><small>{timeText(s.morning_pickup_time)} → {timeText(s.evening_return_time)}</small></td>
   <td><b>{s.passenger_count}</b><small>{Array.isArray(s.passengers)?s.passengers.map(p=>p?.name||"Passenger").join(", "):"—"}</small></td>
   <td><b>₹{money(s.total_amount)}</b><small>{s.billable_days} billable days</small></td>
-  <td><span className={"badge "+statusClass(s.payment_status)}>{statusText(s.payment_status)}</span><small>{s.payment_confirmed_at?"Confirmed":""}</small></td>
+  <td><span className={"badge "+statusClass(s.payment_status)}>{statusText(s.payment_status)}</span><small>₹{money(s.amount_paid)} of ₹{money(s.total_amount)}</small></td>
   <td><div className="rowStatus"><span className={"badge "+statusClass(s.status)}>{statusText(s.status)}</span>{s.assigned_driver_id&&<small>Driver assigned</small>}</div><ActionButtons s={s} busy={busy} onPayment={onPayment} onAssign={onAssign} onPause={onPause} onActivate={onActivate} onCancel={onCancel} onRefund={onRefund} compact/></td>
  </tr>
 }
