@@ -68,7 +68,7 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
           Welcome back to VOYNU
         </h1>
         <p style={{ margin: "7px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
-          Log in to continue your journey.
+          Log in to continue your journey with VOYNU.
         </p>
       </div>
 
