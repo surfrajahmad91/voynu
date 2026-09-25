@@ -86,9 +86,6 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
           <circle cx="205" cy="470" r="25" fill="#12A0C6" fillOpacity=".06" />
           <circle cx="1015" cy="465" r="28" fill="#F5813F" fillOpacity=".07" />
         </svg>
-        <div className="authJourneyBadge authJourneyBadgeOne"><span /> Pickup</div>
-        <div className="authJourneyBadge authJourneyBadgeTwo">ON ROUTE</div>
-        <div className="authJourneyBadge authJourneyBadgeThree">Destination <span /></div>
       </div>
 
       <div className={"authShellGrid" + (showMarketingPanel ? "" : " authShellGridCompact")}>
@@ -143,7 +140,7 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
       <style jsx>{`
         .authShellGrid {
           position: relative;
-          z-index: 1;
+          z-index: 2;
           width: min(1180px, calc(100% - 32px));
           margin: 0 auto;
           min-height: calc(100vh - 68px);
@@ -250,13 +247,16 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
         .routeEtaDot { width: 6px; height: 6px; border-radius: 50%; background: #0A7FA6; box-shadow: 0 0 0 4px rgba(10,127,166,.10); }
 
         .authAmbient {
+          z-index: 0;
           position: absolute;
           inset: 68px 0 0;
           overflow: hidden;
           pointer-events: none;
           background:
-            radial-gradient(ellipse at 50% 30%, rgba(10,35,55,.055), transparent 48%),
-            linear-gradient(160deg, #F4F8FB 0%, #EEF5F8 52%, #FAF6F2 100%);
+            radial-gradient(ellipse at 50% 18%, rgba(255,255,255,.72), transparent 38%),
+            radial-gradient(ellipse at 20% 62%, rgba(18,160,198,.09), transparent 34%),
+            radial-gradient(ellipse at 84% 72%, rgba(245,129,63,.085), transparent 36%),
+            linear-gradient(160deg, #F2F7FA 0%, #EDF5F8 48%, #FBF7F3 100%);
         }
 
         .authAmbient::after {
@@ -295,7 +295,6 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
           opacity: .9;
         }
 
-        .authJourneyBadge {
           position: absolute;
           z-index: 2;
           display: flex;
@@ -312,22 +311,39 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
           font-weight: 800;
           letter-spacing: .5px;
         }
-        .authJourneyBadge span {
           width: 6px;
           height: 6px;
           border-radius: 50%;
           background: #12A0C6;
           box-shadow: 0 0 0 4px rgba(18,160,198,.10);
         }
-        .authJourneyBadgeOne { left: 13%; top: 30%; }
-        .authJourneyBadgeTwo { left: 49%; top: 43%; color: #0A7FA6; }
-        .authJourneyBadgeThree { right: 11%; top: 54%; }
-        .authJourneyBadgeThree span { background: #F5813F; box-shadow: 0 0 0 4px rgba(245,129,63,.10); }
 
         .authShellGridCompact { grid-template-columns: 1fr; min-height: calc(100vh - 68px); }
         .authShellGridCompact .authShellFormWrap { padding: 24px 0 56px; }
         .authShellFormWrap { display: flex; justify-content: center; padding: 30px 0; }
-        .authShellFormCard { width: 100%; max-width: 420px; box-sizing: border-box; padding: 28px 28px; border-radius: 26px; background: rgba(255,255,255,.84); border: 1px solid rgba(255,255,255,.96); box-shadow: 0 30px 80px rgba(10,35,55,.14), 0 6px 18px rgba(10,35,55,.05); backdrop-filter: blur(20px); }
+        .authShellFormCard {
+          position: relative;
+          width: 100%;
+          max-width: 420px;
+          box-sizing: border-box;
+          padding: 30px 28px;
+          border-radius: 30px;
+          background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(255,255,255,.52));
+          border: 1px solid rgba(255,255,255,.72);
+          box-shadow: 0 28px 70px rgba(10,35,55,.10), 0 2px 8px rgba(10,35,55,.035), inset 0 1px 0 rgba(255,255,255,.92);
+          backdrop-filter: blur(26px) saturate(118%);
+          -webkit-backdrop-filter: blur(26px) saturate(118%);
+          overflow: hidden;
+        }
+        .authShellFormCard::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: radial-gradient(circle at 12% 0%, rgba(18,160,198,.07), transparent 34%), radial-gradient(circle at 100% 100%, rgba(245,129,63,.07), transparent 36%);
+          pointer-events: none;
+        }
+        .authShellFormCard > * { position: relative; z-index: 1; }
 
         @media (max-width: 900px) {
           .authShellGrid { grid-template-columns: 1fr; min-height: auto; padding: 24px 0 50px; }
@@ -336,12 +352,9 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
           .authJourneyMap { opacity: .82; }
           .authJourneyGlowOne { width: 280px; height: 280px; left: -150px; top: 9%; }
           .authJourneyGlowTwo { width: 320px; height: 320px; right: -170px; bottom: 4%; }
-          .authJourneyBadgeOne { left: 7%; top: 27%; }
-          .authJourneyBadgeTwo { left: 42%; top: 46%; }
-          .authJourneyBadgeThree { right: 5%; top: 56%; }
           .authShellPanel { min-height: 420px; padding: 34px 26px; }
           .authShellFormWrap { padding: 0; }
-          .authShellFormCard { max-width: 420px; border-radius: 22px; padding: 24px 20px; }
+          .authShellFormCard { max-width: 420px; border-radius: 26px; padding: 26px 20px; background: linear-gradient(145deg, rgba(255,255,255,.74), rgba(255,255,255,.48)); }
         }
 
         @media (max-width: 520px) {
