@@ -216,9 +216,9 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
         .ambientRouteTwo { right: -130px; bottom: 22%; transform: rotate(164deg); }
 
         .authShellGridCompact { grid-template-columns: 1fr; min-height: calc(100vh - 68px); }
-        .authShellGridCompact .authShellFormWrap { padding: 30px 0 70px; }
+        .authShellGridCompact .authShellFormWrap { padding: 24px 0 56px; }
         .authShellFormWrap { display: flex; justify-content: center; padding: 30px 0; }
-        .authShellFormCard { width: 100%; max-width: 430px; padding: 34px 32px; border-radius: 26px; background: rgba(255,255,255,.92); border: 1px solid rgba(255,255,255,.95); box-shadow: 0 28px 70px rgba(10,35,55,.12), 0 4px 14px rgba(10,35,55,.04); backdrop-filter: blur(14px); }
+        .authShellFormCard { width: 100%; max-width: 420px; box-sizing: border-box; padding: 28px 28px; border-radius: 26px; background: rgba(255,255,255,.92); border: 1px solid rgba(255,255,255,.95); box-shadow: 0 28px 70px rgba(10,35,55,.12), 0 4px 14px rgba(10,35,55,.04); backdrop-filter: blur(14px); }
 
         @media (max-width: 900px) {
           .authShellGrid { grid-template-columns: 1fr; min-height: auto; padding: 24px 0 50px; }
@@ -229,7 +229,7 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
           .ambientRoute { width: 380px; }
           .authShellPanel { min-height: 420px; padding: 34px 26px; }
           .authShellFormWrap { padding: 0; }
-          .authShellFormCard { max-width: 520px; border-radius: 20px; padding: 30px 22px; }
+          .authShellFormCard { max-width: 420px; border-radius: 22px; padding: 24px 20px; }
         }
 
         @media (max-width: 520px) {
