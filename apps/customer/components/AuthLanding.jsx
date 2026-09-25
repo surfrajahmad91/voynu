@@ -262,6 +262,36 @@ export default function AuthLanding() {
         </div>
       </section>
 
+      <section className="landingFeatures">
+        <div className="landingSectionInner">
+          <div className="landingSectionHead">
+            <div className="landingEyebrow landingEyebrowCenter"><span /> MORE WITH VOYNU</div>
+            <h2>More ways to travel with VOYNU</h2>
+            <p>Create your account to unlock more ways to use VOYNU beyond everyday cab booking.</p>
+          </div>
+
+          <div className="landingFeatureGrid">
+            <div className="tripTypeCard landingFeatureCard">
+              <span className="tripTypeIcon"><IconClock size={22} /></span>
+              <strong>Daily Commute</strong>
+              <span className="tripTypeDesc">Set up recurring travel with your route, schedule, riders and vehicle plan.</span>
+            </div>
+
+            <div className="tripTypeCard landingFeatureCard">
+              <span className="tripTypeIcon"><IconCar size={22} /></span>
+              <strong>Vehicle Rentals</strong>
+              <span className="tripTypeDesc">Browse approved vehicles and rent one when you need it.</span>
+            </div>
+
+            <div className="tripTypeCard landingFeatureCard landingFeatureOwner">
+              <span className="tripTypeIcon"><IconUsers size={22} /></span>
+              <strong>Have a Vehicle?</strong>
+              <span className="tripTypeDesc">Want to earn from rentals? Contact VOYNU and our team will handle the verification and listing.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="landingValues">
         <div className="landingSectionInner">
           <div className="landingSectionHead">
@@ -353,6 +383,12 @@ export default function AuthLanding() {
         .landingSectionHead h2 { margin: 14px 0 10px; font-size: clamp(24px,3.4vw,34px); font-weight: 800; letter-spacing: -1px; color: #0A2337; }
         .landingSectionHead p { color: #5B6B7C; font-size: 14.5px; line-height: 1.7; }
 
+        .landingFeatures { padding: 76px 0 8px; }
+        .landingFeatureGrid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+        .landingFeatureCard { min-height: 168px; }
+        .landingFeatureCard .tripTypeDesc { max-width: 290px; }
+        .landingFeatureOwner .tripTypeIcon { background: #FFF1E7; color: #D4552A; }
+
         .landingHow { padding: 76px 0; }
         .stepGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
         .stepCard { position: relative; padding: 26px 20px 22px; border-radius: 20px; background: #fff; border: 1px solid #EEF3F7; box-shadow: 0 12px 30px rgba(10,35,55,.05); }
@@ -400,6 +436,10 @@ export default function AuthLanding() {
           .landingTrustRow span { font-size: 8px; }
           .landingTripTypeGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
           .tripTypeCard { padding: 14px 12px; }
+          .landingFeatures { padding: 52px 0 4px; }
+          .landingFeatureGrid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+          .landingFeatureCard { min-height: 150px; }
+          .landingFeatureCard:last-child { grid-column: 1 / -1; }
           .landingHow, .landingValues { padding: 52px 0; }
           .stepGrid { grid-template-columns: 1fr; gap: 14px; }
           .valueGrid { grid-template-columns: repeat(2, 1fr); }
