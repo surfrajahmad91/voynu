@@ -59,16 +59,16 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
       panelDescription={panelDescription}
       showMarketingPanel={false}
       showProductBar={false}
-      whatsappLabel="Need Help • 9918614844"
+      whatsappLabel="Need Help?"
       whatsappHref={"https://wa.me/919918614844?text=" + encodeURIComponent("Hi VOYNU, I need help.")}
     >
 
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
-          Welcome back
+          Welcome back to VOYNU
         </h1>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
-          {subtitle}
+        <p style={{ margin: "7px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
+          Log in to continue your journey.
         </p>
       </div>
 
