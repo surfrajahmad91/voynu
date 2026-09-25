@@ -224,6 +224,7 @@ export default function PageHeader({
           text-decoration: none;
           color: ${theme.colors.textMuted};
           transition: 0.18s ease;
+          -webkit-tap-highlight-color: transparent;
         }
         .homeProductOption.active {
           background: ${theme.gradients.primary};
@@ -285,16 +286,25 @@ export default function PageHeader({
           .homeProductSwitch {
             width: 100%;
           }
+          /* Below 700px there isn't room for icon + two lines of text side by side without
+             the subtitle shrinking past readable size, so tabs switch to icon-over-label and
+             the marketing subtitle (\"We drive, you relax\" etc.) is dropped rather than shrunk. */
           .homeProductOption {
-            min-height: 58px;
-            padding: 8px 6px;
-            gap: 6px;
+            flex-direction: column;
+            gap: 3px;
+            min-height: 56px;
+            padding: 8px 4px;
+          }
+          .homeProductOption > span:first-child {
+            font-size: 18px;
+            line-height: 1;
           }
           .homeProductOption b {
-            font-size: 12px;
+            font-size: 11.5px;
+            line-height: 1.15;
           }
           .homeProductOption small {
-            font-size: 8.5px;
+            display: none;
           }
         }
         @media (max-width: 520px) {
@@ -302,8 +312,8 @@ export default function PageHeader({
             display: none;
           }
           .voynuHeaderAccount :global(a) {
-            padding: 8px 7px !important;
-            font-size: 10px !important;
+            padding: 9px 10px !important;
+            font-size: 10.5px !important;
           }
           .voynuHeaderAccount :global(a span) {
             display: none;
@@ -312,61 +322,51 @@ export default function PageHeader({
             display: none;
           }
           .voynuHeaderWhatsapp {
-            padding: 8px 8px !important;
+            padding: 9px 9px !important;
           }
           .homeProductBar {
-            padding: 5px 0;
+            padding: 6px 0;
           }
           .homeProductSwitch {
             padding: 3px;
+            gap: 4px;
           }
           .homeProductOption {
-            min-height: 56px;
-            padding: 7px 4px;
-            gap: 5px;
+            min-height: 52px;
+            padding: 7px 3px;
           }
           .homeProductOption > span:first-child {
             font-size: 16px;
           }
           .homeProductOption b {
-            font-size: 11px;
-          }
-          .homeProductOption small {
-            display: block;
-            font-size: 7.5px;
+            font-size: 10.5px;
           }
           .whatsappLabel {
             display: none;
           }
         }
-        @media (max-width: 400px) {
-          .homeProductOption small {
-            font-size: 7px;
-          }
-          .homeProductOption b {
-            font-size: 10.5px;
-          }
+        @media (max-width: 380px) {
           .voynuHeaderActions {
-            gap: 2px !important;
+            gap: 3px !important;
           }
           .voynuHeaderAction {
-            padding: 7px 6px !important;
-            font-size: 9.5px !important;
+            padding: 8px 7px !important;
+            font-size: 10px !important;
           }
           .voynuHeaderAccount :global(a) {
-            padding: 7px 6px !important;
+            padding: 8px 8px !important;
           }
           .voynuHeaderWhatsapp {
-            padding: 7px 7px !important;
+            padding: 8px 8px !important;
           }
           .voynuPageHeaderInner {
             padding-inline: 7px;
           }
           .homeProductInner {
-            width: calc(100% - 16px);
+            width: calc(100% - 14px);
           }
-          .homeProductOption small {
-            display: none;
+          .homeProductOption b {
+            font-size: 10px;
           }
         }
       `}</style>
