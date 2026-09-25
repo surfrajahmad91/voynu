@@ -134,7 +134,7 @@ export default function PageHeader({
               }}
             >
               <IconWhatsApp size={14} />
-              <span className="whatsappLabel">{whatsappLabel}</span>
+              <span className={"whatsappLabel" + (showProductBar ? "" : " whatsappLabelAlways")}>{whatsappLabel}</span>
             </a>
           )}
         </div>
@@ -345,6 +345,10 @@ export default function PageHeader({
           }
           .whatsappLabel {
             display: none;
+          }
+          .whatsappLabelAlways {
+            display: inline !important;
+            font-size: 10px;
           }
         }
         @media (max-width: 380px) {
