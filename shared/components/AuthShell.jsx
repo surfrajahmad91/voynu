@@ -48,18 +48,47 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
       />
 
       <div className="authAmbient" aria-hidden="true">
-        <div className="authMapGrid" />
-        <div className="authMapGlow authMapGlowOne" />
-        <div className="authMapGlow authMapGlowTwo" />
-        <div className="authMapRoute authMapRouteOne" />
-        <div className="authMapRoute authMapRouteTwo" />
-        <div className="authMapRoute authMapRouteThree" />
-        <span className="authMapNode authMapNodeOne" />
-        <span className="authMapNode authMapNodeTwo" />
-        <span className="authMapNode authMapNodeThree" />
-        <span className="authMapChip authMapChipOne">Pickup</span>
-        <span className="authMapChip authMapChipTwo">Destination</span>
-        <span className="authMapChip authMapChipThree">VOYNU</span>
+        <div className="authJourneyGlow authJourneyGlowOne" />
+        <div className="authJourneyGlow authJourneyGlowTwo" />
+        <svg className="authJourneyMap" viewBox="0 0 1200 900" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="voynuRouteGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#12A0C6" />
+              <stop offset="52%" stopColor="#6FD6EC" />
+              <stop offset="100%" stopColor="#F5813F" />
+            </linearGradient>
+            <linearGradient id="voynuRoadFade" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#0A7FA6" stopOpacity=".08" />
+              <stop offset="50%" stopColor="#0A2337" stopOpacity=".18" />
+              <stop offset="100%" stopColor="#D4552A" stopOpacity=".08" />
+            </linearGradient>
+            <filter id="voynuGlow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="9" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <pattern id="voynuGrid" width="42" height="42" patternUnits="userSpaceOnUse">
+              <path d="M42 0H0V42" fill="none" stroke="#0A7FA6" strokeOpacity=".07" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="1200" height="900" fill="url(#voynuGrid)" />
+          <path d="M-80 610 C 130 390, 250 760, 480 545 S 770 250, 1020 430 S 1230 700, 1320 500"
+                fill="none" stroke="url(#voynuRoadFade)" strokeWidth="42" strokeLinecap="round" />
+          <path d="M-80 610 C 130 390, 250 760, 480 545 S 770 250, 1020 430 S 1230 700, 1320 500"
+                fill="none" stroke="url(#voynuRouteGradient)" strokeOpacity=".48" strokeWidth="3.5" strokeLinecap="round"
+                filter="url(#voynuGlow)" />
+          <path d="M-40 300 C 180 190, 290 360, 455 330 S 720 120, 930 245 S 1110 430, 1260 310"
+                fill="none" stroke="#0A2337" strokeOpacity=".10" strokeWidth="2" strokeDasharray="8 13" />
+          <path d="M80 820 C 250 650, 430 760, 590 700 S 850 570, 1130 690"
+                fill="none" stroke="#0A7FA6" strokeOpacity=".10" strokeWidth="2" />
+          <circle cx="205" cy="470" r="9" fill="#FFFFFF" stroke="#12A0C6" strokeWidth="4" filter="url(#voynuGlow)" />
+          <circle cx="705" cy="345" r="9" fill="#FFFFFF" stroke="#12A0C6" strokeWidth="4" filter="url(#voynuGlow)" />
+          <circle cx="1015" cy="465" r="10" fill="#FFFFFF" stroke="#F5813F" strokeWidth="4" filter="url(#voynuGlow)" />
+          <circle cx="205" cy="470" r="25" fill="#12A0C6" fillOpacity=".06" />
+          <circle cx="1015" cy="465" r="28" fill="#F5813F" fillOpacity=".07" />
+        </svg>
+        <div className="authJourneyBadge authJourneyBadgeOne"><span /> Pickup</div>
+        <div className="authJourneyBadge authJourneyBadgeTwo">ON ROUTE</div>
+        <div className="authJourneyBadge authJourneyBadgeThree">Destination <span /></div>
       </div>
 
       <div className={"authShellGrid" + (showMarketingPanel ? "" : " authShellGridCompact")}>
@@ -226,120 +255,90 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
           overflow: hidden;
           pointer-events: none;
           background:
-            radial-gradient(circle at 18% 22%, rgba(18,160,198,.10), transparent 28%),
-            radial-gradient(circle at 82% 74%, rgba(245,129,63,.10), transparent 30%);
+            radial-gradient(ellipse at 50% 30%, rgba(10,35,55,.055), transparent 48%),
+            linear-gradient(160deg, #F4F8FB 0%, #EEF5F8 52%, #FAF6F2 100%);
         }
 
-        .authMapGrid {
+        .authAmbient::after {
+          content: "";
           position: absolute;
-          inset: -12%;
-          opacity: .42;
-          background-image:
-            linear-gradient(rgba(10,127,166,.045) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(10,127,166,.045) 1px, transparent 1px);
-          background-size: 44px 44px;
-          transform: rotate(-5deg) scale(1.08);
-          mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 82%, transparent 100%);
-          -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 82%, transparent 100%);
+          inset: 12% 0 0;
+          background: linear-gradient(180deg, rgba(10,35,55,.045), transparent 34%, rgba(245,129,63,.035) 78%, transparent);
         }
 
-        .authMapGlow {
+        .authJourneyGlow {
           position: absolute;
           border-radius: 50%;
-          filter: blur(28px);
+          filter: blur(42px);
+          opacity: .9;
         }
-        .authMapGlowOne {
-          width: 360px;
-          height: 360px;
-          left: -170px;
-          top: 8%;
-          background: rgba(18,160,198,.12);
-        }
-        .authMapGlowTwo {
+        .authJourneyGlowOne {
           width: 420px;
           height: 420px;
-          right: -210px;
-          bottom: 3%;
-          background: rgba(245,129,63,.11);
+          left: -190px;
+          top: 10%;
+          background: rgba(18,160,198,.13);
         }
-
-        .authMapRoute {
-          position: absolute;
-          border: 2px solid rgba(10,127,166,.12);
-          border-left-color: transparent;
-          border-bottom-color: rgba(245,129,63,.13);
-          border-radius: 50%;
-          transform-origin: center;
-        }
-        .authMapRouteOne {
-          width: 720px;
-          height: 330px;
-          left: -250px;
-          top: 8%;
-          transform: rotate(-13deg);
-        }
-        .authMapRouteTwo {
-          width: 760px;
-          height: 360px;
-          right: -310px;
-          top: 39%;
-          transform: rotate(158deg);
-        }
-        .authMapRouteThree {
-          width: 560px;
-          height: 250px;
-          left: 18%;
+        .authJourneyGlowTwo {
+          width: 500px;
+          height: 500px;
+          right: -250px;
           bottom: 2%;
-          border-color: rgba(10,127,166,.075);
-          transform: rotate(8deg);
+          background: rgba(245,129,63,.12);
         }
 
-        .authMapNode {
+        .authJourneyMap {
           position: absolute;
-          width: 11px;
-          height: 11px;
-          border-radius: 50%;
-          background: #FFFFFF;
-          border: 2px solid rgba(10,127,166,.55);
-          box-shadow: 0 0 0 7px rgba(10,127,166,.07);
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          opacity: .9;
         }
-        .authMapNodeOne { left: 13%; top: 25%; }
-        .authMapNodeTwo { right: 14%; top: 51%; border-color: rgba(213,85,42,.55); box-shadow: 0 0 0 7px rgba(213,85,42,.07); }
-        .authMapNodeThree { left: 25%; bottom: 16%; }
 
-        .authMapChip {
+        .authJourneyBadge {
           position: absolute;
-          padding: 7px 10px;
-          border: 1px solid rgba(255,255,255,.8);
-          border-radius: 10px;
-          background: rgba(255,255,255,.62);
-          color: rgba(10,35,55,.60);
-          box-shadow: 0 8px 22px rgba(10,35,55,.05);
-          backdrop-filter: blur(10px);
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 11px;
+          border: 1px solid rgba(255,255,255,.78);
+          border-radius: 999px;
+          background: rgba(255,255,255,.66);
+          color: rgba(10,35,55,.64);
+          box-shadow: 0 10px 28px rgba(10,35,55,.07);
+          backdrop-filter: blur(14px);
           font-size: 9px;
           font-weight: 800;
-          letter-spacing: .35px;
+          letter-spacing: .5px;
         }
-        .authMapChipOne { left: 9%; top: 19%; }
-        .authMapChipTwo { right: 9%; top: 55%; }
-        .authMapChipThree { right: 12%; bottom: 13%; color: rgba(10,127,166,.72); }
+        .authJourneyBadge span {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #12A0C6;
+          box-shadow: 0 0 0 4px rgba(18,160,198,.10);
+        }
+        .authJourneyBadgeOne { left: 13%; top: 30%; }
+        .authJourneyBadgeTwo { left: 49%; top: 43%; color: #0A7FA6; }
+        .authJourneyBadgeThree { right: 11%; top: 54%; }
+        .authJourneyBadgeThree span { background: #F5813F; box-shadow: 0 0 0 4px rgba(245,129,63,.10); }
 
         .authShellGridCompact { grid-template-columns: 1fr; min-height: calc(100vh - 68px); }
         .authShellGridCompact .authShellFormWrap { padding: 24px 0 56px; }
         .authShellFormWrap { display: flex; justify-content: center; padding: 30px 0; }
-        .authShellFormCard { width: 100%; max-width: 420px; box-sizing: border-box; padding: 28px 28px; border-radius: 26px; background: rgba(255,255,255,.92); border: 1px solid rgba(255,255,255,.95); box-shadow: 0 28px 70px rgba(10,35,55,.12), 0 4px 14px rgba(10,35,55,.04); backdrop-filter: blur(14px); }
+        .authShellFormCard { width: 100%; max-width: 420px; box-sizing: border-box; padding: 28px 28px; border-radius: 26px; background: rgba(255,255,255,.84); border: 1px solid rgba(255,255,255,.96); box-shadow: 0 30px 80px rgba(10,35,55,.14), 0 6px 18px rgba(10,35,55,.05); backdrop-filter: blur(20px); }
 
         @media (max-width: 900px) {
           .authShellGrid { grid-template-columns: 1fr; min-height: auto; padding: 24px 0 50px; }
           .authShellGridCompact { min-height: auto; padding: 24px 0 50px; }
           .authAmbient { inset: 62px 0 0; }
-          .authMapGrid { background-size: 34px 34px; opacity: .34; }
-          .authMapGlowOne { width: 240px; height: 240px; left: -130px; top: 10%; }
-          .authMapGlowTwo { width: 280px; height: 280px; right: -150px; bottom: 8%; }
-          .authMapRouteOne { width: 520px; height: 250px; left: -260px; top: 11%; }
-          .authMapRouteTwo { width: 560px; height: 260px; right: -290px; top: 46%; }
-          .authMapRouteThree { width: 430px; height: 210px; left: 8%; bottom: 3%; }
-          .authMapChipThree { display: none; }
+          .authJourneyMap { opacity: .82; }
+          .authJourneyGlowOne { width: 280px; height: 280px; left: -150px; top: 9%; }
+          .authJourneyGlowTwo { width: 320px; height: 320px; right: -170px; bottom: 4%; }
+          .authJourneyBadgeOne { left: 7%; top: 27%; }
+          .authJourneyBadgeTwo { left: 42%; top: 46%; }
+          .authJourneyBadgeThree { right: 5%; top: 56%; }
           .authShellPanel { min-height: 420px; padding: 34px 26px; }
           .authShellFormWrap { padding: 0; }
           .authShellFormCard { max-width: 420px; border-radius: 22px; padding: 24px 20px; }
