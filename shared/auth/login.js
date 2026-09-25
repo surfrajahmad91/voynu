@@ -55,7 +55,13 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
   };
 
   return (
-    <AuthShell panelDescription={panelDescription}>
+    <AuthShell
+      panelDescription={panelDescription}
+      showMarketingPanel={false}
+      showProductBar={false}
+      whatsappLabel="Need Help • 9918614844"
+      whatsappHref={"https://wa.me/919918614844?text=" + encodeURIComponent("Hi VOYNU, I need help.")}
+    >
 
       <div style={{ marginBottom: 22 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
