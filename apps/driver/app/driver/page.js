@@ -10,6 +10,7 @@ import DriverNavigationMode from "../../components/DriverNavigationMode";
 import NotificationBell from "../../../../shared/components/NotificationBell";
 import DriverChrome from "../../components/DriverChrome";
 import TripActionSheet from "../../components/TripActionSheet";
+import SubscriptionPaymentSheet from "../../components/SubscriptionPaymentSheet";
 import TripProgress from "../../components/TripProgress";
 import { ACTIVE_STATUSES, NAVIGATION_STATUSES, nextStepFor, needsCollection, parseWorkflowError } from "../../lib/tripWorkflow";
 
@@ -44,6 +45,8 @@ export default function DriverPage() {
   const [bookings, setBookings] = useState([]), [commuteSubscriptions, setCommuteSubscriptions] = useState([]), [assignmentStatuses, setAssignmentStatuses] = useState({}), [loading, setLoading] = useState(false), [error, setError] = useState("");
   const [locationStatus, setLocationStatus] = useState("Location tracking is off"), [driverLocation, setDriverLocation] = useState(null);
   const [navigationBookingId, setNavigationBookingId] = useState(null), [sheet, setSheet] = useState(null), [busy, setBusy] = useState(false), [sheetError, setSheetError] = useState("");
+  const [paySheet, setPaySheet] = useState(null), [payBusy, setPayBusy] = useState(false), [payError, setPayError] = useState("");
+  const [paymentSummaries, setPaymentSummaries] = useState({});
   const stepFor = (b) => nextStepFor(b, assignmentStatuses[b?.id] === "accepted");
   const [earlyMinutes, setEarlyMinutes] = useState(240);
   useEffect(() => { if (!driver) return; supabase.from("driver_workflow_settings").select("early_departure_minutes").eq("id", true).maybeSingle().then(({ data }) => { if (data?.early_departure_minutes) setEarlyMinutes(data.early_departure_minutes); }); }, [driver]);
@@ -63,6 +66,13 @@ export default function DriverPage() {
   setBookings(data||[]);
   setCommuteSubscriptions(cs||[]);
   setAssignmentStatuses(Object.fromEntries((as||[]).map((x)=>[x.booking_id,x.status])));
+  const payable=(cs||[]).filter((s)=>["active","paused"].includes(s.status));
+  if(payable.length){
+    const results=await Promise.all(payable.map((s)=>supabase.rpc("subscription_payment_summary",{p_subscription_id:s.id})));
+    setPaymentSummaries(Object.fromEntries(payable.map((s,i)=>[s.id,results[i]?.data||null]).filter(([,v])=>v)));
+  } else {
+    setPaymentSummaries({});
+  }
 };
   useEffect(()=>{fetchBookings();},[driver]);
   useEffect(()=>{ if(!driver)return; const channel=supabase.channel(`voynu-driver-bookings-${driver.id}`).on("postgres_changes",{event:"*",schema:"public",table:"bookings",filter:`driver_id=eq.${driver.id}`},()=>fetchBookings()).subscribe(); const subChannel=supabase.channel(`voynu-driver-commute-${driver.id}`).on("postgres_changes",{event:"*",schema:"public",table:"commute_subscriptions",filter:`assigned_driver_id=eq.${driver.id}`},()=>fetchBookings()).subscribe(); const id=setInterval(fetchBookings,10000); return()=>{clearInterval(id);supabase.removeChannel(channel);supabase.removeChannel(subChannel);}; },[driver]);
@@ -113,6 +123,18 @@ export default function DriverPage() {
     await runStep(booking, step);
   };
   const actionSheet = sheet ? <TripActionSheet key={`${sheet.booking.id}-${sheet.step.next}`} sheet={sheet} busy={busy} error={sheetError} onCancel={() => { setSheet(null); setSheetError(""); }} onConfirm={(values) => runStep(sheet.booking, sheet.step, { ...values, fromSheet: true })} /> : null;
+
+  const openPaymentSheet = (s, booking) => { setPayError(""); setPaySheet({ subscriptionId: s.id, bookingId: booking.id, summary: paymentSummaries[s.id], routeLabel: `${s.pickup_name} → ${s.drop_name}` }); };
+  const confirmPayment = async ({ method, amount, utr }) => {
+    setPayBusy(true); setPayError("");
+    const idempotencyKey = `${paySheet.bookingId}:${method}:${Date.now()}`;
+    const { data, error: e } = await supabase.rpc("driver_record_subscription_payment", { p_booking_id: paySheet.bookingId, p_amount: amount, p_method: method, p_utr: utr || null, p_idempotency_key: idempotencyKey });
+    setPayBusy(false);
+    if (e) { setPayError(e.message.replace(/^VOYNU:\s*/, "")); return; }
+    setPaymentSummaries((prev) => ({ ...prev, [paySheet.subscriptionId]: data }));
+    setPaySheet(null);
+  };
+  const paymentSheet = paySheet ? <SubscriptionPaymentSheet key={paySheet.bookingId} sheet={paySheet} busy={payBusy} error={payError} onCancel={() => { setPaySheet(null); setPayError(""); }} onConfirm={confirmPayment} /> : null;
   const activeNavigationBooking=useMemo(()=>bookings.find((b)=>b.id===navigationBookingId&&NAVIGATION_STATUSES.includes(b.booking_status))||null,[bookings,navigationBookingId]);
   const navigationTargetType=activeNavigationBooking?.booking_status==="on_the_way"?"pickup":activeNavigationBooking?.booking_status==="return_trip_started"?"pickup":"destination";
   useEffect(()=>{const b=bookings.find((x)=>NAVIGATION_STATUSES.includes(x.booking_status)); if(b&&!navigationBookingId&&!navigationDismissed.current)setNavigationBookingId(b.id); if(navigationBookingId&&!b){navigationDismissed.current=false;setNavigationBookingId(null);}},[bookings,navigationBookingId]);
@@ -217,7 +239,12 @@ export default function DriverPage() {
             <div style={{height:7,borderRadius:10,background:"#EDF1F5",overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:(serviceTrips.length?Math.round(completed/serviceTrips.length*100):0)+"%",background:theme.gradients.primary}}/></div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:5,marginTop:10}}>{serviceTrips.slice(0,6).map(t=><div key={t.id} style={{padding:"7px 2px",textAlign:"center",borderRadius:10,background:t.status==="completed"?"#EAFBF2":t.trip_date===today?theme.colors.primaryTint:"#F7F9FB",border:"1px solid "+theme.colors.border}}><b style={{fontSize:9}}>{t.status==="completed"?"✓":t.trip_date===today?"TODAY":"○"}</b><div style={{fontSize:8,color:theme.colors.textFaint,marginTop:2}}>{new Date(t.trip_date+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short"})}</div></div>)}</div>
             <div style={{marginTop:12,padding:12,borderRadius:13,background:"#F3F7FA",fontSize:11,fontWeight:800}}>{todayBooking?<><span style={{color:theme.colors.primary}}>Today's commute</span> · {todayBooking.booking_status.replace(/_/g," ")} · {time(todayBooking.pickup_time)}</>:todayTrip?.status==="completed"?<span style={{color:"#16824A"}}>✓ Today's commute completed</span>:nextTrip?<>Next commute: {nextTrip.trip_date} · {time(s.morning_pickup_time)}</>: "No remaining scheduled service day"}</div>
+            {(() => { const sum = paymentSummaries[s.id]; if (!sum) return null; const fullyPaid = Number(sum.remaining) <= 0; const dueToday = Number(sum.due_today || 0);
+              return <div style={{marginTop:10,padding:12,borderRadius:13,background:fullyPaid?"#EAFBF2":dueToday>0?"#FFF7E8":"#F3F7FA",fontSize:11.5,fontWeight:800,color:fullyPaid?"#16824A":dueToday>0?"#8A5700":theme.colors.textMuted}}>
+                {fullyPaid ? "✓ Fully paid" : `Paid ₹${Number(sum.paid||0).toLocaleString("en-IN")} of ₹${Number(sum.total||0).toLocaleString("en-IN")}${dueToday>0?` · ₹${dueToday.toLocaleString("en-IN")} due today`:""}`}
+              </div>; })()}
             {todayBooking&&stepFor(todayBooking)&&<button onClick={()=>advance(todayBooking)} style={{width:"100%",marginTop:10,minHeight:46,border:0,borderRadius:13,background:theme.gradients.primary,color:"#fff",fontWeight:900,fontSize:12,boxShadow:theme.shadow.button}}>{stepFor(todayBooking).label} →</button>}
+            {todayBooking&&paymentSummaries[s.id]&&Number(paymentSummaries[s.id].remaining)>0&&<button onClick={()=>openPaymentSheet(s,todayBooking)} style={{width:"100%",marginTop:8,minHeight:46,border:"1.5px solid "+theme.colors.primary,borderRadius:13,background:"#fff",color:theme.colors.primary,fontWeight:900,fontSize:12}}>💵 Record payment</button>}
           </div>
           <Link href="/driver/trips" style={{display:"block",padding:"12px 17px",borderTop:"1px solid "+theme.colors.border,textAlign:"center",color:theme.colors.primary,textDecoration:"none",fontSize:11,fontWeight:900}}>View subscription details →</Link>
         </article>;
@@ -249,5 +276,6 @@ export default function DriverPage() {
         ))}</div> : <div style={{padding:16,borderRadius:18,background:"#fff",border:"1px solid "+theme.colors.border,color:theme.colors.textFaint,fontSize:11}}>No upcoming trips assigned right now.</div>}
       </section>
       {actionSheet}
+      {paymentSheet}
     </div></DriverChrome>
 }
