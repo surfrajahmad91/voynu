@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "../../../../shared/components/PageHeader";
 import { supabase } from "../../../../shared/lib/supabaseClient";
-import { theme } from "../../../../shared/lib/theme";
 import { buildWhatsAppLink } from "../../lib/contact";
 
 const money = (v) => Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const labels = { reward: "Reward", refund: "Refund credit", booking_use: "Used on booking", reversal: "Reversal", expiry: "Expired", admin_adjustment: "Wallet adjustment" };
+const dateShort = (v) => new Date(v).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+const timeShort = (v) => new Date(v).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
 export default function WalletPage() {
   const router = useRouter();
@@ -38,45 +39,128 @@ export default function WalletPage() {
     supabase.auth.getSession().then(({ data }) => {
       const u = data?.session?.user;
       if (!u) { router.replace("/login"); return; }
-      if (!cancelled) { load(u.id); }
+      if (!cancelled) load(u.id);
     });
     return () => { cancelled = true; };
-  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   const nextMilestone = useMemo(() => rules[0] || null, [rules]);
+  const hasActivity = transactions.length > 0;
 
   return (
-    <main style={{ minHeight: "100vh", background: theme.colors.bg, color: theme.colors.text, fontFamily: theme.fontFamily }}>
-      <PageHeader maxWidth={theme.maxWidth.content} whatsappHref={buildWhatsAppLink("Hi VOYNU, I need help with my wallet.")} />
-      <div style={{ width: "min(" + theme.maxWidth.content + "px, calc(100% - 32px))", margin: "0 auto", padding: "26px 0 70px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
-          <div><div style={{ color: theme.colors.primary, fontSize: 11, fontWeight: 900, letterSpacing: 1 }}>VOYNU WALLET</div><h1 style={{ margin: "5px 0 0", fontSize: 30, letterSpacing: -0.6 }}>Your service credits</h1><p style={{ margin: "7px 0 0", color: theme.colors.textMuted, fontSize: 13 }}>Use eligible VOYNU credits on future bookings. You cannot add cash to this wallet.</p></div>
-          <Link href="/account" style={{ padding: "9px 14px", borderRadius: 12, border: "1px solid " + theme.colors.border, background: theme.colors.surface, color: theme.colors.text, textDecoration: "none", fontWeight: 800, fontSize: 12 }}>Back to account</Link>
+    <main className="page">
+      <PageHeader whatsappHref={buildWhatsAppLink("Hi VOYNU, I need help with my wallet.")} />
+
+      <div className="wrap">
+        <div className="titleRow">
+          <div>
+            <span className="eyebrow">VOYNU WALLET</span>
+            <h1>Your service credits</h1>
+          </div>
+          <Link href="/account" className="backLink">← Account</Link>
         </div>
-        {error && <div style={{ marginTop: 16, padding: 13, borderRadius: 12, background: theme.colors.errorBg, color: theme.colors.error, fontSize: 12 }}>{error}</div>}
-        <section style={{ marginTop: 18, padding: 22, borderRadius: 20, background: theme.gradients.primary, color: "#fff", boxShadow: theme.shadow.card }}>
-          <div style={{ fontSize: 11, fontWeight: 800, opacity: .82 }}>AVAILABLE VOYNU CREDITS</div>
-          <div style={{ marginTop: 7, fontSize: 38, fontWeight: 900, letterSpacing: -1 }}>₹{money(balance)}</div>
-          <div style={{ marginTop: 10, fontSize: 11.5, lineHeight: 1.5, opacity: .88 }}>Wallet credits may come from refunds, ride rewards or promotions. They are service credits, not withdrawable cash.</div>
+        <p className="lede">Use eligible VOYNU credits on future bookings. This is not a cash wallet — you can&apos;t add money to it yourself.</p>
+
+        {error && <div className="alert" role="alert">{error}</div>}
+
+        <section className="balanceCard">
+          <span className="balanceLabel">AVAILABLE CREDITS</span>
+          <div className="balanceValue">₹{money(balance)}</div>
+          <p className="balanceNote">Credits come from refunds, ride rewards or promotions VOYNU runs — never a top-up.</p>
         </section>
-        <section style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
-          <div style={{ padding: 16, borderRadius: 16, background: theme.colors.surface, border: "1px solid " + theme.colors.border, boxShadow: theme.shadow.subtle }}>
-            <div style={{ fontSize: 10.5, color: theme.colors.textFaint, fontWeight: 800 }}>HOW MUCH CAN I USE?</div>
-            <div style={{ marginTop: 6, fontSize: 16, fontWeight: 800 }}>Up to 10% of the booking due</div>
-            <div style={{ marginTop: 4, color: theme.colors.textMuted, fontSize: 11.5, lineHeight: 1.45 }}>The exact limit is calculated from your eligible booking and current wallet balance.</div>
+
+        <section className="infoGrid">
+          <div className="infoCard">
+            <span className="infoLabel">HOW MUCH CAN I USE?</span>
+            <div className="infoHeadline">Up to 10% of a booking</div>
+            <p className="infoBody">The exact amount is calculated for you at checkout, based on your balance and that booking&apos;s total.</p>
           </div>
-          <div style={{ padding: 16, borderRadius: 16, background: theme.colors.surface, border: "1px solid " + theme.colors.border, boxShadow: theme.shadow.subtle }}>
-            <div style={{ fontSize: 10.5, color: theme.colors.textFaint, fontWeight: 800 }}>EARN MORE</div>
-            <div style={{ marginTop: 6, fontSize: 16, fontWeight: 800 }}>{nextMilestone ? "Ride rewards are enabled at selected milestones" : "Ride rewards can be enabled by VOYNU"}</div>
-            <div style={{ marginTop: 4, color: theme.colors.textMuted, fontSize: 11.5, lineHeight: 1.45 }}>{nextMilestone ? "Next configured milestone: " + nextMilestone.qualifying_rides + " qualifying rides → ₹" + money(nextMilestone.reward_amount) + "." : "Rewards are configurable and only issued after qualifying completed and paid rides."}</div>
+          <div className="infoCard">
+            <span className="infoLabel">EARN MORE</span>
+            <div className="infoHeadline">{nextMilestone ? "Ride rewards are active" : "No rewards running yet"}</div>
+            <p className="infoBody">{nextMilestone ? `Next milestone: ${nextMilestone.qualifying_rides} qualifying rides → ₹${money(nextMilestone.reward_amount)}.` : "VOYNU hasn't enabled any reward milestones yet — credits currently only come from refunds."}</p>
           </div>
         </section>
-        <section style={{ marginTop: 28 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}><h2 style={{ margin: 0, fontSize: 18 }}>Wallet activity</h2><span style={{ color: theme.colors.textFaint, fontSize: 11 }}>{transactions.length} recent entries</span></div>
-          {loading ? <div style={{ padding: 18, color: theme.colors.textFaint, background: theme.colors.surface, borderRadius: 16 }}>Loading wallet…</div> : transactions.length === 0 ? <div style={{ padding: 22, textAlign: "center", background: theme.colors.surface, border: "1px solid " + theme.colors.border, borderRadius: 16 }}><div style={{ fontSize: 28 }}>₹</div><strong style={{ display: "block", marginTop: 7 }}>No wallet activity yet</strong><span style={{ display: "block", marginTop: 4, color: theme.colors.textMuted, fontSize: 12 }}>Refunds and rewards will appear here when issued.</span></div> : <div style={{ display: "grid", gap: 8 }}>{transactions.map((t) => { const positive = Number(t.amount) > 0; return <div key={t.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", padding: 14, background: theme.colors.surface, border: "1px solid " + theme.colors.border, borderRadius: 14 }}><div style={{ minWidth: 0 }}><strong style={{ fontSize: 13 }}>{labels[t.transaction_type] || "Wallet activity"}</strong><div style={{ marginTop: 3, color: theme.colors.textMuted, fontSize: 11.5 }}>{t.description || "VOYNU wallet transaction"} · {new Date(t.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</div>{t.expires_at && <div style={{ marginTop: 3, color: theme.colors.warning, fontSize: 10.5 }}>Expires {new Date(t.expires_at).toLocaleDateString("en-IN")}</div>}</div><div style={{ textAlign: "right", flex: "0 0 auto" }}><strong style={{ fontSize: 14, color: positive ? theme.colors.success : theme.colors.text }}>{positive ? "+" : ""}₹{money(t.amount)}</strong><div style={{ marginTop: 3, color: theme.colors.textFaint, fontSize: 10 }}>Balance ₹{money(t.balance_after)}</div></div></div>; })}</div>}
+
+        <section className="activity">
+          <div className="activityHead"><h2>Wallet activity</h2>{hasActivity && <span className="activityCount">{transactions.length} entr{transactions.length === 1 ? "y" : "ies"}</span>}</div>
+
+          {loading ? (
+            <div className="skeletons">{[0, 1, 2].map((i) => <div key={i} className="skeleton" />)}</div>
+          ) : !hasActivity ? (
+            <div className="empty">
+              <div className="emptyIcon">₹</div>
+              <strong>No wallet activity yet</strong>
+              <span>Refunds and rewards will show up here as soon as they&apos;re issued.</span>
+            </div>
+          ) : (
+            <div className="list">
+              {transactions.map((t) => {
+                const positive = Number(t.amount) > 0;
+                return (
+                  <div key={t.id} className="row">
+                    <div className="rowMain">
+                      <strong>{labels[t.transaction_type] || "Wallet activity"}</strong>
+                      <span className="rowMeta">{t.description || "VOYNU wallet transaction"} · {dateShort(t.created_at)}, {timeShort(t.created_at)}</span>
+                      {t.expires_at && <span className="rowExpiry">Expires {dateShort(t.expires_at)}</span>}
+                    </div>
+                    <div className="rowAmount">
+                      <strong className={positive ? "amountPositive" : ""}>{positive ? "+" : ""}₹{money(t.amount)}</strong>
+                      <span>Balance ₹{money(t.balance_after)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
-        <div style={{ marginTop: 22, padding: 14, borderRadius: 14, background: theme.colors.primaryTint, color: theme.colors.primaryDark, fontSize: 11, lineHeight: 1.5 }}>VOYNU Wallet is designed as a closed-loop service-credit system. Credits are intended for eligible VOYNU services and are not customer deposits, cash balances, or transferable funds.</div>
+
+        <div className="footNote">VOYNU Wallet is a closed-loop service-credit system. Credits are for eligible VOYNU services only — not deposits, cash balances, or transferable funds.</div>
       </div>
+
+      <style jsx>{`
+        .page{min-height:100vh;background:var(--voynu-bg,#F7F9FC);color:var(--voynu-text,#1E3348)}
+        .wrap{width:min(640px,calc(100% - 28px));margin:0 auto;padding:22px 0 60px}
+        .titleRow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+        .eyebrow{display:block;font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--voynu-teal,#0A7FA6)}
+        h1{margin:5px 0 0;font-size:clamp(24px,6vw,30px);letter-spacing:-.6px;font-weight:800}
+        .backLink{flex:0 0 auto;padding:9px 13px;border-radius:12px;border:1px solid var(--voynu-border-strong,#D8DEE8);background:var(--voynu-surface,#fff);color:var(--voynu-text,#1E3348);text-decoration:none;font-weight:700;font-size:12px}
+        .lede{margin:9px 0 0;color:var(--voynu-muted,#5B6B7C);font-size:13.5px;line-height:1.5}
+        .alert{margin-top:16px;padding:13px 14px;border-radius:12px;background:#FFF1F2;color:#B42318;font-size:13px;font-weight:500}
+        .balanceCard{margin-top:16px;padding:22px 20px;border-radius:20px;background:var(--voynu-gradient,linear-gradient(135deg,#12A0C6,#0A7FA6));color:#fff;box-shadow:0 14px 30px rgba(10,127,166,.25)}
+        .balanceLabel{font-size:11px;font-weight:800;letter-spacing:1px;opacity:.85}
+        .balanceValue{margin-top:7px;font-size:clamp(34px,10vw,42px);font-weight:900;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+        .balanceNote{margin:10px 0 0;font-size:12px;line-height:1.5;opacity:.9;max-width:46ch}
+        .infoGrid{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .infoCard{padding:15px;border-radius:16px;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7)}
+        .infoLabel{display:block;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--voynu-muted,#5B6B7C)}
+        .infoHeadline{margin-top:6px;font-size:14.5px;font-weight:800;line-height:1.3}
+        .infoBody{margin:5px 0 0;font-size:11.5px;line-height:1.5;color:var(--voynu-muted,#5B6B7C)}
+        .activity{margin-top:26px}
+        .activityHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .activityHead h2{margin:0;font-size:17px;font-weight:800}
+        .activityCount{font-size:11px;color:var(--voynu-muted,#5B6B7C)}
+        .skeletons{display:grid;gap:8px}
+        .skeleton{height:66px;border-radius:14px;background:linear-gradient(90deg,#EEF3F7 25%,#F5F8FB 37%,#EEF3F7 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite}
+        @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+        .empty{padding:30px 20px;text-align:center;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7);border-radius:18px}
+        .emptyIcon{width:44px;height:44px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--voynu-primary-tint,#E7F4F8);color:var(--voynu-teal,#0A7FA6);font-size:20px;font-weight:800}
+        .empty strong{display:block;font-size:14px}
+        .empty span{display:block;margin-top:5px;color:var(--voynu-muted,#5B6B7C);font-size:12.5px;line-height:1.5;max-width:34ch;margin-inline:auto}
+        .list{display:grid;gap:8px}
+        .row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7);border-radius:16px}
+        .rowMain{min-width:0}
+        .rowMain strong{display:block;font-size:13.5px}
+        .rowMeta{display:block;margin-top:3px;color:var(--voynu-muted,#5B6B7C);font-size:11.5px;line-height:1.4}
+        .rowExpiry{display:block;margin-top:3px;color:#B45309;font-size:10.5px;font-weight:700}
+        .rowAmount{text-align:right;flex:0 0 auto}
+        .rowAmount strong{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+        .amountPositive{color:#15803D}
+        .rowAmount span{display:block;margin-top:3px;color:var(--voynu-muted,#5B6B7C);font-size:10.5px;font-variant-numeric:tabular-nums}
+        .footNote{margin-top:22px;padding:14px;border-radius:14px;background:var(--voynu-primary-tint,#E7F4F8);color:var(--voynu-teal-deep,#00456B);font-size:11.5px;line-height:1.55}
+        @media(max-width:420px){.infoGrid{grid-template-columns:1fr}.balanceCard{padding:19px 17px}}
+      `}</style>
     </main>
   );
 }
