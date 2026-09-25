@@ -19,6 +19,8 @@ export default function PageHeader({
   showAccountLink = true,
   showWhatsapp = true,
   whatsappHref = null,
+  whatsappLabel = "Chat with us",
+  showProductBar = true,
 }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
@@ -132,13 +134,13 @@ export default function PageHeader({
               }}
             >
               <IconWhatsApp size={14} />
-              <span className="whatsappLabel">Chat with us</span>
+              <span className="whatsappLabel">{whatsappLabel}</span>
             </a>
           )}
         </div>
       </div>
 
-      <div className="homeProductBar">
+      {showProductBar && <div className="homeProductBar">
         <div className="homeProductInner">
           <div className="homeProductSwitch">
             <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"}>
@@ -164,7 +166,7 @@ export default function PageHeader({
             </Link>
           </div>
         </div>
-      </div>
+      </div>}
 
       <style jsx>{`
         .voynuHeaderActions {
