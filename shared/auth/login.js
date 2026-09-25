@@ -63,16 +63,16 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
       whatsappHref={"https://wa.me/919918614844?text=" + encodeURIComponent("Hi VOYNU, I need help.")}
     >
 
-      <div style={{ marginBottom: 22 }}>
+      <div style={{ marginBottom: 16 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
           Welcome back to VOYNU
         </h1>
         <p style={{ margin: "7px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
-          Log in to continue your journey with VOYNU.
+          Log in to continue your journey.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
         <input
           type="email"
@@ -134,7 +134,7 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
 
       </form>
 
-      <p style={{ marginTop: 20, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
+      <p style={{ marginTop: 16, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
         Don't have an account?{" "}
         <Link href="/signup" style={{ color: theme.colors.primary, fontWeight: 700 }}>
           Sign up
