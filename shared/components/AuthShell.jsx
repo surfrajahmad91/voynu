@@ -28,7 +28,7 @@ function IconBolt({ size = 13 }) {
   );
 }
 
-export default function AuthShell({ children, panelDescription }) {
+export default function AuthShell({ children, panelDescription, showMarketingPanel = true, showProductBar = true, whatsappLabel = "Chat with us", whatsappHref }) {
   return (
     <main
       style={{
@@ -42,10 +42,13 @@ export default function AuthShell({ children, panelDescription }) {
         maxWidth={theme.maxWidth.wide}
         showAccountLink={false}
         showWhatsapp={true}
+        showProductBar={showProductBar}
+        whatsappLabel={whatsappLabel}
+        whatsappHref={whatsappHref}
       />
 
-      <div className="authShellGrid">
-        <div className="authShellPanel">
+      <div className={"authShellGrid" + (showMarketingPanel ? "" : " authShellGridCompact")}>
+        {showMarketingPanel && <div className="authShellPanel">
           <div className="authShellPanelInner">
             <div className="authShellEyebrow">VOYNU • INTERCITY TRAVEL</div>
 
@@ -86,7 +89,7 @@ export default function AuthShell({ children, panelDescription }) {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         <div className="authShellFormWrap">
           <div className="authShellFormCard">{children}</div>
@@ -200,11 +203,14 @@ export default function AuthShell({ children, panelDescription }) {
         .routeEta { position: absolute; left: 18px; right: 18px; bottom: 14px; display: flex; align-items: center; gap: 7px; font-size: 9.5px; color: rgba(255,255,255,.56); }
         .routeEtaDot { width: 6px; height: 6px; border-radius: 50%; background: #0A7FA6; box-shadow: 0 0 0 4px rgba(10,127,166,.10); }
 
+        .authShellGridCompact { grid-template-columns: 1fr; min-height: calc(100vh - 68px); }
+        .authShellGridCompact .authShellFormWrap { padding: 30px 0 70px; }
         .authShellFormWrap { display: flex; justify-content: center; padding: 30px 0; }
         .authShellFormCard { width: 100%; max-width: 410px; padding: 36px 32px; border-radius: 24px; background: #ffffff; border: 1px solid #EEF3F7; box-shadow: 0 30px 80px -20px rgba(10,35,55,.16); }
 
         @media (max-width: 900px) {
           .authShellGrid { grid-template-columns: 1fr; min-height: auto; padding: 24px 0 50px; }
+          .authShellGridCompact { min-height: auto; padding: 24px 0 50px; }
           .authShellPanel { min-height: 420px; padding: 34px 26px; }
           .authShellFormWrap { padding: 0; }
           .authShellFormCard { max-width: 520px; border-radius: 20px; padding: 30px 22px; }
