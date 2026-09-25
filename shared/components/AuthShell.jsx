@@ -33,7 +33,7 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
     <main
       style={{
         minHeight: "100vh",
-        background: theme.colors.bg,
+        background: "linear-gradient(145deg, #F7FAFC 0%, #F1F6F9 48%, #F8F7F5 100%)",
         fontFamily: theme.fontFamily,
         color: theme.colors.text,
       }}
@@ -46,6 +46,8 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
         whatsappLabel={whatsappLabel}
         whatsappHref={whatsappHref}
       />
+
+      <div className="authAmbient" aria-hidden="true"><span className="ambientOrb ambientOrbOne" /><span className="ambientOrb ambientOrbTwo" /><span className="ambientRoute ambientRouteOne" /><span className="ambientRoute ambientRouteTwo" /></div>
 
       <div className={"authShellGrid" + (showMarketingPanel ? "" : " authShellGridCompact")}>
         {showMarketingPanel && <div className="authShellPanel">
@@ -98,6 +100,8 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
 
       <style jsx>{`
         .authShellGrid {
+          position: relative;
+          z-index: 1;
           width: min(1180px, calc(100% - 32px));
           margin: 0 auto;
           min-height: calc(100vh - 68px);
@@ -203,14 +207,26 @@ export default function AuthShell({ children, panelDescription, showMarketingPan
         .routeEta { position: absolute; left: 18px; right: 18px; bottom: 14px; display: flex; align-items: center; gap: 7px; font-size: 9.5px; color: rgba(255,255,255,.56); }
         .routeEtaDot { width: 6px; height: 6px; border-radius: 50%; background: #0A7FA6; box-shadow: 0 0 0 4px rgba(10,127,166,.10); }
 
+        .authAmbient { position: absolute; inset: 68px 0 0; overflow: hidden; pointer-events: none; }
+        .ambientOrb { position: absolute; border-radius: 50%; filter: blur(18px); opacity: .72; }
+        .ambientOrbOne { width: 300px; height: 300px; left: -130px; top: 18%; background: rgba(18,160,198,.10); }
+        .ambientOrbTwo { width: 340px; height: 340px; right: -150px; bottom: 8%; background: rgba(245,129,63,.09); }
+        .ambientRoute { position: absolute; height: 150px; width: 520px; border: 1px solid rgba(10,127,166,.09); border-left-color: transparent; border-bottom-color: rgba(245,129,63,.10); border-radius: 50%; transform: rotate(-12deg); }
+        .ambientRouteOne { left: -110px; top: 14%; }
+        .ambientRouteTwo { right: -130px; bottom: 22%; transform: rotate(164deg); }
+
         .authShellGridCompact { grid-template-columns: 1fr; min-height: calc(100vh - 68px); }
         .authShellGridCompact .authShellFormWrap { padding: 30px 0 70px; }
         .authShellFormWrap { display: flex; justify-content: center; padding: 30px 0; }
-        .authShellFormCard { width: 100%; max-width: 410px; padding: 36px 32px; border-radius: 24px; background: #ffffff; border: 1px solid #EEF3F7; box-shadow: 0 30px 80px -20px rgba(10,35,55,.16); }
+        .authShellFormCard { width: 100%; max-width: 430px; padding: 34px 32px; border-radius: 26px; background: rgba(255,255,255,.92); border: 1px solid rgba(255,255,255,.95); box-shadow: 0 28px 70px rgba(10,35,55,.12), 0 4px 14px rgba(10,35,55,.04); backdrop-filter: blur(14px); }
 
         @media (max-width: 900px) {
           .authShellGrid { grid-template-columns: 1fr; min-height: auto; padding: 24px 0 50px; }
           .authShellGridCompact { min-height: auto; padding: 24px 0 50px; }
+          .authAmbient { inset: 62px 0 0; }
+          .ambientOrbOne { width: 220px; height: 220px; left: -110px; top: 12%; }
+          .ambientOrbTwo { width: 250px; height: 250px; right: -120px; bottom: 12%; }
+          .ambientRoute { width: 380px; }
           .authShellPanel { min-height: 420px; padding: 34px 26px; }
           .authShellFormWrap { padding: 0; }
           .authShellFormCard { max-width: 520px; border-radius: 20px; padding: 30px 22px; }
