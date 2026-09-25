@@ -15,6 +15,7 @@ const groups=[
   ["/admin/bookings?type=ride","Ride bookings","🚕"],
   ["/admin/rentals","Rentals","🚗"],
   ["/admin/subscriptions","Commute subscriptions","📅"],
+  ["/admin/subscription-payments","Commute payments","💵"],
  ]},
  {label:"OPERATIONS",items:[
   ["/admin/trip-monitor","Live trips","◉"],
