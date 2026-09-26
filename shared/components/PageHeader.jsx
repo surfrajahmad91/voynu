@@ -35,9 +35,10 @@ export default function PageHeader({
     <header
       className="voynuPageHeader"
       style={{
-        background: "rgba(255,255,255,0.96)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid " + theme.colors.border,
+        background: "linear-gradient(180deg, rgba(255,255,255,.88) 0%, rgba(246,251,252,.68) 100%)",
+        backdropFilter: "blur(18px) saturate(125%)",
+        boxShadow: "0 10px 30px rgba(10,35,55,.07), inset 0 -1px 0 rgba(255,255,255,.75)",
+        borderBottom: "1px solid rgba(255,255,255,.72)",
         position: "sticky",
         top: 0,
         zIndex: 20,
@@ -143,16 +144,13 @@ export default function PageHeader({
       {showProductBar && <div className="homeProductBar">
         <div className="homeProductInner">
           <div className="homeProductSwitch" aria-label="VOYNU services">
-            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"} style={isHome ? { minHeight: 78, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 78, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
-              <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 16.5h14l-1.2-6.2a2 2 0 0 0-2-1.6H8.2a2 2 0 0 0-2 1.6L5 16.5Z"/><path d="M4.5 16.5v2.2M19.5 16.5v2.2M7 13h10M8 18.5h2M14 18.5h2"/></svg></span>
+            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"} style={isHome ? { minHeight: 78, borderRadius: 22, background: "linear-gradient(145deg, #12a8c5 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.55)", boxShadow: "0 12px 28px rgba(16,145,173,.24), inset 0 1px 0 rgba(255,255,255,.34)" } : { minHeight: 78, borderRadius: 22, background: "linear-gradient(145deg, rgba(255,255,255,.92), rgba(235,245,248,.72))", color: "#19334A", border: "1px solid rgba(255,255,255,.8)", boxShadow: "0 10px 24px rgba(10,35,55,.08), inset 0 1px 0 rgba(255,255,255,.9)" }}>
               <span className="productCopy"><b>Ride</b><small>Book a cab</small></span>
             </Link>
             <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"} style={pathname?.startsWith("/rentals") ? { minHeight: 78, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 78, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
-              <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 16.5h14l-1.2-6.2a2 2 0 0 0-2-1.6H8.2a2 2 0 0 0-2 1.6L5 16.5Z"/><path d="M4.5 16.5v2.2M19.5 16.5v2.2M7 13h10M8 18.5h2M14 18.5h2"/></svg></span>
               <span className="productCopy"><b>Rent</b><small>Drive yourself</small></span>
             </Link>
             <Link href="/subscriptions" className={isCommute ? "homeProductOption active commuteOption" : "homeProductOption commuteOption"} style={isCommute ? { minHeight: 78, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 78, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
-              <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 9h16M8 13h3M8 17h3M14 13h2M14 17h2"/></svg></span>
               <span className="productCopy"><b>Commute</b><small>Daily route</small></span>
             </Link>
           </div>
@@ -286,8 +284,8 @@ export default function PageHeader({
           .homeProductOption { min-height: 64px; gap: 4px; padding: 6px 3px; border-radius: 17px; }
           .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
           .productIcon svg { width: 15px; height: 15px; }
-          .productCopy b { font-size: 10.5px; }
-          .productCopy small { font-size: 8px; }
+          .productCopy b { font-size: 13px; }
+          .productCopy small { font-size: 9px; }
         }
         @media (max-width: 380px) {
           .voynuHeaderActions {
