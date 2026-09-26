@@ -15,13 +15,14 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setLoading(true);
 
-    const { error: signInError } =
+    const { data, error: signInError } =
       await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -33,12 +34,32 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
       return;
     }
 
+    if (!data?.user?.email_confirmed_at) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError("Please verify your email address before logging in.");
+      return;
+    }
+
     // The customer app is role-neutral. Admins and drivers can use the
     // same account here and are treated exactly like normal customers.
     // Elevated Admin/Saarthi access remains enforced by those apps and
     // their backend authorization rules.
     setLoading(false);
     router.replace("/");
+  };
+
+  const handleResendVerification = async () => {
+    setError("");
+    setResending(true);
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: window.location.origin + "/" },
+    });
+    setResending(false);
+    if (resendError) setError(resendError.message);
+    else setError("A new verification email has been sent.");
   };
 
   const inputStyle = {
@@ -106,9 +127,36 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
         </Link>
 
         {error && (
-          <div style={{ color: theme.colors.error, fontSize: 12.5, fontWeight: 600 }}>
+          <div style={{
+            color: error.includes("new verification email") ? theme.colors.primary : theme.colors.error,
+            fontSize: 12.5,
+            fontWeight: 600,
+            lineHeight: 1.45,
+          }}>
             {error}
           </div>
+        )}
+
+        {error === "Please verify your email address before logging in." && (
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            disabled={resending}
+            style={{
+              alignSelf: "flex-start",
+              marginTop: -3,
+              padding: 0,
+              border: 0,
+              background: "transparent",
+              color: theme.colors.primary,
+              fontFamily: theme.fontFamily,
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: resending ? "wait" : "pointer",
+            }}
+          >
+            {resending ? "Sending verification email..." : "Resend verification email"}
+          </button>
         )}
 
         <button
