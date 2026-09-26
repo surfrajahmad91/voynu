@@ -180,20 +180,23 @@ export default function PageHeader({
         .homeProductSwitch {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
+          align-items: center;
+          gap: 12px;
           width: min(620px, 100%);
           padding: 0;
           background: transparent;
         }
         .homeProductOption {
           min-width: 0;
-          min-height: 70px;
+          width: 100%;
+          height: 88px;
+          min-height: 88px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 4px;
-          padding: 8px 6px;
+          gap: 5px;
+          padding: 10px 6px;
           border-radius: 20px;
           text-decoration: none;
           color: ${theme.colors.textMuted};
@@ -230,6 +233,7 @@ export default function PageHeader({
         }
         .productCopy {
           min-width: 0;
+          width: 100%;
           display: flex;
           align-items: center;
           flex-direction: column;
@@ -243,14 +247,16 @@ export default function PageHeader({
           white-space: nowrap;
         }
         .productCopy b {
-          font-size: 12.5px;
-          line-height: 1.1;
+          font-size: 17px;
+          line-height: 1.05;
+          letter-spacing: -0.35px;
           text-align: center;
           font-weight: 800;
         }
         .productCopy small {
-          font-size: 9.5px;
-          line-height: 1.1;
+          font-size: 11.5px;
+          line-height: 1.15;
+          letter-spacing: -0.1px;
           text-align: center;
           opacity: .72;
         }
@@ -268,8 +274,8 @@ export default function PageHeader({
           .voynuHeaderActions { gap: 4px !important; min-width: 0; }
           .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
           .homeProductInner { width: calc(100% - 20px); padding: 8px 0; }
-          .homeProductSwitch { width: 100%; gap: 8px; padding: 0; }
-          .homeProductOption { min-height: 68px; gap: 4px; padding: 7px 4px; border-radius: 18px; }
+          .homeProductSwitch { width: 100%; gap: 9px; padding: 0; }
+          .homeProductOption { height: 88px; min-height: 88px; gap: 5px; padding: 8px 4px; border-radius: 20px; }
           .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
           .productIcon svg { width: 16px; height: 16px; }
           .productCopy b { font-size: 11px; }
@@ -281,11 +287,11 @@ export default function PageHeader({
           .voynuHeaderAccount :global(a span) { display: inline !important; }
           .homeProductInner { width: calc(100% - 16px); padding: 7px 0; }
           .homeProductSwitch { gap: 7px; padding: 0; }
-          .homeProductOption { min-height: 64px; gap: 4px; padding: 6px 3px; border-radius: 17px; }
+          .homeProductOption { height: 82px; min-height: 82px; gap: 4px; padding: 7px 3px; border-radius: 18px; }
           .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
           .productIcon svg { width: 15px; height: 15px; }
-          .productCopy b { font-size: 13px; }
-          .productCopy small { font-size: 9px; }
+          .productCopy b { font-size: 16px; }
+          .productCopy small { font-size: 11px; }
         }
         @media (max-width: 380px) {
           .voynuHeaderActions {
@@ -308,6 +314,9 @@ export default function PageHeader({
             width: calc(100% - 14px);
           }
           .homeProductOption b {
+            font-size: 14px;
+          }
+          .homeProductOption small {
             font-size: 10px;
           }
         }
