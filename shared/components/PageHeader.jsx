@@ -171,9 +171,9 @@ export default function PageHeader({
           background: transparent;
         }
         .homeProductInner {
-          width: min(${maxWidth}px, calc(100% - 32px));
+          width: min(760px, calc(100% - 32px));
           margin: 0 auto;
-          padding: 8px 0;
+          padding: 9px 0;
           display: flex;
           justify-content: center;
         }
@@ -182,7 +182,7 @@ export default function PageHeader({
           grid-template-columns: repeat(3, minmax(0, 1fr));
           align-items: center;
           gap: 12px;
-          width: min(620px, 100%);
+          width: 100%;
           padding: 0;
           background: transparent;
         }
@@ -194,7 +194,10 @@ export default function PageHeader({
           display: grid;
           place-items: center;
           padding: 0 6px;
-          border-radius: 20px;
+          border-radius: 22px;
+          overflow: hidden;
+          isolation: isolate;
+          transform: translateZ(0);
           text-decoration: none;
           color: ${theme.colors.textMuted};
           background: rgba(255,255,255,.78);
@@ -203,10 +206,21 @@ export default function PageHeader({
           backdrop-filter: blur(12px);
           transition: transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
           -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
+          outline: none;
+          -webkit-focus-ring-color: transparent;
         }
         .homeProductOption:hover {
-          transform: translateY(-1px);
+          transform: translateY(-1px) translateZ(0);
           background: #f8fcfd;
+        }
+        .homeProductOption:focus,
+        .homeProductOption:focus-visible,
+        .homeProductOption:active {
+          outline: none;
+          -webkit-tap-highlight-color: transparent;
         }
         .homeProductOption.active {
           background: ${theme.gradients.primary};
@@ -271,9 +285,9 @@ export default function PageHeader({
           .voynuHeaderBrandWord { font-size: 16px !important; }
           .voynuHeaderActions { gap: 4px !important; min-width: 0; }
           .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
-          .homeProductInner { width: calc(100% - 20px); padding: 8px 0; }
-          .homeProductSwitch { width: 100%; gap: 9px; padding: 0; }
-          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 4px; border-radius: 20px; }
+          .homeProductInner { width: calc(100% - 32px); padding: 8px 0; }
+          .homeProductSwitch { width: 100%; gap: 10px; padding: 0; }
+          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 4px; border-radius: 22px; }
           .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
           .productIcon svg { width: 16px; height: 16px; }
           .productCopy b { font-size: 16px; }
@@ -283,9 +297,9 @@ export default function PageHeader({
           .voynuHeaderBrandWord { display: none; }
           .voynuHeaderAccount :global(a) { padding: 9px 11px !important; font-size: 10.5px !important; }
           .voynuHeaderAccount :global(a span) { display: inline !important; }
-          .homeProductInner { width: calc(100% - 16px); padding: 7px 0; }
-          .homeProductSwitch { gap: 7px; padding: 0; }
-          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 3px; border-radius: 19px; }
+          .homeProductInner { width: calc(100% - 32px); padding: 7px 0; }
+          .homeProductSwitch { gap: 8px; padding: 0; }
+          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 3px; border-radius: 22px; }
           .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
           .productIcon svg { width: 15px; height: 15px; }
           .productCopy b { font-size: 16px; }
@@ -309,7 +323,7 @@ export default function PageHeader({
             padding-inline: 7px;
           }
           .homeProductInner {
-            width: calc(100% - 14px);
+            width: calc(100% - 32px);
           }
           .homeProductOption b {
             font-size: 14px;
