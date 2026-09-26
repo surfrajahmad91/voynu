@@ -17,7 +17,7 @@ function IconWhatsApp({ size = 15 }) {
 export default function PageHeader({
   maxWidth = theme.maxWidth.content,
   showAccountLink = true,
-  showWhatsapp = true,
+  showWhatsapp = false,
   whatsappHref = null,
   whatsappLabel = "Chat with us",
   showProductBar = true,
@@ -317,14 +317,12 @@ export default function PageHeader({
             padding: 9px 10px !important;
             font-size: 10.5px !important;
           }
+          .voynuHeaderAccount :global(a) {
+            padding: 9px 11px !important;
+            font-size: 10.5px !important;
+          }
           .voynuHeaderAccount :global(a span) {
-            display: none;
-          }
-          .voynuHeaderWhatsapp .whatsappLabel {
-            display: none;
-          }
-          .voynuHeaderWhatsapp {
-            padding: 9px 9px !important;
+            display: inline !important;
           }
           .homeProductBar {
             padding: 6px 0;
@@ -344,11 +342,7 @@ export default function PageHeader({
             font-size: 10.5px;
           }
           .whatsappLabel {
-            display: none;
-          }
-          .whatsappLabelAlways {
-            display: inline !important;
-            font-size: 10px;
+            display: inline;
           }
         }
         @media (max-width: 380px) {
