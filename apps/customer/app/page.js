@@ -48,7 +48,33 @@ export default function HomePage() {
   const router = useRouter();
   const [session, setSession] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
-  useEffect(() => { let cancelled = false; supabase.auth.getSession().then(({ data }) => { if (!cancelled) { setSession(data?.session || null); setCheckingSession(false); } }); const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => { setSession(newSession); }); return () => { cancelled = true; listener?.subscription?.unsubscribe(); }; }, []);
+  useEffect(() => {
+    let cancelled = false;
+    const acceptVerifiedSession = async (nextSession) => {
+      if (!nextSession) {
+        if (!cancelled) setSession(null);
+        return;
+      }
+      if (!nextSession.user?.email_confirmed_at) {
+        await supabase.auth.signOut();
+        if (!cancelled) setSession(null);
+        return;
+      }
+      if (!cancelled) setSession(nextSession);
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      acceptVerifiedSession(data?.session || null).finally(() => {
+        if (!cancelled) setCheckingSession(false);
+      });
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      acceptVerifiedSession(newSession);
+    });
+    return () => {
+      cancelled = true;
+      listener?.subscription?.unsubscribe();
+    };
+  }, []);
   const today = useMemo(() => { const date = new Date(); return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-"); }, []);
   const [tripType, setTripType] = useState("oneway");
   const [pickup, setPickup] = useState({ name: "", lat: null, lon: null, placeId: null, city: null, selected: false });
