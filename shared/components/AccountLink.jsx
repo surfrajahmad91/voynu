@@ -55,15 +55,17 @@ export default function AccountLink() {
         gap: "6px",
         padding: "9px 14px",
         borderRadius: theme.radius.pill,
-        background: "linear-gradient(135deg, rgba(10,159,191,.13) 0%, rgba(245,129,63,.18) 100%)",
+        background: "linear-gradient(135deg, rgba(18,168,197,.22) 0%, rgba(255,255,255,.86) 48%, rgba(244,107,42,.20) 100%)",
         color: theme.colors.navy,
         textDecoration: "none",
         fontSize: "12.5px",
         fontWeight: 700,
         fontFamily: theme.fontFamily,
-        border: "1px solid rgba(10,127,166,.14)",
-        boxShadow: "0 7px 18px rgba(10,35,55,.08), inset 0 1px 0 rgba(255,255,255,.9)",
+        border: "1px solid rgba(10,127,166,.18)",
+        boxShadow: "0 9px 22px rgba(10,35,55,.09), inset 0 1px 0 rgba(255,255,255,.96)",
         whiteSpace: "nowrap",
+        WebkitTapHighlightColor: "transparent",
+        outline: "none",
       }}
     >
       <IconUser size={13} />
