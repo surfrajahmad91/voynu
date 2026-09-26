@@ -54,27 +54,51 @@ export default function ForgotPasswordPage() {
       whatsappHref={"https://wa.me/919918614844?text=" + encodeURIComponent("Hi VOYNU, I need help.")}
     >
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: sent ? 18 : 16 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
-          Reset your password
+          {sent ? "Check your inbox" : "Reset your password"}
         </h1>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
-          Enter your account email and we'll send a reset link.
+        <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5, color: theme.colors.textFaint }}>
+          {sent
+            ? "We’ve sent instructions to help you get back into your VOYNU account."
+            : "Enter your email and we’ll send you a secure password reset link."}
         </p>
       </div>
 
       {sent ? (
         <div style={{
-          padding: "14px 16px",
-          borderRadius: 12,
-          background: theme.colors.primaryTint,
-          color: theme.colors.primary,
+          padding: "16px",
+          borderRadius: 16,
+          background: "linear-gradient(145deg, rgba(231,244,248,.82), rgba(255,255,255,.72))",
+          border: "1px solid rgba(18,160,198,.12)",
+          color: theme.colors.textMuted,
           fontSize: 13,
-          lineHeight: 1.5,
+          lineHeight: 1.55,
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,.9)",
         }}>
-          If an account exists for <strong>{email}</strong>, a reset link has
-          been sent. Check your inbox (and spam folder) — it can take a few
-          minutes to arrive.
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 8,
+            color: theme.colors.primary,
+            fontWeight: 800,
+          }}>
+            <span style={{
+              width: 24,
+              height: 24,
+              borderRadius: "50%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(18,160,198,.12)",
+              color: theme.colors.primary,
+              fontSize: 14,
+              flexShrink: 0,
+            }}>✓</span>
+            Reset link sent
+          </div>
+          If an account is registered with <strong style={{ color: theme.colors.text }}>{email}</strong>, the reset link has been sent. Check your inbox and spam folder — it may take a few minutes to arrive.
         </div>
       ) : (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -118,7 +142,7 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      <p style={{ marginTop: 20, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
+      <p style={{ marginTop: sent ? 18 : 20, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
         <Link href="/login" style={{ color: theme.colors.primary, fontWeight: 700 }}>
           Back to log in
         </Link>
