@@ -67,38 +67,38 @@ export default function ForgotPasswordPage() {
 
       {sent ? (
         <div style={{
-          padding: "16px",
-          borderRadius: 16,
-          background: "linear-gradient(145deg, rgba(231,244,248,.82), rgba(255,255,255,.72))",
-          border: "1px solid rgba(18,160,198,.12)",
+          padding: "14px 15px",
+          borderRadius: 15,
+          background: "linear-gradient(145deg, rgba(231,244,248,.76), rgba(255,255,255,.66))",
+          border: "1px solid rgba(18,160,198,.11)",
           color: theme.colors.textMuted,
-          fontSize: 13,
-          lineHeight: 1.55,
+          fontSize: 12.5,
+          lineHeight: 1.5,
           boxShadow: "inset 0 1px 0 rgba(255,255,255,.9)",
         }}>
           <div style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            marginBottom: 8,
+            gap: 9,
+            marginBottom: 7,
             color: theme.colors.primary,
             fontWeight: 800,
           }}>
             <span style={{
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               borderRadius: "50%",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
               background: "rgba(18,160,198,.12)",
               color: theme.colors.primary,
-              fontSize: 14,
+              fontSize: 13,
               flexShrink: 0,
             }}>✓</span>
             Reset link sent
           </div>
-          If an account is registered with <strong style={{ color: theme.colors.text }}>{email}</strong>, the reset link has been sent. Check your inbox and spam folder — it may take a few minutes to arrive.
+          If an account is registered with <strong style={{ color: theme.colors.text }}>{email}</strong>, we’ve sent the reset link. Check your inbox and spam folder. It may take a few minutes to arrive.
         </div>
       ) : (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
