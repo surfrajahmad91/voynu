@@ -182,14 +182,10 @@ export default function PageHeader({
         .homeProductSwitch {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 7px;
+          gap: 10px;
           width: min(620px, 100%);
-          padding: 5px;
-          border-radius: 18px;
-          background: rgba(255,255,255,.54);
-          border: 1px solid rgba(28, 111, 138, .10);
-          box-shadow: 0 6px 18px rgba(10,35,55,.045);
-          backdrop-filter: blur(10px);
+          padding: 0;
+          background: transparent;
         }
         .homeProductOption {
           min-width: 0;
@@ -200,11 +196,13 @@ export default function PageHeader({
           justify-content: center;
           gap: 4px;
           padding: 8px 6px;
-          border-radius: 14px;
+          border-radius: 20px;
           text-decoration: none;
           color: ${theme.colors.textMuted};
-          background: rgba(255,255,255,.72);
-          border: 1px solid rgba(28, 111, 138, .07);
+          background: rgba(255,255,255,.78);
+          border: 1px solid rgba(28, 111, 138, .10);
+          box-shadow: 0 7px 18px rgba(10,35,55,.055);
+          backdrop-filter: blur(12px);
           transition: transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
           -webkit-tap-highlight-color: transparent;
         }
@@ -215,7 +213,7 @@ export default function PageHeader({
         .homeProductOption.active {
           background: ${theme.gradients.primary};
           color: #fff;
-          box-shadow: 0 7px 16px rgba(10,127,166,.20);
+          box-shadow: 0 9px 22px rgba(10,127,166,.22);
         }
         .productIcon {
           width: 30px;
@@ -272,8 +270,8 @@ export default function PageHeader({
           .voynuHeaderActions { gap: 4px !important; min-width: 0; }
           .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
           .homeProductInner { width: calc(100% - 20px); padding: 8px 0; }
-          .homeProductSwitch { width: 100%; gap: 5px; padding: 4px; border-radius: 17px; }
-          .homeProductOption { min-height: 66px; gap: 4px; padding: 7px 4px; border-radius: 14px; }
+          .homeProductSwitch { width: 100%; gap: 8px; padding: 0; }
+          .homeProductOption { min-height: 68px; gap: 4px; padding: 7px 4px; border-radius: 18px; }
           .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
           .productIcon svg { width: 16px; height: 16px; }
           .productCopy b { font-size: 11px; }
@@ -284,8 +282,8 @@ export default function PageHeader({
           .voynuHeaderAccount :global(a) { padding: 9px 11px !important; font-size: 10.5px !important; }
           .voynuHeaderAccount :global(a span) { display: inline !important; }
           .homeProductInner { width: calc(100% - 16px); padding: 7px 0; }
-          .homeProductSwitch { gap: 4px; padding: 4px; }
-          .homeProductOption { min-height: 64px; gap: 4px; padding: 6px 3px; border-radius: 13px; }
+          .homeProductSwitch { gap: 7px; padding: 0; }
+          .homeProductOption { min-height: 64px; gap: 4px; padding: 6px 3px; border-radius: 17px; }
           .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
           .productIcon svg { width: 15px; height: 15px; }
           .productCopy b { font-size: 10.5px; }
