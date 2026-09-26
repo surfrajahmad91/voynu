@@ -142,32 +142,22 @@ export default function PageHeader({
 
       {showProductBar && <div className="homeProductBar">
         <div className="homeProductInner">
-          <div className="homeProductSwitch">
+          <div className="homeProductSwitch" aria-label="VOYNU services">
             <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"}>
-              <span>🚕</span>
-              <span>
-                <b>Ride</b>
-                <small>We drive. You relax.</small>
-              </span>
+              <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 16.5h14l-1.2-6.2a2 2 0 0 0-2-1.6H8.2a2 2 0 0 0-2 1.6L5 16.5Z"/><path d="M4.5 16.5v2.2M19.5 16.5v2.2M7 13h10M8 18.5h2M14 18.5h2"/></svg></span>
+              <span className="productCopy"><b>Ride</b><small>Book a cab</small></span>
             </Link>
             <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"}>
-              <span>🚗</span>
-              <span>
-                <b>Rent</b>
-                <small>You drive. You decide.</small>
-              </span>
+              <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 16.5h14l-1.2-6.2a2 2 0 0 0-2-1.6H8.2a2 2 0 0 0-2 1.6L5 16.5Z"/><path d="M4.5 16.5v2.2M19.5 16.5v2.2M7 13h10M8 18.5h2M14 18.5h2"/></svg></span>
+              <span className="productCopy"><b>Rent</b><small>Drive yourself</small></span>
             </Link>
             <Link href="/subscriptions" className={isCommute ? "homeProductOption active commuteOption" : "homeProductOption commuteOption"}>
-              <span>🗓️</span>
-              <span>
-                <b>Commute</b>
-                <small>Fixed daily route.</small>
-              </span>
+              <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 9h16M8 13h3M8 17h3M14 13h2M14 17h2"/></svg></span>
+              <span className="productCopy"><b>Commute</b><small>Daily route</small></span>
             </Link>
           </div>
         </div>
       </div>}
-
       <style jsx>{`
         .voynuHeaderActions {
           scrollbar-width: none;
@@ -180,170 +170,119 @@ export default function PageHeader({
         }
         .homeProductBar {
           border-top: 1px solid ${theme.colors.border};
-          background: ${theme.colors.surface};
+          background: rgba(247, 250, 251, 0.96);
         }
         .homeProductInner {
           width: min(${maxWidth}px, calc(100% - 32px));
           margin: 0 auto;
-          padding: 10px 0;
+          padding: 9px 0;
           display: flex;
-          align-items: center;
           justify-content: center;
-          gap: 14px;
-        }
-        .homeProductIntro {
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-        }
-        .homeProductInner strong {
-          font-size: 11px;
-          color: ${theme.colors.text};
-          letter-spacing: -0.1px;
-        }
-        .homeProductInner span {
-          font-size: 9.5px;
-          color: ${theme.colors.textMuted};
         }
         .homeProductSwitch {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 5px;
-          padding: 4px;
-          border-radius: 16px;
-          background: ${theme.colors.bg};
+          gap: 7px;
+          width: min(620px, 100%);
+          padding: 5px;
+          border-radius: 18px;
+          background: rgba(255,255,255,.72);
           border: 1px solid ${theme.colors.border};
-          width: min(560px, 100%);
+          box-shadow: 0 7px 20px rgba(10,35,55,.06);
         }
         .homeProductOption {
+          min-width: 0;
+          min-height: 56px;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 9px;
-          min-height: 54px;
-          padding: 8px 12px;
-          border-radius: 12px;
+          gap: 8px;
+          padding: 8px 10px;
+          border-radius: 14px;
           text-decoration: none;
           color: ${theme.colors.textMuted};
-          transition: 0.18s ease;
+          transition: transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
           -webkit-tap-highlight-color: transparent;
+        }
+        .homeProductOption:hover {
+          transform: translateY(-1px);
+          background: rgba(255,255,255,.9);
         }
         .homeProductOption.active {
           background: ${theme.gradients.primary};
           color: #fff;
-          box-shadow: 0 5px 14px rgba(10, 127, 166, 0.18);
+          box-shadow: 0 7px 16px rgba(10,127,166,.20);
         }
-        .homeProductOption b,
-        .homeProductOption small {
+        .productIcon {
+          width: 32px;
+          height: 32px;
+          flex: 0 0 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 11px;
+          background: ${theme.colors.primaryTint};
+          color: ${theme.colors.primary};
+        }
+        .homeProductOption.active .productIcon {
+          background: rgba(255,255,255,.18);
+          color: #fff;
+        }
+        .productCopy {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .productCopy b,
+        .productCopy small {
           display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
-        .homeProductOption b {
-          font-size: 13px;
+        .productCopy b {
+          font-size: 12.5px;
           line-height: 1.1;
+          font-weight: 800;
         }
-        .homeProductOption small {
+        .productCopy small {
           font-size: 9.5px;
-          margin-top: 3px;
-          opacity: 0.8;
+          line-height: 1.1;
+          opacity: .72;
         }
-        .homeProductOption > span:first-child {
-          font-size: 19px;
-          line-height: 1;
+        .homeProductOption.active .productCopy small {
+          opacity: .86;
         }
         .whatsappLabel {
           display: inline;
         }
         @media (max-width: 700px) {
-          .voynuPageHeaderInner {
-            width: 100% !important;
-            padding: 8px 10px;
-            min-height: 62px !important;
-            gap: 6px !important;
-          }
-          .voynuHeaderBrand {
-            gap: 7px !important;
-          }
-          .voynuHeaderBrand img {
-            width: 34px !important;
-            height: 34px !important;
-          }
-          .voynuHeaderBrandWord {
-            font-size: 16px !important;
-          }
-          .voynuHeaderActions {
-            gap: 4px !important;
-            min-width: 0;
-          }
-          .voynuHeaderAction {
-            padding: 8px 7px !important;
-            font-size: 10px !important;
-          }
-          .voynuHeaderWhatsapp {
-            padding: 8px 10px !important;
-          }
-          .homeProductInner {
-            width: calc(100% - 20px);
-            padding: 8px 0;
-          }
-          .homeProductSwitch {
-            width: 100%;
-          }
-          /* Below 700px there isn't room for icon + two lines of text side by side without
-             the subtitle shrinking past readable size, so tabs switch to icon-over-label and
-             the marketing subtitle (\"We drive, you relax\" etc.) is dropped rather than shrunk. */
-          .homeProductOption {
-            flex-direction: column;
-            gap: 3px;
-            min-height: 56px;
-            padding: 8px 4px;
-          }
-          .homeProductOption > span:first-child {
-            font-size: 18px;
-            line-height: 1;
-          }
-          .homeProductOption b {
-            font-size: 11.5px;
-            line-height: 1.15;
-          }
-          .homeProductOption small {
-            display: none;
-          }
+          .voynuPageHeaderInner { width: 100% !important; padding: 8px 10px; min-height: 62px !important; gap: 6px !important; }
+          .voynuHeaderBrand { gap: 7px !important; }
+          .voynuHeaderBrand img { width: 34px !important; height: 34px !important; }
+          .voynuHeaderBrandWord { font-size: 16px !important; }
+          .voynuHeaderActions { gap: 4px !important; min-width: 0; }
+          .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
+          .homeProductInner { width: calc(100% - 20px); padding: 8px 0; }
+          .homeProductSwitch { width: 100%; gap: 5px; padding: 4px; border-radius: 17px; }
+          .homeProductOption { min-height: 58px; gap: 5px; padding: 7px 4px; border-radius: 13px; }
+          .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
+          .productIcon svg { width: 16px; height: 16px; }
+          .productCopy b { font-size: 11px; }
+          .productCopy small { font-size: 8.5px; }
         }
         @media (max-width: 520px) {
-          .voynuHeaderBrandWord {
-            display: none;
-          }
-          .voynuHeaderAccount :global(a) {
-            padding: 9px 10px !important;
-            font-size: 10.5px !important;
-          }
-          .voynuHeaderAccount :global(a) {
-            padding: 9px 11px !important;
-            font-size: 10.5px !important;
-          }
-          .voynuHeaderAccount :global(a span) {
-            display: inline !important;
-          }
-          .homeProductBar {
-            padding: 6px 0;
-          }
-          .homeProductSwitch {
-            padding: 3px;
-            gap: 4px;
-          }
-          .homeProductOption {
-            min-height: 52px;
-            padding: 7px 3px;
-          }
-          .homeProductOption > span:first-child {
-            font-size: 16px;
-          }
-          .homeProductOption b {
-            font-size: 10.5px;
-          }
-          .whatsappLabel {
-            display: inline;
-          }
+          .voynuHeaderBrandWord { display: none; }
+          .voynuHeaderAccount :global(a) { padding: 9px 11px !important; font-size: 10.5px !important; }
+          .voynuHeaderAccount :global(a span) { display: inline !important; }
+          .homeProductInner { width: calc(100% - 16px); padding: 7px 0; }
+          .homeProductSwitch { gap: 4px; padding: 4px; }
+          .homeProductOption { min-height: 55px; gap: 4px; padding: 6px 3px; }
+          .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
+          .productIcon svg { width: 15px; height: 15px; }
+          .productCopy b { font-size: 10.5px; }
+          .productCopy small { font-size: 8px; }
         }
         @media (max-width: 380px) {
           .voynuHeaderActions {
