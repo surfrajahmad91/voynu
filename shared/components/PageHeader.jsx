@@ -169,7 +169,7 @@ export default function PageHeader({
           flex-shrink: 0;
         }
         .homeProductBar {
-          border-top: 1px solid ${theme.colors.border};
+          border-top: 1px solid rgba(28, 111, 138, .06);
           background: linear-gradient(180deg, #f7fbfc 0%, #edf6f8 100%);
         }
         .homeProductInner {
