@@ -35,9 +35,9 @@ export default function PageHeader({
     <header
       className="voynuPageHeader"
       style={{
-        background: "linear-gradient(180deg, rgba(255,255,255,.88) 0%, rgba(246,251,252,.68) 100%)",
+        background: "linear-gradient(180deg, rgba(248,252,253,.82) 0%, rgba(238,247,249,.52) 100%)",
         backdropFilter: "blur(18px) saturate(125%)",
-        boxShadow: "0 10px 30px rgba(10,35,55,.07), inset 0 -1px 0 rgba(255,255,255,.75)",
+        boxShadow: "0 12px 32px rgba(10,35,55,.055), inset 0 -1px 0 rgba(255,255,255,.72)",
         borderBottom: "1px solid rgba(255,255,255,.72)",
         position: "sticky",
         top: 0,
@@ -191,12 +191,9 @@ export default function PageHeader({
           width: 100%;
           height: 88px;
           min-height: 88px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-          padding: 10px 6px;
+          display: grid;
+          place-items: center;
+          padding: 0 6px;
           border-radius: 20px;
           text-decoration: none;
           color: ${theme.colors.textMuted};
@@ -236,8 +233,9 @@ export default function PageHeader({
           width: 100%;
           display: flex;
           align-items: center;
+          justify-content: center;
           flex-direction: column;
-          gap: 2px;
+          gap: 4px;
         }
         .productCopy b,
         .productCopy small {
@@ -275,7 +273,7 @@ export default function PageHeader({
           .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
           .homeProductInner { width: calc(100% - 20px); padding: 8px 0; }
           .homeProductSwitch { width: 100%; gap: 9px; padding: 0; }
-          .homeProductOption { height: 78px !important; min-height: 78px !important; align-items: center !important; justify-content: center !important; gap: 4px; padding: 7px 4px; border-radius: 20px; }
+          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 4px; border-radius: 20px; }
           .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
           .productIcon svg { width: 16px; height: 16px; }
           .productCopy b { font-size: 16px; }
@@ -287,7 +285,7 @@ export default function PageHeader({
           .voynuHeaderAccount :global(a span) { display: inline !important; }
           .homeProductInner { width: calc(100% - 16px); padding: 7px 0; }
           .homeProductSwitch { gap: 7px; padding: 0; }
-          .homeProductOption { height: 78px !important; min-height: 78px !important; align-items: center !important; justify-content: center !important; gap: 4px; padding: 7px 3px; border-radius: 19px; }
+          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 3px; border-radius: 19px; }
           .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
           .productIcon svg { width: 15px; height: 15px; }
           .productCopy b { font-size: 16px; }
