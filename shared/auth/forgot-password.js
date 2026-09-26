@@ -142,11 +142,36 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      <p style={{ marginTop: sent ? 18 : 20, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
-        <Link href="/login" style={{ color: theme.colors.primary, fontWeight: 700 }}>
-          Back to log in
+      {sent ? (
+        <Link
+          href="/login"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: 52,
+            boxSizing: "border-box",
+            marginTop: 18,
+            borderRadius: 13,
+            background: theme.gradients.primary,
+            color: "#ffffff",
+            fontFamily: theme.fontFamily,
+            fontWeight: 800,
+            fontSize: 14,
+            textDecoration: "none",
+            boxShadow: theme.shadow.button,
+          }}
+        >
+          Log in to VOYNU
         </Link>
-      </p>
+      ) : (
+        <p style={{ marginTop: 20, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
+          <Link href="/login" style={{ color: theme.colors.primary, fontWeight: 700 }}>
+            Back to log in
+          </Link>
+        </p>
+      )}
 
     </AuthShell>
   );
