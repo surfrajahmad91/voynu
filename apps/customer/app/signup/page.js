@@ -66,14 +66,19 @@ export default function SignupPage() {
   };
 
   return (
-    <AuthShell>
+    <AuthShell
+      showMarketingPanel={false}
+      showProductBar={false}
+      whatsappLabel="Need Help?"
+      whatsappHref={"https://wa.me/919918614844?text=" + encodeURIComponent("Hi VOYNU, I need help.")}
+    >
 
-      <div style={{ marginBottom: 22 }}>
+      <div style={{ marginBottom: 18 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
-          Create your account
+          Create your VOYNU account
         </h1>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: theme.colors.textFaint }}>
-          Join VOYNU to start booking rides.
+        <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5, color: theme.colors.textFaint }}>
+          Sign up once and unlock rides, commute and rentals in VOYNU.
         </p>
       </div>
 
@@ -98,7 +103,7 @@ export default function SignupPage() {
 
         <input
           type="password"
-          placeholder="Password (min 6 characters)"
+          placeholder="Password (6+ characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -129,7 +134,7 @@ export default function SignupPage() {
             boxShadow: theme.shadow.button,
           }}
         >
-          {loading ? "Creating account..." : "Sign up"}
+          {loading ? "Creating account..." : "Create account"}
         </button>
 
       </form>
