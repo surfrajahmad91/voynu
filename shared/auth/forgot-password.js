@@ -47,9 +47,14 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthShell>
+    <AuthShell
+      showMarketingPanel={false}
+      showProductBar={false}
+      whatsappLabel="Need Help?"
+      whatsappHref={"https://wa.me/919918614844?text=" + encodeURIComponent("Hi VOYNU, I need help.")}
+    >
 
-      <div style={{ marginBottom: 22 }}>
+      <div style={{ marginBottom: 16 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
           Reset your password
         </h1>
