@@ -20,7 +20,7 @@ export default function PageHeader({
   showWhatsapp = false,
   whatsappHref = null,
   whatsappLabel = "Chat with us",
-  showProductBar = true,
+  showProductBar = false,
 }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
