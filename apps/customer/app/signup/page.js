@@ -103,7 +103,7 @@ export default function SignupPage() {
         <>
           <div style={{ marginBottom: 18 }}>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
-              Verify your email
+              Check your inbox
             </h1>
             <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5, color: theme.colors.textFaint }}>
               One quick step before you start using VOYNU.
@@ -140,9 +140,9 @@ export default function SignupPage() {
                 fontSize: 13,
                 flexShrink: 0,
               }}>✓</span>
-              Verification email sent
+              Check your email
             </div>
-            We sent a verification link to <strong style={{ color: theme.colors.text }}>{email}</strong>. Open the email and verify your address before logging in. Check your spam folder if you don't see it.
+            If this is a new VOYNU account, we've sent a verification link to <strong style={{ color: theme.colors.text }}>{email}</strong>. Open it to verify your address before logging in. If you already have a VOYNU account, you can log in or reset your password instead.
           </div>
 
           {error && (
@@ -151,14 +151,32 @@ export default function SignupPage() {
             </div>
           )}
 
-          <button type="button" onClick={handleResend} disabled={resending} style={{
-            width: "100%", height: 50, marginTop: 16, border: 0, borderRadius: 13,
-            background: theme.gradients.primary, color: "#fff", fontFamily: theme.fontFamily,
-            fontWeight: 800, fontSize: 14, cursor: resending ? "wait" : "pointer",
-            opacity: resending ? 0.7 : 1, boxShadow: theme.shadow.button,
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            <button type="button" onClick={handleResend} disabled={resending} style={{
+              flex: 1, height: 48, border: 0, borderRadius: 13,
+              background: theme.gradients.primary, color: "#fff", fontFamily: theme.fontFamily,
+              fontWeight: 800, fontSize: 13, cursor: resending ? "wait" : "pointer",
+              opacity: resending ? 0.7 : 1, boxShadow: theme.shadow.button,
+            }}>
+              {resending ? "Sending..." : "Resend verification"}
+            </button>
+            <Link href="/login" style={{
+              flex: 1, height: 48, borderRadius: 13, display: "flex", alignItems: "center",
+              justifyContent: "center", boxSizing: "border-box",
+              border: "1px solid #dce5e1", background: "#fff", color: theme.colors.text,
+              fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 13, textDecoration: "none",
+            }}>
+              Log in
+            </Link>
+          </div>
+
+          <Link href="/forgot-password" style={{
+            display: "block", marginTop: 13, textAlign: "center",
+            color: theme.colors.primary, fontFamily: theme.fontFamily,
+            fontSize: 12.5, fontWeight: 700, textDecoration: "none",
           }}>
-            {resending ? "Sending..." : "Resend verification email"}
-          </button>
+            Forgot your password? Reset it
+          </Link>
         </>
       ) : (
         <>
