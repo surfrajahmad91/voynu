@@ -25,6 +25,7 @@ export default function PageHeader({
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isCommute = pathname?.startsWith("/subscriptions");
+  const isCabSelection = pathname?.startsWith("/cab-selection");
   const headerWidth = "min(" + maxWidth + "px, calc(100% - 32px))";
   const whatsappUrl =
     whatsappHref ||
@@ -49,7 +50,7 @@ export default function PageHeader({
         style={{
           width: headerWidth,
           margin: "0 auto",
-          minHeight: 68,
+          minHeight: isCabSelection ? 58 : 68,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
