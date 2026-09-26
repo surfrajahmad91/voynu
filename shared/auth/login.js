@@ -29,8 +29,16 @@ export default function LoginPage({ subtitle = "Log in to book your next ride.",
       });
 
     if (signInError) {
+      const isUnverified =
+        signInError?.code === "email_not_confirmed" ||
+        /email.*not.*confirm|confirm.*email/i.test(signInError?.message || "");
+
       setLoading(false);
-      setError(signInError.message);
+      setError(
+        isUnverified
+          ? "Please verify your email address before logging in."
+          : signInError.message
+      );
       return;
     }
 
