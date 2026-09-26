@@ -143,15 +143,15 @@ export default function PageHeader({
       {showProductBar && <div className="homeProductBar">
         <div className="homeProductInner">
           <div className="homeProductSwitch" aria-label="VOYNU services">
-            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"}>
+            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"} style={isHome ? { background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", boxShadow: "0 8px 18px rgba(16, 145, 173, 0.22)" } : undefined}>
               <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 16.5h14l-1.2-6.2a2 2 0 0 0-2-1.6H8.2a2 2 0 0 0-2 1.6L5 16.5Z"/><path d="M4.5 16.5v2.2M19.5 16.5v2.2M7 13h10M8 18.5h2M14 18.5h2"/></svg></span>
               <span className="productCopy"><b>Ride</b><small>Book a cab</small></span>
             </Link>
-            <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"}>
+            <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"} style={pathname?.startsWith("/rentals") ? { background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", boxShadow: "0 8px 18px rgba(16, 145, 173, 0.22)" } : undefined}>
               <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 16.5h14l-1.2-6.2a2 2 0 0 0-2-1.6H8.2a2 2 0 0 0-2 1.6L5 16.5Z"/><path d="M4.5 16.5v2.2M19.5 16.5v2.2M7 13h10M8 18.5h2M14 18.5h2"/></svg></span>
               <span className="productCopy"><b>Rent</b><small>Drive yourself</small></span>
             </Link>
-            <Link href="/subscriptions" className={isCommute ? "homeProductOption active commuteOption" : "homeProductOption commuteOption"}>
+            <Link href="/subscriptions" className={isCommute ? "homeProductOption active commuteOption" : "homeProductOption commuteOption"} style={isCommute ? { background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", boxShadow: "0 8px 18px rgba(16, 145, 173, 0.22)" } : undefined}>
               <span className="productIcon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 9h16M8 13h3M8 17h3M14 13h2M14 17h2"/></svg></span>
               <span className="productCopy"><b>Commute</b><small>Daily route</small></span>
             </Link>
@@ -170,12 +170,12 @@ export default function PageHeader({
         }
         .homeProductBar {
           border-top: 1px solid ${theme.colors.border};
-          background: rgba(247, 250, 251, 0.96);
+          background: linear-gradient(180deg, #f7fbfc 0%, #edf6f8 100%);
         }
         .homeProductInner {
           width: min(${maxWidth}px, calc(100% - 32px));
           margin: 0 auto;
-          padding: 9px 0;
+          padding: 8px 0;
           display: flex;
           justify-content: center;
         }
@@ -186,9 +186,10 @@ export default function PageHeader({
           width: min(620px, 100%);
           padding: 5px;
           border-radius: 18px;
-          background: rgba(255,255,255,.72);
-          border: 1px solid ${theme.colors.border};
-          box-shadow: 0 7px 20px rgba(10,35,55,.06);
+          background: rgba(255,255,255,.54);
+          border: 1px solid rgba(28, 111, 138, .10);
+          box-shadow: 0 6px 18px rgba(10,35,55,.045);
+          backdrop-filter: blur(10px);
         }
         .homeProductOption {
           min-width: 0;
@@ -201,12 +202,14 @@ export default function PageHeader({
           border-radius: 14px;
           text-decoration: none;
           color: ${theme.colors.textMuted};
+          background: rgba(255,255,255,.72);
+          border: 1px solid rgba(28, 111, 138, .07);
           transition: transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
           -webkit-tap-highlight-color: transparent;
         }
         .homeProductOption:hover {
           transform: translateY(-1px);
-          background: rgba(255,255,255,.9);
+          background: #f8fcfd;
         }
         .homeProductOption.active {
           background: ${theme.gradients.primary};
@@ -221,7 +224,7 @@ export default function PageHeader({
           align-items: center;
           justify-content: center;
           border-radius: 11px;
-          background: ${theme.colors.primaryTint};
+          background: #e8f5f8;
           color: ${theme.colors.primary};
         }
         .homeProductOption.active .productIcon {
