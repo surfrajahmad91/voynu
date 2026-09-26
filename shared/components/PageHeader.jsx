@@ -144,10 +144,10 @@ export default function PageHeader({
       {showProductBar && <div className="homeProductBar">
         <div className="homeProductInner">
           <div className="homeProductSwitch" aria-label="VOYNU services">
-            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"} style={isHome ? { minHeight: 78, borderRadius: 22, background: "linear-gradient(145deg, #12a8c5 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.55)", boxShadow: "0 12px 28px rgba(16,145,173,.24), inset 0 1px 0 rgba(255,255,255,.34)" } : { minHeight: 78, borderRadius: 22, background: "linear-gradient(145deg, rgba(255,255,255,.92), rgba(235,245,248,.72))", color: "#19334A", border: "1px solid rgba(255,255,255,.8)", boxShadow: "0 10px 24px rgba(10,35,55,.08), inset 0 1px 0 rgba(255,255,255,.9)" }}>
+            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"} style={isHome ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(145deg, #12a8c5 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.55)", boxShadow: "0 12px 28px rgba(16,145,173,.24), inset 0 1px 0 rgba(255,255,255,.34)" } : { minHeight: 78, borderRadius: 22, background: "linear-gradient(145deg, rgba(255,255,255,.92), rgba(235,245,248,.72))", color: "#19334A", border: "1px solid rgba(255,255,255,.8)", boxShadow: "0 10px 24px rgba(10,35,55,.08), inset 0 1px 0 rgba(255,255,255,.9)" }}>
               <span className="productCopy"><b>Ride</b><small>Book a cab</small></span>
             </Link>
-            <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"} style={pathname?.startsWith("/rentals") ? { minHeight: 78, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 78, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
+            <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"} style={pathname?.startsWith("/rentals") ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 74, height: 74, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
               <span className="productCopy"><b>Rent</b><small>Drive yourself</small></span>
             </Link>
             <Link href="/subscriptions" className={isCommute ? "homeProductOption active commuteOption" : "homeProductOption commuteOption"} style={isCommute ? { minHeight: 78, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 78, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
@@ -189,7 +189,7 @@ export default function PageHeader({
         .homeProductOption {
           min-width: 0;
           width: 100%;
-          height: 88px;
+          height: 78px;
           min-height: 88px;
           display: grid;
           place-items: center;
@@ -211,6 +211,8 @@ export default function PageHeader({
           user-select: none;
           outline: none;
           -webkit-focus-ring-color: transparent;
+          -webkit-tap-highlight-color: rgba(0,0,0,0);
+          touch-action: manipulation;
         }
         .homeProductOption:hover {
           transform: translateY(-1px) translateZ(0);
@@ -245,11 +247,13 @@ export default function PageHeader({
         .productCopy {
           min-width: 0;
           width: 100%;
+          height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-direction: column;
-          gap: 4px;
+          gap: 3px;
+          line-height: 1;
         }
         .productCopy b,
         .productCopy small {
@@ -259,6 +263,7 @@ export default function PageHeader({
           white-space: nowrap;
         }
         .productCopy b {
+          margin: 0;
           font-size: 17px;
           line-height: 1.05;
           letter-spacing: -0.35px;
@@ -266,6 +271,7 @@ export default function PageHeader({
           font-weight: 800;
         }
         .productCopy small {
+          margin: 0;
           font-size: 11.5px;
           line-height: 1.15;
           letter-spacing: -0.1px;
@@ -287,7 +293,7 @@ export default function PageHeader({
           .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
           .homeProductInner { width: calc(100% - 32px); padding: 8px 0; }
           .homeProductSwitch { width: 100%; gap: 10px; padding: 0; }
-          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 4px; border-radius: 22px; }
+          .homeProductOption { height: 74px !important; min-height: 74px !important; padding: 0 4px; border-radius: 22px; }
           .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
           .productIcon svg { width: 16px; height: 16px; }
           .productCopy b { font-size: 16px; }
@@ -299,7 +305,7 @@ export default function PageHeader({
           .voynuHeaderAccount :global(a span) { display: inline !important; }
           .homeProductInner { width: calc(100% - 32px); padding: 7px 0; }
           .homeProductSwitch { gap: 8px; padding: 0; }
-          .homeProductOption { height: 78px !important; min-height: 78px !important; padding: 0 3px; border-radius: 22px; }
+          .homeProductOption { height: 74px !important; min-height: 74px !important; padding: 0 3px; border-radius: 22px; }
           .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
           .productIcon svg { width: 15px; height: 15px; }
           .productCopy b { font-size: 16px; }
