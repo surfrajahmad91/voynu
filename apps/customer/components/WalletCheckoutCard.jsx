@@ -90,11 +90,11 @@ export default function WalletCheckoutCard({ bookingAmount, onAmountChange, disa
 }
 
 const styles = `
-  .walletCard{margin-bottom:12px;padding:14px;border-radius:16px;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7)}
-  .walletCard-empty{background:var(--voynu-bg,#F7F9FC)}
+  .walletCard{margin-bottom:12px;padding:12px 14px;border-radius:16px;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7)}
+  .walletCard-empty{background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(247,251,252,.84));box-shadow:0 8px 20px rgba(10,35,55,.045),inset 0 1px 0 rgba(255,255,255,.98)}
   .walletRow{display:flex;justify-content:space-between;align-items:center;gap:12px}
   .walletRow strong{font-size:13.5px;color:var(--voynu-navy,#0A2337)}
-  .walletRow p{margin:4px 0 0;color:var(--voynu-muted,#5B6B7C);font-size:11.5px;line-height:1.45}
+  .walletRow p{margin:3px 0 0;color:var(--voynu-muted,#5B6B7C);font-size:11.5px;line-height:1.45}
   .walletToggle{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:9px 12px;border-radius:12px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:#fff;color:var(--voynu-text,#1E3348);font-size:12px;font-weight:700;white-space:nowrap}
   .walletToggle.on{border-color:var(--voynu-teal,#0A7FA6);background:var(--voynu-primary-tint,#E7F4F8);color:var(--voynu-teal-deep,#00456B)}
   .walletToggle input{width:18px;height:18px;accent-color:var(--voynu-teal,#0A7FA6)}
