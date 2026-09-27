@@ -14,6 +14,32 @@ function IconWhatsApp({ size = 15 }) {
   );
 }
 
+function Icon({ name, size = 18 }) {
+  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" };
+  if (name === "home") return <svg {...common}><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" /></svg>;
+  if (name === "trips") return <svg {...common}><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M7 8h10M7 12h7M7 16h5" /></svg>;
+  if (name === "commute") return <svg {...common}><path d="M5 18h14M7 15h10l-1-6H8l-1 6Z" /><circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" /><path d="M9 9V6h6v3" /></svg>;
+  if (name === "wallet") return <svg {...common}><path d="M4 7.5h14a2 2 0 0 1 2 2v8.5H4a2 2 0 0 1-2-2V7.5Z" /><path d="M4 7.5V6a2 2 0 0 1 2-2h12v3.5" /><path d="M15 12h5" /></svg>;
+  if (name === "account") return <svg {...common}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.5-4 3-6 7-6s6.5 2 7 6" /></svg>;
+  if (name === "car") return <svg {...common}><path d="M4 16h16M6 16l1.4-5a2 2 0 0 1 2-1.5h5.2a2 2 0 0 1 2 1.5L18 16" /><circle cx="8" cy="18" r="1.5" /><circle cx="16" cy="18" r="1.5" /></svg>;
+  if (name === "calendar") return <svg {...common}><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18" /></svg>;
+  return null;
+}
+
+const navItems = [
+  { href: "/", label: "Ride", sub: "Cab", icon: "car", match: (p) => p === "/" || p?.startsWith("/cab-selection") || p?.startsWith("/booking-confirmed") },
+  { href: "/rentals", label: "Rent", sub: "Vehicle", icon: "calendar", match: (p) => p?.startsWith("/rentals") },
+  { href: "/subscriptions", label: "Commute", sub: "Daily", icon: "commute", match: (p) => p?.startsWith("/subscriptions") },
+];
+
+const mobileItems = [
+  { href: "/", label: "Home", icon: "home", match: (p) => p === "/" },
+  { href: "/account", label: "Trips", icon: "trips", match: (p) => p === "/account" },
+  { href: "/subscriptions", label: "Commute", icon: "commute", match: (p) => p?.startsWith("/subscriptions") },
+  { href: "/wallet", label: "Wallet", icon: "wallet", match: (p) => p?.startsWith("/wallet") },
+  { href: "/account", label: "Account", icon: "account", match: (p) => p === "/account" },
+];
+
 export default function PageHeader({
   maxWidth = theme.maxWidth.content,
   showAccountLink = true,
@@ -23,324 +49,257 @@ export default function PageHeader({
   showProductBar = false,
 }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
-  const isCommute = pathname?.startsWith("/subscriptions");
   const isCabSelection = pathname?.startsWith("/cab-selection");
-  const headerWidth = "min(" + maxWidth + "px, calc(100% - 32px))";
-  const whatsappUrl =
-    whatsappHref ||
-    "https://wa.me/919123456789?text=" +
-      encodeURIComponent("Hi VOYNU, I have a question.");
+  const isSubscriptionFlow = pathname?.startsWith("/subscriptions");
+  const isPublicTracking = pathname?.startsWith("/track/");
+  const showMobileDock = showAccountLink && !isCabSelection && !isSubscriptionFlow && !isPublicTracking;
+  const headerWidth = "min(" + maxWidth + "px, calc(100% - 28px))";
+  const whatsappUrl = whatsappHref || "https://wa.me/919123456789?text=" + encodeURIComponent("Hi VOYNU, I have a question.");
 
   return (
-    <header
-      className="voynuPageHeader"
-      style={{
-        background: "rgba(247,249,252,.84)",
-        backdropFilter: "blur(18px) saturate(110%)",
-        WebkitBackdropFilter: "blur(18px) saturate(110%)",
-        boxShadow: "0 8px 24px rgba(10,35,55,.035), inset 0 -1px 0 rgba(255,255,255,.72)",
-        borderBottom: "1px solid rgba(10,127,166,.045)",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-      }}
-    >
-      <div
-        className="voynuPageHeaderInner"
-        style={{
-          width: headerWidth,
-          margin: "0 auto",
-          minHeight: isCabSelection ? 58 : 68,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <Link
-          href="/"
-          className="voynuHeaderBrand"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            textDecoration: "none",
-            flexShrink: 0,
-            overflow: "hidden",
-          }}
-        >
-          <img
-            src="/icon.svg"
-            alt="VOYNU"
-            width="40"
-            height="40"
-            style={{
-              borderRadius: 11,
-              display: "block",
-              boxShadow: "0 6px 14px rgba(10,35,55,.16)",
-            }}
-          />
-          <span
-            className="voynuHeaderBrandWord"
-            style={{
-              color: theme.colors.navy,
-              fontWeight: 800,
-              fontSize: 19,
-              letterSpacing: "-0.4px",
-            }}
-          >
-            VOYNU
-          </span>
-        </Link>
+    <>
+      <header className="voynuPageHeader">
+        <div className="voynuPageHeaderInner" style={{ width: headerWidth }}>
+          <Link href="/" className="voynuHeaderBrand" aria-label="VOYNU home">
+            <img src="/icon.svg" alt="" width="38" height="38" />
+            <span>VOYNU</span>
+          </Link>
 
-        <div
-          className="voynuHeaderActions"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            flexShrink: 1,
-            minWidth: 0,
-            overflowX: "auto",
-            overflowY: "hidden",
-            WebkitOverflowScrolling: "touch",
-            scrollbarWidth: "none",
-          }}
-        >
-          <NotificationBell />
+          <nav className="voynuDesktopNav" aria-label="Primary">
+            {navItems.map((item) => {
+              const active = item.match(pathname);
+              return (
+                <Link key={item.href} href={item.href} className={active ? "voynuTopNav active" : "voynuTopNav"}>
+                  <span className="navIcon"><Icon name={item.icon} size={16} /></span>
+                  <span><b>{item.label}</b><small>{item.sub}</small></span>
+                </Link>
+              );
+            })}
+          </nav>
 
-          {showAccountLink && (
-            <div className="voynuHeaderAccount">
-              <AccountLink />
-            </div>
-          )}
-
-          {showWhatsapp && (
-            <a
-              className="voynuHeaderWhatsapp"
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                padding: "9px 15px",
-                borderRadius: theme.radius.pill,
-                background: "#22C55E",
-                color: "#fff",
-                fontSize: 12.5,
-                fontWeight: 700,
-                boxShadow: "0 6px 16px rgba(34,197,94,.22)",
-                textDecoration: "none",
-              }}
-            >
-              <IconWhatsApp size={14} />
-              <span className={"whatsappLabel" + (showProductBar ? "" : " whatsappLabelAlways")}>{whatsappLabel}</span>
-            </a>
-          )}
-        </div>
-      </div>
-
-      {showProductBar && <div className="homeProductBar">
-        <div className="homeProductInner">
-          <div className="homeProductSwitch" aria-label="VOYNU services">
-            <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"} style={isHome ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(145deg, #12a8c5 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.55)", boxShadow: "0 12px 28px rgba(16,145,173,.24), inset 0 1px 0 rgba(255,255,255,.34)" } : { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(145deg, rgba(255,255,255,.92), rgba(235,245,248,.72))", color: "#19334A", border: "1px solid rgba(255,255,255,.8)", boxShadow: "0 10px 24px rgba(10,35,55,.08), inset 0 1px 0 rgba(255,255,255,.9)" }}>
-              <span className="productCopy"><b>Ride</b><small>Book a cab</small></span>
-            </Link>
-            <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"} style={pathname?.startsWith("/rentals") ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 74, height: 74, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
-              <span className="productCopy"><b>Rent</b><small>Drive yourself</small></span>
-            </Link>
-            <Link href="/subscriptions" className={isCommute ? "homeProductOption active" : "homeProductOption"} style={isCommute ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" }  : { minHeight: 74, height: 74, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
-              <span className="productCopy"><b>Commute</b><small>Daily route</small></span>
-            </Link>
+          <div className="voynuHeaderActions">
+            <NotificationBell />
+            {showWhatsapp && (
+              <a className="voynuHeaderWhatsapp" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <IconWhatsApp size={14} />
+                <span>{whatsappLabel}</span>
+              </a>
+            )}
+            {showAccountLink && <div className="voynuHeaderAccount"><AccountLink /></div>}
           </div>
         </div>
-      </div>}
-      <style jsx>{`
-        .voynuHeaderActions {
-          scrollbar-width: none;
+
+        {showProductBar && (
+          <div className="voynuServiceStrip">
+            <div className="voynuServiceStripInner">
+              <span className="voynuServiceLabel">Move with VOYNU</span>
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href} className={item.match(pathname) ? "serviceLink active" : "serviceLink"}>
+                  <Icon name={item.icon} size={15} />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {showMobileDock && (
+        <nav className="voynuMobileDock" aria-label="Mobile navigation">
+          {mobileItems.map((item, index) => {
+            const active = item.match(pathname);
+            return (
+              <Link key={item.label + index} href={item.href} className={active ? "mobileDockItem active" : "mobileDockItem"}>
+                <Icon name={item.icon} size={20} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      <style jsx>{\`
+        .voynuPageHeader {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: rgba(255,255,255,.88);
+          backdrop-filter: blur(22px) saturate(140%);
+          -webkit-backdrop-filter: blur(22px) saturate(140%);
+          border-bottom: 1px solid rgba(10,35,55,.07);
+          box-shadow: 0 8px 30px rgba(10,35,55,.045);
         }
-        .voynuHeaderActions::-webkit-scrollbar {
-          display: none;
-        }
-        .voynuHeaderActions > :global(*) {
-          flex-shrink: 0;
-        }
-        .homeProductBar {
-          border-top: 1px solid rgba(28, 111, 138, .06);
-          background: transparent;
-        }
-        .homeProductInner {
-          width: min(760px, calc(100% - 32px));
+        .voynuPageHeaderInner {
+          min-height: 70px;
           margin: 0 auto;
-          padding: 9px 0;
           display: flex;
-          justify-content: center;
-        }
-        .homeProductSwitch {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
           align-items: center;
-          gap: 12px;
-          width: 100%;
-          padding: 0;
-          background: transparent;
+          gap: 18px;
         }
-        .homeProductOption {
-          min-width: 0;
-          width: 100%;
-          height: 78px;
-          min-height: 88px;
-          display: grid;
-          place-items: center;
-          padding: 0 6px;
-          border-radius: 22px;
-          overflow: hidden;
-          isolation: isolate;
-          transform: translateZ(0);
+        .voynuHeaderBrand {
+          display: flex;
+          align-items: center;
+          gap: 9px;
           text-decoration: none;
-          color: ${theme.colors.textMuted};
-          background: rgba(255,255,255,.78);
-          border: 1px solid rgba(28, 111, 138, .10);
-          box-shadow: 0 7px 18px rgba(10,35,55,.055);
-          backdrop-filter: blur(12px);
-          transition: transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
-          -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          -webkit-user-select: none;
-          user-select: none;
-          outline: none;
-          -webkit-focus-ring-color: transparent;
-          -webkit-tap-highlight-color: rgba(0,0,0,0);
-          touch-action: manipulation;
+          flex: 0 0 auto;
         }
-        .homeProductOption:hover {
-          transform: translateY(-1px) translateZ(0);
-          background: #f8fcfd;
-        }
-        .homeProductOption:focus,
-        .homeProductOption:focus-visible,
-        .homeProductOption:active {
-          outline: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .homeProductOption.active {
-          background: ${theme.gradients.primary};
-          color: #fff;
-          box-shadow: 0 9px 22px rgba(10,127,166,.22);
-        }
-        .productIcon {
-          width: 30px;
-          height: 30px;
-          flex: 0 0 30px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 11px;
-          background: #e8f5f8;
-          color: ${theme.colors.primary};
-        }
-        .homeProductOption.active .productIcon {
-          background: rgba(255,255,255,.18);
-          color: #fff;
-        }
-         .productCopy {
-          min-width: 0;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-          gap: 3px;
-          line-height: 1;
-        }
-        .productCopy b,
-        .productCopy small {
+        .voynuHeaderBrand img {
           display: block;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          border-radius: 12px;
+          box-shadow: 0 7px 18px rgba(10,35,55,.14);
         }
-        .productCopy b {
-          margin: 0;
-          font-size: 17px;
-          line-height: 1.05;
-          letter-spacing: -0.35px;
-          text-align: center;
+        .voynuHeaderBrand span {
+          color: \${theme.colors.navy};
+          font-size: 19px;
+          line-height: 1;
+          font-weight: 850;
+          letter-spacing: -.65px;
+        }
+        .voynuDesktopNav {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex: 1;
+        }
+        .voynuTopNav {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 46px;
+          padding: 5px 13px;
+          border-radius: 14px;
+          text-decoration: none;
+          color: \${theme.colors.textMuted};
+          transition: .18s ease;
+        }
+        .voynuTopNav:hover { background: #F3F8FA; color: \${theme.colors.navy}; }
+        .voynuTopNav.active {
+          background: linear-gradient(135deg, rgba(18,160,198,.11), rgba(245,129,63,.08));
+          color: \${theme.colors.tealDeep};
+        }
+        .voynuTopNav .navIcon {
+          width: 30px; height: 30px; display: grid; place-items: center;
+          border-radius: 10px; background: #F0F7F9; color: \${theme.colors.primary};
+        }
+        .voynuTopNav.active .navIcon { background: \${theme.colors.primary}; color: #fff; }
+        .voynuTopNav b { display: block; font-size: 12px; line-height: 1.1; font-weight: 800; }
+        .voynuTopNav small { display: block; margin-top: 2px; font-size: 9px; line-height: 1; opacity: .65; }
+        .voynuHeaderActions {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          flex: 0 0 auto;
+        }
+        .voynuHeaderWhatsapp {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 38px;
+          padding: 0 13px;
+          border-radius: 12px;
+          background: #EAFBF2;
+          color: #138A4B;
+          border: 1px solid #CDEEDB;
+          font-size: 11px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .voynuHeaderAccount :global(a) {
+          min-height: 38px !important;
+          border-radius: 12px !important;
+          padding: 0 13px !important;
+          display: inline-flex !important;
+          align-items: center !important;
+        }
+        .voynuServiceStrip {
+          border-top: 1px solid rgba(10,35,55,.045);
+          background: rgba(247,250,252,.72);
+        }
+        .voynuServiceStripInner {
+          width: min(760px, calc(100% - 28px));
+          margin: 0 auto;
+          min-height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+        }
+        .voynuServiceLabel {
+          margin-right: 5px;
+          color: #7A8795;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: .8px;
+          text-transform: uppercase;
+        }
+        .serviceLink {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px;
+          border-radius: 999px;
+          color: \${theme.colors.textMuted};
+          text-decoration: none;
+          font-size: 11px;
           font-weight: 800;
         }
-        .productCopy small {
-          margin: 0;
-          font-size: 11.5px;
-          line-height: 1.15;
-          letter-spacing: -0.1px;
-          text-align: center;
-          opacity: .72;
+        .serviceLink.active { color: #fff; background: linear-gradient(135deg,#12A0C6,#0A7FA6 55%,#F5813F); box-shadow: 0 6px 15px rgba(10,127,166,.16); }
+        .voynuMobileDock { display: none; }
+
+        @media (max-width: 900px) {
+          .voynuPageHeaderInner { width: calc(100% - 20px) !important; min-height: 62px; gap: 8px; }
+          .voynuDesktopNav { display: none; }
+          .voynuHeaderBrand img { width: 34px; height: 34px; }
+          .voynuHeaderBrand span { font-size: 17px; }
+          .voynuHeaderActions { margin-left: auto; gap: 4px; }
+          .voynuHeaderWhatsapp span { display: none; }
+          .voynuHeaderWhatsapp { width: 38px; justify-content: center; padding: 0; }
+          .voynuHeaderAccount :global(a) { min-height: 38px !important; padding: 0 10px !important; }
+          .voynuServiceStripInner { overflow-x: auto; justify-content: flex-start; }
+          .voynuServiceLabel { display: none; }
         }
-        .homeProductOption.active .productCopy small {
-          opacity: .86;
+
+        @media (max-width: 600px) {
+          .voynuMobileDock {
+            position: fixed;
+            left: 8px;
+            right: 8px;
+            bottom: calc(8px + env(safe-area-inset-bottom));
+            z-index: 120;
+            height: 62px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            padding: 5px;
+            border: 1px solid rgba(255,255,255,.85);
+            border-radius: 20px;
+            background: rgba(255,255,255,.88);
+            backdrop-filter: blur(20px) saturate(140%);
+            -webkit-backdrop-filter: blur(20px) saturate(140%);
+            box-shadow: 0 18px 45px rgba(10,35,55,.16), 0 2px 8px rgba(10,35,55,.05);
+          }
+          .mobileDockItem {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            border-radius: 15px;
+            color: #7A8795;
+            text-decoration: none;
+            font-size: 8.5px;
+            font-weight: 800;
+            transition: .18s ease;
+          }
+          .mobileDockItem.active {
+            color: #fff;
+            background: linear-gradient(135deg,#12A0C6,#0A7FA6 55%,#F5813F);
+            box-shadow: 0 8px 18px rgba(10,127,166,.18);
+          }
+          .mobileDockItem:active { transform: scale(.96); }
+          :global(body) { padding-bottom: 82px; }
         }
-        .whatsappLabel {
-          display: inline;
-        }
-        @media (max-width: 700px) {
-          .voynuPageHeaderInner { width: 100% !important; padding: 8px 10px; min-height: 62px !important; gap: 6px !important; }
-          .voynuHeaderBrand { gap: 7px !important; }
-          .voynuHeaderBrand img { width: 34px !important; height: 34px !important; }
-          .voynuHeaderBrandWord { font-size: 16px !important; }
-          .voynuHeaderActions { gap: 4px !important; min-width: 0; }
-          .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
-          .homeProductInner { width: calc(100% - 32px); padding: 8px 0; }
-          .homeProductSwitch { width: 100%; gap: 10px; padding: 0; }
-          .homeProductOption { height: 74px !important; min-height: 74px !important; padding: 0 4px; border-radius: 22px; }
-          .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
-          .productIcon svg { width: 16px; height: 16px; }
-          .productCopy b { font-size: 16px; }
-          .productCopy small { font-size: 11px; }
-        }
-        @media (max-width: 520px) {
-          .voynuHeaderBrandWord { display: none; }
-          .voynuHeaderAccount :global(a) { padding: 9px 11px !important; font-size: 10.5px !important; }
-          .voynuHeaderAccount :global(a span) { display: inline !important; }
-          .homeProductInner { width: calc(100% - 32px); padding: 7px 0; }
-          .homeProductSwitch { gap: 8px; padding: 0; }
-          .homeProductOption { height: 74px !important; min-height: 74px !important; padding: 0 3px; border-radius: 22px; }
-          .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
-          .productIcon svg { width: 15px; height: 15px; }
-          .productCopy b { font-size: 16px; }
-          .productCopy small { font-size: 11px; }
-        }
-        @media (max-width: 380px) {
-          .voynuHeaderActions {
-            gap: 3px !important;
-          }
-          .voynuHeaderAction {
-            padding: 8px 7px !important;
-            font-size: 10px !important;
-          }
-          .voynuHeaderAccount :global(a) {
-            padding: 8px 8px !important;
-          }
-          .voynuHeaderWhatsapp {
-            padding: 8px 8px !important;
-          }
-          .voynuPageHeaderInner {
-            padding-inline: 7px;
-          }
-          .homeProductInner {
-            width: calc(100% - 32px);
-          }
-          .homeProductOption b {
-            font-size: 14px;
-          }
-          .homeProductOption small {
-            font-size: 10px;
-          }
-        }
-      `}</style>
-    </header>
+      \`}</style>
+    </>
   );
 }
