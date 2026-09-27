@@ -128,13 +128,13 @@ export default function OlaHomeShell({
       <section className="voMapArea">
         <MapSurface pickup={pickup} />
         <button type="button" className="voTopButton voMenuButton" onClick={() => setMenuOpen(v => !v)} aria-label="Open menu"><Icon name="menu" size={24} /></button>
-        <button type="button" className="voTopButton voHeartButton" onClick={() => router.push("/favorites")} aria-label="Saved places"><Icon name="heart" size={23} /></button>
+        <button type="button" className="voTopButton voHeartButton" onClick={() => setDestinationFocused(true)} aria-label="Saved places"><Icon name="heart" size={23} /></button>
         {menuOpen && (
           <div className="voMenu">
-            <button onClick={() => router.push("/bookings")}>My trips</button>
+            <button onClick={() => router.push("/account")}>My trips</button>
             <button onClick={() => router.push("/subscriptions")}>Commute</button>
             <button onClick={() => router.push("/wallet")}>Wallet</button>
-            <button onClick={() => router.push("/profile")}>Account</button>
+            <button onClick={() => router.push("/account")}>Account</button>
           </div>
         )}
         <div className="voMapLocationPill"><span className="voLiveDot" />{pickup?.selected ? "Pickup selected" : "Your location"}</div>
@@ -179,10 +179,10 @@ export default function OlaHomeShell({
       <section className="voServices">
         <button type="button" className="voServiceCard active" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="car" size={27} /></span><strong>Ride</strong><small>Cab</small></button>
         <button type="button" className="voServiceCard" onClick={() => router.push("/rentals")}><span className="voServiceIcon"><Icon name="clock" size={27} /></span><strong>Rentals</strong><small>Hourly</small></button>
-        <button type="button" className="voServiceCard" onClick={() => router.push("/outstation")}><span className="voServiceIcon"><Icon name="road" size={27} /></span><strong>Outstation</strong><small>Intercity</small></button>
-        <button type="button" className="voServiceCard" onClick={() => router.push("/parcel")}><span className="voServiceIcon"><Icon name="box" size={27} /></span><strong>Parcel</strong><small>Delivery</small></button>
+        <button type="button" className="voServiceCard" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="road" size={27} /></span><strong>Outstation</strong><small>Intercity</small></button>
+        <button type="button" className="voServiceCard" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="box" size={27} /></span><strong>Parcel</strong><small>Delivery</small></button>
         <button type="button" className="voServiceCard" onClick={() => router.push("/subscriptions")}><span className="voServiceIcon"><Icon name="calendar" size={27} /></span><strong>Commute</strong><small>Daily</small></button>
-        <button type="button" className="voServiceCard" onClick={() => router.push("/electric")}><span className="voServiceIcon"><Icon name="bolt" size={27} /></span><strong>Electric</strong><small>EV</small></button>
+        <button type="button" className="voServiceCard" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="bolt" size={27} /></span><strong>Electric</strong><small>EV</small></button>
       </section>
 
       {hasRoute && (
