@@ -119,10 +119,6 @@ export default function OlaHomeShell({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [destinationFocused, setDestinationFocused] = useState(false);
-  const hasDestination = Boolean(drop?.selected);
-  const hasRoute = Boolean(pickup?.selected && drop?.selected);
-  const recent = useMemo(() => (favorites || []).slice(0, 4), [favorites]);
-
   const [locationPanelOpen, setLocationPanelOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -326,9 +322,6 @@ export default function OlaHomeShell({
         .voRouteSummary>div{display:flex;gap:10px;align-items:flex-start}.voRouteSummary .dot{width:12px;height:12px;flex:0 0 12px;border-radius:50%;margin-top:4px;border:3px solid #fff;box-shadow:0 0 0 1px #b7c0bb}.voRouteSummary .pickup{background:#1a9fbd}.voRouteSummary .drop{background:#ef7b45}.voRouteSummary small{display:block;font-size:8px;letter-spacing:.1em;color:#89938f;font-weight:900}.voRouteSummary strong{display:block;margin-top:2px;font-size:11px;line-height:1.35}.voRouteSummary .routeLine{height:16px;border-left:2px dashed #d1d8d4;margin-left:5px}.voDistance{margin:11px 0;padding:9px 11px;border-radius:11px;background:#f5faf7;color:#3f5149;font-size:10px;font-weight:800}.voNotice{display:flex;gap:7px;padding:10px;border-radius:11px;background:#fff4e9;color:#a15b30;font-size:10px;line-height:1.4}.voFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.voFormGrid label,.voPassenger label{display:block;min-width:0}.voFormGrid label>span,.voPassenger label>span{display:flex;align-items:center;gap:5px;margin:0 0 5px;color:#59655f;font-size:9px;font-weight:800}.voFormGrid input,.voPassenger input{width:100%;height:44px;border:1px solid #e2e8e5;border-radius:11px;background:#fafcfb;padding:0 9px;font:600 12px inherit;color:#173126;outline:none}.voReturn{margin-top:11px;padding:11px;border-radius:13px;background:#f7faf8}.voReturnTitle{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:900;color:#197146}.voPassenger{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.voPassenger label:first-child{grid-column:1/-1}.voSamePhone{grid-column:1/-1;border:0;background:none;color:#69746f;font-size:10px;font-weight:800;text-align:left;padding:0}.voSamePhone span{display:inline-flex;width:18px;height:18px;border-radius:50%;border:1px solid #b7c0bb;align-items:center;justify-content:center;margin-right:5px}.voSamePhone span.checked{background:#22bf69;border-color:#22bf69;color:#fff}.voMessage{margin-top:11px;padding:10px 11px;border-radius:11px;font-size:10px;line-height:1.4}.voMessage.success{background:#eaf8ef;color:#187444}.voMessage.error,.voInlineError{background:#fff0ef;color:#b42318;padding:9px;border-radius:10px;font-size:10px}.voSecure{text-align:center;margin-top:8px;color:#8b9691;font-size:8px}.voFooter{position:fixed;left:0;right:0;bottom:0;height:64px;padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.96);border-top:1px solid #e8edeb;display:flex;align-items:center;justify-content:space-around;z-index:30;color:#a0a8a4;font-size:11px}.voFooter strong{color:#111}.voFooter span:before{content:"Trips";color:#7d8782;margin-right:22px}
         @media(min-width:760px){.voHome{max-width:520px;margin:0 auto;border-left:1px solid #e9edeb;border-right:1px solid #e9edeb}.voMapArea{height:400px}.voBookingSurface{margin-top:-30px;margin-left:10px;margin-right:10px}}@media(max-width:420px){.voBookingSurface{margin-left:8px;margin-right:8px}.voServices{gap:7px}.voServiceCard{flex-basis:101px}.voPassenger{grid-template-columns:1fr}.voPassenger label:first-child{grid-column:auto}.voSamePhone{grid-column:auto}}
       `}</style>
-    </main>
-  );
-}
     </main>
   );
 }
