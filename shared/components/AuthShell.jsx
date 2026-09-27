@@ -75,7 +75,7 @@ export default function AuthShell({
         </section>
       </div>
 
-      <style jsx>{\`
+      <style jsx>{`
         .voynuAuthPage{min-height:100vh;background:radial-gradient(circle at 10% 10%,rgba(18,160,198,.07),transparent 30%),radial-gradient(circle at 90% 80%,rgba(245,129,63,.07),transparent 32%),#F5F8FA;color:#1E3348;font-family:var(--voynu-font)}
         .authLayout{width:min(1180px,calc(100% - 32px));min-height:calc(100vh - 72px);margin:auto;padding:34px 0 48px;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(380px,.78fr);gap:48px;align-items:center}
         .authLayout.compact{grid-template-columns:minmax(380px,460px);justify-content:center}
@@ -88,7 +88,7 @@ export default function AuthShell({
         .authFormArea{display:flex;justify-content:center}.authFormCard{width:100%;box-sizing:border-box;padding:30px 28px;border-radius:26px;background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.95);box-shadow:0 25px 70px rgba(10,35,55,.1);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}.authFormBrand{display:flex;align-items:center;gap:10px;margin-bottom:22px}.authFormBrand img{border-radius:11px;box-shadow:0 6px 14px rgba(10,35,55,.12)}.authFormBrand b{display:block;color:#0A2337;font-size:14px;line-height:1}.authFormBrand span{display:block;margin-top:4px;color:#8491A0;font-size:9px}
         @media(max-width:900px){.authLayout{grid-template-columns:1fr;min-height:auto;padding:22px 0 50px;gap:18px}.authIntro{min-height:470px;padding:26px;border-radius:24px}.authCopy{margin-top:38px}.authRoute{height:190px}.authBenefits{grid-template-columns:1fr 1fr}.authBenefits>div:last-child{grid-column:1/-1}.authFormArea{width:100%}.authFormCard{max-width:460px}}
         @media(max-width:560px){.authLayout{width:calc(100% - 24px)}.authIntro{min-height:430px;padding:20px}.authIntroTop .authStatus{display:none}.authCopy h1{font-size:34px;letter-spacing:-1.5px}.authCopy p{font-size:12px}.authRoute{height:175px;margin-top:25px}.authBenefits{display:none}.authFormCard{padding:24px 18px;border-radius:22px}.authFormBrand{margin-bottom:18px}}
-      \`}</style>
+      `}</style>
     </main>
   );
 }
