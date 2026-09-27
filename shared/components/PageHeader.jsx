@@ -118,7 +118,7 @@ export default function PageHeader({
         </nav>
       )}
 
-      <style jsx>{\`
+      <style jsx>{`
         .voynuPageHeader {
           position: sticky;
           top: 0;
@@ -299,7 +299,7 @@ export default function PageHeader({
           .mobileDockItem:active { transform: scale(.96); }
           :global(body) { padding-bottom: 82px; }
         }
-      \`}</style>
+      `}</style>
     </>
   );
 }
