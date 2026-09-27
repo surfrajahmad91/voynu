@@ -126,36 +126,7 @@ export default function OlaHomeShell({
   const [locationPanelOpen, setLocationPanelOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  useEffect(() => {
-    if (pickup?.selected) return;
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        if (pickup?.selected) return;
-        try {
-          const response = await fetch("/api/geocode", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat: coords.latitude, lon: coords.longitude }),
-          });
-          const data = await response.json();
-          if (response.ok && data?.name && typeof handlePickupSelect === "function") {
-            handlePickupSelect({
-              name: data.name,
-              lat: coords.latitude,
-              lon: coords.longitude,
-              placeId: data.placeId || null,
-              city: data.city || null,
-            });
-          }
-        } catch {
-          // The user can still select pickup manually.
-        }
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 60000, timeout: 8000 }
-    );
-  }, [pickup?.selected, handlePickupSelect]);
+  // Pickup remains user-controlled. The existing LocationPicker handles current-location permission and reverse geocoding safely.
 
   const hasDestination = Boolean(drop?.selected);
   const hasRoute = Boolean(pickup?.selected && drop?.selected);
@@ -177,7 +148,7 @@ export default function OlaHomeShell({
       <section className="voMapArea">
         <MapSurface pickup={pickup} />
         <button type="button" className="voTopButton voMenuButton" onClick={() => setMenuOpen(v => !v)} aria-label="Open menu"><Icon name="menu" size={24} /></button>
-        <button type="button" className="voTopButton voHeartButton" onClick={() => setDestinationFocused(true)} aria-label="Saved places"><Icon name="heart" size={23} /></button>
+        <button type="button" className="voTopButton voHeartButton" onClick={openDestination} aria-label="Saved places"><Icon name="heart" size={23} /></button>
         {menuOpen && (
           <div className="voMenu">
             <button onClick={() => router.push("/account")}>My trips</button>
