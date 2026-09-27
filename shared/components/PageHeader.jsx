@@ -149,7 +149,7 @@ export default function PageHeader({
           box-shadow: 0 7px 18px rgba(10,35,55,.14);
         }
         .voynuHeaderBrand span {
-          color: ${theme.colors.navy};
+          color: #0A2337;
           font-size: 19px;
           line-height: 1;
           font-weight: 850;
@@ -169,19 +169,19 @@ export default function PageHeader({
           padding: 5px 13px;
           border-radius: 14px;
           text-decoration: none;
-          color: ${theme.colors.textMuted};
+          color: #5B6B7C;
           transition: .18s ease;
         }
-        .voynuTopNav:hover { background: #F3F8FA; color: ${theme.colors.navy}; }
+        .voynuTopNav:hover { background: #F3F8FA; color: #0A2337; }
         .voynuTopNav.active {
           background: linear-gradient(135deg, rgba(18,160,198,.11), rgba(245,129,63,.08));
-          color: ${theme.colors.tealDeep};
+          color: #00456B;
         }
         .voynuTopNav .navIcon {
           width: 30px; height: 30px; display: grid; place-items: center;
-          border-radius: 10px; background: #F0F7F9; color: ${theme.colors.primary};
+          border-radius: 10px; background: #F0F7F9; color: #0A7FA6;
         }
-        .voynuTopNav.active .navIcon { background: ${theme.colors.primary}; color: #fff; }
+        .voynuTopNav.active .navIcon { background: #0A7FA6; color: #fff; }
         .voynuTopNav b { display: block; font-size: 12px; line-height: 1.1; font-weight: 800; }
         .voynuTopNav small { display: block; margin-top: 2px; font-size: 9px; line-height: 1; opacity: .65; }
         .voynuHeaderActions {
@@ -238,7 +238,7 @@ export default function PageHeader({
           gap: 6px;
           padding: 8px 12px;
           border-radius: 999px;
-          color: ${theme.colors.textMuted};
+          color: #5B6B7C;
           text-decoration: none;
           font-size: 11px;
           font-weight: 800;
