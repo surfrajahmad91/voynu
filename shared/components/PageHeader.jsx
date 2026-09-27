@@ -36,10 +36,10 @@ export default function PageHeader({
     <header
       className="voynuPageHeader"
       style={{
-        background: "linear-gradient(180deg, rgba(248,252,253,.82) 0%, rgba(238,247,249,.52) 100%)",
+        background: "linear-gradient(180deg, rgba(247,250,252,.94) 0%, rgba(239,247,250,.72) 100%)",
         backdropFilter: "blur(18px) saturate(125%)",
-        boxShadow: "0 12px 32px rgba(10,35,55,.055), inset 0 -1px 0 rgba(255,255,255,.72)",
-        borderBottom: "1px solid rgba(255,255,255,.72)",
+        boxShadow: "0 12px 32px rgba(10,35,55,.045), inset 0 -1px 0 rgba(255,255,255,.78)",
+        borderBottom: "1px solid rgba(10,127,166,.055)",
         position: "sticky",
         top: 0,
         zIndex: 20,
