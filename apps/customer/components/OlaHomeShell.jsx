@@ -180,9 +180,7 @@ export default function OlaHomeShell({
         <button type="button" className="voServiceCard active" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="car" size={27} /></span><strong>Ride</strong><small>Cab</small></button>
         <button type="button" className="voServiceCard" onClick={() => router.push("/rentals")}><span className="voServiceIcon"><Icon name="clock" size={27} /></span><strong>Rentals</strong><small>Hourly</small></button>
         <button type="button" className="voServiceCard" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="road" size={27} /></span><strong>Outstation</strong><small>Intercity</small></button>
-        <button type="button" className="voServiceCard" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="box" size={27} /></span><strong>Parcel</strong><small>Delivery</small></button>
         <button type="button" className="voServiceCard" onClick={() => router.push("/subscriptions")}><span className="voServiceIcon"><Icon name="calendar" size={27} /></span><strong>Commute</strong><small>Daily</small></button>
-        <button type="button" className="voServiceCard" onClick={() => setDestinationFocused(true)}><span className="voServiceIcon"><Icon name="bolt" size={27} /></span><strong>Electric</strong><small>EV</small></button>
       </section>
 
       {hasRoute && (
