@@ -171,7 +171,7 @@ export default function NotificationBell({ targetPath = "/account", audience = "
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
-      <button type="button" aria-label={unreadCount ? `${unreadCount} unread notifications` : "Notifications"} aria-expanded={open} onClick={() => setOpen((value) => !value)} style={{ position: "relative", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: "1px solid rgba(10,127,166,.07)", background: "linear-gradient(135deg, rgba(231,247,250,.92), rgba(255,242,234,.90))", color: theme.colors.primary, cursor: "pointer", boxShadow: "0 8px 20px rgba(10,35,55,.055), inset 0 1px 0 rgba(255,255,255,.86)" }}>
+      <button type="button" aria-label={unreadCount ? `${unreadCount} unread notifications` : "Notifications"} aria-expanded={open} onClick={() => setOpen((value) => !value)} style={{ position: "relative", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: "1px solid rgba(10,127,166,.055)", background: "rgba(255,255,255,.58)", color: theme.colors.primary, cursor: "pointer", boxShadow: "0 6px 16px rgba(10,35,55,.045), inset 0 1px 0 rgba(255,255,255,.78)" }}>
         <IconBell />
         {unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 1, minWidth: 17, height: 17, padding: "0 4px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: theme.colors.accent, color: "#ffffff", border: "2px solid #ffffff", fontSize: 8.5, fontWeight: 800 }}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
