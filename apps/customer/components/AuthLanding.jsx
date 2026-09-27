@@ -164,7 +164,7 @@ export default function AuthLanding() {
         <span>Travel safe. Travel smart.</span>
       </footer>
 
-      <style jsx>{\`
+      <style jsx>{`
         .voynuLanding{min-height:100vh;background:#F6F9FB;color:#1E3348;font-family:var(--voynu-font);overflow-x:hidden}
         .landingHeader{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid rgba(10,35,55,.07)}
         .landingHeaderInner{width:min(1180px,calc(100% - 32px));min-height:72px;margin:auto;display:flex;align-items:center;gap:24px}
@@ -213,7 +213,7 @@ export default function AuthLanding() {
         .finalCta{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:70px 0;display:flex;align-items:center;justify-content:space-between;gap:24px}.finalCta h2{margin:10px 0 6px;color:#0A2337;font-size:clamp(25px,3vw,35px);letter-spacing:-1px}.finalCta p{margin:0;color:#657486;font-size:12.5px}.landingFooter{width:min(1180px,calc(100% - 32px));min-height:72px;margin:auto;border-top:1px solid #E2E9EE;display:flex;align-items:center;justify-content:space-between;color:#81909E;font-size:9px}
         @media(max-width:920px){.landingDesktopNav{display:none}.landingHero{grid-template-columns:1fr;gap:40px;padding-top:48px}.landingHeroCopy{text-align:center;display:flex;flex-direction:column;align-items:center}.heroLead{max-width:620px}.heroTrust{justify-content:center}.landingHeroVisual{width:min(620px,100%);margin:auto}.serviceGrid{grid-template-columns:repeat(2,1fr)}.trustInner{grid-template-columns:1fr;gap:35px}}
         @media(max-width:600px){.landingHeaderInner,.landingHero,.section,.trustInner,.finalCta,.landingFooter{width:calc(100% - 24px)}.landingHeaderInner{min-height:64px}.landingBrand span{font-size:17px}.landingActions{gap:5px}.landingLogin,.landingSignup{min-height:36px;padding:0 11px;font-size:10px}.landingHero{padding:38px 0 52px}.eyebrow{font-size:8px}.heroLead{font-size:13px}.heroCtas{width:100%;flex-direction:column}.primaryCta,.secondaryCta{width:100%}.heroTrust{gap:9px 12px}.heroTrust span{font-size:8.5px}.landingHeroVisual{padding:10px;border-radius:22px}.mapCard{height:310px}.serviceGrid{gap:9px}.serviceCard{min-height:190px;padding:16px}.serviceCard h3{margin-top:18px}.servicesSection{padding:48px 0 60px}.processSection{padding:5px 0 62px}.stepGrid{grid-template-columns:1fr}.trustSection{padding:55px 0}.finalCta{padding:55px 0;display:flex;flex-direction:column;align-items:flex-start}.finalCta .primaryCta{width:auto}.landingFooter{min-height:76px;flex-direction:column;justify-content:center;gap:7px}}
-      \`}</style>
+      `}</style>
     </main>
   );
 }
