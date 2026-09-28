@@ -120,6 +120,7 @@ export default function OlaHomeShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const [destinationFocused, setDestinationFocused] = useState(false);
   const [locationPanelOpen, setLocationPanelOpen] = useState(false);
+  const [locationMode, setLocationMode] = useState("destination");
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Pickup remains user-controlled. The existing LocationPicker handles current-location permission and reverse geocoding safely.
@@ -130,6 +131,13 @@ export default function OlaHomeShell({
 
   const openDestination = () => {
     setDetailsOpen(false);
+    setLocationMode("destination");
+    setLocationPanelOpen(true);
+  };
+
+  const openPickup = () => {
+    setDetailsOpen(false);
+    setLocationMode("pickup");
     setLocationPanelOpen(true);
   };
 
@@ -157,7 +165,7 @@ export default function OlaHomeShell({
       </section>
 
       <section className="voBookingSurface">
-        <button type="button" className="voPickupRow" onClick={() => setLocationPanelOpen(true)}>
+        <button type="button" className="voPickupRow" onClick={openPickup}>
           <span className="voPickupIcon"><Icon name="pin" size={20} /></span>
           <span className="voLocationCopy">
             <small>PICKUP</small>
@@ -178,24 +186,32 @@ export default function OlaHomeShell({
         {locationPanelOpen && (
           <div className="voLocationPanel">
             <div className="voPanelHeader">
-              <div><span className="voEyebrow">JOURNEY</span><h2>Where are you going?</h2></div>
+              <div>
+                <span className="voEyebrow">{locationMode === "pickup" ? "PICKUP" : "DESTINATION"}</span>
+                <h2>{locationMode === "pickup" ? "Where should we pick you up?" : "Where do you want to go?"}</h2>
+              </div>
               <button type="button" onClick={() => setLocationPanelOpen(false)}>Done</button>
             </div>
-            <LocationPicker
-              label="Pickup"
-              value={pickup?.name || ""}
-              placeholder="Where should we pick you up?"
-              allowCurrentLocation={true}
-              onLocationSelect={handlePickupSelect}
-            />
-            <div className="voPanelDivider" />
-            <LocationPicker
-              label="Destination"
-              value={drop?.name || ""}
-              placeholder="Search destination"
-              allowCurrentLocation={false}
-              onLocationSelect={handleDropSelect}
-            />
+            {locationMode === "pickup" ? (
+              <LocationPicker
+                label="Pickup"
+                value={pickup?.name || ""}
+                placeholder="Search pickup location"
+                allowCurrentLocation={true}
+                onLocationSelect={(value) => { handlePickupSelect(value); setLocationPanelOpen(false); }}
+              />
+            ) : (
+              <LocationPicker
+                label="Destination"
+                value={drop?.name || ""}
+                placeholder="Search destination"
+                allowCurrentLocation={false}
+                onLocationSelect={(value) => { handleDropSelect(value); setLocationPanelOpen(false); }}
+              />
+            )}
+            <button type="button" className="voSwitchLocation" onClick={() => setLocationMode(locationMode === "pickup" ? "destination" : "pickup")}>
+              {locationMode === "pickup" ? "Choose destination instead" : "Change pickup instead"}
+            </button>
           </div>
         )}
 
