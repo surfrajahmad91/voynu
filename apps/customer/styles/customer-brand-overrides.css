@@ -72,3 +72,7 @@ button,a,select,summary,[role="button"]{touch-action:manipulation}
 @media(max-width:700px){input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea{font-size:16px!important}}
 @supports(height:100dvh){.loading{min-height:100dvh}}
 @media(max-width:900px){body[data-bottom-nav="on"]{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}}
+
+/* Commute flow: keep its action dock (Back / Continue) above the bottom tab bar. */
+body[data-bottom-nav="on"] .dock{bottom:calc(57px + env(safe-area-inset-bottom,0px))!important;padding-bottom:10px!important}
+@media(min-width:901px){body[data-bottom-nav="on"] .dock{bottom:0!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}}
