@@ -88,3 +88,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
   .btn,a[class*="btn"]{min-height:44px}
   body[data-bottom-nav="on"] .voynuHeaderAccount{display:none}
 }
+
+/* Never show the tab bar or a bottom action dock behind a modal sheet. */
+body:has([aria-modal="true"]) .voynuBottomNav,
+body:has(.voynu-datetime-sheet.open) .voynuBottomNav,
+body:has([aria-modal="true"]) .dock,
+body:has(.voynu-datetime-sheet.open) .dock{display:none!important}
