@@ -216,16 +216,16 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .cabCard.unavailable .cabName,.cabCard.unavailable .cabPrice{color:${theme.colors.textMuted}}
 .cabCardLeft{min-width:0;flex:1}
 .cabName{font-size:15px;font-weight:700}
-.cabMeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;color:${theme.colors.textMuted};font-size:11.5px;line-height:1.4}
+.cabMeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;color:${theme.colors.textMuted};font-size:12px;line-height:1.4}
 .cabUnavailableReason{margin-top:9px;padding:9px 10px;border-radius:${theme.radius.sm}px;background:#fff;border:1px solid ${theme.colors.border}}
-.cabUnavailableTitle{display:flex;align-items:center;gap:6px;color:#4e6659;font-size:11.5px;font-weight:700}
-.cabUnavailableText{margin-top:4px;color:#5e6d65;font-size:11.5px;line-height:1.45}
-.cabUnavailableHint{margin-top:3px;color:#75827b;font-size:11.5px;line-height:1.4}
+.cabUnavailableTitle{display:flex;align-items:center;gap:6px;color:${theme.colors.textMuted};font-size:12px;font-weight:700}
+.cabUnavailableText{margin-top:4px;color:${theme.colors.textMuted};font-size:12px;line-height:1.45}
+.cabUnavailableHint{margin-top:3px;color:${theme.colors.textFaint};font-size:12px;line-height:1.4}
 .cabCardRight{display:flex;align-items:center;gap:12px;flex:0 0 auto}
 .cabPrice{font-size:17px;font-weight:700}
 .cabRadio{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1.5px solid ${theme.colors.borderStrong};border-radius:50%;color:#fff;flex:0 0 20px}
 .cabRadio.active{border-color:${theme.colors.primary};background:${theme.colors.primary}}
-.dataHealth{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;color:${theme.colors.textMuted};font-size:11px}
+.dataHealth{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;color:${theme.colors.textMuted};font-size:12px}
 
 .paymentAction{margin-top:10px}
 .paymentCard{width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;cursor:pointer;opacity:0.55}
@@ -236,24 +236,24 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .couponTriggerLeft{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .couponIcon,.couponAppliedIcon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:0 0 32px;border-radius:${theme.radius.sm}px;background:${theme.colors.primaryTint};color:${theme.colors.primary}}
 .couponTrigger strong,.couponAppliedCopy strong{display:block;font-size:13px;font-weight:700}
-.couponTrigger small,.couponAppliedCopy span{display:block;margin-top:2px;color:${theme.colors.textMuted};font-size:11px}
-.couponAction{flex:0 0 auto;padding:7px 12px;border-radius:${theme.radius.sm}px;background:${theme.colors.primary};color:#fff;font-size:11.5px;font-weight:700}
+.couponTrigger small,.couponAppliedCopy span{display:block;margin-top:2px;color:${theme.colors.textMuted};font-size:12px}
+.couponAction{flex:0 0 auto;padding:7px 12px;border-radius:${theme.radius.sm}px;background:${theme.colors.primary};color:#fff;font-size:12px;font-weight:700}
 .couponForm{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:0 14px 14px}
 .couponForm input{min-width:0;width:100%;height:40px;padding:0 12px;border:1px solid ${theme.colors.border};border-radius:${theme.radius.sm}px;background:${theme.colors.bg};color:${theme.colors.text};font:inherit;font-size:12px;font-weight:600;outline:none}
 .couponForm input:focus{border-color:${theme.colors.primary}}
 .couponForm button{height:40px;padding:0 14px;border:0;border-radius:${theme.radius.sm}px;background:${theme.colors.primary};color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .couponForm button:disabled{opacity:.55;cursor:wait}
-.couponError{margin:0;padding:0 14px 12px;color:#b64c32;font-size:11px}
+.couponError{margin:0;padding:0 14px 12px;color:#b64c32;font-size:12px}
 .couponApplied{display:flex;align-items:center;gap:10px;padding:12px 14px}
 .couponAppliedCopy{min-width:0;flex:1}
-.couponRemove{appearance:none;border:0;background:transparent;color:#b64c32;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.couponRemove{appearance:none;border:0;background:transparent;color:#b64c32;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 
 .fareBreakdown{margin-top:12px;padding:16px 18px}
 .fareRow{display:flex;justify-content:space-between;gap:14px;padding:6px 0;color:${theme.colors.textMuted};font-size:13px}
 .fareRow.subtotal{margin-top:6px;padding-top:12px;border-top:1px solid ${theme.colors.border};font-weight:700;color:${theme.colors.text}}
 .fareRow.minimumAdjustment{color:${theme.colors.textMuted}}
 .fareRow.minimumAdjustment span:first-child{display:flex;align-items:center;gap:5px}
-.minimumFareNote{margin-top:2px;color:${theme.colors.textFaint};font-size:11.5px;line-height:1.45}
+.minimumFareNote{margin-top:2px;color:${theme.colors.textFaint};font-size:12px;line-height:1.45}
 .discountRow{color:${theme.colors.primary};font-weight:700}
 .fareRow.total{margin-top:6px;padding-top:13px;border-top:1px solid ${theme.colors.border};color:${theme.colors.text};font-size:18px;font-weight:700}
 
@@ -261,12 +261,12 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .availabilityNoticeIcon{width:32px;height:32px;flex:0 0 32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;color:${theme.colors.primary}}
 .availabilityNotice strong{display:block;font-size:14px}
 .availabilityNotice p{margin:5px 0 0;color:${theme.colors.textMuted};font-size:12px;line-height:1.5}
-.availabilityNotice .diagnosticLine{color:#738079}
+.availabilityNotice .diagnosticLine{color:${theme.colors.textFaint}}
 
 .confirmError{margin-top:14px}
 .desktopConfirmButton{width:100%;min-height:54px;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:${theme.radius.md}px;background:${theme.gradients.primary};box-shadow:${theme.shadow.button};color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
 .desktopConfirmButton:disabled{opacity:.7;cursor:wait}
-.disclaimer{margin:12px 2px 0;text-align:center;color:${theme.colors.textFaint};font-size:11px;line-height:1.5}
+.disclaimer{margin:12px 2px 0;text-align:center;color:${theme.colors.textFaint};font-size:12px;line-height:1.5}
 
 .mobileConfirmBar{display:none}
 
@@ -278,7 +278,7 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
     background:${theme.colors.surface};border-top:1px solid ${theme.colors.border};box-shadow:0 -8px 24px rgba(10,35,55,.08);
   }
   .mobileConfirmAmount{min-width:60px;display:flex;flex-direction:column;gap:1px}
-  .mobileConfirmAmount small{font-size:11.5px;color:${theme.colors.textMuted};font-weight:700}
+  .mobileConfirmAmount small{font-size:12px;color:${theme.colors.textMuted};font-weight:700}
   .mobileConfirmAmount strong{font-size:16px;color:${theme.colors.text};font-weight:800}
   .mobileConfirmButton{flex:1;min-height:46px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:${theme.radius.sm}px;background:${theme.gradients.primary};color:#fff;font-family:inherit;font-size:13px;font-weight:700}
   .mobileConfirmButton:disabled{opacity:.7}

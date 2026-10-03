@@ -329,7 +329,7 @@ export default function AuthLanding() {
         .landingNav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
         .landingHero { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 58px 0 70px; display: grid; grid-template-columns: minmax(0,.9fr) minmax(430px,1fr); align-items: center; gap: 68px; }
-        .landingEyebrow { display: flex; align-items: center; gap: 9px; color: #00456B; font-size:11.5px; font-weight: 800; letter-spacing: 1.5px; }
+        .landingEyebrow { display: flex; align-items: center; gap: 9px; color: #00456B; font-size:12px; font-weight: 800; letter-spacing: 1.5px; }
         .landingEyebrow span { width: 22px; height: 3px; border-radius: 99px; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); flex-shrink: 0; }
         .landingEyebrowCenter { justify-content: center; }
         h1 { margin: 16px 0 0; font-size: clamp(48px,6vw,76px); line-height: .98; letter-spacing: -3px; font-weight: 800; color: #0A2337; }
@@ -342,8 +342,8 @@ export default function AuthLanding() {
         .landingActions { width: min(350px,100%); display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
 
         .landingVisual { padding: 20px; border: 1px solid rgba(255,255,255,.9); border-radius: 30px; background: rgba(255,255,255,.72); box-shadow: 0 30px 80px rgba(10,35,55,.12); backdrop-filter: blur(12px); }
-        .landingVisualTop { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 14px; color: #0A2337; font-size:11.5px; font-weight: 800; letter-spacing: 1px; }
-        .landingLive { display: flex; align-items: center; gap: 6px; color: #00456B; font-size:11.5px; letter-spacing: .8px; }
+        .landingVisualTop { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 14px; color: #0A2337; font-size:12px; font-weight: 800; letter-spacing: 1px; }
+        .landingLive { display: flex; align-items: center; gap: 6px; color: #00456B; font-size:12px; letter-spacing: .8px; }
         .landingLive i { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgba(34,197,94,.10); display: block; }
         .landingRoute { position: relative; height: 380px; overflow: hidden; border-radius: 22px; background: linear-gradient(145deg,#0A2337,#0E2D46 60%,#12384F); }
         .landingRouteGrid { position: absolute; inset: -30px; opacity: .30; background-image: linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px); background-size: 42px 42px; transform: rotate(-8deg) scale(1.1); }
@@ -355,23 +355,23 @@ export default function AuthLanding() {
         .landingRoutePointOne { left: 16%; top: 23%; background: #6FD6EC; box-shadow: 0 0 0 7px rgba(111,214,236,.14); }
         .landingRoutePointTwo { right: 16%; bottom: 22%; background: #fff; box-shadow: 0 0 0 7px rgba(255,255,255,.10); }
         .landingRouteCard { position: absolute; display: flex; flex-direction: column; gap: 3px; padding: 11px 13px; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; background: rgba(10,35,55,.72); color: #fff; backdrop-filter: blur(10px); max-width: 44%; }
-        .landingRouteCard strong { font-size: 11px; }
-        .landingRouteCard span { color: rgba(255,255,255,.6); font-size:11.5px; }
+        .landingRouteCard strong { font-size:12px; }
+        .landingRouteCard span { color: rgba(255,255,255,.6); font-size:12px; }
         .landingRouteCardOne { left: 10%; top: 30%; }
         .landingRouteCardTwo { right: 9%; bottom: 29%; text-align: right; align-items: flex-end; }
-        .landingRouteFooter { position: absolute; left: 16px; right: 16px; bottom: 15px; display: flex; align-items: center; gap: 7px; color: rgba(255,255,255,.55); font-size:11.5px; }
+        .landingRouteFooter { position: absolute; left: 16px; right: 16px; bottom: 15px; display: flex; align-items: center; gap: 7px; color: rgba(255,255,255,.55); font-size:12px; }
         .landingPulse { width: 6px; height: 6px; border-radius: 50%; background: #0A7FA6; box-shadow: 0 0 0 4px rgba(10,127,166,.10); display: block; flex-shrink: 0; }
         .landingTrustRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; margin-top: 14px; border: 1px solid #EEF3F7; border-radius: 16px; overflow: hidden; background: #EEF3F7; }
         .landingTrustRow div { min-height: 66px; display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; background: #fff; }
-        .landingTrustRow strong { color: #0A2337; font-size: 11px; }
-        .landingTrustRow span { margin-top: 3px; color: #87919E; font-size:11.5px; }
+        .landingTrustRow strong { color: #0A2337; font-size:12px; }
+        .landingTrustRow span { margin-top: 3px; color: #87919E; font-size:12px; }
 
         .landingTripTypes { padding: 6px 0 14px; }
         .landingTripTypeGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         .tripTypeCard { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 16px; border-radius: 18px; background: #fff; border: 1px solid #EEF3F7; box-shadow: 0 10px 26px rgba(10,35,55,.05); }
         .tripTypeIcon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: #E7F4F8; color: #0A7FA6; }
         .tripTypeCard strong { font-size: 14px; color: #0A2337; }
-        .tripTypeDesc { font-size: 11.5px; color: #5B6B7C; line-height: 1.4; }
+        .tripTypeDesc { font-size:12px; color: #5B6B7C; line-height: 1.4; }
 
         .landingSectionHead { text-align: center; max-width: 620px; margin: 0 auto 40px; }
         .landingSectionHead h2 { margin: 14px 0 10px; font-size: clamp(24px,3.4vw,34px); font-weight: 800; letter-spacing: -1px; color: #0A2337; }
@@ -396,14 +396,14 @@ export default function AuthLanding() {
         .valueCard { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 22px 14px; border-radius: 18px; background: #F7F9FC; }
         .valueIcon { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #E7F4F8; color: #0A7FA6; }
         .valueCard strong { font-size: 13px; color: #0A2337; }
-        .valueCard span { font-size: 11px; color: #5B6B7C; line-height: 1.4; }
+        .valueCard span { font-size:12px; color: #5B6B7C; line-height: 1.4; }
 
         .landingFinalCta { padding: 4px 0 70px; }
         .landingFinalCtaInner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 40px 44px; border-radius: 26px; background: linear-gradient(145deg,#0A2337,#0E2D46 60%,#12384F); color: #fff; }
         .landingFinalCtaInner h2 { font-size: clamp(20px,2.6vw,28px); font-weight: 800; margin: 0 0 8px; }
         .landingFinalCtaInner p { font-size: 13.5px; color: rgba(255,255,255,.68); margin: 0; }
 
-        .landingFooter { min-height: 64px; display: flex; align-items: center; justify-content: space-between; width: min(1180px,calc(100% - 32px)); margin: 0 auto; color: #7A8491; font-size:11.5px; }
+        .landingFooter { min-height: 64px; display: flex; align-items: center; justify-content: space-between; width: min(1180px,calc(100% - 32px)); margin: 0 auto; color: #7A8491; font-size:12px; }
         .landingFooter strong { color: #0A2337; }
 
         @media (max-width: 920px) {
@@ -426,8 +426,8 @@ export default function AuthLanding() {
           .landingRoute { height: 300px; border-radius: 18px; }
           .landingRouteCard { padding: 9px 11px; }
           .landingTrustRow div { min-height: 58px; padding: 8px; }
-          .landingTrustRow strong { font-size:11.5px; }
-          .landingTrustRow span { font-size:11.5px; }
+          .landingTrustRow strong { font-size:12px; }
+          .landingTrustRow span { font-size:12px; }
           .landingTripTypeGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
           .tripTypeCard { padding: 14px 12px; }
           .landingFeatures { padding: 52px 0 4px; }
