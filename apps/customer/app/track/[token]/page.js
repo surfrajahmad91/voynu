@@ -57,13 +57,13 @@ export default function SharedTripPage({ params }) {
         <div style={{ padding: "12px 16px", borderRadius: theme.radius.lg, background: theme.colors.primaryTint, color: theme.colors.primaryDark, fontWeight: 800, fontSize: 13, marginBottom: 14 }}>{STATUS_LABEL[data.status] || "Trip in progress"}</div>
         <LiveTripMap pickup={{ lat: data.pickupLat, lon: data.pickupLon }} destination={{ lat: data.dropLat, lon: data.dropLon }} driverLocation={loc} targetType={target} trafficEta />
         <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: theme.radius.lg, background: theme.colors.surface, border: `1px solid ${theme.colors.border}`, boxShadow: theme.shadow.card }}>
-          <div style={{ fontSize: 10.5, color: theme.colors.textFaint, fontWeight: 800, textTransform: "uppercase" }}>Driver</div>
+          <div style={{ fontSize: 11.5, color: theme.colors.textFaint, fontWeight: 800, textTransform: "uppercase" }}>Driver</div>
           <div style={{ marginTop: 5, fontSize: 14.5, fontWeight: 800 }}>{data.driverName || "VOYNU driver"}</div>
           <div style={{ marginTop: 3, fontSize: 12, color: theme.colors.textMuted }}>{data.vehicleLabel || ""}{data.registrationNumber ? ` · ${data.registrationNumber}` : ""}</div>
           <div style={{ marginTop: 10, fontSize: 11, color: theme.colors.textFaint, lineHeight: 1.5 }}>{data.pickupName} → {data.dropName}</div>
-          {loc?.updatedAt && <div style={{ marginTop: 8, fontSize: 10, color: theme.colors.textFaint }}>Location updated {new Date(loc.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</div>}
+          {loc?.updatedAt && <div style={{ marginTop: 8, fontSize: 11.5, color: theme.colors.textFaint }}>Location updated {new Date(loc.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</div>}
         </div>
-        <div style={{ marginTop: 16, textAlign: "center", fontSize: 10.5, color: theme.colors.textFaint }}>This is a shared, read-only view. Refreshes automatically every 15 seconds.</div>
+        <div style={{ marginTop: 16, textAlign: "center", fontSize: 11.5, color: theme.colors.textFaint }}>This is a shared, read-only view. Refreshes automatically every 15 seconds.</div>
       </div>
     </main>
   );

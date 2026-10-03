@@ -7,7 +7,7 @@ export const metadata = {
   title: "VOYNU",
   description: "Book your perfect trip with VOYNU",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  icons: { icon: "/icon.svg", apple: "/icons/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "VOYNU", statusBarStyle: "black-translucent" },
 };
 

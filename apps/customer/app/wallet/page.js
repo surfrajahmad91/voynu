@@ -134,7 +134,7 @@ export default function WalletPage() {
         .balanceNote{margin:10px 0 0;font-size:12px;line-height:1.5;opacity:.9;max-width:46ch}
         .infoGrid{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
         .infoCard{padding:15px;border-radius:16px;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7)}
-        .infoLabel{display:block;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--voynu-muted,#5B6B7C)}
+        .infoLabel{display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;color:var(--voynu-muted,#5B6B7C)}
         .infoHeadline{margin-top:6px;font-size:14.5px;font-weight:800;line-height:1.3}
         .infoBody{margin:5px 0 0;font-size:11.5px;line-height:1.5;color:var(--voynu-muted,#5B6B7C)}
         .activity{margin-top:26px}
@@ -153,11 +153,11 @@ export default function WalletPage() {
         .rowMain{min-width:0}
         .rowMain strong{display:block;font-size:13.5px}
         .rowMeta{display:block;margin-top:3px;color:var(--voynu-muted,#5B6B7C);font-size:11.5px;line-height:1.4}
-        .rowExpiry{display:block;margin-top:3px;color:#B45309;font-size:10.5px;font-weight:700}
+        .rowExpiry{display:block;margin-top:3px;color:#B45309;font-size:11.5px;font-weight:700}
         .rowAmount{text-align:right;flex:0 0 auto}
         .rowAmount strong{display:block;font-size:15px;font-variant-numeric:tabular-nums}
         .amountPositive{color:#15803D}
-        .rowAmount span{display:block;margin-top:3px;color:var(--voynu-muted,#5B6B7C);font-size:10.5px;font-variant-numeric:tabular-nums}
+        .rowAmount span{display:block;margin-top:3px;color:var(--voynu-muted,#5B6B7C);font-size:11.5px;font-variant-numeric:tabular-nums}
         .footNote{margin-top:22px;padding:14px;border-radius:14px;background:var(--voynu-primary-tint,#E7F4F8);color:var(--voynu-teal-deep,#00456B);font-size:11.5px;line-height:1.55}
         @media(max-width:420px){.infoGrid{grid-template-columns:1fr}.balanceCard{padding:19px 17px}}
       `}</style>
