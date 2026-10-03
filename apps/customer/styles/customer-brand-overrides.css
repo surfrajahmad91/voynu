@@ -76,3 +76,15 @@ button,a,select,summary,[role="button"]{touch-action:manipulation}
 /* Commute flow: keep its action dock (Back / Continue) above the bottom tab bar. */
 body[data-bottom-nav="on"] .dock{bottom:calc(57px + env(safe-area-inset-bottom,0px))!important;padding-bottom:10px!important}
 @media(min-width:901px){body[data-bottom-nav="on"] .dock{bottom:0!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}}
+
+/* Polish pass 2 */
+@keyframes voynuSpin{to{transform:rotate(360deg)}}
+main.page .card .locationPicker{margin-bottom:18px}
+:focus-visible{outline:3px solid rgba(10,127,166,.35);outline-offset:2px;border-radius:6px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media(max-width:700px){
+  main [style*="font-size:11.5px"]{line-height:1.45}
+  .btn,a[class*="btn"]{min-height:44px}
+  body[data-bottom-nav="on"] .voynuHeaderAccount{display:none}
+}

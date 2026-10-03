@@ -1,5 +1,5 @@
-const CACHE_NAME = "voynu-customer-static-v7";
-const STATIC_URLS = ["/icon.svg", "/manifest.webmanifest", "/notification-badge.svg"];
+const CACHE_NAME = "voynu-customer-static-v8";
+const STATIC_URLS = ["/icon.svg", "/icons/icon-192.png", "/manifest.webmanifest", "/notification-badge.svg"];
 
 function notificationCopy(data) {
   const type = data?.data?.type || String(data?.tag || "").replace(/^voynu-/, "").split("-")[0];

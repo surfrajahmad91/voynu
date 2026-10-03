@@ -8,7 +8,7 @@ import { supabase } from "../../../shared/lib/supabaseClient";
 // Bottom tab bar for the two live features + account, shown for signed-in
 // customers on the home, commute and account screens. The commute flow has its
 // own bottom action dock; global CSS lifts that dock above this bar.
-const SHOW_ON = ["/", "/account", "/subscriptions", "/subscriptions/manage", "/subscriptions/confirmed"];
+const SHOW_ON = ["/", "/account", "/booking-confirmed", "/subscriptions", "/subscriptions/manage", "/subscriptions/confirmed"];
 
 const icons = {
   ride: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16h15M5.8 16l1.6-5.2a2.2 2.2 0 0 1 2.1-1.5h5a2.2 2.2 0 0 1 2.1 1.5L18.2 16" /><path d="M8 9.3V7h8v2.3" /><circle cx="8" cy="17.6" r="1.6" /><circle cx="16" cy="17.6" r="1.6" /></svg>),

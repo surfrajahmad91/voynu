@@ -58,12 +58,12 @@ export default function DateTimeBookingGuard() {
         .voynu-datetime-button-copy{min-width:0;flex:1}
         .voynu-datetime-button-value{display:block;font-size:17px;line-height:1.15;font-weight:800;letter-spacing:-.2px;color:${theme.colors.text}}
         .voynu-datetime-button-value.placeholder{color:${theme.colors.textFaint};font-weight:650}
-        .voynu-datetime-button-hint{display:block;margin-top:4px;color:${theme.colors.textMuted};font-size:10.5px;font-weight:600}
+        .voynu-datetime-button-hint{display:block;margin-top:4px;color:${theme.colors.textMuted};font-size:11.5px;font-weight:600}
         .voynu-datetime-chevron{width:18px;height:18px;flex:0 0 18px;color:${theme.colors.textMuted}}
         .voynu-datetime-inline-error{display:flex;align-items:flex-start;gap:8px;margin:7px 2px 0;padding:9px 11px;border:1px solid rgba(239,68,68,.30);border-radius:11px;background:${theme.colors.errorBg};color:${theme.colors.error};font-size:11.5px;line-height:1.4;font-weight:700}
         .voynu-datetime-inline-error .err-dot{width:19px;height:19px;flex:0 0 19px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${theme.colors.error};color:#fff;font-size:11px;font-weight:900}
         .voynu-datetime-meta{display:flex;flex-wrap:wrap;gap:6px;margin:7px 2px 0}
-        .voynu-datetime-meta span{padding:5px 8px;border-radius:999px;background:${theme.colors.primaryTint};color:${theme.colors.primaryDark};font-size:10px;font-weight:750}
+        .voynu-datetime-meta span{padding:5px 8px;border-radius:999px;background:${theme.colors.primaryTint};color:${theme.colors.primaryDark};font-size:11.5px;font-weight:750}
         .voynu-datetime-backdrop{position:fixed;inset:0;z-index:99990;background:rgba(13,28,21,.38);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .18s ease}
         .voynu-datetime-backdrop.open{opacity:1;pointer-events:auto}
         .voynu-datetime-sheet{position:fixed;left:50%;bottom:0;z-index:99991;width:min(560px,100%);max-height:min(88vh,760px);overflow:auto;transform:translate(-50%,105%);border-radius:26px 26px 0 0;background:#fff;box-shadow:0 -18px 60px rgba(0,0,0,.22);transition:transform .24s cubic-bezier(.2,.8,.2,1);padding:10px 18px calc(22px + env(safe-area-inset-bottom))}
@@ -71,21 +71,21 @@ export default function DateTimeBookingGuard() {
         .voynu-datetime-grab{width:42px;height:4px;border-radius:99px;background:${theme.colors.borderStrong};margin:3px auto 15px}
         .voynu-datetime-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
         .voynu-datetime-head h3{margin:0;color:${theme.colors.text};font-size:19px;font-weight:850;letter-spacing:-.3px}
-        .voynu-datetime-head p{margin:3px 0 0;color:${theme.colors.textMuted};font-size:10.5px;font-weight:600}
+        .voynu-datetime-head p{margin:3px 0 0;color:${theme.colors.textMuted};font-size:11.5px;font-weight:600}
         .voynu-datetime-close{width:36px;height:36px;border:0;border-radius:50%;background:${theme.colors.border};color:${theme.colors.textMuted};font-size:21px;line-height:1;cursor:pointer}
         .voynu-datetime-quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
         .voynu-datetime-quick button{min-height:54px;padding:8px 11px;border:1px solid ${theme.colors.border};border-radius:14px;background:${theme.colors.bg};color:${theme.colors.text};font:inherit;text-align:left;cursor:pointer}
-        .voynu-datetime-quick button strong{display:block;font-size:12px;font-weight:850}.voynu-datetime-quick button span{display:block;margin-top:3px;font-size:10px;color:${theme.colors.textMuted};font-weight:600}
+        .voynu-datetime-quick button strong{display:block;font-size:12px;font-weight:850}.voynu-datetime-quick button span{display:block;margin-top:3px;font-size:11.5px;color:${theme.colors.textMuted};font-weight:600}
         .voynu-datetime-quick button.active{border-color:${theme.colors.primary};background:${theme.colors.primaryTint};box-shadow:0 0 0 2px rgba(10,127,166,.08)}
         .voynu-datetime-month{display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px}
         .voynu-datetime-month strong{font-size:15px;color:${theme.colors.text}}.voynu-datetime-month button{width:36px;height:36px;border:1px solid ${theme.colors.border};border-radius:50%;background:#fff;color:${theme.colors.text};font-size:18px;cursor:pointer}
         .voynu-datetime-week,.voynu-datetime-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-        .voynu-datetime-week span{text-align:center;color:${theme.colors.textMuted};font-size:9px;font-weight:800;padding-bottom:3px}
+        .voynu-datetime-week span{text-align:center;color:${theme.colors.textMuted};font-size:11.5px;font-weight:800;padding-bottom:3px}
         .voynu-datetime-day{aspect-ratio:1;border:0;border-radius:12px;background:${theme.colors.bg};color:${theme.colors.text};font:inherit;font-size:12px;font-weight:750;cursor:pointer}
         .voynu-datetime-day.empty{visibility:hidden}.voynu-datetime-day.disabled{color:${theme.colors.textFaint};background:${theme.colors.bg};cursor:not-allowed}.voynu-datetime-day.today{box-shadow:inset 0 0 0 1px ${theme.colors.primaryLight}}.voynu-datetime-day.selected{background:${theme.colors.primary};color:#fff;box-shadow:0 5px 12px rgba(10,127,166,.22)}
-        .voynu-datetime-time-groups{display:flex;flex-direction:column;gap:15px}.voynu-datetime-time-group h4{margin:0 0 8px;color:${theme.colors.textMuted};font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:850}
+        .voynu-datetime-time-groups{display:flex;flex-direction:column;gap:15px}.voynu-datetime-time-group h4{margin:0 0 8px;color:${theme.colors.textMuted};font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:850}
         .voynu-datetime-times{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.voynu-datetime-time{min-height:48px;border:1px solid ${theme.colors.border};border-radius:13px;background:${theme.colors.bg};color:${theme.colors.text};font:inherit;font-size:12px;font-weight:800;cursor:pointer}.voynu-datetime-time:hover{border-color:${theme.colors.primaryLight};background:${theme.colors.primaryTint}}.voynu-datetime-time.selected{background:${theme.colors.primary};border-color:${theme.colors.primary};color:#fff;box-shadow:0 5px 12px rgba(10,127,166,.20)}.voynu-datetime-time.disabled{color:${theme.colors.textFaint};background:${theme.colors.bg};border-color:${theme.colors.border};cursor:not-allowed}
-        .voynu-datetime-info{display:flex;gap:9px;align-items:flex-start;margin:14px 0 0;padding:11px 12px;border-radius:13px;background:${theme.colors.primaryTint};color:${theme.colors.textMuted};font-size:10.5px;line-height:1.45;font-weight:650}.voynu-datetime-info strong{color:${theme.colors.primaryDark}}
+        .voynu-datetime-info{display:flex;gap:9px;align-items:flex-start;margin:14px 0 0;padding:11px 12px;border-radius:13px;background:${theme.colors.primaryTint};color:${theme.colors.textMuted};font-size:11.5px;line-height:1.45;font-weight:650}.voynu-datetime-info strong{color:${theme.colors.primaryDark}}
         .voynu-datetime-confirm{width:100%;min-height:52px;margin-top:15px;border:0;border-radius:14px;background:linear-gradient(135deg,${theme.colors.primary},${theme.colors.primaryDark});color:#fff;font:inherit;font-size:14px;font-weight:850;cursor:pointer;box-shadow:0 9px 20px rgba(10,127,166,.20)}
         @media(max-width:380px){.voynu-datetime-times{grid-template-columns:repeat(2,1fr)}.voynu-datetime-sheet{padding-left:14px;padding-right:14px}.voynu-datetime-button-value{font-size:16px}}
       `;
