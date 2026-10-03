@@ -17,6 +17,14 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  // Deferred features (Rentals, Wallet) stay in the repo but are unreachable for now.
+  async redirects() {
+    return [
+      { source: "/rentals", destination: "/", permanent: false },
+      { source: "/rentals/:path*", destination: "/", permanent: false },
+      { source: "/wallet", destination: "/account", permanent: false },
+    ];
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

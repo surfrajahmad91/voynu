@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import PageHeader from "../../../../shared/components/PageHeader";
 import LocationPicker from "../../components/LocationPicker";
 import { supabase } from "../../../../shared/lib/supabaseClient";
-import WalletCheckoutCard from "../../components/WalletCheckoutCard";
 
 const DAYS = [[1, "M", "Mon"], [2, "T", "Tue"], [3, "W", "Wed"], [4, "T", "Thu"], [5, "F", "Fri"], [6, "S", "Sat"], [7, "S", "Sun"]];
 const STEPS = ["Route", "Riders", "Plan", "Review"];
@@ -362,7 +361,6 @@ export default function CommuteSubscriptionPage() {
                     <b>{p.name}</b>
                     <small>{periodText(p)}</small>
                     <em>{Number(p.discount_percent || 0) > 0 ? `${p.discount_percent}% off` : "Standard price"}</em>
-                    {Number(p.wallet_reward_amount || 0) > 0 && <i>+ ₹{money(p.wallet_reward_amount)} wallet reward</i>}
                   </button>
                 ))}
               </div>
@@ -404,7 +402,6 @@ export default function CommuteSubscriptionPage() {
                       <div><span>Base amount</span><b>₹{money(quote.baseAmount)}</b></div>
                       {Number(quote.discountAmount) > 0 && <div className="good"><span>Plan discount</span><b>− ₹{money(quote.discountAmount)}</b></div>}
                     </div>
-                    <WalletCheckoutCard bookingAmount={quote.totalAmount} onAmountChange={setWalletApplied} disabled={busy} />
                     <div className="total"><span>Total for the plan</span><b>₹{money(payable)}</b></div>
                   </section>
 

@@ -64,3 +64,11 @@ main > div[style*="max-width:1100px"] > section:nth-child(2) button:last-child{b
   .voynuHeaderActions{min-width:0!important;max-width:100%!important;overflow:hidden!important}
   .voynuHeaderAction{white-space:nowrap!important}
 }
+
+/* Mobile / Android-app polish (customer app) */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+button,a,select,summary,[role="button"]{touch-action:manipulation}
+@media(max-width:700px){input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea{font-size:16px!important}}
+@supports(height:100dvh){.loading{min-height:100dvh}}
+@media(max-width:900px){body[data-bottom-nav="on"]{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}}

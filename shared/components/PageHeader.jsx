@@ -42,6 +42,7 @@ export default function PageHeader({
         position: "sticky",
         top: 0,
         zIndex: 20,
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
       <div
@@ -147,9 +148,7 @@ export default function PageHeader({
             <Link href="/" className={isHome ? "homeProductOption active" : "homeProductOption"} style={isHome ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(145deg, #12a8c5 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.55)", boxShadow: "0 12px 28px rgba(16,145,173,.24), inset 0 1px 0 rgba(255,255,255,.34)" } : { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(145deg, rgba(255,255,255,.92), rgba(235,245,248,.72))", color: "#19334A", border: "1px solid rgba(255,255,255,.8)", boxShadow: "0 10px 24px rgba(10,35,55,.08), inset 0 1px 0 rgba(255,255,255,.9)" }}>
               <span className="productCopy"><b>Ride</b><small>Book a cab</small></span>
             </Link>
-            <Link href="/rentals" className={pathname?.startsWith("/rentals") ? "homeProductOption active" : "homeProductOption"} style={pathname?.startsWith("/rentals") ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" } : { minHeight: 74, height: 74, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
-              <span className="productCopy"><b>Rent</b><small>Drive yourself</small></span>
-            </Link>
+            
             <Link href="/subscriptions" className={isCommute ? "homeProductOption active" : "homeProductOption"} style={isCommute ? { minHeight: 74, height: 74, borderRadius: 22, background: "linear-gradient(135deg, #079bb8 0%, #f46b2a 100%)", color: "#fff", border: "1px solid rgba(255,255,255,.42)", boxShadow: "0 10px 24px rgba(16,145,173,.22)" }  : { minHeight: 74, height: 74, borderRadius: 22, background: "rgba(255,255,255,.82)", color: "#19334A", border: "1px solid rgba(28,111,138,.10)", boxShadow: "0 8px 20px rgba(10,35,55,.06)" }}>
               <span className="productCopy"><b>Commute</b><small>Daily route</small></span>
             </Link>
@@ -179,7 +178,7 @@ export default function PageHeader({
         }
         .homeProductSwitch {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           align-items: center;
           gap: 12px;
           width: 100%;
