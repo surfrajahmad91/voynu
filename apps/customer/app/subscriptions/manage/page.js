@@ -31,7 +31,7 @@ export default function ManageSubscriptions(){
   const args=modal.action==="pause"?{p_subscription_id:modal.s.id,p_dates:dates,p_reason:reason.trim()}:{p_subscription_id:modal.s.id,p_reason:reason.trim()};
   const{error:e}=await supabase.rpc(rpc,args);
   if(e){setError(e.message);setBusy(false);return}
-  setBusy(false);setModal(null);setMessage(modal.action==="cancel"?"Subscription cancelled.":"Pause request recorded. Days paused at least 4 hours before pickup are removed from the chargeable schedule; days after the cutoff remain fully chargeable.");await load();
+  setBusy(false);setModal(null);setMessage(modal.action==="cancel"?"Subscription cancelled. Eligible unused service value has been returned to VOYNU Wallet Credits.":"Pause request recorded. Days paused at least 4 hours before pickup are removed from the chargeable schedule; days after the cutoff remain fully chargeable.");await load();
  };
  if(!session&&!loading)return <><PageHeader/><main className="page"><section className="card"><h1>Sign in to manage subscriptions</h1><p>Your commute subscriptions are linked to your VOYNU account.</p><Link href="/login?next=/subscriptions/manage" className="btn primary">Sign in</Link></section></main><style jsx>{styles}</style></>;
  return <><PageHeader/><main className="page">
