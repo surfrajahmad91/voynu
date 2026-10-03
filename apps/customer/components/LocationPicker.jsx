@@ -288,8 +288,9 @@ export default function LocationPicker({
           <span className={`locationLabelIcon ${tone}`}><PinIcon tone={tone} size={16} /></span>
           {label}
         </label>
-        {tone === "pickup" && <span className="locationHintLabel">Your starting point</span>}
-        {tone === "drop" && <span className="locationHintLabel">Your destination</span>}
+        {hasValue
+          ? <span className={`selectedPill ${tone}`}><CheckIcon size={13} /> Selected</span>
+          : <span className="locationHintLabel">{tone === "pickup" ? "Your starting point" : "Your destination"}</span>}
       </div>
 
       <div className={`inputWrapper ${hasValue ? "hasValue" : ""}`}>
@@ -340,11 +341,6 @@ export default function LocationPicker({
           )}
         </div>
 
-        {hasValue && (
-          <div className={`selectedBadge ${tone}`} aria-label="Location selected">
-            <CheckIcon size={13} /> Selected
-          </div>
-        )}
       </div>
 
       {allowCurrentLocation && !hasValue && (
@@ -404,7 +400,7 @@ export default function LocationPicker({
         .locationLabel { display:flex; align-items:center; gap:7px; color:${theme.colors.text}; font-size:13px; font-weight:800; }
         .locationLabelIcon { width:25px; height:25px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:${theme.colors.primaryTint}; color:${theme.colors.primary}; }
         .locationLabelIcon.drop { background:#FFF1E7; color:${theme.colors.accentDark}; }
-        .locationHintLabel { color:${theme.colors.textFaint}; font-size:11.5px; font-weight:600; }
+        .locationHintLabel { color:${theme.colors.textFaint}; font-size:12px; font-weight:600; }
         .inputWrapper { position:relative; width:100%; }
         .locationInput { width:100%; height:56px; text-overflow:ellipsis; padding:0 15px; border:1.5px solid ${theme.colors.border}; border-radius:14px; background:${theme.colors.bg}; color:${theme.colors.text}; font-family:inherit; font-size:14px; outline:none; transition:border-color .2s ease,box-shadow .2s ease,background .2s ease; }
         .locationInput::placeholder { color:${theme.colors.textFaint}; }
@@ -418,23 +414,23 @@ export default function LocationPicker({
         .actionButton.currentButton { background:${theme.colors.primaryTint}; }
         .actionButton:disabled { opacity:.55; cursor:wait; }
         .spinner { width:14px; height:14px; border:2px solid rgba(10,127,166,.22); border-top-color:${theme.colors.primary}; border-radius:50%; animation:spin .7s linear infinite; }
-        .selectedBadge { position:absolute; left:13px; bottom:7px; display:flex; align-items:center; gap:3px; font-size:11.5px; line-height:1; font-weight:800; color:${theme.colors.primary}; pointer-events:none; }
+        .selectedBadge { position:absolute; left:13px; bottom:7px; display:flex; align-items:center; gap:3px; font-size:12px; line-height:1; font-weight:800; color:${theme.colors.primary}; pointer-events:none; }
         .selectedBadge.drop { color:${theme.colors.accentDark}; }
-        .currentLocationLink { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:2px 0; border:0; background:transparent; color:${theme.colors.primary}; font-family:inherit; font-size:11px; font-weight:800; cursor:pointer; }
+        .currentLocationLink { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:2px 0; border:0; background:transparent; color:${theme.colors.primary}; font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; }
         .currentLocationLink:disabled { opacity:.55; cursor:wait; }
-        .locationHelper { display:flex; justify-content:space-between; align-items:center; margin-top:7px; margin-bottom:2px; color:${theme.colors.textFaint}; font-size:11.5px; line-height:1.3; }
+        .locationHelper { display:flex; justify-content:space-between; align-items:center; margin-top:7px; margin-bottom:2px; color:${theme.colors.textFaint}; font-size:12px; line-height:1.3; }
         .mapHelper { display:inline-flex; align-items:center; gap:3px; color:${theme.colors.textMuted}; font-weight:700; }
         .recentLocations { position:absolute; left:0; right:0; top:86px; z-index:30; padding:9px; border:1px solid ${theme.colors.border}; border-radius:13px; background:#fff; box-shadow:${theme.shadow.raised}; }
-        .recentTitle { display:flex; align-items:center; gap:6px; padding:3px 5px 7px; color:${theme.colors.textMuted}; font-size:11.5px; font-weight:800; }
+        .recentTitle { display:flex; align-items:center; gap:6px; padding:3px 5px 7px; color:${theme.colors.textMuted}; font-size:12px; font-weight:800; }
         .recentItem { width:100%; display:flex; align-items:center; gap:9px; padding:9px 7px; border:0; border-radius:9px; background:transparent; color:${theme.colors.text}; text-align:left; font-family:inherit; cursor:pointer; }
         .recentItem:hover { background:${theme.colors.primaryTint}; }
         .recentPin { width:28px; height:28px; flex:0 0 28px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:${theme.colors.primaryTint}; }
         .recentPin.drop { background:#FFF1E7; }
-        .recentText { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:650; }
-        .locationHint { margin-top:5px; color:${theme.colors.textFaint}; font-size:11.5px; }
-        .locationError { margin-top:6px; color:${theme.colors.error}; font-size:11.5px; line-height:1.4; }
+        .recentText { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:650; }
+        .locationHint { margin-top:5px; color:${theme.colors.textFaint}; font-size:12px; }
+        .locationError { margin-top:6px; color:${theme.colors.error}; font-size:12px; line-height:1.4; }
         @keyframes spin { to { transform:rotate(360deg); } }
-        @media (max-width:700px) { .locationInput { height:54px; font-size:16px; } .actionButton { width:40px; height:40px; } .currentLocationLink { min-height:40px; font-size:13px; } .recentItem { min-height:44px; } .locationHintLabel { display:none; } .locationHelper { font-size:11.5px; } }
+        @media (max-width:700px) { .locationInput { height:54px; font-size:16px; } .actionButton { width:40px; height:40px; } .currentLocationLink { min-height:40px; font-size:13px; } .recentItem { min-height:44px; } .locationHintLabel { display:none; } .locationHelper { font-size:12px; } }
       `}</style>
     </div>
   );

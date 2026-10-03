@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "../lib/supabaseClient";
@@ -76,6 +77,7 @@ function notificationCopy(notification) {
 export default function NotificationBell({ targetPath = "/account", audience = "customer" }) {
   const router = useRouter();
   const containerRef = useRef(null);
+  const panelRef = useRef(null);
   const [userId, setUserId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
@@ -140,10 +142,11 @@ export default function NotificationBell({ targetPath = "/account", audience = "
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
-      if (!containerRef.current?.contains(event.target)) setOpen(false);
+      if (containerRef.current?.contains(event.target) || panelRef.current?.contains(event.target)) return;
+      setOpen(false);
     };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("pointerdown", handleOutsideClick);
+    return () => document.removeEventListener("pointerdown", handleOutsideClick);
   }, []);
 
   const unreadCount = useMemo(
@@ -173,20 +176,20 @@ export default function NotificationBell({ targetPath = "/account", audience = "
     <div ref={containerRef} style={{ position: "relative" }}>
       <button type="button" aria-label={unreadCount ? `${unreadCount} unread notifications` : "Notifications"} aria-expanded={open} onClick={() => setOpen((value) => !value)} style={{ position: "relative", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${theme.colors.border}`, background: "#ffffff", color: theme.colors.primary, cursor: "pointer", boxShadow: "0 5px 14px rgba(10,40,25,0.06)" }}>
         <IconBell />
-        {unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 1, minWidth: 17, height: 17, padding: "0 4px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: theme.colors.accent, color: "#ffffff", border: "2px solid #ffffff", fontSize: 8.5, fontWeight: 800 }}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
+        {unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 1, minWidth: 17, height: 17, padding: "0 4px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 10, background: theme.colors.accent, color: "#ffffff", border: "2px solid #ffffff", fontSize: 10, fontWeight: 800 }}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
 
-      {open && (
-        <div style={{ position: "fixed", top: 76, right: 12, width: "min(380px, calc(100vw - 24px))", maxHeight: "calc(100vh - 92px)", overflow: "hidden", borderRadius: 16, border: `1px solid ${theme.colors.border}`, background: "#ffffff", boxShadow: "0 18px 45px rgba(10,40,25,0.16)", zIndex: 1000 }}>
+      {open && typeof document !== "undefined" && createPortal(
+        <div ref={panelRef} role="dialog" aria-label="Notifications" style={{ position: "fixed", top: "calc(env(safe-area-inset-top, 0px) + 68px)", right: 12, width: "min(380px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 150px)", overflow: "hidden", borderRadius: 16, border: `1px solid ${theme.colors.border}`, background: "#ffffff", boxShadow: "0 18px 45px rgba(10,35,55,0.18)", zIndex: 2000 }}>
           <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${theme.colors.border}` }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 800, color: theme.colors.text }}>Notifications</div>
-              <div style={{ marginTop: 2, fontSize: 10.5, color: theme.colors.textFaint }}>{unreadCount ? `${unreadCount} unread` : "You're all caught up"}</div>
+              <div style={{ marginTop: 2, fontSize: 12, color: theme.colors.textFaint }}>{unreadCount ? `${unreadCount} unread` : "You're all caught up"}</div>
             </div>
-            {unreadCount > 0 && <button type="button" onClick={markAllRead} style={{ border: 0, background: "transparent", color: theme.colors.primary, fontSize: 10.5, fontWeight: 800, cursor: "pointer" }}>Mark all read</button>}
+            {unreadCount > 0 && <button type="button" onClick={markAllRead} style={{ border: 0, background: "transparent", color: theme.colors.primary, fontSize: 12, fontWeight: 800, cursor: "pointer" }}>Mark all read</button>}
           </div>
 
-          <div style={{ maxHeight: "calc(100vh - 170px)", overflowY: "auto" }}>
+          <div style={{ maxHeight: "calc(100dvh - 230px)", overflowY: "auto" }}>
             {loading ? (
               <div style={{ padding: 24, textAlign: "center", color: theme.colors.textFaint, fontSize: 12 }}>Loading notifications…</div>
             ) : notifications.length === 0 ? (
@@ -197,13 +200,13 @@ export default function NotificationBell({ targetPath = "/account", audience = "
                 return (
                   <button type="button" key={notification.id} onClick={() => markRead(notification)} style={{ width: "100%", display: "block", padding: "13px 16px", textAlign: "left", border: 0, borderBottom: `1px solid ${theme.colors.border}`, background: notification.read_at ? "#ffffff" : theme.colors.primaryTint, cursor: "pointer" }}>
                     <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-                      <span style={{ width: 8, height: 8, marginTop: 5, borderRadius: "50%", background: notification.read_at ? "#c5d1ca" : theme.colors.primary, flexShrink: 0 }} />
+                      <span style={{ width: 8, height: 8, marginTop: 5, borderRadius: "50%", background: notification.read_at ? "#C8D2DF" : theme.colors.primary, flexShrink: 0 }} />
                       <span style={{ minWidth: 0, flex: 1 }}>
                         <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
                           <span style={{ minWidth: 0, fontSize: 12, fontWeight: 800, color: theme.colors.text }}>{copy.title}</span>
-                          <span style={{ flexShrink: 0, fontSize: 9.5, color: theme.colors.textFaint }}>{formatNotificationTime(notification.created_at)}</span>
+                          <span style={{ flexShrink: 0, fontSize: 12, color: theme.colors.textFaint }}>{formatNotificationTime(notification.created_at)}</span>
                         </span>
-                        <span style={{ display: "block", marginTop: 4, fontSize: 11, lineHeight: 1.45, color: theme.colors.textMuted, overflowWrap: "anywhere" }}>{copy.message}</span>
+                        <span style={{ display: "block", marginTop: 4, fontSize: 12, lineHeight: 1.45, color: theme.colors.textMuted, overflowWrap: "anywhere" }}>{copy.message}</span>
                       </span>
                     </div>
                   </button>
@@ -211,7 +214,8 @@ export default function NotificationBell({ targetPath = "/account", audience = "
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

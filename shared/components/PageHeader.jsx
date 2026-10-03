@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { theme } from "../lib/theme";
+import { supabase } from "../lib/supabaseClient";
 import AccountLink from "./AccountLink";
 import NotificationBell from "./NotificationBell";
 
@@ -14,6 +16,12 @@ function IconWhatsApp({ size = 15 }) {
   );
 }
 
+const MAIN_NAV = [
+  { href: "/", label: "Ride", match: (p) => p === "/" },
+  { href: "/subscriptions", label: "Commute", match: (p) => p.startsWith("/subscriptions") },
+  { href: "/account", label: "Account", match: (p) => p.startsWith("/account") },
+];
+
 export default function PageHeader({
   maxWidth = theme.maxWidth.content,
   showAccountLink = true,
@@ -21,7 +29,17 @@ export default function PageHeader({
   whatsappHref = null,
   whatsappLabel = "Chat with us",
   showProductBar = false,
+  showMainNav = true,
 }) {
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    if (!showMainNav) return undefined;
+    let dead = false;
+    supabase.auth.getSession().then(({ data }) => { if (!dead) setSignedIn(Boolean(data?.session)); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(Boolean(session)));
+    return () => { dead = true; listener?.subscription?.unsubscribe(); };
+  }, [showMainNav]);
+  const hasNav = showMainNav && signedIn;
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isCommute = pathname?.startsWith("/subscriptions");
@@ -33,7 +51,7 @@ export default function PageHeader({
 
   return (
     <header
-      className="voynuPageHeader"
+      className={"voynuPageHeader" + (hasNav ? " hasNav" : "")}
       style={{
         background: "linear-gradient(180deg, rgba(248,252,253,.82) 0%, rgba(238,247,249,.52) 100%)",
         backdropFilter: "blur(18px) saturate(125%)",
@@ -92,6 +110,19 @@ export default function PageHeader({
             VOYNU
           </span>
         </Link>
+
+        {hasNav && (
+          <nav className="voynuHeaderNav" aria-label="Main">
+            {MAIN_NAV.map((item) => {
+              const active = item.match(pathname || "/");
+              return (
+                <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         <div
           className="voynuHeaderActions"
@@ -164,6 +195,14 @@ export default function PageHeader({
         }
         .voynuHeaderActions > :global(*) {
           flex-shrink: 0;
+        }
+        .voynuHeaderNav { display: none; }
+        @media (min-width: 901px) {
+          .voynuHeaderNav { display: flex; align-items: center; gap: 6px; margin: 0 auto; }
+          .voynuHeaderNav :global(a) { display: inline-flex; align-items: center; min-height: 42px; padding: 0 20px; border-radius: ${theme.radius.pill}px; color: ${theme.colors.textMuted}; font-size: 14.5px; font-weight: 700; text-decoration: none; transition: background .15s ease, color .15s ease; }
+          .voynuHeaderNav :global(a:hover) { background: rgba(10,127,166,.08); color: ${theme.colors.navy}; }
+          .voynuHeaderNav :global(a.active) { background: ${theme.colors.primaryTint}; color: ${theme.colors.primary}; }
+          .hasNav .voynuHeaderAccount { display: none; }
         }
         .homeProductBar {
           border-top: 1px solid rgba(28, 111, 138, .06);

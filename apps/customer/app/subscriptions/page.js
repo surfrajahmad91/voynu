@@ -492,7 +492,7 @@ export default function CommuteSubscriptionPage() {
           .rows .good b,.rows .good span{color:#15803D}
           .total{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;padding-top:14px;border-top:1px solid var(--voynu-border-strong,#D8DEE8);font-size:15px;font-weight:600}.total b{font-size:24px;color:var(--voynu-navy,#0A2337);font-variant-numeric:tabular-nums}
           .pay{background:linear-gradient(180deg,#FFF8F1,#fff);border-color:#FFD9BD}
-          .payTag{display:inline-block;margin-bottom:8px;padding:4px 10px;border-radius:99px;background:var(--voynu-accent,#F5813F);color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.8px}
+          .payTag{display:inline-block;margin-bottom:8px;padding:4px 10px;border-radius:99px;background:var(--voynu-accent,#F5813F);color:#fff;font-size:12px;font-weight:700;letter-spacing:.8px}
           .how{margin:0;padding:0;list-style:none;display:grid;gap:10px}.how li{display:block;font-size:14px;line-height:1.5;color:var(--voynu-text,#1E3348);padding-left:16px;position:relative}
           .how li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:50%;background:var(--voynu-accent,#F5813F)}
           .dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-top:1px solid var(--voynu-border-strong,#D8DEE8);padding:10px 0 calc(10px + env(safe-area-inset-bottom))}
