@@ -246,7 +246,7 @@ export default function SignupPage() {
               Create your VOYNU account
             </h1>
             <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5, color: theme.colors.textFaint }}>
-              Sign up once and unlock rides, commute and rentals in VOYNU.
+              Sign up once to book rides and set up your daily commute.
             </p>
           </div>
 

@@ -279,14 +279,8 @@ export default function AuthLanding() {
 
             <div className="tripTypeCard landingFeatureCard">
               <span className="tripTypeIcon"><IconCar size={22} /></span>
-              <strong>Vehicle Rentals</strong>
-              <span className="tripTypeDesc">Browse approved vehicles and rent one when you need it.</span>
-            </div>
-
-            <div className="tripTypeCard landingFeatureCard landingFeatureOwner">
-              <span className="tripTypeIcon"><IconUsers size={22} /></span>
-              <strong>Have a Vehicle?</strong>
-              <span className="tripTypeDesc">Want to earn from rentals? Contact VOYNU and our team will handle the verification and listing.</span>
+              <strong>Cab Rides</strong>
+              <span className="tripTypeDesc">One-way or round-trip cabs with the full fare shown upfront. Pay at pickup.</span>
             </div>
           </div>
         </div>
@@ -384,7 +378,7 @@ export default function AuthLanding() {
         .landingSectionHead p { color: #5B6B7C; font-size: 14.5px; line-height: 1.7; }
 
         .landingFeatures { padding: 76px 0 8px; }
-        .landingFeatureGrid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+        .landingFeatureGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
         .landingFeatureCard { min-height: 168px; }
         .landingFeatureCard .tripTypeDesc { max-width: 290px; }
         .landingFeatureOwner .tripTypeIcon { background: #FFF1E7; color: #D4552A; }

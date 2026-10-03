@@ -67,7 +67,7 @@ export default function SubscriptionConfirmedPage() {
           <section className="card">
             <h2>What happens next</h2>
             <ol className="next">
-              <li><b>1</b><div><strong>VOYNU approves your request</strong><span>Requests not approved within 4 hours lapse automatically, and any wallet credits used are returned.</span></div></li>
+              <li><b>1</b><div><strong>VOYNU approves your request</strong><span>Requests not approved within 4 hours lapse automatically.</span></div></li>
               <li><b>2</b><div><strong>Your driver picks you up</strong><span>Pickups begin on {subscription.start || "your start date"}.</span></div></li>
               <li><b>3</b><div><strong>You pay at pickup</strong><span>At least that day&apos;s fare{perDay > 0 ? <> (about <em>₹{money(perDay)}</em>)</> : null}. Cash up to that amount, or UPI to VOYNU — your driver verifies the transaction reference.</span></div></li>
             </ol>
