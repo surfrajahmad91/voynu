@@ -94,3 +94,5 @@ body:has([aria-modal="true"]) .voynuBottomNav,
 body:has(.voynu-datetime-sheet.open) .voynuBottomNav,
 body:has([aria-modal="true"]) .dock,
 body:has(.voynu-datetime-sheet.open) .dock{display:none!important}
+
+summary::-webkit-details-marker{display:none}
