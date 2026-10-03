@@ -23,11 +23,15 @@ export default function WalletPage() {
     setLoading(true);
     setError("");
     const [{ data: account, error: accountError }, { data: tx, error: txError }, { data: rewardRules, error: rulesError }] = await Promise.all([
-      supabase.from("wallet_accounts").select("balance").eq("user_id", uid).maybeSingle(),
+      supabase.rpc("get_wallet_summary", { p_booking_amount: 0 }).then(({ data, error }) => ({ data: data ? { balance: data.balance } : null, error })),
       supabase.from("wallet_transactions").select("id,transaction_type,amount,balance_after,description,expires_at,created_at,booking_id,subscription_id").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
       supabase.from("wallet_reward_rules").select("id,code,qualifying_rides,reward_amount,active,description").eq("active", true).order("qualifying_rides"),
     ]);
-    if (accountError || txError || rulesError) setError((accountError || txError || rulesError)?.message || "Wallet could not be loaded.");
+    if (accountError || txError || rulesError) {
+      console.error("VOYNU wallet load:", accountError || txError || rulesError);
+      const raw = String((accountError || txError || rulesError)?.message || "");
+      setError(/permission denied/i.test(raw) ? "Your wallet activity couldn't be loaded right now. Your balance above is up to date. Please try again later." : "Wallet could not be loaded. Please check your connection and try again.");
+    }
     setBalance(Number(account?.balance || 0));
     setTransactions(tx || []);
     setRules((rewardRules || []).filter((r) => Number(r.reward_amount) > 0));
