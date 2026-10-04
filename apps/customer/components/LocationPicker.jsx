@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { loadGoogleMaps, extractCityName } from "../lib/googleMaps";
 import { theme } from "../../../shared/lib/theme";
 import MapLocationPicker from "./MapLocationPicker";
+import { PLACE_KINDS, useSavedPlaces } from "../lib/savedPlaces";
 
 const RECENT_LOCATIONS_KEY = "voynu_recent_locations_v1";
 const MAX_RECENT_LOCATIONS = 4;
@@ -36,6 +37,14 @@ function MapIcon({ size = 17 }) {
     </svg>
   );
 }
+
+function HomeIcon({ size = 16 }) {
+  return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10.5V20h13v-9.5" /><path d="M10 20v-5h4v5" /></svg>);
+}
+function WorkIcon({ size = 16 }) {
+  return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2.5" /><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" /><path d="M3 13h18" /></svg>);
+}
+const PLACE_META = { home: { label: "Home", Icon: HomeIcon }, work: { label: "Work", Icon: WorkIcon } };
 
 function ClockIcon({ size = 15 }) {
   return (
@@ -86,6 +95,10 @@ export default function LocationPicker({
   const [currentCoords, setCurrentCoords] = useState({ lat: null, lon: null });
   const [recentLocations, setRecentLocations] = useState([]);
   const [focused, setFocused] = useState(false);
+  const { places: savedPlaces, save: savePlace, remove: removePlace } = useSavedPlaces();
+  const lastSelectedRef = useRef(null);
+  const [savingKind, setSavingKind] = useState(null); // set -> next map confirm also saves this kind
+  const [editKind, setEditKind] = useState(null);
 
   const hasValue = String(value || "").trim().length > 0;
 
@@ -114,6 +127,7 @@ export default function LocationPicker({
       placeId: location.placeId || null,
       city: location.city || null,
     };
+    lastSelectedRef.current = item;
 
     try {
       const existing = JSON.parse(localStorage.getItem(RECENT_LOCATIONS_KEY) || "[]");
@@ -261,6 +275,29 @@ export default function LocationPicker({
     setMapPickerOpen(false);
     rememberLocation(location);
     onLocationSelect?.(location);
+    if (savingKind) {
+      const kind = savingKind;
+      setSavingKind(null);
+      savePlace(kind, location).catch(() => setError("Couldn't save that place. Please try again."));
+    }
+  };
+
+  const applySavedPlace = (place) => {
+    if (inputRef.current) inputRef.current.value = place.name;
+    lastSelectedRef.current = place;
+    setCurrentCoords({ lat: place.lat, lon: place.lon });
+    setError("");
+    setEditKind(null);
+    onLocationSelect?.(place);
+    setFocused(false);
+  };
+
+  const openSaveMap = (kind) => {
+    const p = savedPlaces[kind];
+    if (p) setCurrentCoords({ lat: p.lat, lon: p.lon });
+    setSavingKind(kind);
+    setEditKind(null);
+    setMapPickerOpen(true);
   };
 
   const handleClear = () => {
@@ -292,6 +329,38 @@ export default function LocationPicker({
           ? <span className={`selectedPill ${tone}`}><CheckIcon size={13} /> Selected</span>
           : <span className="locationHintLabel">{tone === "pickup" ? "Your starting point" : "Your destination"}</span>}
       </div>
+
+      {!hasValue && (
+        <div className="savedRow">
+          {PLACE_KINDS.map((kind) => {
+            const { label: kindLabel, Icon } = PLACE_META[kind];
+            const place = savedPlaces[kind];
+            return place ? (
+              <span key={kind} className="savedChip set">
+                <button type="button" className="savedChipMain" onClick={() => applySavedPlace(place)} aria-label={`Use ${kindLabel}: ${place.name}`}><Icon size={15} /> {kindLabel}</button>
+                <button type="button" className="savedChipEdit" onClick={() => setEditKind(editKind === kind ? null : kind)} aria-label={`Edit ${kindLabel}`} aria-expanded={editKind === kind}>···</button>
+              </span>
+            ) : (
+              <button key={kind} type="button" className="savedChip add" onClick={() => openSaveMap(kind)}><Icon size={15} /> Add {kindLabel}</button>
+            );
+          })}
+        </div>
+      )}
+      {!hasValue && editKind && savedPlaces[editKind] && (
+        <div className="savedEdit">
+          <span className="savedEditName">{savedPlaces[editKind].name}</span>
+          <button type="button" onClick={() => openSaveMap(editKind)}>Change</button>
+          <button type="button" className="danger" onClick={() => { const k = editKind; setEditKind(null); removePlace(k).catch(() => setError("Couldn't remove that place. Please try again.")); }}>Remove</button>
+        </div>
+      )}
+      {hasValue && lastSelectedRef.current?.name === value && PLACE_KINDS.some((k) => !savedPlaces[k]) && !PLACE_KINDS.some((k) => savedPlaces[k]?.name === value) && (
+        <div className="saveCurrent">
+          <span>Save as</span>
+          {PLACE_KINDS.filter((k) => !savedPlaces[k]).map((kind) => (
+            <button key={kind} type="button" onClick={() => savePlace(kind, lastSelectedRef.current).catch(() => setError("Couldn't save that place. Please try again."))}>{PLACE_META[kind].label}</button>
+          ))}
+        </div>
+      )}
 
       <div className={`inputWrapper ${hasValue ? "hasValue" : ""}`}>
         <input
@@ -387,15 +456,27 @@ export default function LocationPicker({
 
       <MapLocationPicker
         open={mapPickerOpen}
-        title={`Choose ${tone === "pickup" ? "pickup" : "destination"} location`}
+        title={savingKind ? `Set ${PLACE_META[savingKind].label} location` : `Choose ${tone === "pickup" ? "pickup" : "destination"} location`}
         initialLat={currentCoords.lat}
         initialLon={currentCoords.lon}
         onConfirm={handleMapConfirm}
-        onClose={() => setMapPickerOpen(false)}
+        onClose={() => { setMapPickerOpen(false); setSavingKind(null); }}
       />
 
       <style jsx>{`
         .locationPicker { width: 100%; min-width: 0; position: relative; }
+        .savedRow { display:flex; gap:8px; margin:0 0 8px; }
+        .savedChip { display:inline-flex; align-items:center; min-height:34px; border-radius:999px; font-size:13px; font-weight:800; color:${theme.colors.primary}; }
+        .savedChip.set { background:${theme.colors.primaryTint}; border:1.5px solid rgba(10,127,166,.22); overflow:hidden; }
+        .savedChip.add { gap:6px; padding:0 13px; background:transparent; border:1.5px dashed ${theme.colors.borderStrong}; color:${theme.colors.textMuted}; }
+        .savedChipMain { display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:0 6px 0 12px; border:0; background:transparent; color:inherit; font:inherit; }
+        .savedChipEdit { min-height:34px; padding:0 11px 0 4px; border:0; background:transparent; color:${theme.colors.textMuted}; font-size:15px; font-weight:800; letter-spacing:1px; }
+        .savedEdit { display:flex; align-items:center; gap:8px; margin:-2px 0 8px; padding:7px 10px; border-radius:12px; background:${theme.colors.bg}; border:1px solid ${theme.colors.border}; font-size:12px; }
+        .savedEditName { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:${theme.colors.textMuted}; }
+        .savedEdit button { min-height:30px; padding:0 10px; border-radius:9px; border:1px solid ${theme.colors.border}; background:#fff; color:${theme.colors.primary}; font-size:12px; font-weight:800; }
+        .savedEdit button.danger { color:${theme.colors.error}; }
+        .saveCurrent { display:flex; align-items:center; gap:8px; margin:0 0 8px; font-size:12px; color:${theme.colors.textMuted}; }
+        .saveCurrent button { min-height:30px; padding:0 12px; border-radius:999px; border:1.5px dashed ${theme.colors.borderStrong}; background:transparent; color:${theme.colors.primary}; font-size:12px; font-weight:800; }
         .locationLabelRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
         .locationLabel { display:flex; align-items:center; gap:7px; color:${theme.colors.text}; font-size:13px; font-weight:800; }
         .locationLabelIcon { width:25px; height:25px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:${theme.colors.primaryTint}; color:${theme.colors.primary}; }
