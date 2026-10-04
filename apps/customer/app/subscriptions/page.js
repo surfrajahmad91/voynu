@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import PageHeader from "../../../../shared/components/PageHeader";
 import WalletCheckoutCard from "../../components/WalletCheckoutCard";
 import LocationPicker from "../../components/LocationPicker";
+import RoutePreview from "../../components/RoutePreview";
 import { supabase } from "../../../../shared/lib/supabaseClient";
 
 const DAYS = [[1, "M", "Mon"], [2, "T", "Tue"], [3, "W", "Wed"], [4, "T", "Thu"], [5, "F", "Fri"], [6, "S", "Sat"], [7, "S", "Sun"]];
@@ -291,6 +292,7 @@ export default function CommuteSubscriptionPage() {
               <p className="sub">Tell us your daily route and timing.</p>
               <LocationPicker label="Pickup location" value={pickup?.name || ""} placeholder="Home / pickup point" allowCurrentLocation onLocationSelect={setLoc(setPickup)} />
               <LocationPicker label="Destination" value={drop?.name || ""} placeholder="Office / school / college" onLocationSelect={setLoc(setDrop)} />
+              <RoutePreview pickup={pickup} drop={drop} />
               <div className="distance" aria-live="polite">
                 <div>
                   <small>Road distance</small>
