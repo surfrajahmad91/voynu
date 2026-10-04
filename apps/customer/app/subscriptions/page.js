@@ -299,10 +299,10 @@ export default function CommuteSubscriptionPage() {
                 {pickup && drop && !busyDistance && <button type="button" className="ghost" onClick={calcDistance}>Recalculate</button>}
               </div>
               <div className="two">
-                <label>Morning pickup<input type="time" value={morning} onChange={(e) => { setMorning(e.target.value); invalidate(); }} /></label>
-                <label>Evening return<input type="time" value={evening} onChange={(e) => { setEvening(e.target.value); invalidate(); }} /></label>
+                <label>Morning pickup<input id="commuteMorning" data-picker-title="Morning pickup time" data-picker-sub="Your cab arrives at this time on every travel day" data-picker-placeholder="Choose pickup time" data-picker-hint="Every travel day" type="time" value={morning} onChange={(e) => { setMorning(e.target.value); invalidate(); }} /></label>
+                <label>Evening return<input id="commuteEvening" data-picker-title="Evening return time" data-picker-sub="Your cab leaves for the return trip at this time" data-picker-placeholder="Choose return time" data-picker-hint="Every travel day" type="time" value={evening} onChange={(e) => { setEvening(e.target.value); invalidate(); }} /></label>
               </div>
-              <label>Start date<input type="date" min={tomorrow} value={start} onChange={(e) => { setStart(e.target.value); invalidate(); }} /></label>
+              <label>Start date<input id="commuteStart" data-picker-title="Start date" data-picker-sub="Your first commute day" data-picker-placeholder="Choose start date" data-picker-hint="Your first commute day" type="date" min={tomorrow} value={start} onChange={(e) => { setStart(e.target.value); invalidate(); }} /></label>
               <div className="field">
                 <span className="fieldLabel">Travel days</span>
                 <div className="days" role="group" aria-label="Travel days">
