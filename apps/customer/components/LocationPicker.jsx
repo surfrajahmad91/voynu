@@ -430,7 +430,7 @@ export default function LocationPicker({
         .locationHint { margin-top:5px; color:${theme.colors.textFaint}; font-size:12px; }
         .locationError { margin-top:6px; color:${theme.colors.error}; font-size:12px; line-height:1.4; }
         @keyframes spin { to { transform:rotate(360deg); } }
-        @media (max-width:700px) { .locationInput { height:54px; font-size:16px; } .actionButton { width:40px; height:40px; } .currentLocationLink { min-height:40px; font-size:13px; } .recentItem { min-height:44px; } .locationHintLabel { display:none; } .locationHelper { font-size:12px; } }
+        @media (max-width:700px) { .locationInput { height:46px; font-size:15px; } .actionButton { width:34px; height:34px; } .currentLocationLink { min-height:32px; margin:0; font-size:12.5px; } .recentItem { min-height:44px; } .locationHintLabel { display:none; } .locationHelper { font-size:12px; margin-top:4px; margin-bottom:0; } .locationLabel { margin-bottom:6px; } }
       `}</style>
     </div>
   );

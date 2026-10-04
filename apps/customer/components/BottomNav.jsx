@@ -56,7 +56,7 @@ export default function BottomNav() {
       })}
       <style jsx>{`
         .voynuBottomNav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(3,1fr);background:rgba(255,255,255,.96);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-top:1px solid #D8DEE8;padding-bottom:env(safe-area-inset-bottom,0px)}
-        .voynuBottomNav :global(a){min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#5B6B7C;font-size:12px;font-weight:700;text-decoration:none}
+        .voynuBottomNav :global(a){min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#5B6B7C;font-size:12px;font-weight:700;text-decoration:none}
         .voynuBottomNav :global(a.active){color:#0A7FA6}
         @media(min-width:901px){.voynuBottomNav{display:none}}
       `}</style>

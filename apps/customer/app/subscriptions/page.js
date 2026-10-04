@@ -507,6 +507,40 @@ export default function CommuteSubscriptionPage() {
           button:focus-visible{outline:3px solid rgba(10,127,166,.35);outline-offset:2px}
           @media(max-width:380px){.cta{min-width:118px;padding:0 14px}.dockInfo b{font-size:15px}  .progress li span{display:none}.progress ol{grid-template-columns:repeat(4,auto);justify-content:space-between}}
           @media(prefers-reduced-motion:reduce){.bar span{transition:none}}
+        
+          @media(max-width:700px){
+            .hero{padding:12px 0 14px;text-align:center}
+            .hero h1{font-size:24px;margin:2px 0 4px;letter-spacing:-.6px}
+            .hero p{font-size:12.5px;line-height:1.4}
+            .wrap{width:calc(100% - 20px)}
+            .body{padding-top:10px}
+            .progress{margin-bottom:8px}.progress ol{margin-top:7px}
+            .progress li{justify-content:center;gap:5px;font-size:12px}
+            .progress li b{width:20px;height:20px;flex-basis:20px;font-size:12px}
+            .card{padding:12px;margin-bottom:8px;border-radius:18px}
+            h2{margin-bottom:2px;font-size:17px;text-align:center}
+            .sub{margin-bottom:10px;font-size:12.5px;line-height:1.4;text-align:center}
+            label,.fieldLabel{margin-bottom:8px;font-size:12.5px}.fieldLabel{margin-bottom:6px}
+            input,select{height:46px;margin-top:4px;font-size:15px;border-radius:12px}
+            .two{gap:8px}
+            .distance{margin:2px 0 8px;padding:9px 12px}
+            .days{gap:5px}.day{min-height:40px;font-size:13.5px;border-radius:12px}
+            .hint{margin-top:6px;font-size:12px}
+            .stepper{gap:18px;margin:2px 0 12px}.stepper button{width:44px;height:44px;font-size:22px}.stepper b{font-size:28px}
+            .person{padding:10px;margin-bottom:8px;border-radius:14px}
+            .choice{min-height:50px;padding:9px 12px;border-radius:14px}.choice b{font-size:14px}
+            .plan{min-height:88px;padding:11px;border-radius:14px}.plan b{font-size:14px}
+            .note{margin-top:10px;font-size:12px}
+            .route{margin:6px 0 10px}.route>div{font-size:14px}
+            .facts{gap:10px 12px;padding-top:10px}.facts dd{font-size:13.5px}
+            .rows>div{padding:7px 0;font-size:13.5px}
+            .total b{font-size:21px}
+            .how{gap:7px}.how li{font-size:13px}
+            .dockIn{width:calc(100% - 20px)}
+            .back{width:46px;height:46px;flex-basis:46px;border-radius:14px}
+            .cta{min-width:130px;height:46px;font-size:15px;border-radius:14px}
+            .dockInfo b{font-size:15px}
+          }
         `}</style>
       </main>
     </>

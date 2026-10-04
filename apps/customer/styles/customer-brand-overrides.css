@@ -71,10 +71,10 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 button,a,select,summary,[role="button"]{touch-action:manipulation}
 @media(max-width:700px){input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea{font-size:16px!important}}
 @supports(height:100dvh){.loading{min-height:100dvh}}
-@media(max-width:900px){body[data-bottom-nav="on"]{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:900px){body[data-bottom-nav="on"]{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}}
 
 /* Commute flow: keep its action dock (Back / Continue) above the bottom tab bar. */
-body[data-bottom-nav="on"] .dock{bottom:calc(57px + env(safe-area-inset-bottom,0px))!important;padding-bottom:10px!important}
+body[data-bottom-nav="on"] .dock{bottom:calc(53px + env(safe-area-inset-bottom,0px))!important;padding-top:8px!important;padding-bottom:8px!important}
 @media(min-width:901px){body[data-bottom-nav="on"] .dock{bottom:0!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}}
 
 /* Polish pass 2 */
@@ -99,3 +99,9 @@ summary::-webkit-details-marker{display:none}
 
 /* Commute: stack the two time pickers on phones so each button has room. */
 @media(max-width:700px){.two:has(.voynu-datetime-button){grid-template-columns:1fr!important}}
+
+/* Premium feel: tactile press feedback and a soft page fade-in. */
+button,a[href]{transition:transform .12s ease,box-shadow .2s ease,background-color .2s ease,border-color .2s ease}
+button:active:not(:disabled){transform:scale(.98)}
+@keyframes voynuFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+main{animation:voynuFade .28s ease both}
