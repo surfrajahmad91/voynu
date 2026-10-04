@@ -8,7 +8,7 @@ import { supabase } from "../lib/supabaseClient";
 import { theme } from "../lib/theme";
 
 const NOTIFICATION_TYPES = {
-  customer: ["booking_created", "booking_confirmed", "driver_assigned", "driver_on_the_way", "driver_arrived", "trip_started", "trip_waiting_for_return", "return_trip_started", "trip_completed", "booking_cancelled"],
+  customer: ["booking_created", "booking_confirmed", "driver_assigned", "driver_on_the_way", "driver_arrived", "trip_started", "trip_waiting_for_return", "return_trip_started", "trip_completed", "booking_cancelled", "ride_not_started"],
   driver: ["driver_trip_assigned"],
   admin: ["admin_booking_created"],
 };
