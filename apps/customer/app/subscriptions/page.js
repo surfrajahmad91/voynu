@@ -541,6 +541,19 @@ export default function CommuteSubscriptionPage() {
             .cta{min-width:130px;height:46px;font-size:15px;border-radius:14px}
             .dockInfo b{font-size:15px}
           }
+        
+          @media(max-width:700px){
+            .hero{display:flex;align-items:center;min-height:120px;padding:12px 0}
+            .hero .wrap{width:100%;padding:0 16px}
+            .eyebrow{display:block;margin-bottom:4px;line-height:1.2}
+            .hero h1{margin:0;font-size:24px;line-height:1.15}
+            .hero p{margin:6px 0 0}
+            .wrap.body{width:100%;padding-top:10px}
+            .progress{padding:0 14px}
+            .alert{margin:0 14px 10px}
+            .card{margin:0 0 8px;border-width:1px 0;border-radius:0;box-shadow:none;padding:12px 14px}
+            .dockIn{width:100%;padding:0 14px}
+          }
         `}</style>
       </main>
     </>
