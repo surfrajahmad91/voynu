@@ -56,15 +56,15 @@ export default function DateTimeBookingGuard() {
       style.textContent = `
         .voynu-datetime-wrap{position:relative!important}
         .voynu-datetime-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important}
-        .voynu-datetime-button{width:100%;min-height:64px;display:flex;align-items:center;gap:13px;padding:10px 14px;border:1.5px solid ${theme.colors.border};border-radius:17px;background:linear-gradient(180deg,${theme.colors.bg},${theme.colors.bg});color:${theme.colors.text};font:inherit;text-align:left;cursor:pointer;transition:.18s ease;box-shadow:0 3px 12px rgba(10,127,166,.10)}
+        .voynu-datetime-button{width:100%;min-height:54px;display:flex;align-items:center;gap:11px;padding:7px 12px;border:1.5px solid ${theme.colors.border};border-radius:17px;background:linear-gradient(180deg,${theme.colors.bg},${theme.colors.bg});color:${theme.colors.text};font:inherit;text-align:left;cursor:pointer;transition:.18s ease;box-shadow:0 3px 12px rgba(10,127,166,.10)}
         .voynu-datetime-button:hover{border-color:${theme.colors.primaryLight};background:#fff;box-shadow:0 5px 16px rgba(10,127,166,.12)}
         .voynu-datetime-button:focus-visible{outline:none;border-color:${theme.colors.primary};box-shadow:0 0 0 4px rgba(10,127,166,.11)}
         .voynu-datetime-button.is-invalid{border-color:${theme.colors.error};background:${theme.colors.errorBg};box-shadow:0 0 0 4px rgba(239,68,68,.12)}
-        .voynu-datetime-button-icon{width:40px;height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:${theme.colors.primaryTint};color:${theme.colors.primary}}
+        .voynu-datetime-button-icon{width:34px;height:34px;flex:0 0 34px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:${theme.colors.primaryTint};color:${theme.colors.primary}}
         .voynu-datetime-button-copy{min-width:0;flex:1}
-        .voynu-datetime-button-value{display:block;font-size:17px;line-height:1.15;font-weight:800;letter-spacing:-.2px;color:${theme.colors.text}}
+        .voynu-datetime-button-value{display:block;font-size:15px;line-height:1.15;font-weight:800;letter-spacing:-.2px;color:${theme.colors.text}}
         .voynu-datetime-button-value.placeholder{color:${theme.colors.textFaint};font-weight:650}
-        .voynu-datetime-button-hint{display:block;margin-top:4px;color:${theme.colors.textMuted};font-size:12px;font-weight:600}
+        .voynu-datetime-button-hint{display:block;margin-top:2px;color:${theme.colors.textMuted};font-size:12px;font-weight:600}
         .voynu-datetime-chevron{width:18px;height:18px;flex:0 0 18px;color:${theme.colors.textMuted}}
         .voynu-datetime-inline-error{display:flex;align-items:flex-start;gap:8px;margin:7px 2px 0;padding:9px 11px;border:1px solid rgba(239,68,68,.30);border-radius:11px;background:${theme.colors.errorBg};color:${theme.colors.error};font-size:12px;line-height:1.4;font-weight:700}
         .voynu-datetime-inline-error .err-dot{width:19px;height:19px;flex:0 0 19px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${theme.colors.error};color:#fff;font-size:12px;font-weight:900}
