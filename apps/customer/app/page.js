@@ -198,5 +198,16 @@ export default function HomePage() {
 .nextStepHint{margin-top:8px;padding:8px 10px;font-size:12px}
 .bookingFooter{margin-top:8px;font-size:12px}
 }
+
+@media(max-width:700px){
+.hero{display:flex;align-items:center;min-height:120px;border-bottom:3px solid ${theme.colors.accent}}
+.heroInner{width:100%;margin:0;padding:12px 16px}
+.heroGrid{width:100%}
+.heroEyebrow{margin-bottom:4px;font-size:12px;line-height:1.2}
+.heroText h1{margin:0;font-size:24px;line-height:1.15}
+.heroText p{margin:6px auto 0;font-size:12.5px;line-height:1.4}
+.bookingSection{width:100%;margin:0;padding-bottom:0}
+.bookingCard{border-radius:0;border:0;box-shadow:none;background:#fff;padding:12px 14px 16px}
+}
 `}</style></main>);
 }
