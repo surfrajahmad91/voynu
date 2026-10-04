@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { theme } from "../../../shared/lib/theme";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -29,9 +30,14 @@ const toMinutes = (value) => {
 };
 const fromMinutes = (minutes) => `${pad(Math.floor(minutes / 60) % 24)}:${pad(minutes % 60)}`;
 
+// Pages whose date/time fields get the VOYNU picker sheet instead of the browser's native pickers.
+const PICKER_PATHS = ["/", "/subscriptions"];
+
 export default function DateTimeBookingGuard() {
+  const pathname = usePathname();
   useEffect(() => {
-    if (window.location.pathname !== "/") return undefined;
+    // Re-evaluated on every client-side navigation (e.g. via the bottom tab bar), not only on first load.
+    if (!PICKER_PATHS.includes(pathname || window.location.pathname)) return undefined;
 
     let durationSeconds = null;
     let destroyed = false;
@@ -40,7 +46,7 @@ export default function DateTimeBookingGuard() {
     let activeInput = null;
     let calendarMonth = new Date();
     const originalFetch = window.fetch.bind(window);
-    const ids = ["travelDate", "pickupTime", "returnDate", "returnTime"];
+    const ids = ["travelDate", "pickupTime", "returnDate", "returnTime", "commuteMorning", "commuteEvening", "commuteStart"];
     const get = (id) => document.getElementById(id);
 
     const ensureStyles = () => {
@@ -140,6 +146,7 @@ export default function DateTimeBookingGuard() {
         const travel = get("travelDate")?.value || today;
         return { min: travel > today ? travel : today, max: travel || today };
       }
+      if (input?.dataset?.pickerTitle) return { min: input.min || today, max: input.max || null };
       return { min: null, max: null };
     };
 
@@ -222,7 +229,7 @@ export default function DateTimeBookingGuard() {
     const renderTimeSheet = (input, body) => {
       const { slots, min, max, selectedDate } = buildTimeSlots(input);
       const groups = [["Morning", slots.filter((s) => s.minutes < 12 * 60)], ["Afternoon", slots.filter((s) => s.minutes >= 12 * 60 && s.minutes < 17 * 60)], ["Evening", slots.filter((s) => s.minutes >= 17 * 60)]];
-      body.innerHTML = `<div class="voynu-datetime-head"><div><h3>${input.id === "returnTime" ? "When will you return?" : "When should we pick you up?"}</h3><p>${selectedDate ? dateLabel(selectedDate, true) : "Select a travel date first."}</p></div><button class="voynu-datetime-close" type="button" aria-label="Close">×</button></div><div class="voynu-datetime-time-groups"></div><div class="voynu-datetime-info"></div><button type="button" class="voynu-datetime-confirm">Done</button>`;
+      body.innerHTML = `<div class="voynu-datetime-head"><div><h3>${input.dataset.pickerTitle || (input.id === "returnTime" ? "When will you return?" : "When should we pick you up?")}</h3><p>${input.dataset.pickerSub || (selectedDate ? dateLabel(selectedDate, true) : "Select a travel date first.")}</p></div><button class="voynu-datetime-close" type="button" aria-label="Close">×</button></div><div class="voynu-datetime-time-groups"></div><div class="voynu-datetime-info"></div><button type="button" class="voynu-datetime-confirm">Done</button>`;
       body.querySelector(".voynu-datetime-close").addEventListener("click", closeSheet);
       const groupsEl = body.querySelector(".voynu-datetime-time-groups");
       groups.forEach(([name, items]) => {
@@ -262,8 +269,8 @@ export default function DateTimeBookingGuard() {
       const button = field(input)?.querySelector(`.voynu-datetime-button[data-for="${input.id}"]`);
       if (!button) return;
       const value = button.querySelector(".voynu-datetime-button-value"); const hint = button.querySelector(".voynu-datetime-button-hint");
-      if (input.type === "date") { value.textContent = input.value ? dateLabel(input.value) : (input.id === "returnDate" ? "Choose return date" : "Choose travel date"); hint.textContent = input.value ? (input.id === "returnDate" ? "Return journey" : "Your journey date") : "Tap to open calendar"; }
-      else { value.textContent = input.value ? timeLabel(input.value) : (input.id === "returnTime" ? "Choose return time" : "Choose pickup time"); hint.textContent = input.value ? "Selected time" : "Tap to choose a time"; }
+      if (input.type === "date") { value.textContent = input.value ? dateLabel(input.value) : (input.dataset.pickerPlaceholder || (input.id === "returnDate" ? "Choose return date" : "Choose travel date")); hint.textContent = input.value ? (input.dataset.pickerHint || (input.id === "returnDate" ? "Return journey" : "Your journey date")) : "Tap to open calendar"; }
+      else { value.textContent = input.value ? timeLabel(input.value) : (input.dataset.pickerPlaceholder || (input.id === "returnTime" ? "Choose return time" : "Choose pickup time")); hint.textContent = input.value ? (input.dataset.pickerHint || "Selected time") : "Tap to choose a time"; }
       value.classList.toggle("placeholder", !input.value);
     };
 
@@ -289,6 +296,8 @@ export default function DateTimeBookingGuard() {
       if (destroyed) return; ensureStyles();
       const travelDate = get("travelDate"); const pickupTime = get("pickupTime"); const returnDate = get("returnDate"); const returnTime = get("returnTime");
       wrapInput(travelDate, "date"); wrapInput(pickupTime, "time"); wrapInput(returnDate, "date"); wrapInput(returnTime, "time");
+      const commuteInputs = [get("commuteMorning"), get("commuteEvening"), get("commuteStart")];
+      wrapInput(commuteInputs[0], "time"); wrapInput(commuteInputs[1], "time"); wrapInput(commuteInputs[2], "date");
       const today = localDate(); const now = localTime();
       if (travelDate) travelDate.min = today;
       if (pickupTime) { if (travelDate?.value === today) pickupTime.min = now; else pickupTime.removeAttribute("min"); }
@@ -298,7 +307,7 @@ export default function DateTimeBookingGuard() {
         const start = parseLocal(travelDate.value, pickupTime.value);
         if (start) { const arrival = new Date(start.getTime() + Number(durationSeconds) * 1000); const latest = new Date(arrival.getTime() + 180 * 60000); returnTime.min = `${pad(arrival.getHours())}:${pad(arrival.getMinutes())}`; returnTime.max = `${pad(latest.getHours())}:${pad(latest.getMinutes())}`; const ret = parseLocal(returnDate.value, returnTime.value); if (ret && ret < arrival) addLocal(returnTime, `Return must be after your estimated arrival at ${timeLabel(arrival)}.`); else if (ret && ret > latest) addLocal(returnTime, `Please return by ${timeLabel(latest)}. Maximum waiting time is 3 hours after arrival.`); else if (ret) addMeta(returnTime, [`Arrival ${timeLabel(arrival)}`, `Latest ${timeLabel(latest)}`]); }
       }
-      [travelDate,pickupTime,returnDate,returnTime].forEach(updateButton); suppressGlobalMessage();
+      [travelDate,pickupTime,returnDate,returnTime,...commuteInputs].forEach((i) => { if (i) updateButton(i); }); suppressGlobalMessage();
     };
 
     const onInput = (event) => { if (!ids.includes(event.target?.id)) return; clearLocal(event.target); window.setTimeout(refresh, 0); };
@@ -318,7 +327,7 @@ export default function DateTimeBookingGuard() {
     observer.observe(document.body, { childList: true, subtree: true });
     const timer = window.setTimeout(refresh, 250);
     return () => { destroyed = true; clearTimeout(timer); if (raf) cancelAnimationFrame(raf); observer?.disconnect(); document.removeEventListener("input", onInput, true); document.removeEventListener("change", onChange, true); window.fetch = originalFetch; backdrop?.remove(); sheet?.remove(); document.getElementById("voynu-datetime-polish-v5")?.remove(); };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

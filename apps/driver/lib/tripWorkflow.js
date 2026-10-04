@@ -12,7 +12,7 @@ export function nextStepFor(booking, accepted) {
   if (status === "on_the_way") return { next: "arrived", label: "Arrived at pickup" };
   if (status === "arrived") return { next: "trip_started", label: round ? "Start outbound journey" : "Start journey" };
   if (status === "trip_started") return round ? { next: "waiting_for_return", label: "Reached destination" } : { next: "trip_completed", label: "Reached destination · Complete trip" };
-  if (status === "waiting_for_return") return { next: "return_trip_started", label: "Start return journey" };
+  if (status === "waiting_for_return") return booking?.return_cancelled_at ? { next: "trip_completed", label: "Return cancelled · Complete trip" } : { next: "return_trip_started", label: "Start return journey" };
   if (status === "return_trip_started") return { next: "trip_completed", label: "Reached back · Complete trip" };
   return null;
 }

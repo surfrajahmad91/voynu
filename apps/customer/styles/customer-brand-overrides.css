@@ -96,3 +96,6 @@ body:has([aria-modal="true"]) .dock,
 body:has(.voynu-datetime-sheet.open) .dock{display:none!important}
 
 summary::-webkit-details-marker{display:none}
+
+/* Commute: stack the two time pickers on phones so each button has room. */
+@media(max-width:700px){.two:has(.voynu-datetime-button){grid-template-columns:1fr!important}}
