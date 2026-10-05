@@ -369,7 +369,7 @@ export default function AuthLanding() {
         .landingTripTypes { padding: 6px 0 14px; }
         .landingTripTypeGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         .tripTypeCard { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 16px; border-radius: 18px; background: #fff; border: 1px solid #EEF3F7; box-shadow: 0 10px 26px rgba(10,35,55,.05); }
-        .tripTypeIcon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: #E7F4F8; color: #0A7FA6; }
+        .tripTypeIcon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #E7F4F8; color: #0A7FA6; }
         .tripTypeCard strong { font-size: 13px; color: #0A2337; }
         .tripTypeDesc { font-size:12px; color: #5B6B7C; line-height: 1.4; }
 
@@ -447,7 +447,7 @@ export default function AuthLanding() {
 
 const primaryButtonStyle = {
   minHeight: 54,
-  borderRadius: 15,
+  borderRadius: 16,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -461,7 +461,7 @@ const primaryButtonStyle = {
 
 const secondaryButtonStyle = {
   minHeight: 54,
-  borderRadius: 15,
+  borderRadius: 16,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -491,7 +491,7 @@ const brandLinkStyle = {
 };
 
 const brandIconStyle = {
-  borderRadius: 13,
+  borderRadius: 12,
   display: "block",
   boxShadow: "0 8px 20px rgba(10,35,55,.18)",
 };

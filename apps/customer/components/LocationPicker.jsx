@@ -501,7 +501,7 @@ export default function LocationPicker({
         .currentLocationLink:disabled { opacity:.55; cursor:wait; }
         .locationHelper { display:flex; justify-content:space-between; align-items:center; margin-top:7px; margin-bottom:2px; color:${theme.colors.textFaint}; font-size:12px; line-height:1.3; }
         .mapHelper { display:inline-flex; align-items:center; gap:3px; color:${theme.colors.textMuted}; font-weight:700; }
-        .recentLocations { position:absolute; left:0; right:0; top:86px; z-index:30; padding:9px; border:1px solid ${theme.colors.border}; border-radius:13px; background:#fff; box-shadow:${theme.shadow.raised}; }
+        .recentLocations { position:absolute; left:0; right:0; top:86px; z-index:30; padding:9px; border:1px solid ${theme.colors.border}; border-radius:12px; background:#fff; box-shadow:${theme.shadow.raised}; }
         .recentTitle { display:flex; align-items:center; gap:6px; padding:3px 5px 7px; color:${theme.colors.textMuted}; font-size:12px; font-weight:800; }
         .recentItem { width:100%; display:flex; align-items:center; gap:9px; padding:9px 7px; border:0; border-radius:9px; background:transparent; color:${theme.colors.text}; text-align:left; font-family:inherit; cursor:pointer; }
         .recentItem:hover { background:${theme.colors.primaryTint}; }
