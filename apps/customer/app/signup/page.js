@@ -97,7 +97,7 @@ export default function SignupPage() {
     border: "1.5px solid #e3e9e5",
     borderRadius: 12,
     padding: "0 14px",
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: theme.fontFamily,
     outline: "none",
     boxSizing: "border-box",
@@ -115,10 +115,10 @@ export default function SignupPage() {
       {accountExists ? (
         <>
           <div style={{ marginBottom: 18 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: theme.colors.text }}>
               Account already associated
             </h1>
-            <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5, color: theme.colors.textFaint }}>
+            <p style={{ margin: "7px 0 0", fontSize: 12.5, lineHeight: 1.5, color: theme.colors.textFaint }}>
               This email is already associated with a VOYNU account.
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function SignupPage() {
             background: "linear-gradient(145deg, rgba(231,244,248,.76), rgba(255,255,255,.66))",
             border: "1px solid rgba(18,160,198,.11)",
             color: theme.colors.textMuted,
-            fontSize: 12.5,
+            fontSize: 12,
             lineHeight: 1.5,
             boxShadow: "inset 0 1px 0 rgba(255,255,255,.9)",
           }}>
@@ -150,7 +150,7 @@ export default function SignupPage() {
                 justifyContent: "center",
                 background: "rgba(18,160,198,.12)",
                 color: theme.colors.primary,
-                fontSize: 13,
+                fontSize: 12.5,
                 flexShrink: 0,
               }}>✓</span>
               VOYNU account found
@@ -163,7 +163,7 @@ export default function SignupPage() {
               flex: 1, height: 48, borderRadius: 13, display: "flex", alignItems: "center",
               justifyContent: "center", boxSizing: "border-box",
               background: theme.gradients.primary, color: "#fff",
-              fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 13, textDecoration: "none",
+              fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 12.5, textDecoration: "none",
               boxShadow: theme.shadow.button,
             }}>
               Log in
@@ -172,7 +172,7 @@ export default function SignupPage() {
               flex: 1, height: 48, borderRadius: 13, display: "flex", alignItems: "center",
               justifyContent: "center", boxSizing: "border-box",
               border: "1px solid #dce5e1", background: "#fff", color: theme.colors.text,
-              fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 13, textDecoration: "none",
+              fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 12.5, textDecoration: "none",
             }}>
               Reset password
             </Link>
@@ -181,10 +181,10 @@ export default function SignupPage() {
       ) : verificationSent ? (
         <>
           <div style={{ marginBottom: 18 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: theme.colors.text }}>
               Check your inbox
             </h1>
-            <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5, color: theme.colors.textFaint }}>
+            <p style={{ margin: "7px 0 0", fontSize: 12.5, lineHeight: 1.5, color: theme.colors.textFaint }}>
               One quick step before you start using VOYNU.
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function SignupPage() {
             background: "linear-gradient(145deg, rgba(231,244,248,.76), rgba(255,255,255,.66))",
             border: "1px solid rgba(18,160,198,.11)",
             color: theme.colors.textMuted,
-            fontSize: 12.5,
+            fontSize: 12,
             lineHeight: 1.5,
             boxShadow: "inset 0 1px 0 rgba(255,255,255,.9)",
           }}>
@@ -216,7 +216,7 @@ export default function SignupPage() {
                 justifyContent: "center",
                 background: "rgba(18,160,198,.12)",
                 color: theme.colors.primary,
-                fontSize: 13,
+                fontSize: 12.5,
                 flexShrink: 0,
               }}>✓</span>
               Check your email
@@ -225,7 +225,7 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div style={{ marginTop: 12, color: theme.colors.error, fontSize: 12.5, fontWeight: 600 }}>
+            <div style={{ marginTop: 12, color: theme.colors.error, fontSize: 12, fontWeight: 600 }}>
               {error}
             </div>
           )}
@@ -233,7 +233,7 @@ export default function SignupPage() {
           <button type="button" onClick={handleResend} disabled={resending} style={{
             width: "100%", height: 50, marginTop: 16, border: 0, borderRadius: 13,
             background: theme.gradients.primary, color: "#fff", fontFamily: theme.fontFamily,
-            fontWeight: 800, fontSize: 14, cursor: resending ? "wait" : "pointer",
+            fontWeight: 800, fontSize: 13, cursor: resending ? "wait" : "pointer",
             opacity: resending ? 0.7 : 1, boxShadow: theme.shadow.button,
           }}>
             {resending ? "Sending..." : "Resend verification"}
@@ -242,10 +242,10 @@ export default function SignupPage() {
       ) : (
         <>
           <div style={{ marginBottom: 18 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.colors.text }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: theme.colors.text }}>
               Create your VOYNU account
             </h1>
-            <p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5, color: theme.colors.textFaint }}>
+            <p style={{ margin: "7px 0 0", fontSize: 12.5, lineHeight: 1.5, color: theme.colors.textFaint }}>
               Sign up once to book rides and set up your daily commute.
             </p>
           </div>
@@ -254,10 +254,10 @@ export default function SignupPage() {
             <input type="text" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
             <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
             <input type="password" placeholder="Password (6+ characters)" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} />
-            {error && <div style={{ color: theme.colors.error, fontSize: 12.5, fontWeight: 600 }}>{error}</div>}
+            {error && <div style={{ color: theme.colors.error, fontSize: 12, fontWeight: 600 }}>{error}</div>}
             <button type="submit" disabled={loading} style={{
               height: 52, border: 0, borderRadius: 13, background: theme.gradients.primary,
-              color: "#ffffff", fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 14,
+              color: "#ffffff", fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 13,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1, marginTop: 6,
               boxShadow: theme.shadow.button,
             }}>
@@ -268,7 +268,7 @@ export default function SignupPage() {
       )}
 
       {!accountExists && (
-        <p style={{ marginTop: 20, textAlign: "center", fontSize: 13, color: theme.colors.textFaint }}>
+        <p style={{ marginTop: 20, textAlign: "center", fontSize: 12.5, color: theme.colors.textFaint }}>
           Already have an account?{" "}
           <Link href="/login" style={{ color: theme.colors.primary, fontWeight: 700 }}>
             Log in

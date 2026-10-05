@@ -188,7 +188,7 @@ export default function CabSelectionPage() {
 }
 
 .summaryCard{padding:16px 18px}
-.summaryRoute{display:flex;align-items:flex-start;gap:12px;font-size:14px;font-weight:600;line-height:1.4}
+.summaryRoute{display:flex;align-items:flex-start;gap:12px;font-size:13px;font-weight:600;line-height:1.4}
 .summaryAddress{min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .routeDot{width:9px;height:9px;margin-top:6px;border-radius:50%;flex:0 0 9px}
 .routeDot.pickup{background:${theme.colors.primary};box-shadow:0 0 0 4px ${theme.colors.primaryTint}}
@@ -196,20 +196,20 @@ export default function CabSelectionPage() {
 .routeLine{width:1px;height:18px;margin:3px 0 3px 4px;background:${theme.colors.borderStrong}}
 .summaryMeta{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:14px;padding-top:12px;border-top:1px solid ${theme.colors.border};color:${theme.colors.textMuted};font-size:12px}
 
-.sectionHeading{margin:26px 0 10px;font-size:16px;font-weight:700;color:${theme.colors.textMuted}}
+.sectionHeading{margin:26px 0 10px;font-size:14.5px;font-weight:700;color:${theme.colors.textMuted}}
 
 .requirementsCard{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
-.requirementsCard label{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.requirementsCard label{display:flex;align-items:center;gap:8px;font-size:13px}
 .requirementsCard label span{color:${theme.colors.textMuted}}
 select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border-radius:${theme.radius.sm}px;background:${theme.colors.bg};color:${theme.colors.text};font:inherit;font-weight:600}
 
 .statusCard{display:flex;gap:14px;align-items:center;padding:16px}
-.statusCard strong,.errorCard strong{font-size:14.5px}
-.statusCard p,.errorCard p{margin:6px 0 0;color:${theme.colors.textMuted};font-size:13px;line-height:1.5}
+.statusCard strong,.errorCard strong{font-size:13.5px}
+.statusCard p,.errorCard p{margin:6px 0 0;color:${theme.colors.textMuted};font-size:12.5px;line-height:1.5}
 .errorCard{background:${theme.colors.errorBg};border-color:#efd2cd;padding:16px}
 .errorCard strong{color:#8e3029}
 .errorCard details{margin-top:10px}
-.errorCard summary{cursor:pointer;font-weight:700;color:#8e3029;font-size:13px}
+.errorCard summary{cursor:pointer;font-weight:700;color:#8e3029;font-size:12.5px}
 .errorCard pre{margin:8px 0 0;padding:12px;overflow:auto;border-radius:${theme.radius.sm}px;background:${theme.colors.navy};color:#dce8df;font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
 .retryButton{margin-top:12px;border:0;border-radius:${theme.radius.sm}px;padding:10px 16px;background:${theme.colors.primary};color:#fff;font-weight:700;cursor:pointer}
 
@@ -223,14 +223,14 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .cabCard.unavailable{cursor:not-allowed;background:${theme.colors.bg};align-items:flex-start}
 .cabCard.unavailable .cabName,.cabCard.unavailable .cabPrice{color:${theme.colors.textMuted}}
 .cabCardLeft{min-width:0;flex:1}
-.cabName{font-size:15px;font-weight:700}
+.cabName{font-size:14px;font-weight:700}
 .cabMeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:5px;color:${theme.colors.textMuted};font-size:12px;line-height:1.4}
 .cabUnavailableReason{margin-top:9px;padding:9px 10px;border-radius:${theme.radius.sm}px;background:#fff;border:1px solid ${theme.colors.border}}
 .cabUnavailableTitle{display:flex;align-items:center;gap:6px;color:${theme.colors.textMuted};font-size:12px;font-weight:700}
 .cabUnavailableText{margin-top:4px;color:${theme.colors.textMuted};font-size:12px;line-height:1.45}
 .cabUnavailableHint{margin-top:3px;color:${theme.colors.textFaint};font-size:12px;line-height:1.4}
 .cabCardRight{display:flex;align-items:center;gap:12px;flex:0 0 auto}
-.cabPrice{font-size:17px;font-weight:700}
+.cabPrice{font-size:15.5px;font-weight:700}
 .cabRadio{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1.5px solid ${theme.colors.borderStrong};border-radius:50%;color:#fff;flex:0 0 20px}
 .cabRadio.active{border-color:${theme.colors.primary};background:${theme.colors.primary}}
 .dataHealth{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;color:${theme.colors.textMuted};font-size:12px}
@@ -240,10 +240,10 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .paymentCard.active{opacity:1;border-color:${theme.colors.primary};background:${theme.colors.primaryTint};color:${theme.colors.primary}}
 
 .couponCard{margin-top:10px;overflow:hidden}
-.couponTrigger{appearance:none;-webkit-appearance:none;width:100%;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:12px 14px;border:0;background:transparent;color:${theme.colors.text};font-family:inherit;font-size:13px;text-align:left;cursor:pointer}
+.couponTrigger{appearance:none;-webkit-appearance:none;width:100%;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:12px 14px;border:0;background:transparent;color:${theme.colors.text};font-family:inherit;font-size:12.5px;text-align:left;cursor:pointer}
 .couponTriggerLeft{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .couponIcon,.couponAppliedIcon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:0 0 32px;border-radius:${theme.radius.sm}px;background:${theme.colors.primaryTint};color:${theme.colors.primary}}
-.couponTrigger strong,.couponAppliedCopy strong{display:block;font-size:13px;font-weight:700}
+.couponTrigger strong,.couponAppliedCopy strong{display:block;font-size:12.5px;font-weight:700}
 .couponTrigger small,.couponAppliedCopy span{display:block;margin-top:2px;color:${theme.colors.textMuted};font-size:12px}
 .couponAction{flex:0 0 auto;padding:7px 12px;border-radius:${theme.radius.sm}px;background:${theme.colors.primary};color:#fff;font-size:12px;font-weight:700}
 .couponForm{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:0 14px 14px}
@@ -257,22 +257,22 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .couponRemove{appearance:none;border:0;background:transparent;color:#b64c32;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 
 .fareBreakdown{margin-top:12px;padding:16px 18px}
-.fareRow{display:flex;justify-content:space-between;gap:14px;padding:6px 0;color:${theme.colors.textMuted};font-size:13px}
+.fareRow{display:flex;justify-content:space-between;gap:14px;padding:6px 0;color:${theme.colors.textMuted};font-size:12.5px}
 .fareRow.subtotal{margin-top:6px;padding-top:12px;border-top:1px solid ${theme.colors.border};font-weight:700;color:${theme.colors.text}}
 .fareRow.minimumAdjustment{color:${theme.colors.textMuted}}
 .fareRow.minimumAdjustment span:first-child{display:flex;align-items:center;gap:5px}
 .minimumFareNote{margin-top:2px;color:${theme.colors.textFaint};font-size:12px;line-height:1.45}
 .discountRow{color:${theme.colors.primary};font-weight:700}
-.fareRow.total{margin-top:6px;padding-top:13px;border-top:1px solid ${theme.colors.border};color:${theme.colors.text};font-size:18px;font-weight:700}
+.fareRow.total{margin-top:6px;padding-top:13px;border-top:1px solid ${theme.colors.border};color:${theme.colors.text};font-size:16px;font-weight:700}
 
 .availabilityNotice{margin-top:12px;display:flex;gap:12px;align-items:flex-start;background:${theme.colors.primaryTint};padding:16px}
 .availabilityNoticeIcon{width:32px;height:32px;flex:0 0 32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;color:${theme.colors.primary}}
-.availabilityNotice strong{display:block;font-size:14px}
+.availabilityNotice strong{display:block;font-size:13px}
 .availabilityNotice p{margin:5px 0 0;color:${theme.colors.textMuted};font-size:12px;line-height:1.5}
 .availabilityNotice .diagnosticLine{color:${theme.colors.textFaint}}
 
 .confirmError{margin-top:14px}
-.desktopConfirmButton{width:100%;min-height:54px;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:${theme.radius.md}px;background:${theme.gradients.primary};box-shadow:${theme.shadow.button};color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.desktopConfirmButton{width:100%;min-height:54px;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:${theme.radius.md}px;background:${theme.gradients.primary};box-shadow:${theme.shadow.button};color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .desktopConfirmButton:disabled{opacity:.7;cursor:wait}
 .disclaimer{margin:12px 2px 0;text-align:center;color:${theme.colors.textFaint};font-size:12px;line-height:1.5}
 
@@ -287,11 +287,11 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
   }
   .mobileConfirmAmount{min-width:60px;display:flex;flex-direction:column;gap:1px}
   .mobileConfirmAmount small{font-size:12px;color:${theme.colors.textMuted};font-weight:700}
-  .mobileConfirmAmount strong{font-size:16px;color:${theme.colors.text};font-weight:800}
-  .mobileConfirmButton{flex:1;min-height:46px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:${theme.radius.sm}px;background:${theme.gradients.primary};color:#fff;font-family:inherit;font-size:13px;font-weight:700}
+  .mobileConfirmAmount strong{font-size:14.5px;color:${theme.colors.text};font-weight:800}
+  .mobileConfirmButton{flex:1;min-height:46px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:${theme.radius.sm}px;background:${theme.gradients.primary};color:#fff;font-family:inherit;font-size:12.5px;font-weight:700}
   .mobileConfirmButton:disabled{opacity:.7}
   .requirementsCard{padding:12px 14px}
-  .sectionHeading{font-size:15px;margin:22px 0 10px}
+  .sectionHeading{font-size:14px;margin:22px 0 10px}
 }
 `}</style></main>
   );

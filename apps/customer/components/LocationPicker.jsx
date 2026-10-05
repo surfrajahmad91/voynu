@@ -466,11 +466,11 @@ export default function LocationPicker({
       <style jsx>{`
         .locationPicker { width: 100%; min-width: 0; position: relative; }
         .savedRow { display:flex; gap:8px; margin:0 0 8px; }
-        .savedChip { display:inline-flex; align-items:center; min-height:34px; border-radius:999px; font-size:13px; font-weight:800; color:${theme.colors.primary}; }
+        .savedChip { display:inline-flex; align-items:center; min-height:34px; border-radius:999px; font-size:12.5px; font-weight:800; color:${theme.colors.primary}; }
         .savedChip.set { background:${theme.colors.primaryTint}; border:1.5px solid rgba(10,127,166,.22); overflow:hidden; }
         .savedChip.add { gap:6px; padding:0 13px; background:transparent; border:1.5px dashed ${theme.colors.borderStrong}; color:${theme.colors.textMuted}; }
         .savedChipMain { display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:0 6px 0 12px; border:0; background:transparent; color:inherit; font:inherit; }
-        .savedChipEdit { min-height:34px; padding:0 11px 0 4px; border:0; background:transparent; color:${theme.colors.textMuted}; font-size:15px; font-weight:800; letter-spacing:1px; }
+        .savedChipEdit { min-height:34px; padding:0 11px 0 4px; border:0; background:transparent; color:${theme.colors.textMuted}; font-size:14px; font-weight:800; letter-spacing:1px; }
         .savedEdit { display:flex; align-items:center; gap:8px; margin:-2px 0 8px; padding:7px 10px; border-radius:12px; background:${theme.colors.bg}; border:1px solid ${theme.colors.border}; font-size:12px; }
         .savedEditName { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:${theme.colors.textMuted}; }
         .savedEdit button { min-height:30px; padding:0 10px; border-radius:9px; border:1px solid ${theme.colors.border}; background:#fff; color:${theme.colors.primary}; font-size:12px; font-weight:800; }
@@ -478,12 +478,12 @@ export default function LocationPicker({
         .saveCurrent { display:flex; align-items:center; gap:8px; margin:0 0 8px; font-size:12px; color:${theme.colors.textMuted}; }
         .saveCurrent button { min-height:30px; padding:0 12px; border-radius:999px; border:1.5px dashed ${theme.colors.borderStrong}; background:transparent; color:${theme.colors.primary}; font-size:12px; font-weight:800; }
         .locationLabelRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
-        .locationLabel { display:flex; align-items:center; gap:7px; color:${theme.colors.text}; font-size:13px; font-weight:800; }
+        .locationLabel { display:flex; align-items:center; gap:7px; color:${theme.colors.text}; font-size:12.5px; font-weight:800; }
         .locationLabelIcon { width:25px; height:25px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:${theme.colors.primaryTint}; color:${theme.colors.primary}; }
         .locationLabelIcon.drop { background:#FFF1E7; color:${theme.colors.accentDark}; }
         .locationHintLabel { color:${theme.colors.textFaint}; font-size:12px; font-weight:600; }
         .inputWrapper { position:relative; width:100%; }
-        .locationInput { width:100%; height:56px; text-overflow:ellipsis; padding:0 15px; border:1.5px solid ${theme.colors.border}; border-radius:14px; background:${theme.colors.bg}; color:${theme.colors.text}; font-family:inherit; font-size:14px; outline:none; transition:border-color .2s ease,box-shadow .2s ease,background .2s ease; }
+        .locationInput { width:100%; height:56px; text-overflow:ellipsis; padding:0 15px; border:1.5px solid ${theme.colors.border}; border-radius:14px; background:${theme.colors.bg}; color:${theme.colors.text}; font-family:inherit; font-size:13px; outline:none; transition:border-color .2s ease,box-shadow .2s ease,background .2s ease; }
         .locationInput::placeholder { color:${theme.colors.textFaint}; }
         .locationInput:focus { border-color:${theme.colors.primary}; background:#fff; box-shadow:0 0 0 4px rgba(10,127,166,.10); }
         .inputWrapper:has(.locationInput:focus) .locationLabelIcon { box-shadow:0 0 0 3px rgba(10,127,166,.10); }
@@ -511,7 +511,7 @@ export default function LocationPicker({
         .locationHint { margin-top:5px; color:${theme.colors.textFaint}; font-size:12px; }
         .locationError { margin-top:6px; color:${theme.colors.error}; font-size:12px; line-height:1.4; }
         @keyframes spin { to { transform:rotate(360deg); } }
-        @media (max-width:700px) { .locationInput { height:46px; font-size:15px; } .actionButton { width:34px; height:34px; } .currentLocationLink { min-height:32px; margin:0; font-size:12.5px; } .recentItem { min-height:44px; } .locationHintLabel { display:none; } .locationHelper { font-size:12px; margin-top:4px; margin-bottom:0; } .locationLabel { margin-bottom:6px; } }
+        @media (max-width:700px) { .locationInput { height:46px; font-size:14px; } .actionButton { width:34px; height:34px; } .currentLocationLink { min-height:32px; margin:0; font-size:12px; } .recentItem { min-height:44px; } .locationHintLabel { display:none; } .locationHelper { font-size:12px; margin-top:4px; margin-bottom:0; } .locationLabel { margin-bottom:6px; } }
       `}</style>
     </div>
   );
