@@ -334,7 +334,7 @@ export default function AuthLanding() {
         .landingEyebrowCenter { justify-content: center; }
         h1 { margin: 16px 0 0; font-size: clamp(48px,6vw,76px); line-height: .98; letter-spacing: -3px; font-weight: 800; color: #0A2337; }
         h1 span { background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .landingLead { max-width: 500px; margin: 22px 0 0; color: #5B6B7C; font-size: 15px; line-height: 1.7; }
+        .landingLead { max-width: 500px; margin: 22px 0 0; color: #5B6B7C; font-size: 14px; line-height: 1.7; }
         .landingPills { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 25px; }
         .pill { display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 30px; background: #FFFFFF; border: 1px solid #EEF3F7; color: #344052; font-size: 12px; font-weight: 700; white-space: nowrap; }
         .pillIcon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #E7F4F8; color: #00456B; flex-shrink: 0; }
@@ -370,12 +370,12 @@ export default function AuthLanding() {
         .landingTripTypeGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         .tripTypeCard { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 16px; border-radius: 18px; background: #fff; border: 1px solid #EEF3F7; box-shadow: 0 10px 26px rgba(10,35,55,.05); }
         .tripTypeIcon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: #E7F4F8; color: #0A7FA6; }
-        .tripTypeCard strong { font-size: 14px; color: #0A2337; }
+        .tripTypeCard strong { font-size: 13px; color: #0A2337; }
         .tripTypeDesc { font-size:12px; color: #5B6B7C; line-height: 1.4; }
 
         .landingSectionHead { text-align: center; max-width: 620px; margin: 0 auto 40px; }
         .landingSectionHead h2 { margin: 14px 0 10px; font-size: clamp(24px,3.4vw,34px); font-weight: 800; letter-spacing: -1px; color: #0A2337; }
-        .landingSectionHead p { color: #5B6B7C; font-size: 14.5px; line-height: 1.7; }
+        .landingSectionHead p { color: #5B6B7C; font-size: 13.5px; line-height: 1.7; }
 
         .landingFeatures { padding: 76px 0 8px; }
         .landingFeatureGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
@@ -386,22 +386,22 @@ export default function AuthLanding() {
         .landingHow { padding: 76px 0; }
         .stepGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
         .stepCard { position: relative; padding: 26px 20px 22px; border-radius: 20px; background: #fff; border: 1px solid #EEF3F7; box-shadow: 0 12px 30px rgba(10,35,55,.05); }
-        .stepNumber { position: absolute; top: 18px; right: 20px; font-size: 26px; font-weight: 800; color: #EEF3F7; }
+        .stepNumber { position: absolute; top: 18px; right: 20px; font-size: 23px; font-weight: 800; color: #EEF3F7; }
         .stepIcon { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); color: #fff; margin-bottom: 16px; }
-        .stepCard strong { display: block; font-size: 15px; color: #0A2337; margin-bottom: 8px; }
-        .stepCard p { font-size: 12.5px; color: #5B6B7C; line-height: 1.6; }
+        .stepCard strong { display: block; font-size: 14px; color: #0A2337; margin-bottom: 8px; }
+        .stepCard p { font-size: 12px; color: #5B6B7C; line-height: 1.6; }
 
         .landingValues { padding: 20px 0 76px; }
         .valueGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
         .valueCard { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 22px 14px; border-radius: 18px; background: #F7F9FC; }
         .valueIcon { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #E7F4F8; color: #0A7FA6; }
-        .valueCard strong { font-size: 13px; color: #0A2337; }
+        .valueCard strong { font-size: 12.5px; color: #0A2337; }
         .valueCard span { font-size:12px; color: #5B6B7C; line-height: 1.4; }
 
         .landingFinalCta { padding: 4px 0 70px; }
         .landingFinalCtaInner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 40px 44px; border-radius: 26px; background: linear-gradient(145deg,#0A2337,#0E2D46 60%,#12384F); color: #fff; }
         .landingFinalCtaInner h2 { font-size: clamp(20px,2.6vw,28px); font-weight: 800; margin: 0 0 8px; }
-        .landingFinalCtaInner p { font-size: 13.5px; color: rgba(255,255,255,.68); margin: 0; }
+        .landingFinalCtaInner p { font-size: 13px; color: rgba(255,255,255,.68); margin: 0; }
 
         .landingFooter { min-height: 64px; display: flex; align-items: center; justify-content: space-between; width: min(1180px,calc(100% - 32px)); margin: 0 auto; color: #7A8491; font-size:12px; }
         .landingFooter strong { color: #0A2337; }
@@ -452,7 +452,7 @@ const primaryButtonStyle = {
   alignItems: "center",
   justifyContent: "center",
   gap: 9,
-  fontSize: 14,
+  fontSize: 13,
   fontWeight: 800,
   background: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
   color: "#FFFFFF",
@@ -466,7 +466,7 @@ const secondaryButtonStyle = {
   alignItems: "center",
   justifyContent: "center",
   gap: 9,
-  fontSize: 14,
+  fontSize: 13,
   fontWeight: 800,
   border: "1px solid #D8DEE8",
   background: "#FFFFFF",
@@ -484,7 +484,7 @@ const brandLinkStyle = {
   alignItems: "center",
   gap: 12,
   color: "#0A2337",
-  fontSize: 21,
+  fontSize: 19,
   fontWeight: 800,
   letterSpacing: "-0.6px",
   flexShrink: 0,
@@ -510,7 +510,7 @@ const loginButtonStyle = {
   border: "1.5px solid #D8DEE8",
   background: "#FFFFFF",
   color: "#1E3348",
-  fontSize: 13,
+  fontSize: 12.5,
   fontWeight: 700,
   whiteSpace: "nowrap",
 };
@@ -526,7 +526,7 @@ const signupButtonStyle = {
   border: "none",
   background: "linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%)",
   color: "#FFFFFF",
-  fontSize: 13,
+  fontSize: 12.5,
   fontWeight: 800,
   whiteSpace: "nowrap",
   boxShadow: "0 10px 22px rgba(10,127,166,.28)",

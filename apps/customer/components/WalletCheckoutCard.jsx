@@ -93,11 +93,11 @@ const styles = `
   .walletCard{margin-bottom:10px;padding:14px 16px;border-radius:16px;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7)}
   .walletCard-empty{opacity:.6}
   .walletRow{display:flex;justify-content:space-between;align-items:center;gap:12px}
-  .walletRow strong{font-size:13.5px;color:var(--voynu-navy,#0A2337)}
+  .walletRow strong{font-size:13px;color:var(--voynu-navy,#0A2337)}
   .walletRow p{margin:3px 0 0;color:var(--voynu-muted,#5B6B7C);font-size:12px;line-height:1.45}
   .walletToggle{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:8px 12px;border-radius:10px;border:1px solid var(--voynu-border-strong,#D8DEE8);background:#fff;color:var(--voynu-text,#1E3348);font-size:12px;font-weight:700;white-space:nowrap}
   .walletToggle.on{border-color:var(--voynu-teal,#0A7FA6);background:var(--voynu-primary-tint,#E7F4F8);color:var(--voynu-teal-deep,#00456B)}
   .walletToggle input{width:18px;height:18px;accent-color:var(--voynu-teal,#0A7FA6)}
-  .walletApplied{display:flex;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:1px solid var(--voynu-border,#EEF3F7);font-size:12.5px;color:var(--voynu-muted,#5B6B7C)}
+  .walletApplied{display:flex;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:1px solid var(--voynu-border,#EEF3F7);font-size:12px;color:var(--voynu-muted,#5B6B7C)}
   .walletApplied strong{color:var(--voynu-teal-deep,#00456B)}
 `;

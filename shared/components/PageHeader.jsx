@@ -103,7 +103,7 @@ export default function PageHeader({
             style={{
               color: theme.colors.navy,
               fontWeight: 800,
-              fontSize: 19,
+              fontSize: 17,
               letterSpacing: "-0.4px",
             }}
           >
@@ -160,7 +160,7 @@ export default function PageHeader({
                 borderRadius: theme.radius.pill,
                 background: "#22C55E",
                 color: "#fff",
-                fontSize: 12.5,
+                fontSize: 12,
                 fontWeight: 700,
                 boxShadow: "0 6px 16px rgba(34,197,94,.22)",
                 textDecoration: "none",
@@ -199,7 +199,7 @@ export default function PageHeader({
         .voynuHeaderNav { display: none; }
         @media (min-width: 901px) {
           .voynuHeaderNav { display: flex; align-items: center; gap: 6px; margin: 0 auto; }
-          .voynuHeaderNav :global(a) { display: inline-flex; align-items: center; min-height: 42px; padding: 0 20px; border-radius: ${theme.radius.pill}px; color: ${theme.colors.textMuted}; font-size: 14.5px; font-weight: 700; text-decoration: none; transition: background .15s ease, color .15s ease; }
+          .voynuHeaderNav :global(a) { display: inline-flex; align-items: center; min-height: 42px; padding: 0 20px; border-radius: ${theme.radius.pill}px; color: ${theme.colors.textMuted}; font-size: 13.5px; font-weight: 700; text-decoration: none; transition: background .15s ease, color .15s ease; }
           .voynuHeaderNav :global(a:hover) { background: rgba(10,127,166,.08); color: ${theme.colors.navy}; }
           .voynuHeaderNav :global(a.active) { background: ${theme.colors.primaryTint}; color: ${theme.colors.primary}; }
           .hasNav .voynuHeaderAccount { display: none; }
@@ -302,7 +302,7 @@ export default function PageHeader({
         }
         .productCopy b {
           margin: 0;
-          font-size: 17px;
+          font-size: 15.5px;
           line-height: 1.05;
           letter-spacing: -0.35px;
           text-align: center;
@@ -326,7 +326,7 @@ export default function PageHeader({
           .voynuPageHeaderInner { width: 100% !important; padding: 8px 10px; min-height: 62px !important; gap: 6px !important; }
           .voynuHeaderBrand { gap: 7px !important; }
           .voynuHeaderBrand img { width: 34px !important; height: 34px !important; }
-          .voynuHeaderBrandWord { font-size: 16px !important; }
+          .voynuHeaderBrandWord { font-size: 14.5px !important; }
           .voynuHeaderActions { gap: 4px !important; min-width: 0; }
           .voynuHeaderAction { padding: 8px 7px !important; font-size: 10px !important; }
           .homeProductInner { width: calc(100% - 32px); padding: 8px 0; }
@@ -334,7 +334,7 @@ export default function PageHeader({
           .homeProductOption { height: 74px !important; min-height: 74px !important; padding: 0 4px; border-radius: 22px; }
           .productIcon { width: 29px; height: 29px; flex-basis: 29px; border-radius: 10px; }
           .productIcon svg { width: 16px; height: 16px; }
-          .productCopy b { font-size: 16px; }
+          .productCopy b { font-size: 14.5px; }
           .productCopy small { font-size: 11px; }
         }
         @media (max-width: 520px) {
@@ -346,7 +346,7 @@ export default function PageHeader({
           .homeProductOption { height: 74px !important; min-height: 74px !important; padding: 0 3px; border-radius: 22px; }
           .productIcon { width: 27px; height: 27px; flex-basis: 27px; }
           .productIcon svg { width: 15px; height: 15px; }
-          .productCopy b { font-size: 16px; }
+          .productCopy b { font-size: 14.5px; }
           .productCopy small { font-size: 11px; }
         }
         @media (max-width: 380px) {
@@ -370,7 +370,7 @@ export default function PageHeader({
             width: calc(100% - 32px);
           }
           .homeProductOption b {
-            font-size: 14px;
+            font-size: 13px;
           }
           .homeProductOption small {
             font-size: 10px;
