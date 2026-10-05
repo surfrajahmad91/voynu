@@ -11,9 +11,9 @@ import { supabase } from "../../../shared/lib/supabaseClient";
 const SHOW_ON = ["/", "/account", "/booking-confirmed", "/subscriptions", "/subscriptions/manage", "/subscriptions/confirmed"];
 
 const icons = {
-  ride: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16h15M5.8 16l1.6-5.2a2.2 2.2 0 0 1 2.1-1.5h5a2.2 2.2 0 0 1 2.1 1.5L18.2 16" /><path d="M8 9.3V7h8v2.3" /><circle cx="8" cy="17.6" r="1.6" /><circle cx="16" cy="17.6" r="1.6" /></svg>),
-  commute: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>),
-  account: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4.2 4-6.4 8-6.4s8 2.2 8 6.4" /></svg>),
+  ride: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16h15M5.8 16l1.6-5.2a2.2 2.2 0 0 1 2.1-1.5h5a2.2 2.2 0 0 1 2.1 1.5L18.2 16" /><path d="M8 9.3V7h8v2.3" /><circle cx="8" cy="17.6" r="1.6" /><circle cx="16" cy="17.6" r="1.6" /></svg>),
+  commute: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>),
+  account: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4.2 4-6.4 8-6.4s8 2.2 8 6.4" /></svg>),
 };
 
 const TABS = [

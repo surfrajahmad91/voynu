@@ -125,7 +125,7 @@ export default function SignupPage() {
 
           <div style={{
             padding: "15px",
-            borderRadius: 15,
+            borderRadius: 16,
             background: "linear-gradient(145deg, rgba(231,244,248,.76), rgba(255,255,255,.66))",
             border: "1px solid rgba(18,160,198,.11)",
             color: theme.colors.textMuted,
@@ -160,7 +160,7 @@ export default function SignupPage() {
 
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
             <Link href="/login" style={{
-              flex: 1, height: 48, borderRadius: 13, display: "flex", alignItems: "center",
+              flex: 1, height: 48, borderRadius: 12, display: "flex", alignItems: "center",
               justifyContent: "center", boxSizing: "border-box",
               background: theme.gradients.primary, color: "#fff",
               fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 12.5, textDecoration: "none",
@@ -169,7 +169,7 @@ export default function SignupPage() {
               Log in
             </Link>
             <Link href="/forgot-password" style={{
-              flex: 1, height: 48, borderRadius: 13, display: "flex", alignItems: "center",
+              flex: 1, height: 48, borderRadius: 12, display: "flex", alignItems: "center",
               justifyContent: "center", boxSizing: "border-box",
               border: "1px solid #dce5e1", background: "#fff", color: theme.colors.text,
               fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 12.5, textDecoration: "none",
@@ -191,7 +191,7 @@ export default function SignupPage() {
 
           <div style={{
             padding: "15px",
-            borderRadius: 15,
+            borderRadius: 16,
             background: "linear-gradient(145deg, rgba(231,244,248,.76), rgba(255,255,255,.66))",
             border: "1px solid rgba(18,160,198,.11)",
             color: theme.colors.textMuted,
@@ -231,7 +231,7 @@ export default function SignupPage() {
           )}
 
           <button type="button" onClick={handleResend} disabled={resending} style={{
-            width: "100%", height: 50, marginTop: 16, border: 0, borderRadius: 13,
+            width: "100%", height: 50, marginTop: 16, border: 0, borderRadius: 12,
             background: theme.gradients.primary, color: "#fff", fontFamily: theme.fontFamily,
             fontWeight: 800, fontSize: 13, cursor: resending ? "wait" : "pointer",
             opacity: resending ? 0.7 : 1, boxShadow: theme.shadow.button,
@@ -256,7 +256,7 @@ export default function SignupPage() {
             <input type="password" placeholder="Password (6+ characters)" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} />
             {error && <div style={{ color: theme.colors.error, fontSize: 12, fontWeight: 600 }}>{error}</div>}
             <button type="submit" disabled={loading} style={{
-              height: 52, border: 0, borderRadius: 13, background: theme.gradients.primary,
+              height: 52, border: 0, borderRadius: 12, background: theme.gradients.primary,
               color: "#ffffff", fontFamily: theme.fontFamily, fontWeight: 800, fontSize: 13,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1, marginTop: 6,
               boxShadow: theme.shadow.button,
