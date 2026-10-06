@@ -68,7 +68,7 @@ export default function PageHeader({
         style={{
           width: headerWidth,
           margin: "0 auto",
-          minHeight: 68,
+          minHeight: 54,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -90,10 +90,10 @@ export default function PageHeader({
           <img
             src="/icon.svg"
             alt="VOYNU"
-            width="40"
-            height="40"
+            width="32"
+            height="32"
             style={{
-              borderRadius: 11,
+              borderRadius: 9,
               display: "block",
               boxShadow: "0 6px 14px rgba(10,35,55,.16)",
             }}
@@ -323,7 +323,7 @@ export default function PageHeader({
           display: inline;
         }
         @media (max-width: 700px) {
-          .voynuPageHeaderInner { width: 100% !important; padding: 8px 10px; min-height: 62px !important; gap: 6px !important; }
+          .voynuPageHeaderInner { width: 100% !important; padding: 8px 10px; min-height: 54px !important; gap: 6px !important; }
           .voynuHeaderBrand { gap: 7px !important; }
           .voynuHeaderBrand img { width: 34px !important; height: 34px !important; }
           .voynuHeaderBrandWord { font-size: 14.5px !important; }

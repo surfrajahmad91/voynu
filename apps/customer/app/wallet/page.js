@@ -127,18 +127,18 @@ export default function WalletPage() {
         .page{min-height:100vh;background:var(--voynu-bg,#F7F9FC);color:var(--voynu-text,#1E3348)}
         .wrap{width:min(640px,calc(100% - 28px));margin:0 auto;padding:22px 0 60px}
         .titleRow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-        .eyebrow{display:block;font-size:12px;font-weight:800;letter-spacing:1.2px;color:var(--voynu-teal,#0A7FA6)}
+        .eyebrow{display:block;font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--voynu-teal,#0A7FA6)}
         h1{margin:5px 0 0;font-size:clamp(24px,6vw,30px);letter-spacing:-.6px;font-weight:800}
         .backLink{flex:0 0 auto;padding:9px 13px;border-radius:12px;border:1px solid var(--voynu-border-strong,#D8DEE8);background:var(--voynu-surface,#fff);color:var(--voynu-text,#1E3348);text-decoration:none;font-weight:700;font-size:12px}
         .lede{margin:9px 0 0;color:var(--voynu-muted,#5B6B7C);font-size:13px;line-height:1.5}
         .alert{margin-top:16px;padding:13px 14px;border-radius:12px;background:#FFF1F2;color:#B42318;font-size:12.5px;font-weight:500}
         .balanceCard{margin-top:16px;padding:22px 20px;border-radius:20px;background:var(--voynu-gradient,linear-gradient(135deg,#12A0C6,#0A7FA6));color:#fff;box-shadow:0 14px 30px rgba(10,127,166,.25)}
-        .balanceLabel{font-size:12px;font-weight:800;letter-spacing:1px;opacity:.85}
+        .balanceLabel{font-size:11px;font-weight:800;letter-spacing:1px;opacity:.85}
         .balanceValue{margin-top:7px;font-size:clamp(34px,10vw,42px);font-weight:900;letter-spacing:-1px;font-variant-numeric:tabular-nums}
         .balanceNote{margin:10px 0 0;font-size:12px;line-height:1.5;opacity:.9;max-width:46ch}
         .infoGrid{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
         .infoCard{padding:15px;border-radius:16px;background:var(--voynu-surface,#fff);border:1px solid var(--voynu-border,#EEF3F7)}
-        .infoLabel{display:block;font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--voynu-muted,#5B6B7C)}
+        .infoLabel{display:block;font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--voynu-muted,#5B6B7C)}
         .infoHeadline{margin-top:6px;font-size:13.5px;font-weight:800;line-height:1.3}
         .infoBody{margin:5px 0 0;font-size:12px;line-height:1.5;color:var(--voynu-muted,#5B6B7C)}
         .activity{margin-top:26px}

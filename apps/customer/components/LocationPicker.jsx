@@ -511,7 +511,7 @@ export default function LocationPicker({
         .locationHint { margin-top:5px; color:${theme.colors.textFaint}; font-size:12px; }
         .locationError { margin-top:6px; color:${theme.colors.error}; font-size:12px; line-height:1.4; }
         @keyframes spin { to { transform:rotate(360deg); } }
-        @media (max-width:700px) { .locationInput { height:46px; font-size:14px; } .actionButton { width:34px; height:34px; } .currentLocationLink { min-height:32px; margin:0; font-size:12px; } .recentItem { min-height:44px; } .locationHintLabel { display:none; } .locationHelper { font-size:12px; margin-top:4px; margin-bottom:0; } .locationLabel { margin-bottom:6px; } }
+        @media (max-width:700px) { .locationInput { height:42px; font-size:14px; } .actionButton { width:34px; height:34px; } .currentLocationLink { min-height:32px; margin:0; font-size:12px; } .recentItem { min-height:40px; } .locationHintLabel { display:none; } .locationHelper { font-size:12px; margin-top:4px; margin-bottom:0; } .locationLabel { margin-bottom:6px; } }
       `}</style>
     </div>
   );

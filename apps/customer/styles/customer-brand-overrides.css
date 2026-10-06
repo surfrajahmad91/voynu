@@ -71,10 +71,10 @@ body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 button,a,select,summary,[role="button"]{touch-action:manipulation}
 @media(max-width:700px){input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea{font-size:14px!important}}
 @supports(height:100dvh){.loading{min-height:100dvh}}
-@media(max-width:900px){body[data-bottom-nav="on"]{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:900px){body[data-bottom-nav="on"]{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px))}}
 
 /* Commute flow: keep its action dock (Back / Continue) above the bottom tab bar. */
-body[data-bottom-nav="on"] .dock{bottom:calc(53px + env(safe-area-inset-bottom,0px))!important;padding-top:8px!important;padding-bottom:8px!important}
+body[data-bottom-nav="on"] .dock{bottom:calc(49px + env(safe-area-inset-bottom,0px))!important;padding-top:8px!important;padding-bottom:8px!important}
 @media(min-width:901px){body[data-bottom-nav="on"] .dock{bottom:0!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}}
 
 /* Polish pass 2 */

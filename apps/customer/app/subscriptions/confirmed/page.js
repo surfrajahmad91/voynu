@@ -140,7 +140,7 @@ export default function SubscriptionConfirmedPage() {
           .total b{font-size:21px;color:var(--voynu-navy,#0A2337);font-variant-numeric:tabular-nums}
           .note{margin:12px 0 0;font-size:12px;line-height:1.55;color:var(--voynu-muted,#5B6B7C)}
           .actions{display:grid;gap:10px;margin-top:18px}
-          .actions :global(a){display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:16px;font-size:14.5px;font-weight:700}
+          .actions :global(a){display:flex;align-items:center;justify-content:center;min-height:46px;border-radius:16px;font-size:14.5px;font-weight:700}
           .actions :global(a.primary){background:var(--voynu-gradient,linear-gradient(135deg,#12A0C6,#0A7FA6));color:#fff;box-shadow:0 10px 24px rgba(10,127,166,.22)}
           .actions :global(a.secondary){border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:#fff;color:var(--voynu-navy,#0A2337)}
         `}</style>

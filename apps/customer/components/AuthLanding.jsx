@@ -329,7 +329,7 @@ export default function AuthLanding() {
         .landingNav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
         .landingHero { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 58px 0 70px; display: grid; grid-template-columns: minmax(0,.9fr) minmax(430px,1fr); align-items: center; gap: 68px; }
-        .landingEyebrow { display: flex; align-items: center; gap: 9px; color: #00456B; font-size:12px; font-weight: 800; letter-spacing: 1.5px; }
+        .landingEyebrow { display: flex; align-items: center; gap: 9px; color: #00456B; font-size:11px; font-weight: 800; letter-spacing: 1.5px; }
         .landingEyebrow span { width: 22px; height: 3px; border-radius: 99px; background: linear-gradient(135deg, #12A0C6 0%, #0A7FA6 46%, #D4552A 54%, #F5813F 100%); flex-shrink: 0; }
         .landingEyebrowCenter { justify-content: center; }
         h1 { margin: 16px 0 0; font-size: clamp(48px,6vw,76px); line-height: .98; letter-spacing: -3px; font-weight: 800; color: #0A2337; }
@@ -342,8 +342,8 @@ export default function AuthLanding() {
         .landingActions { width: min(350px,100%); display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
 
         .landingVisual { padding: 20px; border: 1px solid rgba(255,255,255,.9); border-radius: 30px; background: rgba(255,255,255,.72); box-shadow: 0 30px 80px rgba(10,35,55,.12); backdrop-filter: blur(12px); }
-        .landingVisualTop { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 14px; color: #0A2337; font-size:12px; font-weight: 800; letter-spacing: 1px; }
-        .landingLive { display: flex; align-items: center; gap: 6px; color: #00456B; font-size:12px; letter-spacing: .8px; }
+        .landingVisualTop { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 14px; color: #0A2337; font-size:11px; font-weight: 800; letter-spacing: 1px; }
+        .landingLive { display: flex; align-items: center; gap: 6px; color: #00456B; font-size:11px; letter-spacing: .8px; }
         .landingLive i { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 0 4px rgba(34,197,94,.10); display: block; }
         .landingRoute { position: relative; height: 380px; overflow: hidden; border-radius: 22px; background: linear-gradient(145deg,#0A2337,#0E2D46 60%,#12384F); }
         .landingRouteGrid { position: absolute; inset: -30px; opacity: .30; background-image: linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px); background-size: 42px 42px; transform: rotate(-8deg) scale(1.1); }
@@ -446,7 +446,7 @@ export default function AuthLanding() {
 }
 
 const primaryButtonStyle = {
-  minHeight: 54,
+  minHeight: 48,
   borderRadius: 16,
   display: "flex",
   alignItems: "center",
@@ -460,7 +460,7 @@ const primaryButtonStyle = {
 };
 
 const secondaryButtonStyle = {
-  minHeight: 54,
+  minHeight: 48,
   borderRadius: 16,
   display: "flex",
   alignItems: "center",
