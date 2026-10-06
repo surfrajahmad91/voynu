@@ -1,3 +1,4 @@
+import "../lib/themeTuning";
 import "../styles/globals.css";
 import PushNotifications from "../../../shared/components/PushNotifications";
 import DateTimeBookingGuard from "../components/DateTimeBookingGuard";

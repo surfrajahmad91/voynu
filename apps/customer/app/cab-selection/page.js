@@ -236,7 +236,7 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .dataHealth{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;color:${theme.colors.textMuted};font-size:12px}
 
 .paymentAction{margin-top:10px}
-.paymentCard{width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;cursor:pointer;opacity:0.55}
+.paymentCard{width:100%;min-height:46px;display:flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;cursor:pointer;opacity:0.55}
 .paymentCard.active{opacity:1;border-color:${theme.colors.primary};background:${theme.colors.primaryTint};color:${theme.colors.primary}}
 
 .couponCard{margin-top:10px;overflow:hidden}
@@ -272,7 +272,7 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
 .availabilityNotice .diagnosticLine{color:${theme.colors.textFaint}}
 
 .confirmError{margin-top:14px}
-.desktopConfirmButton{width:100%;min-height:54px;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:${theme.radius.md}px;background:${theme.gradients.primary};box-shadow:${theme.shadow.button};color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.desktopConfirmButton{width:100%;min-height:48px;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:${theme.radius.md}px;background:${theme.gradients.primary};box-shadow:${theme.shadow.button};color:#fff;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .desktopConfirmButton:disabled{opacity:.7;cursor:wait}
 .disclaimer{margin:12px 2px 0;text-align:center;color:${theme.colors.textFaint};font-size:12px;line-height:1.5}
 
@@ -288,7 +288,7 @@ select{height:40px;padding:0 10px;border:1px solid ${theme.colors.border};border
   .mobileConfirmAmount{min-width:60px;display:flex;flex-direction:column;gap:1px}
   .mobileConfirmAmount small{font-size:12px;color:${theme.colors.textMuted};font-weight:700}
   .mobileConfirmAmount strong{font-size:14.5px;color:${theme.colors.text};font-weight:800}
-  .mobileConfirmButton{flex:1;min-height:46px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:${theme.radius.sm}px;background:${theme.gradients.primary};color:#fff;font-family:inherit;font-size:12.5px;font-weight:700}
+  .mobileConfirmButton{flex:1;min-height:42px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:${theme.radius.sm}px;background:${theme.gradients.primary};color:#fff;font-family:inherit;font-size:12.5px;font-weight:700}
   .mobileConfirmButton:disabled{opacity:.7}
   .requirementsCard{padding:12px 14px}
   .sectionHeading{font-size:14px;margin:22px 0 10px}

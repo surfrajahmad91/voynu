@@ -440,7 +440,7 @@ export default function CommuteSubscriptionPage() {
           .page{min-height:100vh;background:var(--voynu-bg,#F7F9FC);color:var(--voynu-text,#1E3348);padding-bottom:calc(112px + env(safe-area-inset-bottom))}
           .wrap{width:min(680px,calc(100% - 28px));margin:0 auto}
           .hero{background:var(--voynu-navy,#0A2337);color:#fff;padding:26px 0 30px;border-bottom:3px solid var(--voynu-accent,#F5813F)}
-          .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;color:var(--voynu-accent-light,#FFB25C)}
+          .eyebrow{font-size:11px;font-weight:700;letter-spacing:1.4px;color:var(--voynu-accent-light,#FFB25C)}
           .hero h1{margin:6px 0 6px;font-size:clamp(28px,7vw,38px);line-height:1.1;letter-spacing:-.8px;font-weight:700}
           .hero p{margin:0;font-size:14px;line-height:1.5;color:rgba(255,255,255,.8)}
           .body{padding-top:18px}
@@ -458,25 +458,25 @@ export default function CommuteSubscriptionPage() {
           .sub{margin:0 0 16px;font-size:13px;line-height:1.55;color:var(--voynu-muted,#5B6B7C)}
           label,.fieldLabel{display:block;margin:0 0 14px;font-size:12.5px;font-weight:600;color:var(--voynu-navy,#0A2337)}
           .fieldLabel{margin-bottom:8px}.plansLabel{margin-top:18px}
-          input,select{display:block;width:100%;height:50px;margin-top:6px;padding:0 14px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);border-radius:14px;background:var(--voynu-surface,#fff);color:var(--voynu-text,#1E3348);font-size:14.5px;font-weight:500}
-          input[type=time],input[type=date]{min-height:50px}
+          input,select{display:block;width:100%;height:44px;margin-top:6px;padding:0 14px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);border-radius:14px;background:var(--voynu-surface,#fff);color:var(--voynu-text,#1E3348);font-size:14.5px;font-weight:500}
+          input[type=time],input[type=date]{min-height:44px}
           .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
           .distance{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 16px;padding:12px 14px;border-radius:14px;background:var(--voynu-primary-tint,#E7F4F8)}
           .distance small{display:block;font-size:12px;font-weight:600;color:var(--voynu-muted,#5B6B7C)}.distance b{font-size:14px;color:var(--voynu-teal-deep,#00456B)}
-          .ghost{min-height:44px;padding:0 14px;border:1.5px solid var(--voynu-teal,#0A7FA6);border-radius:12px;background:transparent;color:var(--voynu-teal-deep,#00456B);font-size:13px;font-weight:600}.ghost.wide{width:100%}
+          .ghost{min-height:40px;padding:0 14px;border:1.5px solid var(--voynu-teal,#0A7FA6);border-radius:12px;background:transparent;color:var(--voynu-teal-deep,#00456B);font-size:13px;font-weight:600}.ghost.wide{width:100%}
           .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-          .day{min-height:46px;border-radius:14px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:var(--voynu-surface,#fff);color:var(--voynu-muted,#5B6B7C);font-size:14px;font-weight:700}
+          .day{min-height:42px;border-radius:14px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:var(--voynu-surface,#fff);color:var(--voynu-muted,#5B6B7C);font-size:14px;font-weight:700}
           .day.on{border-color:var(--voynu-teal,#0A7FA6);background:var(--voynu-teal,#0A7FA6);color:#fff}
           .hint{display:block;margin-top:8px;font-size:12px;color:var(--voynu-muted,#5B6B7C)}
           .stepper{display:flex;align-items:center;justify-content:center;gap:22px;margin:4px 0 18px}
-          .stepper button{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--voynu-teal,#0A7FA6);background:var(--voynu-primary-tint,#E7F4F8);color:var(--voynu-teal-deep,#00456B);font-size:23px;font-weight:600;line-height:1}
+          .stepper button{width:52px;height:46px;border-radius:50%;border:1.5px solid var(--voynu-teal,#0A7FA6);background:var(--voynu-primary-tint,#E7F4F8);color:var(--voynu-teal-deep,#00456B);font-size:23px;font-weight:600;line-height:1}
           .stepper button:disabled{opacity:.4}
           .stepper div{min-width:84px;text-align:center}.stepper b{display:block;font-size:30px;line-height:1;color:var(--voynu-navy,#0A2337)}.stepper small{font-size:12px;color:var(--voynu-muted,#5B6B7C)}
           .person{border:1px solid var(--voynu-border,#EEF3F7);border-radius:16px;padding:14px;margin-bottom:12px;background:var(--voynu-bg,#F7F9FC)}
           .person input,.person select{background:var(--voynu-surface,#fff)}
           .personTitle{margin-bottom:10px;font-size:12.5px;font-weight:700;color:var(--voynu-teal-deep,#00456B)}
           .choices{display:grid;gap:10px}
-          .choice{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;padding:12px 14px;text-align:left;border-radius:16px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:var(--voynu-surface,#fff);color:var(--voynu-text,#1E3348)}
+          .choice{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:12px 14px;text-align:left;border-radius:16px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:var(--voynu-surface,#fff);color:var(--voynu-text,#1E3348)}
           .choice b{display:block;font-size:14px}.choice small{display:block;margin-top:2px;font-size:12px;color:var(--voynu-muted,#5B6B7C)}
           .radio{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:2px solid var(--voynu-border-strong,#D8DEE8);background:#fff}
           .choice.on{border-color:var(--voynu-teal,#0A7FA6);background:var(--voynu-primary-tint,#E7F4F8)}
@@ -497,14 +497,14 @@ export default function CommuteSubscriptionPage() {
           .rows .good b,.rows .good span{color:#15803D}
           .total{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;padding-top:14px;border-top:1px solid var(--voynu-border-strong,#D8DEE8);font-size:14px;font-weight:600}.total b{font-size:21px;color:var(--voynu-navy,#0A2337);font-variant-numeric:tabular-nums}
           .pay{background:linear-gradient(180deg,#FFF8F1,#fff);border-color:#FFD9BD}
-          .payTag{display:inline-block;margin-bottom:8px;padding:4px 10px;border-radius:99px;background:var(--voynu-accent,#F5813F);color:#fff;font-size:12px;font-weight:700;letter-spacing:.8px}
+          .payTag{display:inline-block;margin-bottom:8px;padding:4px 10px;border-radius:99px;background:var(--voynu-accent,#F5813F);color:#fff;font-size:11px;font-weight:700;letter-spacing:.8px}
           .how{margin:0;padding:0;list-style:none;display:grid;gap:10px}.how li{display:block;font-size:13px;line-height:1.5;color:var(--voynu-text,#1E3348);padding-left:16px;position:relative}
           .how li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:50%;background:var(--voynu-accent,#F5813F)}
           .dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-top:1px solid var(--voynu-border-strong,#D8DEE8);padding:10px 0 calc(10px + env(safe-area-inset-bottom))}
           .dockIn{width:min(680px,calc(100% - 28px));margin:0 auto;display:flex;align-items:center;gap:12px}
-          .back{width:52px;height:52px;flex:0 0 52px;border-radius:16px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:#fff;color:var(--voynu-navy,#0A2337);font-size:20px;font-weight:600}
+          .back{width:52px;height:46px;flex:0 0 52px;border-radius:16px;border:1.5px solid var(--voynu-border-strong,#D8DEE8);background:#fff;color:var(--voynu-navy,#0A2337);font-size:20px;font-weight:600}
           .dockInfo{flex:1;min-width:0}.dockInfo small{display:block;font-size:12px;font-weight:600;color:var(--voynu-muted,#5B6B7C)}.dockInfo b{display:block;font-size:15.5px;color:var(--voynu-navy,#0A2337);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
-          .cta{min-width:148px;height:52px;padding:0 22px;border:0;border-radius:16px;background:var(--voynu-gradient,linear-gradient(135deg,#12A0C6,#0A7FA6));color:#fff;font-size:14.5px;font-weight:700;box-shadow:0 10px 24px rgba(10,127,166,.22)}
+          .cta{min-width:148px;height:46px;padding:0 22px;border:0;border-radius:16px;background:var(--voynu-gradient,linear-gradient(135deg,#12A0C6,#0A7FA6));color:#fff;font-size:14.5px;font-weight:700;box-shadow:0 10px 24px rgba(10,127,166,.22)}
           .cta:disabled{opacity:.55;box-shadow:none}
           button:focus-visible{outline:3px solid rgba(10,127,166,.35);outline-offset:2px}
           @media(max-width:380px){.cta{min-width:118px;padding:0 14px}.dockInfo b{font-size:14px}  .progress li span{display:none}.progress ol{grid-template-columns:repeat(4,auto);justify-content:space-between}}
@@ -523,14 +523,14 @@ export default function CommuteSubscriptionPage() {
             h2{margin-bottom:2px;font-size:15.5px;text-align:center}
             .sub{margin-bottom:10px;font-size:12px;line-height:1.4;text-align:center}
             label,.fieldLabel{margin-bottom:8px;font-size:12px}.fieldLabel{margin-bottom:6px}
-            input,select{height:46px;margin-top:4px;font-size:14px;border-radius:12px}
+            input,select{height:42px;margin-top:4px;font-size:14px;border-radius:12px}
             .two{gap:8px}
             .distance{margin:2px 0 8px;padding:9px 12px}
             .days{gap:5px}.day{min-height:40px;font-size:13px;border-radius:12px}
             .hint{margin-top:6px;font-size:12px}
-            .stepper{gap:18px;margin:2px 0 12px}.stepper button{width:44px;height:44px;font-size:20px}.stepper b{font-size:25px}
+            .stepper{gap:18px;margin:2px 0 12px}.stepper button{width:44px;height:40px;font-size:20px}.stepper b{font-size:25px}
             .person{padding:10px;margin-bottom:8px;border-radius:14px}
-            .choice{min-height:50px;padding:9px 12px;border-radius:14px}.choice b{font-size:13px}
+            .choice{min-height:44px;padding:9px 12px;border-radius:14px}.choice b{font-size:13px}
             .plan{min-height:88px;padding:11px;border-radius:14px}.plan b{font-size:13px}
             .note{margin-top:10px;font-size:12px}
             .route{margin:6px 0 10px}.route>div{font-size:13px}
@@ -539,13 +539,13 @@ export default function CommuteSubscriptionPage() {
             .total b{font-size:19px}
             .how{gap:7px}.how li{font-size:12.5px}
             .dockIn{width:calc(100% - 20px)}
-            .back{width:46px;height:46px;flex-basis:46px;border-radius:14px}
-            .cta{min-width:130px;height:46px;font-size:14px;border-radius:14px}
+            .back{width:46px;height:42px;flex-basis:46px;border-radius:14px}
+            .cta{min-width:130px;height:42px;font-size:14px;border-radius:14px}
             .dockInfo b{font-size:14px}
           }
         
           @media(max-width:700px){
-            .hero{display:flex;align-items:center;min-height:120px;padding:12px 0}
+            .hero{display:flex;align-items:center;min-height:104px;padding:12px 0}
             .hero .wrap{width:100%;padding:0 16px}
             .eyebrow{display:block;margin-bottom:4px;line-height:1.2}
             .hero h1{margin:0;font-size:21px;line-height:1.15}
