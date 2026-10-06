@@ -2,6 +2,7 @@ import "../styles/globals.css";
 import PushNotifications from "../../../shared/components/PushNotifications";
 import DateTimeBookingGuard from "../components/DateTimeBookingGuard";
 import BottomNav from "../components/BottomNav";
+import NativeBridge from "../components/NativeBridge";
 
 export const metadata = {
   title: "VOYNU",
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
         <DateTimeBookingGuard />
         {children}
         <BottomNav />
+        <NativeBridge />
         <PushNotifications targetPath="/account" audience="customer" />
         <script dangerouslySetInnerHTML={{__html:`if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));}`}} />
       </body>
